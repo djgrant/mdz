@@ -13,3 +13,12 @@ website/dist/
 # IDE
 .idea/
 *.swp
+
+# OpenCode workspace
+.opencode/
+.screenshots/
+
+# Test artifacts
+test-execution.js
+test-loop.mdz
+logo-concepts.html
