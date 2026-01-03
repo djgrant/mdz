@@ -1,11 +1,11 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
 
 // Syntax-highlighted code example using CSS classes
 // Note: curly braces must be escaped in Astro using HTML entities
 const codeExample = `<span class="zen-comment">---</span>
-<span class="zen-comment">name: the-scientist</span>
+<span class="zen-comment">name: scientific-method</span>
 <span class="zen-comment">description: Hypothesis-driven iteration</span>
 <span class="zen-comment">uses:</span>
 <span class="zen-comment">  - work-packages</span>
@@ -27,248 +27,412 @@ const codeExample = `<span class="zen-comment">---</span>
 
 <Layout title="MDZ - A language for the world's most powerful runtime">
   <Header currentPath="/" />
-  
+
   <main>
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
       <!-- Subtle gradient background -->
-      <div class="absolute inset-0 bg-gradient-to-b from-[var(--color-accent)]/5 to-transparent pointer-events-none"></div>
-      
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] pt-16 pb-10 md:pt-20 md:pb-12">
-        <div class="max-w-3xl">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-[var(--color-accent)]/5 to-transparent pointer-events-none"
+      >
+      </div>
+
+      <div
+        class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] pt-16 pb-10 md:pt-20 md:pb-12"
+      >
+        <div class="max-w-4xl">
           <!-- Tagline -->
-          <p class="text-[var(--color-accent)] font-medium mb-4 text-sm tracking-wide uppercase">
+          <!-- <p
+            class="text-[var(--color-accent)] font-medium mb-4 text-sm tracking-wide uppercase"
+          >
             Zen Markdown
-          </p>
-          
+          </p> -->
+
           <!-- Headline -->
-          <h1 class="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-            A language for the world's most powerful runtime
+          <h1
+            class="max-w-3xl text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+          >
+            A language for the world's <br />most powerful runtime
           </h1>
-          
-          <!-- Description -->
-          <p class="text-lg md:text-xl text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-10 max-w-2xl leading-relaxed">
-            MDZ is a superset of markdown designed for LLMs. Define typed variables, control flow, and skill composition in a structured format that tooling validates and LLMs execute directly.
-          </p>
-          
-          <!-- CTAs -->
-          <div class="flex flex-wrap gap-4">
-            <a 
-              href="/docs/getting-started" 
-              class="inline-flex items-center px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-light)] text-white font-medium rounded-lg transition-colors"
-            >
-              Get Started
-              <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-            <a 
-              href="/playground" 
-              class="inline-flex items-center px-6 py-3 border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] text-[var(--color-text)] dark:text-[var(--color-text-dark)] font-medium rounded-lg transition-colors"
-            >
-              Try Playground
-            </a>
-          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Code Example Section -->
-    <section class="pt-8 pb-16 md:pt-12 md:pb-24">
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
-        <div class="grid md:grid-cols-2 gap-8 items-center">
-          <!-- Code Example -->
-          <div class="relative">
-            <div class="absolute -inset-2 bg-gradient-to-r from-[var(--color-accent)]/20 to-transparent rounded-xl blur-xl opacity-50"></div>
-            <pre class="relative rounded-xl text-sm leading-relaxed" set:html={codeExample} />
-          </div>
-          
-          <!-- Features -->
-          <div class="space-y-8">
-            <div>
-              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-                Write in Structured Language
-              </h3>
-              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-                Express complex agent behaviors in a structured format that can be 
-                reasoned about, tested, and predicted. The structure is the specification.
-              </p>
-            </div>
-            
-            <div>
-              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-                LLM Executes Directly
-              </h3>
-              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-                No compilation to another format. The LLM reads your skill, 
-                interprets the control flow, and executes it. Source is runtime.
-              </p>
-            </div>
-            
-            <div>
-              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-                Tooling Catches Errors
-              </h3>
-              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-                Static analysis validates references, types, and dependencies 
-                before runtime—catching structural issues before the LLM sees them.
-              </p>
-            </div>
-            
-            <div>
-              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-                Compose Complex Systems
-              </h3>
-              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-                Reference other skills with [[wiki-links]]. Build multi-agent 
-                workflows from validated, composable modules.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- The Runtime Section -->
-    <section class="py-16 md:py-24 bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] border-y border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
-        <div class="max-w-3xl mx-auto text-center mb-12">
-          <h2 class="text-2xl md:text-3xl font-medium mb-4 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-            The World's Most Powerful Runtime
-          </h2>
-          <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-            LLMs aren't just text generators—they're Turing-complete interpreters. 
-            MDZ treats them as the runtime they are.
-          </p>
-        </div>
-        
-        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div class="text-center">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
-              <svg class="w-6 h-6 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">You Write</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-              Markdown skills with typed variables, references, and control flow
-            </p>
-          </div>
-          
-          <div class="text-center">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
-              <svg class="w-6 h-6 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <h3 class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">Tooling Validates</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-              Static analysis catches broken refs, type errors, and cycles
-            </p>
-          </div>
-          
-          <div class="text-center">
-            <div class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center">
-              <svg class="w-6 h-6 text-[var(--color-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">LLM Executes</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-              The LLM reads and runs your skill directly—no transformation
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Syntax Overview Section -->
-    <section class="py-16 md:py-24">
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
-        <h2 class="text-2xl md:text-3xl font-medium mb-4 text-center text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-          Syntax at a Glance
-        </h2>
-        <p class="text-center text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-12 max-w-xl mx-auto">
-          MDZ extends markdown. Every construct is a signal to both tooling and the LLM.
+        <!-- Description -->
+        <p
+          class="text-lg md:text-xl text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-10 max-w-2xl leading-relaxed"
+        >
+          MDZ is a superset of markdown designed to leverage SOTA LLMs' ability
+          to evaluate programs. Declare interfaces, control flow and composition
+          using a structured format that tools can analyse, and LLMs can execute
+          directly.
         </p>
-        
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Types -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-type)]">Types</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              Contracts for tooling to check
+
+        <!-- CTAs -->
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="/docs/getting-started"
+            class="inline-flex items-center px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-light)] text-white font-medium rounded-lg transition-colors"
+          >
+            Get Started
+            <svg
+              class="ml-2 w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+          <a
+            href="/playground"
+            class="inline-flex items-center px-6 py-3 border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] text-[var(--color-text)] dark:text-[var(--color-text-dark)] font-medium rounded-lg transition-colors"
+          >
+            Try Playground
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Code Example Section -->
+  <section class="pt-8 pb-16 md:pt-12 md:pb-24">
+    <div
+      class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]"
+    >
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <!-- Code Example -->
+        <div class="relative">
+          <div
+            class="absolute -inset-2 bg-gradient-to-r from-[var(--color-accent)]/20 to-transparent rounded-xl blur-xl opacity-50"
+          >
+          </div>
+          <pre
+            class="relative rounded-xl text-sm leading-relaxed"
+            set:html={codeExample}
+          />
+        </div>
+
+        <!-- Features -->
+        <div class="space-y-8">
+          <div>
+            <h3
+              class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+            >
+              Write in Structured Language
+            </h3>
+            <p
+              class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+            >
+              Express complex agent behaviors in a structured format that can be
+              reasoned about, tested, and predicted.
             </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code><span class="zen-type">$Task</span> = any executable instruction
+          </div>
+
+          <div>
+            <h3
+              class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+            >
+              LLM Executes Directly
+            </h3>
+            <p
+              class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+            >
+              No compilation, no interpreter. The LLM just reads your program,
+              understands the intent, and executes it.
+            </p>
+          </div>
+
+          <div>
+            <h3
+              class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+            >
+              Tooling Catches Errors
+            </h3>
+            <p
+              class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+            >
+              Static analysis validates references, types, and dependencies
+              before runtime – catching structural issues before the LLM sees
+              them.
+            </p>
+          </div>
+
+          <div>
+            <h3
+              class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+            >
+              Compose Complex Systems
+            </h3>
+            <p
+              class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+            >
+              Reference and invoke other skills with type-safe interfaces. Build
+              multi-agent workflows with clear, composable modules.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Runtime Section -->
+  <section
+    class="py-16 md:py-24 bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] border-y border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+  >
+    <div
+      class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]"
+    >
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2
+          class="text-2xl md:text-3xl font-medium mb-4 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+        >
+          The World's Most Powerful Runtime
+        </h2>
+        <p
+          class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+        >
+          LLMs aren't just text generators – they're Turing-complete
+          interpreters. <br />MDZ treats them as the runtime they are.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="text-center">
+          <div
+            class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-6 h-6 text-[var(--color-accent)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+          </div>
+          <h3
+            class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+          >
+            You Write
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+          >
+            Markdown skills with typed variables, references, and control flow
+          </p>
+        </div>
+
+        <div class="text-center">
+          <div
+            class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-6 h-6 text-[var(--color-accent)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              ></path>
+            </svg>
+          </div>
+          <h3
+            class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+          >
+            Tooling Validates
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+          >
+            Static analysis catches broken refs, type errors, and cycles
+          </p>
+        </div>
+
+        <div class="text-center">
+          <div
+            class="w-12 h-12 mx-auto mb-4 rounded-lg bg-[var(--color-accent)]/10 flex items-center justify-center"
+          >
+            <svg
+              class="w-6 h-6 text-[var(--color-accent)]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <h3
+            class="font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+          >
+            LLM Executes
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+          >
+            The LLM reads and runs your skill directly – no transformation
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Syntax Overview Section -->
+  <section class="py-16 md:py-24">
+    <div
+      class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]"
+    >
+      <h2
+        class="text-2xl md:text-3xl font-medium mb-4 text-center text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+      >
+        Syntax at a Glance
+      </h2>
+      <p
+        class="text-center text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-12 max-w-xl mx-auto"
+      >
+        MDZ extends markdown. Every construct is a signal to both an ecosystem
+        of tools, and to the LLM.
+      </p>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Types -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-type)]">Types</h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            Contracts for tooling to check
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-type">$Task</span> = any executable instruction
 <span class="zen-type">$Strategy</span> = <span class="zen-string">"fast"</span> | <span class="zen-string">"thorough"</span></code></pre>
-          </div>
-          
-          <!-- Variables -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-variable)]">Variables</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              Named values with type annotations
-            </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
+        </div>
+
+        <!-- Variables -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-variable)]">
+            Variables
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            Named values with type annotations
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code>- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
 - <span class="zen-variable">$path</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.mdz`</code></pre>
-          </div>
-          
-          <!-- References -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-reference)]">References</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              Dependencies the tooling validates
-            </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code><span class="zen-reference">[[skill-name]]</span>
+        </div>
+
+        <!-- References -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-reference)]">
+            References
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            Dependencies the tooling validates
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-reference">[[skill-name]]</span>
 <span class="zen-reference">[[skill#section]]</span>
 <span class="zen-reference">[[#local-section]]</span></code></pre>
-          </div>
-          
-          <!-- Semantic Markers -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-semantic)]">Semantic Markers</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              LLM determines from context
-            </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code><span class="zen-semantic">&#123;~~appropriate location&#125;</span>
+        </div>
+
+        <!-- Semantic Markers -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-semantic)]">
+            Semantic Markers
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            LLM determines from context
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-semantic">&#123;~~appropriate location&#125;</span>
 <span class="zen-semantic">&#123;~~best strategy for $task&#125;</span></code></pre>
-          </div>
-          
-          <!-- Control Flow -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-keyword)]">Control Flow</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              The LLM executes at runtime
-            </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$list</span>:
+        </div>
+
+        <!-- Control Flow -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-keyword)]">
+            Control Flow
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            The LLM executes at runtime
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$list</span>:
 <span class="zen-keyword">WHILE</span> (condition):
 <span class="zen-keyword">IF</span> <span class="zen-variable">$x</span> = <span class="zen-string">"y"</span> <span class="zen-keyword">THEN</span>:</code></pre>
-          </div>
-          
-          <!-- Composition -->
-          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-            <h3 class="font-medium mb-3 text-[var(--color-accent)]">Composition</h3>
-            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-              Validated skill delegation
-            </p>
-            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>Execute <span class="zen-reference">[[skill]]</span> <span class="zen-keyword">WITH</span>:
+        </div>
+
+        <!-- Composition -->
+        <div
+          class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <h3 class="font-medium mb-3 text-[var(--color-accent)]">
+            Composition
+          </h3>
+          <p
+            class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
+          >
+            Validated skill delegation
+          </p>
+          <pre
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code>Execute <span class="zen-reference">[[skill]]</span> <span class="zen-keyword">WITH</span>:
   - <span class="zen-variable">$param</span> = value
   - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#check]]</span></code></pre>
-          </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Quick Start Section -->
-    <section class="py-16 md:py-24 bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] border-y border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
-        <div class="max-w-2xl mx-auto text-center">
-          <h2 class="text-2xl md:text-3xl font-medium mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
-            Get Started in Seconds
-          </h2>
-          
-          <div class="mb-8">
-            <pre class="inline-block text-left text-sm rounded-xl"><code><span class="zen-comment"># Install</span>
+  <!-- Quick Start Section -->
+  <section
+    class="py-16 md:py-24 bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] border-y border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+  >
+    <div
+      class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]"
+    >
+      <div class="max-w-2xl mx-auto text-center">
+        <h2
+          class="text-2xl md:text-3xl font-medium mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+        >
+          Get Started in Seconds
+        </h2>
+
+        <div class="mb-8">
+          <pre
+            class="block text-left text-sm rounded-xl max-w-full overflow-x-auto"><code><span class="zen-comment"># Install</span>
 npm install zenmarkdown
 
 <span class="zen-comment"># Validate a skill</span>
@@ -276,47 +440,87 @@ mdz check skill.mdz
 
 <span class="zen-comment"># Build with preprocessing (optional)</span>
 mdz build skill.mdz -o ./dist</code></pre>
-          </div>
-          
-          <div class="flex flex-wrap justify-center gap-4">
-            <a 
-              href="/docs" 
-              class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
-            >
-              Read the docs
-              <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-            <span class="text-[var(--color-muted)]">·</span>
-            <a 
-              href="/examples" 
-              class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
-            >
-              Browse examples
-              <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="py-8 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-            MDZ is open source under MIT license
-          </p>
-          <div class="flex gap-6">
-            <a href="https://github.com/djgrant/mdz" class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] transition-colors">
-              GitHub
-            </a>
-          </div>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href="/docs"
+            class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
+          >
+            Read the docs
+            <svg
+              class="ml-1 w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+          <a
+            href="/examples"
+            class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
+          >
+            Browse examples
+            <svg
+              class="ml-1 w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
         </div>
       </div>
-    </footer>
-  </main>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer
+    class="py-8 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+  >
+    <div
+      class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]"
+    >
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p
+          class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+        >
+          MIT · Created by <a
+            href="https://danielgrant.co"
+            class="hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] underline transition-colors"
+            >Daniel Grant</a
+          >
+        </p>
+        <div class="flex items-center gap-6">
+          <a
+            href="https://github.com/djgrant/zen"
+            class="inline-flex items-center gap-2 text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] transition-colors"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                clip-rule="evenodd"></path>
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
 </Layout>

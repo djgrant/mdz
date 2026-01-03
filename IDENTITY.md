@@ -4,7 +4,7 @@ Identity
 
     Acronym: MDZ
 
-    Full Name: Zen Markdown
+    Full Name: ZenMarkdown
 
     File Extension: .mdz
 

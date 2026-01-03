@@ -1,4 +1,4 @@
-# Zen Markdown Vision Document
+# MDZ Vision Document
 
 > A superset of markdown (.mdz) for multi-agent systems that unlocks LLM runtime capabilities, with tooling that guides developers into the pit of success.
 
@@ -16,15 +16,15 @@ A simpler, shorter prompt outperforms an expanded one on frontier models. We do 
 
 **3. Source is the optimal format.**
 
-Zen Markdown as authored IS what the LLM should see. There is no "compiled form" that's better for LLM consumption.
+MDZ as authored IS what the LLM should see. There is no "compiled form" that's better for LLM consumption.
 
 Minimal preprocessing may still be valuable (grammar preambles, macro expansion, reference inlining), but this is distinct from "compilation" in the traditional sense. See Open Questions.
 
-## What Zen Is
+## What MDZ Is
 
 **A format that guides developers toward correct multi-agent systems.**
 
-Zen is markdown with lightweight extensions that:
+MDZ is markdown with lightweight extensions that:
 - Express interfaces (inputs, outputs, types)
 - Declare dependencies between modules
 - Signal semantic interpretation points to the LLM
@@ -50,7 +50,7 @@ This is "compilation" in the sense of checking pieces fit - not transforming sou
 
 **An ecosystem for managing complex agent systems.**
 
-Like dbt for SQL, zen adds a coordination layer to markdown modules:
+Like dbt for SQL, MDZ adds a coordination layer to markdown modules:
 - Modules as composable units with declared interfaces
 - Dependency graph construction and visualization
 - Build-time validation before runtime discovery of errors
@@ -60,11 +60,11 @@ Like dbt for SQL, zen adds a coordination layer to markdown modules:
 
 LLMs that help developers write agent systems can generate `.mdz` files. The deterministic syntax enables validation of LLM-generated output before use.
 
-## What Zen Is NOT
+## What MDZ Is NOT
 
 **Not a transpiler.**
 
-We don't transform zen into "something else" for the LLM. The source format is the execution format (with minimal exceptions noted below).
+We don't transform MDZ into "something else" for the LLM. The source format is the execution format (with minimal exceptions noted below).
 
 **Not type-safe at runtime.**
 
@@ -72,11 +72,11 @@ Types are contracts for tooling, not runtime enforcement. We can check "you're p
 
 **Not a DSL that hides markdown.**
 
-Zen extends markdown; it doesn't replace it. A zen file is valid markdown. The extensions are visible signals, not a parallel syntax.
+MDZ extends markdown; it doesn't replace it. A MDZ file is valid markdown. The extensions are visible signals, not a parallel syntax.
 
 **Not a runtime or orchestration framework.**
 
-The LLM + agent framework (e.g., OpenCode) handles execution. Zen is the authoring format and validation layer, not the execution engine.
+The LLM + agent framework (e.g., OpenCode) handles execution. MDZ is the authoring format and validation layer, not the execution engine.
 
 **Not an expansion system for smaller models.**
 
@@ -88,7 +88,7 @@ We're targeting frontier models. The assumption is they work better with concise
 
 Checks that what's written is logically coherent:
 
-- **Syntax correctness** - Valid zen constructs
+- **Syntax correctness** - Valid MDZ constructs
 - **Reference validation** - `[[skill]]` and `[[skill#section]]` targets exist
 - **Contract compatibility** - Types match across skill boundaries
 - **Dependency validation** - No cycles, required skills available
@@ -149,7 +149,7 @@ Both produce valid input for the LLM. Mode A is terser; Mode B requires no gramm
 
 ## Syntax Signals
 
-Zen syntax serves as signals to both tooling and the LLM.
+MDZ syntax serves as signals to both tooling and the LLM.
 
 ### `$name` - Variables and Types
 
@@ -222,7 +222,7 @@ When a macro value is known at build time, the compiler prunes to a single path.
 
 ## The Pit of Success
 
-Zen's structure makes the right thing easy and the wrong thing hard.
+MDZ's structure makes the right thing easy and the wrong thing hard.
 
 **Declaring dependencies explicitly:**
 ```yaml
@@ -258,7 +258,7 @@ There are two distinct concepts:
 
 **1. Compilation (.mdz → .md)**
 
-The transformation from zen markdown to standard markdown:
+The transformation from MDZ markdown to standard markdown:
 - Macro expansion (prune branches or split into variants)
 - Grammar preamble injection (optional)
 - Reference inlining (optional)
@@ -280,7 +280,7 @@ Future targets could include other agent frameworks with different conventions.
 
 ## Playground Vision
 
-The playground demonstrates zen's value proposition. This requires separate exploration, but initial use cases include:
+The playground demonstrates MDZ's value proposition. This requires separate exploration, but initial use cases include:
 
 **Preprocessing modes:**
 - Toggle between grammar preamble vs natural language transformation
@@ -297,7 +297,7 @@ The playground demonstrates zen's value proposition. This requires separate expl
 **Validation feedback:**
 - Undefined reference → red squiggle
 - Contract mismatch → type error
-- "Without zen, you'd discover this at runtime with a confused LLM"
+- "Without MDZ, you'd discover this at runtime with a confused LLM"
 
 **Compression demonstration:**
 - Show source skill (25 lines) vs inlined version (180 lines)
@@ -340,7 +340,7 @@ Syntax choices aren't just aesthetic - they determine what the compiler can do d
 
 ### Runtime Integration
 
-11. How does zen integrate with OpenCode's skill loading?
+11. How does MDZ integrate with OpenCode's skill loading?
 12. Should preprocessed output go to a `/skills` directory (dbt-style) or be generated on-demand?
 
 ### Validation

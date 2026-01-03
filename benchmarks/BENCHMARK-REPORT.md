@@ -1,6 +1,6 @@
-# Zen Benchmark Report
+# MDZ Benchmark Report
 
-> Lightweight benchmarks validating core assumptions for the zen project.
+> Lightweight benchmarks validating core assumptions for the MDZ project.
 > Generated: 2026-01-03
 
 ## Executive Summary
@@ -24,7 +24,7 @@ Does a simpler, shorter prompt outperform an expanded one on frontier models?
 
 ### Methodology
 
-Compared parallel prompts (compact zen syntax vs expanded prose) on identical tasks:
+Compared parallel prompts (compact MDZ syntax vs expanded prose) on identical tasks:
 
 **Test Pairs:**
 
@@ -100,7 +100,7 @@ Can LLMs reliably execute control flow constructs, track variables, and interpre
 
 ### Methodology
 
-Tested zen control flow patterns across seven categories:
+Tested MDZ control flow patterns across seven categories:
 
 1. FOR EACH loops
 2. WHILE conditions
@@ -129,7 +129,7 @@ Tested zen control flow patterns across seven categories:
 
 ### Key Test: Semantic WHILE
 
-The most important test for zen's vision:
+The most important test for MDZ's vision:
 
 ```
 WHILE (NOT diminishing returns AND length($ideas) < 5):
@@ -163,7 +163,7 @@ FOR EACH $person IN $data:
 
 **Ambiguous intent:** When shown standalone control flow without task context, LLM may ask "what do you want me to do?"
 
-**Solution:** Frame as "execute this" or embed in task context. Not a blocker - real zen skills provide task context naturally.
+**Solution:** Frame as "execute this" or embed in task context. Not a blocker - real MDZ skills provide task context naturally.
 
 ### Confidence: HIGH
 

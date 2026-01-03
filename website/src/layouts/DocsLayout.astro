@@ -38,14 +38,19 @@ const sections = [
     ]
   },
 ];
+
+// Find current page label for mobile nav button
+const currentPageLabel = sections
+  .flatMap(s => s.links)
+  .find(link => link.href === currentPath)?.label ?? 'Navigation';
 ---
 
 <Layout title={`${title} - MDZ docs`} description={description}>
   <Header currentPath="/docs" />
   
   <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-12">
-    <div class="flex gap-16">
-      <!-- Sidebar -->
+    <div class="flex gap-4 lg:gap-16">
+      <!-- Desktop Sidebar -->
       <aside class="hidden lg:block w-56 flex-shrink-0">
         <nav class="sticky top-24 space-y-8">
           {sections.map(section => (
@@ -77,6 +82,65 @@ const sections = [
       
       <!-- Content -->
       <main class="flex-1 min-w-0 max-w-[var(--max-width-prose)]">
+        <!-- Mobile Navigation -->
+        <div class="lg:hidden mb-6">
+          <button
+            id="mobile-nav-toggle"
+            class="mobile-nav-toggle"
+            aria-expanded="false"
+            aria-controls="mobile-nav-menu"
+          >
+            <span class="mobile-nav-current">{currentPageLabel}</span>
+            <svg
+              class="mobile-nav-chevron"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 7.5L10 12.5L15 7.5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          
+          <nav
+            id="mobile-nav-menu"
+            class="mobile-nav-menu"
+            aria-label="Documentation navigation"
+          >
+            {sections.map(section => (
+              <div class="mobile-nav-section">
+                <h4 class="nav-section-heading">
+                  {section.title}
+                </h4>
+                <ul class="space-y-1">
+                  {section.links.map(link => (
+                    <li>
+                      <a 
+                        href={link.href}
+                        class:list={[
+                          'block py-2 px-3 text-sm rounded-md transition-colors',
+                          currentPath === link.href
+                            ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium'
+                            : 'text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] hover:bg-black/5 dark:hover:bg-white/5'
+                        ]}
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </div>
+
         <article class="docs-content">
           <slot />
         </article>
@@ -85,7 +149,145 @@ const sections = [
   </div>
 </Layout>
 
+<script>
+  const toggle = document.getElementById('mobile-nav-toggle');
+  const menu = document.getElementById('mobile-nav-menu');
+  
+  if (toggle && menu) {
+    toggle.addEventListener('click', () => {
+      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!isExpanded));
+      menu.classList.toggle('is-open');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!toggle.contains(e.target as Node) && !menu.contains(e.target as Node)) {
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+      }
+    });
+    
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+        toggle.focus();
+      }
+    });
+  }
+</script>
+
 <style>
+  /* Mobile Navigation Toggle */
+  .mobile-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  
+  .mobile-nav-toggle:hover {
+    border-color: var(--color-accent);
+  }
+  
+  .mobile-nav-toggle:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+  
+  .mobile-nav-toggle[aria-expanded="true"] {
+    border-color: var(--color-accent);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .mobile-nav-toggle {
+      background: var(--color-bg-dark);
+      border-color: var(--color-border-dark);
+      color: var(--color-text-dark);
+    }
+    
+    .mobile-nav-toggle[aria-expanded="true"] {
+      border-bottom-color: transparent;
+    }
+  }
+  
+  .mobile-nav-current {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .mobile-nav-chevron {
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+    color: var(--color-muted);
+    transition: transform 0.2s ease;
+  }
+  
+  .mobile-nav-toggle[aria-expanded="true"] .mobile-nav-chevron {
+    transform: rotate(180deg);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .mobile-nav-chevron {
+      color: var(--color-muted-dark);
+    }
+  }
+  
+  /* Mobile Navigation Menu */
+  .mobile-nav-menu {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    background: var(--color-bg);
+    border: 1px solid var(--color-accent);
+    border-top: none;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    transition: grid-template-rows 0.25s ease, opacity 0.2s ease, visibility 0.2s ease;
+    overflow: hidden;
+  }
+  
+  .mobile-nav-menu.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .mobile-nav-menu {
+      background: var(--color-bg-dark);
+    }
+  }
+  
+  .mobile-nav-section {
+    padding: 1rem 1rem 0.5rem;
+  }
+  
+  .mobile-nav-section:first-child {
+    padding-top: 0.75rem;
+  }
+  
+  .mobile-nav-section:last-child {
+    padding-bottom: 1rem;
+  }
+  
   /* Navigation section headings */
   .nav-section-heading {
     font-size: 0.85rem;
@@ -297,9 +499,11 @@ const sections = [
     }
   }
   
-  /* Tables */
+  /* Tables - with overflow handling for mobile */
   .docs-content :global(table) {
+    display: block;
     width: 100%;
+    overflow-x: auto;
     border-collapse: collapse;
     margin: 1.5rem 0;
     font-size: 0.875rem;
@@ -310,6 +514,7 @@ const sections = [
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
   }
   
   .docs-content :global(th) {

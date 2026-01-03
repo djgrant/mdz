@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to zen will be documented in this file.
+All notable changes to MDZ will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -27,7 +27,7 @@ v0.3 adopts a validation-first model: the compiler validates source documents an
   - E010: Section reference broken
   - W001: Skill not declared in uses/imports
 - **Dependency graph extraction** - `result.dependencies` shows skill relationships
-- **`zen graph` command** - Visualize dependencies (JSON, Mermaid, DOT formats)
+- **`MDZ graph` command** - Visualize dependencies (JSON, Mermaid, DOT formats)
 - **`--metadata` flag** - Export extracted metadata to JSON
 - **`buildFullDependencyGraph()`** - Detect cycles across skill registry
 - **`createRegistry()`** - Build skill registry for cross-file validation
@@ -35,7 +35,7 @@ v0.3 adopts a validation-first model: the compiler validates source documents an
 #### Why This Change?
 
 The transformation model added complexity without clear benefits:
-- LLMs can interpret zen syntax directly
+- LLMs can interpret MDZ syntax directly
 - Transformations made debugging harder (source ≠ execution)
 - "What you write is what runs" is easier to reason about
 
@@ -53,7 +53,7 @@ If you relied on compiled output format:
 - `CompileResult.output` now equals the input source (plus optional debug header)
 - Removed options: `expandTypes`, `resolveReferences`, `transformSemantics`
 - Added options: `validateTypes`, `validateScope`, `validateReferences`
-- CLI `zen compile` no longer transforms; use for validation + output
+- CLI `MDZ compile` no longer transforms; use for validation + output
 
 ## [0.2.0] - 2026-01-03
 
@@ -65,7 +65,7 @@ If you relied on compiled output format:
 - Iterations execute independently
 - Results collected when all complete
 - Example:
-  ```zen
+  ```MDZ
   PARALLEL FOR EACH $item IN $items:
     - Process $item independently
   ```
@@ -80,7 +80,7 @@ If you relied on compiled output format:
   imports:
     - path: "./skills/"
       skills: [simplify, work-packages]
-    - path: "@zen/stdlib"
+    - path: "@MDZ/stdlib"
       alias:
         orchestrate-map-reduce: omr
   ```
@@ -89,7 +89,7 @@ If you relied on compiled output format:
 - Parameters in WITH clauses can now have type annotations
 - Parameters without default values are marked as required
 - Example:
-  ```zen
+  ```MDZ
   Execute [[skill]] WITH:
     - $param: $Type = value     # Optional
     - $required: $Task          # Required
@@ -101,7 +101,7 @@ If you relied on compiled output format:
 - Valid in FOR EACH, PARALLEL FOR EACH, and WHILE loops
 - Parser error if used outside loops
 - Example:
-  ```zen
+  ```MDZ
   FOR EACH $item IN $items:
     - IF $item.skip THEN:
       - CONTINUE
@@ -143,7 +143,7 @@ If you relied on compiled output format:
 
 #### Parser
 - Recursive descent parser with error recovery
-- Lexer with all zen tokens
+- Lexer with all MDZ tokens
 - Complete AST representation
 - Source location tracking (spans)
 
@@ -155,9 +155,9 @@ If you relied on compiled output format:
 - Compilation statistics
 
 #### CLI
-- `zen compile` - Compile skills to LLM-ready format
-- `zen check` - Validate syntax
-- `zen parse` - Export AST as JSON
+- `MDZ compile` - Compile skills to LLM-ready format
+- `MDZ check` - Validate syntax
+- `MDZ parse` - Export AST as JSON
 - Verbose mode with statistics
 - Source map output
 

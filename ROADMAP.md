@@ -1,4 +1,4 @@
-# Zen Roadmap
+# MDZ Roadmap
 
 > How we move from current state to the refined vision.
 
@@ -28,12 +28,16 @@ Old expansion-based compiler preserved in `compiler.ts.backup`.
 See "Current State" above.
 
 **Remaining opportunities:**
-- Advanced contract checking (call site interface matching)
-- Cross-skill type consistency checking
-- Required parameter validation at call sites
-- Incremental validation (per-file vs whole-project)
+- Advanced contract checking (call site interface matching) - AST defined but not produced by parser
+- Cross-skill type consistency checking - single-file type validation exists, cross-file does not
+- Required parameter validation at call sites - `isRequired` parsing exists, no validation logic
+- Incremental validation (per-file vs whole-project) - no caching or incremental logic
 
 ### 2. Macro System
+
+**Status:** NOT IMPLEMENTED
+
+Runtime control flow (IF, FOR EACH, WHILE, etc.) is fully implemented. Build-time macro system is not.
 
 **Goal:** `{{IF}}` expansion to clean, single-path outputs.
 
@@ -47,81 +51,119 @@ See "Current State" above.
 - How do variants get named?
 - How does the runtime know which variant to load?
 
-### 3. Dependency Graph ✓ BASIC COMPLETE
+### 3. Dependency Graph ✓ MOSTLY COMPLETE
 
 Implemented in v0.3 compiler:
 - ✓ Extract from `uses:` and `imports:` frontmatter
 - ✓ Extract from inline `[[references]]`
 - ✓ Cycle detection with `buildFullDependencyGraph()`
 - ✓ CLI `graph` command with JSON/Mermaid/DOT output
+- ✓ Basic visualization in playground (SVG-based, typed edges)
 
 **Remaining opportunities:**
-- Visualization in playground
-- Handle conditional dependencies
-- Impact analysis tooling
+- Handle conditional dependencies (dependencies inside IF blocks treated same as unconditional)
+- Impact analysis tooling (reverse dependency lookup: "What skills depend on X?")
+- `getDependents()` API documented but not implemented
 
-### 4. Playground Reimagining
+### 4. Playground Reimagining ✓ MOSTLY COMPLETE
 
-**Goal:** Demonstrate zen's actual value proposition.
+**Implemented:**
+- ✓ Validation catching errors with diagnostics panel
+- ✓ Inline Monaco editor markers for issues
+- ✓ Dependency graph visualization (SVG with typed edges)
+- ✓ Pre-built scenarios demonstrating error types (valid, broken-ref, missing-type, undeclared, complex)
+- ✓ Status bar with skill/reference/type counts
+- ✓ Real-time validation via web worker
 
-**Ideas to explore:**
-- Show validation catching errors (NOW POSSIBLE with v0.3)
-- Show dependency graph visualization (NOW POSSIBLE - graph data available)
-- Show compression ratio (source lines vs inlined output)
-- Show preprocessing modes (if implemented)
+**Remaining opportunities:**
+- Interactive tutorial (guided step-by-step walkthrough)
+- Advanced graph features (click-to-navigate, zoom/pan, hierarchical layout)
+- Compression ratio display (less relevant since source = output)
 
-**Open questions:**
-- What demonstrations will create a "penny-drop" moment?
-- Should there be elements of an interactive tutorial?
+### 5. Benchmarks ✓ MOSTLY COMPLETE
 
-### 5. Benchmarks
+**Implemented:**
+- ✓ "Less prompt is better" - COMPLETE with Medium-High confidence
+  - 2-3x token reduction with compact syntax
+  - Task completion parity or better
+- ✓ "LLM as runtime" - COMPLETE with High confidence
+  - 86% success on deterministic control flow
+  - 100% success on semantic conditions
+  - 100% success on edge cases
 
-**Goal:** Validate core assumptions.
-
-**Ideas to explore:**
-- "Less prompt is better" - compare compact vs expanded prompts on same tasks
-- "LLM as runtime" - can LLMs reliably execute control flow constructs?
-- "Deterministic checking catches real bugs" - collect examples of errors caught
-
-**Open questions:**
-- What tasks/scenarios to benchmark?
-- What metrics matter?
+**Remaining opportunities:**
+- Collect real-world examples of validation errors caught (document what validator prevents)
 
 ### 6. OpenCode Integration
 
-**Goal:** Zen as a first-class authoring format for OpenCode skills.
+**Status:** NOT IMPLEMENTED
+
+**Goal:** MDZ as a first-class authoring format for OpenCode skills.
 
 **Ideas to explore:**
 - Output structure matching OpenCode conventions
 - Grammar preamble as part of skill loading
-- Use zen validation in skill authoring workflow
+- Use mdz validation in skill authoring workflow
+
+**What exists:**
+- Full validation tooling (types, scope, references)
+- CLI commands work standalone
 
 **Assumptions:**
-- OpenCode receives zen source directly (since source = output)
+- OpenCode receives mdz source directly (since source = output)
 - Validation happens during skill development, not at runtime
 
-### 7. Spec Revision
+### 7. Spec Revision ⚠️ PARTIAL
 
 **Goal:** Language spec that matches the vision.
 
-**Ideas to explore:**
-- Remove expansion semantics ✓ (done in implementation)
-- Clarify macro vs control flow distinction
-- Document deterministic compilation constraint
-- Add preprocessing modes
+**Implemented:**
+- ✓ Remove expansion semantics (language-spec.md v0.3 has "Source = Output" principle)
+
+**Remaining:**
+- Clarify macro vs control flow distinction (control flow documented but macro distinction unclear)
+- Document deterministic compilation constraints more explicitly
+- Add preprocessing modes documentation (if applicable)
+- Align grammar.md (v0.2) with language-spec.md (v0.3)
 
 **Decided:**
 - Version as v0.3
 - No backward compatibility needed
 
-### 8. Website & Documentation
+### 8. Website & Documentation ⚠️ PARTIAL
 
 **Goal:** Communicate the refined vision.
 
+**Implemented:**
+- ✓ Messaging reflects validator-first approach ("Tooling Catches Errors", "You Write → Tooling Validates → LLM Executes")
+- ✓ Playground shows validation and dependency graphs
+- ✓ Core concepts documentation accurate
+
+**Needs updating:**
+- Homepage CLI example shows `mdz build` but command is `mdz compile`
+- API docs reference `validate()` and `build()` functions that don't exist (actual: `parse()`, `compile()`)
+- Standardize CLI prefix (mdz vs mdz used inconsistently)
+- Graph command signature documented as directory but takes file
+- IDE/LSP docs marked "planned" but LSP server exists
+
+### 9. Data Persistence in Markdown
+
+**Status:** NOT IMPLEMENTED (exploratory)
+
+**Goal:** Explore language constructs for persisting data within markdown documents.
+
 **Ideas to explore:**
-- Update messaging to reflect validator-first approach
-- Update playground to show validation, dependency graphs
-- Documentation reflecting actual tooling behavior
+- Could skills define persistent state that survives across executions?
+- What syntax would represent stored/cached values?
+- How would this interact with version control?
+- Is this a dead end or a genuine capability gap?
+
+**Open questions:**
+- What use cases require persistence that can't be handled externally?
+- How would LLMs read/write persistent sections?
+- Is this better solved at the runtime/platform level?
+
+*Note: This may be a dead end, but worth exploring to understand the boundary between document and state.*
 
 ## Not On Roadmap
 
@@ -137,9 +179,10 @@ Things we're explicitly not pursuing now:
 Natural dependencies with tooling refactor complete:
 
 1. ~~**Tooling refactor**~~ ✓ DONE - unblocks other work
-2. **Benchmarks** can now proceed
-3. **Playground** has the tooling data it needs
-4. **Spec revision** can document what's implemented
+2. ~~**Benchmarks**~~ ✓ MOSTLY DONE - core hypotheses validated
+3. ~~**Playground**~~ ✓ MOSTLY DONE - demonstrates value proposition
+4. **Spec revision** - needs alignment pass
+5. **Website & Documentation** - needs accuracy pass
 
 It's ok to CTRL+A DELETE. This is high-velocity experimental work.
 

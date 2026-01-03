@@ -1,85 +1,171 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
 ---
 
 <Layout title="Playground - zen">
   <Header currentPath="/playground" fullWidth={true} />
-  
+
+  <!-- Mobile notice - show on small screens -->
+  <div
+    class="lg:hidden fixed inset-0 z-50 bg-[var(--color-bg)]/95 dark:bg-[var(--color-bg-dark)]/95 flex items-center justify-center p-8"
+    id="mobile-notice"
+  >
+    <div class="text-center max-w-sm">
+      <svg
+        class="w-16 h-16 mx-auto mb-4 text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+        ></path>
+      </svg>
+      <h2
+        class="text-xl font-medium mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+      >
+        Best on Desktop
+      </h2>
+      <p
+        class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-6"
+      >
+        The playground works best on larger screens where you can see the editor
+        and validation results side by side.
+      </p>
+      <button
+        onclick="document.getElementById('mobile-notice').remove()"
+        class="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
+      >
+        Continue Anyway
+      </button>
+    </div>
+  </div>
+
   <div class="h-[calc(100vh-4rem)] flex flex-col">
     <!-- Top Bar -->
-    <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]">
+    <div
+      class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
+    >
       <div class="flex items-center gap-4">
-        <select id="scenario" class="text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-3 py-1.5 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+        <select
+          id="scenario"
+          class="text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-3 py-1.5 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+        >
           <option value="valid">✅ Valid Skill</option>
           <option value="broken-ref">🔴 Broken Reference</option>
           <option value="missing-type">🔴 Missing Type</option>
           <option value="undeclared">⚠️ Undeclared Skill</option>
           <option value="complex">📊 Complex System</option>
         </select>
-        <span class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+        <span
+          class="hidden md:inline text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+        >
           Select a scenario or edit the code to see zen's validation in action
         </span>
       </div>
       <div class="flex items-center gap-2">
-        <span id="validation-status" class="text-xs text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"></span>
+        <span
+          id="validation-status"
+          class="text-xs text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+        ></span>
       </div>
     </div>
-    
+
     <!-- Main Content -->
-    <div class="flex-1 flex">
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
       <!-- Left: Editor -->
-      <div class="flex-[3] flex flex-col border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-        <div class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] flex items-center justify-between">
+      <div
+        class="flex-1 lg:flex-[3] flex flex-col border-b lg:border-b-0 lg:border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] min-h-[300px] lg:min-h-0"
+      >
+        <div
+          class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] flex items-center justify-between"
+        >
           <span>Source</span>
           <span id="file-indicator" class="font-mono">skill.mdz</span>
         </div>
         <div id="editor" class="flex-1"></div>
       </div>
-      
+
       <!-- Right: Insights Panel -->
-      <div class="flex-[2] flex flex-col bg-[var(--color-bg-secondary)] dark:bg-[var(--color-bg-secondary-dark)]">
+      <div
+        class="flex-1 lg:flex-[2] flex flex-col bg-[var(--color-bg-secondary)] dark:bg-[var(--color-bg-secondary-dark)] overflow-auto"
+      >
         <!-- Diagnostics -->
-        <div class="border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-          <div class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide flex items-center gap-2">
+        <div
+          class="border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
+          <div
+            class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide flex items-center gap-2"
+          >
             <span>Diagnostics</span>
-            <span id="error-count" class="px-1.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-600 dark:text-green-400">0 issues</span>
+            <span
+              id="error-count"
+              class="px-1.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-600 dark:text-green-400"
+              >0 issues</span
+            >
           </div>
           <div id="diagnostics" class="px-4 pb-4 max-h-48 overflow-auto">
-            <div class="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <div
+              class="text-sm text-green-600 dark:text-green-400 flex items-center gap-2"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"></path>
               </svg>
               No issues found
             </div>
           </div>
         </div>
-        
-        <!-- Dependency Graph -->
-        <div class="flex-1 flex flex-col">
-          <div class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+
+        <!-- Dependency Graph - hidden on mobile -->
+        <div class="hidden md:flex flex-1 flex-col">
+          <div
+            class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+          >
             Dependency Graph
           </div>
-          <div id="graph" class="flex-1 flex items-center justify-center p-4">
+          <div
+            id="graph"
+            class="flex-1 flex items-center justify-center p-4 min-h-[150px]"
+          >
             <svg id="graph-svg" class="w-full h-full"></svg>
           </div>
         </div>
-        
+
         <!-- Insight Message -->
-        <div id="insight" class="px-4 py-3 bg-indigo-500/10 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+        <div
+          id="insight"
+          class="px-4 py-3 bg-indigo-500/10 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]"
+        >
           <p class="text-sm text-indigo-600 dark:text-indigo-400">
-            💡 <strong>Why this matters:</strong> zen validates your skill definitions before runtime—catching broken references, type errors, and missing dependencies early.
+            💡 <strong>Why this matters:</strong> zen validates your skill definitions
+            before runtime—catching broken references, type errors, and missing dependencies
+            early.
           </p>
         </div>
       </div>
     </div>
-    
+
     <!-- Status Bar -->
-    <div class="flex items-center justify-between px-4 py-1.5 text-xs border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-      <div class="flex items-center gap-4">
+    <div
+      class="flex items-center justify-between px-4 py-1.5 text-xs border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+    >
+      <div class="flex items-center gap-2 sm:gap-4">
         <span id="skills-count">Skills: 0</span>
-        <span id="refs-count">References: 0</span>
-        <span id="types-count">Types: 0</span>
+        <span id="refs-count" class="hidden sm:inline">References: 0</span>
+        <span id="types-count" class="hidden sm:inline">Types: 0</span>
       </div>
       <span id="position">Line 1, Col 1</span>
     </div>
@@ -91,7 +177,7 @@ import Header from '../components/Header.astro';
     --color-bg-secondary: #f5f5f5;
     --color-bg-secondary-dark: #111;
   }
-  
+
   .diagnostic-item {
     cursor: pointer;
     transition: background-color 0.15s;
@@ -101,15 +187,18 @@ import Header from '../components/Header.astro';
   }
 </style>
 
-<script is:inline src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script
+  is:inline
+  src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"
+></script>
 
 <script type="module">
   // Scenario sources
   const scenarios = {
     valid: {
-      name: 'the-scientist.mdz',
+      name: "scientific-method.mdz",
       source: `---
-name: the-scientist
+name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 uses:
   - work-packages
@@ -136,11 +225,12 @@ WHILE (NOT diminishing returns AND $iteration < $maxIterations):
   - IF $result = "confirmed" THEN:
     - Commit changes
 `,
-      insight: "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages or scientific-method will be caught if they break this contract."
+      insight:
+        "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages or scientific-method will be caught if they break this contract.",
     },
-    
-    'broken-ref': {
-      name: 'my-workflow.mdz',
+
+    "broken-ref": {
+      name: "my-workflow.mdz",
       source: `---
 name: my-workflow
 description: A workflow with a broken section reference
@@ -154,11 +244,12 @@ uses:
 2. Then jump to [[#non-existent-section]]
 3. Reference [[#workflow]] for this section
 `,
-      insight: "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion."
+      insight:
+        "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion.",
     },
-    
-    'missing-type': {
-      name: 'data-processor.mdz',
+
+    "missing-type": {
+      name: "data-processor.mdz",
       source: `---
 name: data-processor
 description: Process some data
@@ -180,11 +271,12 @@ $DataSource = "api" | "file" | "database"
 
 Process $count items from $source
 `,
-      insight: "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' would silently create undefined types. zen's type checking catches these mistakes before your agent runs."
+      insight:
+        "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
     },
-    
-    'undeclared': {
-      name: 'quick-skill.mdz',
+
+    undeclared: {
+      name: "quick-skill.mdz",
       source: `---
 name: quick-skill
 description: A skill that uses undeclared dependencies
@@ -196,18 +288,19 @@ description: A skill that uses undeclared dependencies
 2. Then use [[work-packages]]
 3. Finally apply [[simplify]]
 `,
-      insight: "⚠️ <strong>Undeclared dependencies:</strong> These skills are referenced but not declared in 'uses:'. While zen allows this as a warning, explicit declarations make dependencies clear."
+      insight:
+        "⚠️ <strong>Undeclared dependencies:</strong> These skills are referenced but not declared in 'uses:'. While zen allows this as a warning, explicit declarations make dependencies clear.",
     },
-    
+
     complex: {
-      name: 'skill-composer.mdz',
+      name: "skill-composer.mdz",
       source: `---
 name: skill-composer
 description: Compose multiple skills into workflows
 uses:
   - orchestrate
   - work-packages
-  - the-scientist
+  - scientific-method
   - simplify
 ---
 
@@ -243,8 +336,9 @@ Execute [[orchestrate]] WITH:
   - $skills = $skills
   - $mode = $mode
 `,
-      insight: "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together."
-    }
+      insight:
+        "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together.",
+    },
   };
 
   let editor = null;
@@ -252,22 +346,22 @@ Execute [[orchestrate]] WITH:
   let requestId = 0;
   let pendingRequests = new Map();
   let validateTimeout = null;
-  let currentScenario = 'valid';
+  let currentScenario = "valid";
 
   // Initialize worker
   function initWorker() {
-    worker = new Worker('/zen-worker.js');
-    
-    worker.addEventListener('message', (event) => {
+    worker = new Worker("/zen-worker.js");
+
+    worker.addEventListener("message", (event) => {
       const { type, id, result, error } = event.data;
-      
-      if (type === 'ready') {
-        console.log('zen worker ready');
+
+      if (type === "ready") {
+        console.log("zen worker ready");
         return;
       }
-      
-      if (type === 'error') {
-        console.error('Worker error:', error);
+
+      if (type === "error") {
+        console.error("Worker error:", error);
         const resolve = pendingRequests.get(id);
         if (resolve) {
           resolve({ error });
@@ -275,7 +369,7 @@ Execute [[orchestrate]] WITH:
         }
         return;
       }
-      
+
       const resolve = pendingRequests.get(id);
       if (resolve) {
         resolve(result);
@@ -283,8 +377,8 @@ Execute [[orchestrate]] WITH:
       }
     });
 
-    worker.addEventListener('error', (error) => {
-      console.error('Worker error:', error);
+    worker.addEventListener("error", (error) => {
+      console.error("Worker error:", error);
     });
   }
 
@@ -297,22 +391,22 @@ Execute [[orchestrate]] WITH:
   }
 
   async function validate(source) {
-    document.getElementById('validation-status').textContent = 'Validating...';
-    
+    document.getElementById("validation-status").textContent = "Validating...";
+
     try {
-      const result = await sendToWorker('validate', { source });
-      
+      const result = await sendToWorker("validate", { source });
+
       if (result.error) {
-        console.error('Validation error:', result.error);
-        document.getElementById('validation-status').textContent = 'Error';
+        console.error("Validation error:", result.error);
+        document.getElementById("validation-status").textContent = "Error";
         return;
       }
-      
-      document.getElementById('validation-status').textContent = '';
+
+      document.getElementById("validation-status").textContent = "";
       renderValidationResult(result);
     } catch (error) {
-      console.error('Validation failed:', error);
-      document.getElementById('validation-status').textContent = 'Error';
+      console.error("Validation failed:", error);
+      document.getElementById("validation-status").textContent = "Error";
     }
   }
 
@@ -324,9 +418,9 @@ Execute [[orchestrate]] WITH:
   }
 
   function renderDiagnostics(diagnostics) {
-    const container = document.getElementById('diagnostics');
-    const countEl = document.getElementById('error-count');
-    
+    const container = document.getElementById("diagnostics");
+    const countEl = document.getElementById("error-count");
+
     if (diagnostics.length === 0) {
       container.innerHTML = `
         <div class="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
@@ -336,36 +430,47 @@ Execute [[orchestrate]] WITH:
           No issues found
         </div>
       `;
-      countEl.textContent = '0 issues';
-      countEl.className = 'px-1.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-600 dark:text-green-400';
+      countEl.textContent = "0 issues";
+      countEl.className =
+        "px-1.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-600 dark:text-green-400";
       return;
     }
-    
-    const errors = diagnostics.filter(d => d.severity === 'error').length;
-    const warnings = diagnostics.filter(d => d.severity === 'warning').length;
-    
-    let countText = '';
-    if (errors > 0) countText += `${errors} error${errors !== 1 ? 's' : ''}`;
+
+    const errors = diagnostics.filter((d) => d.severity === "error").length;
+    const warnings = diagnostics.filter((d) => d.severity === "warning").length;
+
+    let countText = "";
+    if (errors > 0) countText += `${errors} error${errors !== 1 ? "s" : ""}`;
     if (warnings > 0) {
-      if (countText) countText += ', ';
-      countText += `${warnings} warning${warnings !== 1 ? 's' : ''}`;
+      if (countText) countText += ", ";
+      countText += `${warnings} warning${warnings !== 1 ? "s" : ""}`;
     }
-    
-    countEl.textContent = countText || `${diagnostics.length} issue${diagnostics.length !== 1 ? 's' : ''}`;
-    countEl.className = errors > 0 
-      ? 'px-1.5 py-0.5 rounded-full text-xs bg-red-500/20 text-red-600 dark:text-red-400'
-      : 'px-1.5 py-0.5 rounded-full text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400';
-    
-    container.innerHTML = diagnostics.map(d => {
-      const severityClass = d.severity === 'error' 
-        ? 'text-red-600 dark:text-red-400' 
-        : d.severity === 'warning'
-        ? 'text-yellow-600 dark:text-yellow-400'
-        : 'text-blue-600 dark:text-blue-400';
-      
-      const icon = d.severity === 'error' ? '🔴' : d.severity === 'warning' ? '⚠️' : 'ℹ️';
-      
-      return `
+
+    countEl.textContent =
+      countText ||
+      `${diagnostics.length} issue${diagnostics.length !== 1 ? "s" : ""}`;
+    countEl.className =
+      errors > 0
+        ? "px-1.5 py-0.5 rounded-full text-xs bg-red-500/20 text-red-600 dark:text-red-400"
+        : "px-1.5 py-0.5 rounded-full text-xs bg-yellow-500/20 text-yellow-600 dark:text-yellow-400";
+
+    container.innerHTML = diagnostics
+      .map((d) => {
+        const severityClass =
+          d.severity === "error"
+            ? "text-red-600 dark:text-red-400"
+            : d.severity === "warning"
+              ? "text-yellow-600 dark:text-yellow-400"
+              : "text-blue-600 dark:text-blue-400";
+
+        const icon =
+          d.severity === "error"
+            ? "🔴"
+            : d.severity === "warning"
+              ? "⚠️"
+              : "ℹ️";
+
+        return `
         <div class="diagnostic-item mb-2 last:mb-0 p-1.5 -mx-1.5 rounded" onclick="jumpToLine(${d.line}, ${d.column})">
           <div class="text-sm ${severityClass} flex items-start gap-2">
             <span class="font-mono text-xs mt-0.5 shrink-0">L${d.line}</span>
@@ -373,40 +478,50 @@ Execute [[orchestrate]] WITH:
           </div>
         </div>
       `;
-    }).join('');
-    
+      })
+      .join("");
+
     // Update Monaco markers
     if (editor && monaco) {
-      const markers = diagnostics.map(d => ({
-        severity: d.severity === 'error' ? monaco.MarkerSeverity.Error : 
-                  d.severity === 'warning' ? monaco.MarkerSeverity.Warning : 
-                  monaco.MarkerSeverity.Info,
+      const markers = diagnostics.map((d) => ({
+        severity:
+          d.severity === "error"
+            ? monaco.MarkerSeverity.Error
+            : d.severity === "warning"
+              ? monaco.MarkerSeverity.Warning
+              : monaco.MarkerSeverity.Info,
         startLineNumber: d.line,
         startColumn: d.column,
         endLineNumber: d.endLine || d.line,
         endColumn: d.endColumn || d.column + 10,
         message: `[${d.code}] ${d.message}`,
       }));
-      monaco.editor.setModelMarkers(editor.getModel(), 'zen', markers);
+      monaco.editor.setModelMarkers(editor.getModel(), "zen", markers);
     }
   }
 
   function renderGraph(metadata, dependencies) {
-    const svg = document.getElementById('graph-svg');
-    const container = document.getElementById('graph');
+    const svg = document.getElementById("graph-svg");
+    const container = document.getElementById("graph");
+
+    // Skip rendering if the graph container is hidden (mobile)
+    if (!container || container.offsetParent === null) {
+      return;
+    }
+
     const width = container.clientWidth - 32;
     const height = container.clientHeight - 32;
-    
+
     // Build nodes: current skill + all dependencies
     const nodes = [];
     const nodeMap = new Map();
-    
+
     // Add the main skill node
     if (metadata.name) {
       nodes.push({ id: metadata.name, isMain: true });
       nodeMap.set(metadata.name, nodes.length - 1);
     }
-    
+
     // Add dependency nodes
     for (const dep of dependencies.nodes) {
       if (!nodeMap.has(dep)) {
@@ -414,51 +529,51 @@ Execute [[orchestrate]] WITH:
         nodeMap.set(dep, nodes.length - 1);
       }
     }
-    
+
     if (nodes.length === 0) {
       svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="currentColor" class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">No dependencies</text>`;
       return;
     }
-    
+
     // Simple layout: main node at top, dependencies in a row below
-    const mainNode = nodes.find(n => n.isMain);
-    const depNodes = nodes.filter(n => !n.isMain);
-    
+    const mainNode = nodes.find((n) => n.isMain);
+    const depNodes = nodes.filter((n) => !n.isMain);
+
     // Position nodes
     const centerX = width / 2;
     const topY = 40;
     const bottomY = height - 50;
-    
+
     if (mainNode) {
       mainNode.x = centerX;
       mainNode.y = topY;
     }
-    
+
     // Distribute dependency nodes evenly
     const depWidth = Math.min(width - 100, depNodes.length * 120);
     const startX = centerX - depWidth / 2 + 60;
     const spacing = depNodes.length > 1 ? depWidth / (depNodes.length - 1) : 0;
-    
+
     depNodes.forEach((node, i) => {
       node.x = depNodes.length === 1 ? centerX : startX + i * spacing;
       node.y = bottomY;
     });
-    
+
     // Build edges
     const edges = [];
     if (mainNode) {
       for (const edge of dependencies.edges) {
-        const targetNode = nodes.find(n => n.id === edge.target);
+        const targetNode = nodes.find((n) => n.id === edge.target);
         if (targetNode) {
           edges.push({
             from: mainNode,
             to: targetNode,
-            type: edge.type
+            type: edge.type,
           });
         }
       }
     }
-    
+
     // Render
     let html = `
       <defs>
@@ -473,283 +588,316 @@ Execute [[orchestrate]] WITH:
         </marker>
       </defs>
     `;
-    
+
     // Draw edges
     for (const edge of edges) {
-      const color = edge.type === 'uses' ? '#8B5CF6' : edge.type === 'imports' ? '#3B82F6' : '#6B7280';
-      const markerEnd = edge.type === 'uses' ? 'arrowhead-purple' : edge.type === 'imports' ? 'arrowhead-blue' : 'arrowhead-gray';
-      const dashArray = edge.type === 'reference' ? '4' : 'none';
-      
-      html += `<line 
-        x1="${edge.from.x}" y1="${edge.from.y + 15}" 
-        x2="${edge.to.x}" y2="${edge.to.y - 15}" 
-        stroke="${color}" 
-        stroke-width="2" 
+      const color =
+        edge.type === "uses"
+          ? "#8B5CF6"
+          : edge.type === "imports"
+            ? "#3B82F6"
+            : "#6B7280";
+      const markerEnd =
+        edge.type === "uses"
+          ? "arrowhead-purple"
+          : edge.type === "imports"
+            ? "arrowhead-blue"
+            : "arrowhead-gray";
+      const dashArray = edge.type === "reference" ? "4" : "none";
+
+      html += `<line
+        x1="${edge.from.x}" y1="${edge.from.y + 15}"
+        x2="${edge.to.x}" y2="${edge.to.y - 15}"
+        stroke="${color}"
+        stroke-width="2"
         stroke-dasharray="${dashArray}"
         marker-end="url(#${markerEnd})"/>`;
     }
-    
+
     // Draw nodes
     for (const node of nodes) {
-      const fillColor = node.isMain ? '#E0E7FF' : '#F3F4F6';
-      const strokeColor = node.isMain ? '#6366F1' : '#9CA3AF';
-      const textColor = node.isMain ? '#4338CA' : '#374151';
+      const fillColor = node.isMain ? "#E0E7FF" : "#F3F4F6";
+      const strokeColor = node.isMain ? "#6366F1" : "#9CA3AF";
+      const textColor = node.isMain ? "#4338CA" : "#374151";
       const nodeWidth = Math.min(100, Math.max(60, node.id.length * 7 + 20));
-      
+
       html += `
         <g class="cursor-pointer hover:opacity-80 transition-opacity">
-          <rect x="${node.x - nodeWidth/2}" y="${node.y - 15}" width="${nodeWidth}" height="30" rx="4" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/>
-          <text x="${node.x}" y="${node.y + 4}" text-anchor="middle" font-size="11" fill="${textColor}" font-family="monospace">${node.id.length > 14 ? node.id.slice(0, 12) + '...' : node.id}</text>
+          <rect x="${node.x - nodeWidth / 2}" y="${node.y - 15}" width="${nodeWidth}" height="30" rx="4" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/>
+          <text x="${node.x}" y="${node.y + 4}" text-anchor="middle" font-size="11" fill="${textColor}" font-family="monospace">${node.id.length > 14 ? node.id.slice(0, 12) + "..." : node.id}</text>
         </g>
       `;
     }
-    
+
     svg.innerHTML = html;
   }
 
   function updateCounts(metadata, dependencies) {
-    document.getElementById('skills-count').textContent = `Skills: ${dependencies.nodes.length + (metadata.name ? 1 : 0)}`;
-    document.getElementById('refs-count').textContent = `References: ${metadata.references.length}`;
-    document.getElementById('types-count').textContent = `Types: ${metadata.types.length}`;
+    document.getElementById("skills-count").textContent =
+      `Skills: ${dependencies.nodes.length + (metadata.name ? 1 : 0)}`;
+    document.getElementById("refs-count").textContent =
+      `References: ${metadata.references.length}`;
+    document.getElementById("types-count").textContent =
+      `Types: ${metadata.types.length}`;
   }
 
   function updateInsight(diagnostics) {
-    const insightEl = document.getElementById('insight');
+    const insightEl = document.getElementById("insight");
     const scenario = scenarios[currentScenario];
-    
+
     if (diagnostics.length === 0) {
       insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${scenario?.insight || "💡 <strong>All checks passed!</strong> Your skill definition is valid."}</p>`;
     } else {
-      const errors = diagnostics.filter(d => d.severity === 'error');
-      const warnings = diagnostics.filter(d => d.severity === 'warning');
-      
-      let message = '';
+      const errors = diagnostics.filter((d) => d.severity === "error");
+      const warnings = diagnostics.filter((d) => d.severity === "warning");
+
+      let message = "";
       if (errors.length > 0) {
-        message = `🔴 <strong>${errors.length} error${errors.length !== 1 ? 's' : ''} found:</strong> Fix these issues before your agent can safely run this skill.`;
+        message = `🔴 <strong>${errors.length} error${errors.length !== 1 ? "s" : ""} found:</strong> Fix these issues before your agent can safely run this skill.`;
       } else if (warnings.length > 0) {
-        message = `⚠️ <strong>${warnings.length} warning${warnings.length !== 1 ? 's' : ''}:</strong> These won't break your skill, but may indicate issues.`;
+        message = `⚠️ <strong>${warnings.length} warning${warnings.length !== 1 ? "s" : ""}:</strong> These won't break your skill, but may indicate issues.`;
       }
-      
+
       insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${message}</p>`;
     }
   }
 
   // Monaco setup
-  require.config({ 
-    paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+  require.config({
+    paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs" },
   });
 
-  require(['vs/editor/editor.main'], function() {
+  require(["vs/editor/editor.main"], function () {
     // Register zen language
-    monaco.languages.register({ id: 'zen' });
-    
-    monaco.languages.setMonarchTokensProvider('zen', {
+    monaco.languages.register({ id: "zen" });
+
+    monaco.languages.setMonarchTokensProvider("zen", {
       tokenizer: {
         root: [
-          [/^---$/, 'meta.frontmatter'],
-          [/^#+\s+.*$/, 'markup.heading'],
-          [/\b(PARALLEL FOR EACH|FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/, 'keyword'],
-          [/\{~~/, { token: 'delimiter.semantic', next: '@semantic' }],
-          [/\[\[/, { token: 'delimiter.reference', next: '@reference' }],
-          [/\$[A-Z][a-zA-Z0-9]*/, 'type'],
-          [/\$[a-z][a-zA-Z0-9-]*/, 'variable'],
-          [/"[^"]*"/, 'string'],
-          [/-?\d+(\.\d+)?/, 'number'],
-          [/^>.*$/, 'comment'],
+          [/^---$/, "meta.frontmatter"],
+          [/^#+\s+.*$/, "markup.heading"],
+          [
+            /\b(PARALLEL FOR EACH|FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/,
+            "keyword",
+          ],
+          [/\{~~/, { token: "delimiter.semantic", next: "@semantic" }],
+          [/\[\[/, { token: "delimiter.reference", next: "@reference" }],
+          [/\$[A-Z][a-zA-Z0-9]*/, "type"],
+          [/\$[a-z][a-zA-Z0-9-]*/, "variable"],
+          [/"[^"]*"/, "string"],
+          [/-?\d+(\.\d+)?/, "number"],
+          [/^>.*$/, "comment"],
         ],
         semantic: [
-          [/[^}]+/, 'string.semantic'],
-          [/\}/, { token: 'delimiter.semantic', next: '@pop' }],
+          [/[^}]+/, "string.semantic"],
+          [/\}/, { token: "delimiter.semantic", next: "@pop" }],
         ],
         reference: [
-          [/[^\]]+/, 'entity.reference'],
-          [/\]\]/, { token: 'delimiter.reference', next: '@pop' }],
+          [/[^\]]+/, "entity.reference"],
+          [/\]\]/, { token: "delimiter.reference", next: "@pop" }],
         ],
       },
     });
 
     // Theme
-    monaco.editor.defineTheme('zen-dark', {
-      base: 'vs-dark',
+    monaco.editor.defineTheme("zen-dark", {
+      base: "vs-dark",
       inherit: true,
       rules: [
-        { token: 'meta.frontmatter', foreground: '6A737D' },
-        { token: 'markup.heading', foreground: 'E5E5E5', fontStyle: 'bold' },
-        { token: 'keyword', foreground: '8B5CF6', fontStyle: 'bold' },
-        { token: 'type', foreground: '06B6D4' },
-        { token: 'variable', foreground: 'F59E0B' },
-        { token: 'string', foreground: '22C55E' },
-        { token: 'string.semantic', foreground: 'EC4899', fontStyle: 'italic' },
-        { token: 'entity.reference', foreground: '3B82F6' },
-        { token: 'delimiter.semantic', foreground: 'EC4899' },
-        { token: 'delimiter.reference', foreground: '3B82F6' },
-        { token: 'number', foreground: 'F59E0B' },
-        { token: 'comment', foreground: '6A737D', fontStyle: 'italic' },
+        { token: "meta.frontmatter", foreground: "6A737D" },
+        { token: "markup.heading", foreground: "E5E5E5", fontStyle: "bold" },
+        { token: "keyword", foreground: "8B5CF6", fontStyle: "bold" },
+        { token: "type", foreground: "06B6D4" },
+        { token: "variable", foreground: "F59E0B" },
+        { token: "string", foreground: "22C55E" },
+        { token: "string.semantic", foreground: "EC4899", fontStyle: "italic" },
+        { token: "entity.reference", foreground: "3B82F6" },
+        { token: "delimiter.semantic", foreground: "EC4899" },
+        { token: "delimiter.reference", foreground: "3B82F6" },
+        { token: "number", foreground: "F59E0B" },
+        { token: "comment", foreground: "6A737D", fontStyle: "italic" },
       ],
       colors: {
-        'editor.background': '#0A0A0A',
-        'editor.foreground': '#EDEDED',
+        "editor.background": "#0A0A0A",
+        "editor.foreground": "#EDEDED",
       },
     });
 
-    monaco.editor.defineTheme('zen-light', {
-      base: 'vs',
+    monaco.editor.defineTheme("zen-light", {
+      base: "vs",
       inherit: true,
       rules: [
-        { token: 'meta.frontmatter', foreground: '6A737D' },
-        { token: 'markup.heading', foreground: '171717', fontStyle: 'bold' },
-        { token: 'keyword', foreground: '7C3AED', fontStyle: 'bold' },
-        { token: 'type', foreground: '0891B2' },
-        { token: 'variable', foreground: 'D97706' },
-        { token: 'string', foreground: '16A34A' },
-        { token: 'string.semantic', foreground: 'DB2777', fontStyle: 'italic' },
-        { token: 'entity.reference', foreground: '2563EB' },
-        { token: 'delimiter.semantic', foreground: 'DB2777' },
-        { token: 'delimiter.reference', foreground: '2563EB' },
-        { token: 'number', foreground: 'D97706' },
-        { token: 'comment', foreground: '6B7280', fontStyle: 'italic' },
+        { token: "meta.frontmatter", foreground: "6A737D" },
+        { token: "markup.heading", foreground: "171717", fontStyle: "bold" },
+        { token: "keyword", foreground: "7C3AED", fontStyle: "bold" },
+        { token: "type", foreground: "0891B2" },
+        { token: "variable", foreground: "D97706" },
+        { token: "string", foreground: "16A34A" },
+        { token: "string.semantic", foreground: "DB2777", fontStyle: "italic" },
+        { token: "entity.reference", foreground: "2563EB" },
+        { token: "delimiter.semantic", foreground: "DB2777" },
+        { token: "delimiter.reference", foreground: "2563EB" },
+        { token: "number", foreground: "D97706" },
+        { token: "comment", foreground: "6B7280", fontStyle: "italic" },
       ],
       colors: {
-        'editor.background': '#FAFAFA',
-        'editor.foreground': '#171717',
+        "editor.background": "#FAFAFA",
+        "editor.foreground": "#171717",
       },
     });
 
     // Autocomplete provider for zen language
-    monaco.languages.registerCompletionItemProvider('zen', {
-      triggerCharacters: ['$', '['],
-      
+    monaco.languages.registerCompletionItemProvider("zen", {
+      triggerCharacters: ["$", "["],
+
       provideCompletionItems: (model, position) => {
         const textUntilPosition = model.getValueInRange({
           startLineNumber: 1,
           startColumn: 1,
           endLineNumber: position.lineNumber,
-          endColumn: position.column
+          endColumn: position.column,
         });
-        
+
         const lineContent = model.getLineContent(position.lineNumber);
         const lineUntilPosition = lineContent.substring(0, position.column - 1);
-        
+
         const suggestions = [];
         const fullText = model.getValue();
-        
+
         // Check if we're completing after $ (types and variables)
         if (lineUntilPosition.match(/\$[a-zA-Z]*$/)) {
           // Extract types: $TypeName = ...
           const typeMatches = fullText.matchAll(/\$([A-Z][a-zA-Z0-9]*)\s*=/g);
           for (const match of typeMatches) {
             suggestions.push({
-              label: '$' + match[1],
+              label: "$" + match[1],
               kind: monaco.languages.CompletionItemKind.Class,
               insertText: match[1],
-              detail: 'Type',
-              documentation: 'Defined type'
+              detail: "Type",
+              documentation: "Defined type",
             });
           }
-          
+
           // Extract variables: $varName: $Type or $varName = ...
-          const varMatches = fullText.matchAll(/\$([a-z][a-zA-Z0-9-]*)\s*[=:]/g);
+          const varMatches = fullText.matchAll(
+            /\$([a-z][a-zA-Z0-9-]*)\s*[=:]/g,
+          );
           const seenVars = new Set();
           for (const match of varMatches) {
             if (!seenVars.has(match[1])) {
               seenVars.add(match[1]);
               suggestions.push({
-                label: '$' + match[1],
+                label: "$" + match[1],
                 kind: monaco.languages.CompletionItemKind.Variable,
                 insertText: match[1],
-                detail: 'Variable',
-                documentation: 'Defined variable'
+                detail: "Variable",
+                documentation: "Defined variable",
               });
             }
           }
-          
+
           // Add built-in types
-          const builtInTypes = ['String', 'Number', 'Boolean', 'Array', 'Object', 'Any'];
+          const builtInTypes = [
+            "String",
+            "Number",
+            "Boolean",
+            "Array",
+            "Object",
+            "Any",
+          ];
           for (const type of builtInTypes) {
             suggestions.push({
-              label: '$' + type,
+              label: "$" + type,
               kind: monaco.languages.CompletionItemKind.Class,
               insertText: type,
-              detail: 'Built-in type',
-              documentation: 'Built-in zen type'
+              detail: "Built-in type",
+              documentation: "Built-in MDZ type",
             });
           }
         }
-        
+
         // Check if we're completing after [[ (references)
         if (lineUntilPosition.match(/\[\[[^\]]*$/)) {
           const isLocalRef = lineUntilPosition.match(/\[\[#[^\]]*$/);
-          
+
           if (isLocalRef) {
             // Suggest local sections (## headings)
             const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
             for (const match of sectionMatches) {
               const sectionName = match[1].trim();
-              const sectionId = sectionName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const sectionId = sectionName
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, "");
               suggestions.push({
-                label: '[[#' + sectionId + ']]',
+                label: "[[#" + sectionId + "]]",
                 kind: monaco.languages.CompletionItemKind.Reference,
-                insertText: '#' + sectionId + ']]',
-                detail: 'Section: ' + sectionName,
-                documentation: 'Reference to local section'
+                insertText: "#" + sectionId + "]]",
+                detail: "Section: " + sectionName,
+                documentation: "Reference to local section",
               });
             }
           } else {
             // Suggest skills from uses: declarations
-            const usesMatch = fullText.match(/uses:\s*\n((?:\s+-\s+\S+\s*\n?)*)/);
+            const usesMatch = fullText.match(
+              /uses:\s*\n((?:\s+-\s+\S+\s*\n?)*)/,
+            );
             if (usesMatch) {
               const skillMatches = usesMatch[1].matchAll(/-\s+(\S+)/g);
               for (const match of skillMatches) {
                 suggestions.push({
-                  label: '[[' + match[1] + ']]',
+                  label: "[[" + match[1] + "]]",
                   kind: monaco.languages.CompletionItemKind.Module,
-                  insertText: match[1] + ']]',
-                  detail: 'Skill dependency',
-                  documentation: 'Declared in uses:'
+                  insertText: match[1] + "]]",
+                  detail: "Skill dependency",
+                  documentation: "Declared in uses:",
                 });
               }
             }
-            
+
             // Also suggest local sections with #
             const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
             for (const match of sectionMatches) {
               const sectionName = match[1].trim();
-              const sectionId = sectionName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const sectionId = sectionName
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-]/g, "");
               suggestions.push({
-                label: '[[#' + sectionId + ']]',
+                label: "[[#" + sectionId + "]]",
                 kind: monaco.languages.CompletionItemKind.Reference,
-                insertText: '#' + sectionId + ']]',
-                detail: 'Section: ' + sectionName,
-                documentation: 'Reference to local section'
+                insertText: "#" + sectionId + "]]",
+                detail: "Section: " + sectionName,
+                documentation: "Reference to local section",
               });
             }
           }
         }
-        
+
         return { suggestions };
-      }
+      },
     });
 
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    editor = monaco.editor.create(document.getElementById('editor'), {
+    editor = monaco.editor.create(document.getElementById("editor"), {
       value: scenarios.valid.source,
-      language: 'zen',
-      theme: isDark ? 'zen-dark' : 'zen-light',
+      language: "zen",
+      theme: isDark ? "zen-dark" : "zen-light",
       fontSize: 14,
       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
       minimap: { enabled: false },
-      lineNumbers: 'on',
+      lineNumbers: "on",
       scrollBeyondLastLine: false,
       automaticLayout: true,
       padding: { top: 16, bottom: 16 },
-      wordWrap: 'on',
+      wordWrap: "on",
       readOnly: false,
     });
 
     // Position tracking
     editor.onDidChangeCursorPosition((e) => {
-      document.getElementById('position').textContent = 
+      document.getElementById("position").textContent =
         `Line ${e.position.lineNumber}, Col ${e.position.column}`;
     });
 
@@ -765,32 +913,35 @@ Execute [[orchestrate]] WITH:
 
     // Initialize worker and run initial validation
     initWorker();
-    document.getElementById('file-indicator').textContent = scenarios.valid.name;
-    
+    document.getElementById("file-indicator").textContent =
+      scenarios.valid.name;
+
     // Wait for worker to be ready, then validate
     setTimeout(() => {
       validate(editor.getValue());
     }, 100);
 
     // Scenario selector
-    document.getElementById('scenario').addEventListener('change', (e) => {
+    document.getElementById("scenario").addEventListener("change", (e) => {
       const scenarioId = e.target.value;
       const scenario = scenarios[scenarioId];
       if (scenario) {
         currentScenario = scenarioId;
         editor.setValue(scenario.source);
-        document.getElementById('file-indicator').textContent = scenario.name;
+        document.getElementById("file-indicator").textContent = scenario.name;
         // Validation will trigger automatically via onDidChangeModelContent
       }
     });
 
     // Theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      monaco.editor.setTheme(e.matches ? 'zen-dark' : 'zen-light');
-    });
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        monaco.editor.setTheme(e.matches ? "zen-dark" : "zen-light");
+      });
 
     // Make jumpToLine available globally
-    window.jumpToLine = function(line, column = 1) {
+    window.jumpToLine = function (line, column = 1) {
       if (editor) {
         editor.revealLineInCenter(line);
         editor.setPosition({ lineNumber: line, column: column });

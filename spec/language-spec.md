@@ -117,7 +117,7 @@ The following types are implicitly available:
 
 ### Type Philosophy
 
-Types in zen are **hints, not enforcement**:
+Types in MDZ are **hints, not enforcement**:
 - They document intent for humans
 - They guide LLM interpretation
 - They enable tooling (autocomplete, validation)
@@ -528,7 +528,7 @@ A zen skill executes as:
 
 ### Error Handling
 
-Errors in zen are handled through:
+Errors in MDZ are handled through:
 1. Explicit checks: `IF ($result = "regression") THEN...`
 2. Semantic resilience: LLMs adapt to unexpected states
 3. Work package logging: State is persisted for debugging

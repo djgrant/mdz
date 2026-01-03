@@ -1,50 +1,50 @@
 ---
-import DocsLayout from '../../layouts/DocsLayout.astro';
+import DocsLayout from "../../layouts/DocsLayout.astro";
 ---
 
 <DocsLayout title="Composition">
   <h1>Composition</h1>
-  
+
   <p class="lead">
-    Skills in zen compose through references and delegation, enabling 
-    complex behaviors from simple, validated components.
+    Skills in MDZ compose through references and delegation, enabling complex
+    behaviors from simple, validated components.
   </p>
 
   <h2>Skill References</h2>
-  
+
   <p>Reference another skill using wiki-link syntax:</p>
-  
+
   <pre><code><span class="zen-reference">[[skill-name]]</span></code></pre>
 
   <p>In prose:</p>
-  
+
   <pre><code>Execute the task using <span class="zen-reference">[[orchestrate-map-reduce]]</span> methodology.</code></pre>
-  
+
   <p>
-    Tooling validates that referenced skills exist. You won't discover a missing 
+    Tooling validates that referenced skills exist. You won't discover a missing
     dependency at runtime.
   </p>
 
   <h2>Section References</h2>
-  
+
   <h3>Within Current Skill</h3>
-  
+
   <pre><code><span class="zen-reference">[[#section-name]]</span></code></pre>
 
   <h3>In Another Skill</h3>
-  
+
   <pre><code><span class="zen-reference">[[skill-name#section-name]]</span></code></pre>
 
   <h3>Section Names</h3>
-  
+
   <p>Section names are derived from headings by:</p>
-  
+
   <ol>
     <li>Converting to lowercase</li>
     <li>Replacing spaces with hyphens</li>
     <li>Removing special characters</li>
   </ol>
-  
+
   <pre><code><span class="zen-heading">## Validate Prompt</span>
 → <span class="zen-reference">[[#validate-prompt]]</span>
 
@@ -52,40 +52,40 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 → <span class="zen-reference">[[#2-execute-phase]]</span></code></pre>
 
   <h2>Delegation with Parameters</h2>
-  
+
   <p>Pass parameters when delegating to a skill:</p>
-  
+
   <pre><code>Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
   - <span class="zen-variable">$transforms</span> = [(<span class="zen-string">"Apply heuristic"</span>, <span class="zen-string">"accumulate"</span>)]
   - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#validate-essence]]</span>
   - <span class="zen-variable">$return</span> = <span class="zen-string">"Report findings"</span></code></pre>
-  
+
   <p>
-    Tooling validates that required parameters are provided and types match 
-    the skill's declared interface.
+    Tooling validates that required parameters are provided and types match the
+    skill's declared interface.
   </p>
 
   <h3>Inline Parameters</h3>
-  
+
   <p>For simple cases:</p>
-  
+
   <pre><code>Use <span class="zen-reference">[[#section]]</span> passing <span class="zen-variable">$current</span> and <span class="zen-variable">$next</span></code></pre>
 
   <h2>Dependency Declaration</h2>
-  
+
   <p>Declare skill dependencies in frontmatter:</p>
-  
+
   <pre><code><span class="zen-comment">---
 name: my-skill
 description: When orchestrating complex workflows
 uses:
   - orchestrate
   - work-packages
-  - the-scientist
+  - scientific-method
 ---</span></code></pre>
 
   <h3>Benefits</h3>
-  
+
   <ul>
     <li>Dependency graph visualization</li>
     <li>Circular dependency detection</li>
@@ -94,46 +94,51 @@ uses:
   </ul>
 
   <h2>Patterns</h2>
-  
+
   <h3>Sub-Agent Delegation</h3>
-  
+
   <pre><code>Delegate to sub-agent with <span class="zen-reference">[[#experiment-prompt]]</span>:
   - The experiment work package
   - Access to <span class="zen-reference">[[work-packages]]</span> skill</code></pre>
 
   <h3>Conditional Delegation</h3>
-  
+
   <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"failure"</span> <span class="zen-keyword">THEN</span>:
   - Attempt recovery using <span class="zen-reference">[[#recovery-strategy]]</span>
 <span class="zen-keyword">ELSE</span>:
   - Continue with <span class="zen-reference">[[#main-workflow]]</span></code></pre>
 
   <h3>Iterative Composition</h3>
-  
+
   <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$skill</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skills</span>:
   - Load <span class="zen-variable">$skill</span> source
   - Execute with <span class="zen-reference">[[orchestrate]]</span>
   - Collect results</code></pre>
 
   <h2>Reference Handling</h2>
-  
+
   <p>
-    By default, references stay as-is—the LLM interprets <code>[[skill]]</code> 
+    By default, references stay as-is—the LLM interprets <code>[[skill]]</code>
     syntax directly. With optional preprocessing:
   </p>
-  
+
   <ul>
-    <li><strong>Inlining</strong> — Referenced skill content embedded inline</li>
-    <li><strong>Section extraction</strong> — Only the referenced section included</li>
+    <li>
+      <strong>Inlining</strong> — Referenced skill content embedded inline
+    </li>
+    <li>
+      <strong>Section extraction</strong> — Only the referenced section included
+    </li>
   </ul>
-  
+
   <p>
-    Both approaches are valid. Inlining reduces LLM load-time; leaving references 
-    keeps the prompt concise. Experiment to find what works best for your use case.
+    Both approaches are valid. Inlining reduces LLM load-time; leaving
+    references keeps the prompt concise. Experiment to find what works best for
+    your use case.
   </p>
 
   <h2>Best Practices</h2>
-  
+
   <ul>
     <li>Declare all dependencies in frontmatter</li>
     <li>Create reusable prompt sections within skills</li>
