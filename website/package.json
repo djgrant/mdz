@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "description": "Documentation and playground for the zen language",
   "scripts": {
-    "dev": "npm run bundle:compiler && npm run build:worker && astro dev",
-    "build": "npm run bundle:compiler && npm run build:worker && astro build",
+    "dev": "pnpm bundle:compiler && pnpm build:worker && astro dev",
+    "build": "pnpm bundle:compiler && pnpm build:worker && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "bundle:compiler": "node scripts/bundle-compiler.js",

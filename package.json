@@ -9,13 +9,14 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node dist/tests/parser.test.js && node dist/tests/compiler.test.js && node dist/tests/integration.test.js && node dist/tests/stress/edge-cases.test.js && node dist/tests/v02-features.test.js",
-    "test:parser": "npm run build && node dist/tests/parser.test.js",
-    "test:compiler": "npm run build && node dist/tests/compiler.test.js",
-    "test:integration": "npm run build && node dist/tests/integration.test.js",
-    "test:stress": "npm run build && node dist/tests/stress/edge-cases.test.js",
-    "test:v02": "npm run build && node dist/tests/v02-features.test.js",
-    "cli": "npm run build && node dist/src/cli/index.js"
+    "test": "pnpm build && node dist/tests/parser.test.js && node dist/tests/compiler.test.js && node dist/tests/integration.test.js && node dist/tests/stress/edge-cases.test.js && node dist/tests/v02-features.test.js",
+    "test:parser": "pnpm build && node dist/tests/parser.test.js",
+    "test:compiler": "pnpm build && node dist/tests/compiler.test.js",
+    "test:integration": "pnpm build && node dist/tests/integration.test.js",
+    "test:stress": "pnpm build && node dist/tests/stress/edge-cases.test.js",
+    "test:v02": "pnpm build && node dist/tests/v02-features.test.js",
+    "cli": "pnpm build && node dist/src/cli/index.js",
+    "web": "pnpm -F zen-website --"
   },
   "keywords": [
     "markdown",
@@ -32,5 +33,11 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }
