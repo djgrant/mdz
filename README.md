@@ -1,33 +1,42 @@
-# zen
+# MDZ (Zen Markdown)
 
-> A markdown extension language for multi-agent systems
+> A language for the world's most powerful runtime
 
-Zen extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. It's designed to be:
+MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. It's designed to be:
 
 - **Readable** as natural prose
 - **Parseable** by deterministic tools  
 - **Interpretable** by LLMs as executable instructions
 - **Composable** through skill references and delegation
 
+## Why MDZ?
+
+**Signal over noise.** Standard prompts are cluttered with verbose instructions to manage context. MDZ removes this linguistic clutter.
+
+**Clarity of thought.** By offloading logic, variables, and structure to the syntax (the `.mdz` file), the final prompt sent to the LLM is clean and focused. The code handles complexity so the model can focus on intent.
+
 ## Quick Start
 
 ```bash
 # Install
-npm install zen-lang
+npm install zenmarkdown
 
-# Compile a skill
-zen compile skill.zen.md -o skill.out.md
+# Validate a skill (primary command)
+mdz check skill.mdz
 
-# Validate syntax
-zen check skill.zen.md
+# Output validated source (unchanged)
+mdz compile skill.mdz -o skill.out.mdz
+
+# View dependency graph
+mdz graph skill.mdz --mermaid
 
 # Export AST
-zen parse skill.zen.md > ast.json
+mdz parse skill.mdz > ast.json
 ```
 
 ## Syntax Overview
 
-Zen skills are markdown files with a `.zen.md` extension:
+MDZ skills are markdown files with a `.mdz` extension:
 
 ```markdown
 ---
@@ -67,10 +76,17 @@ $TypeName = natural language description
 $Enum = "option1" | "option2" | "option3"
 ```
 
+**Built-in Primitives** - Common types that don't need definition:
+```markdown
+- $name: $String = "value"
+- $count: $Number = 42
+- $enabled: $Boolean = true
+```
+
 **Variables** - Named values with optional types:
 ```markdown
 - $name: $Type = value
-- $path = $n => `output-{$n}.md`
+- $path = $n => `output-{$n}.mdz`
 ```
 
 **References** - Links to skills and sections:
@@ -103,38 +119,44 @@ ELSE:
 ## CLI Reference
 
 ```bash
-zen compile <file> [options]
-  Compile a skill to LLM-ready format
+mdz check <file>
+  Validate syntax, types, and references
+  Primary command for catching errors before runtime
+
+mdz compile <file> [options]
+  Validate and output skill (source unchanged)
   
   Options:
     -o, --output <file>    Write output to file
-    -V, --verbose          Show compilation statistics
+    -V, --verbose          Show validation summary
     --source-map           Generate source map
-    --no-expand-types      Don't expand type definitions
-    --no-resolve-refs      Don't resolve references
-    --no-transform-sem     Don't transform semantic markers
-    --no-header            Don't include header comment
+    --metadata             Generate metadata JSON
 
-zen check <file>
-  Validate syntax without compiling
+mdz graph <file> [options]
+  Output dependency graph
+  
+  Options:
+    --mermaid              Output Mermaid format
+    --dot                  Output GraphViz DOT format
+    (default is JSON)
 
-zen parse <file>
+mdz parse <file>
   Output the AST as JSON
 
-zen --version
+mdz --version
   Show version number
 
-zen --help
+mdz --help
   Show help message
 ```
 
 ## API Usage
 
 ```typescript
-import { parse, compile, AST } from 'zen-lang';
+import { parse, compile } from 'zenmarkdown';
 
 // Parse a document
-const source = fs.readFileSync('skill.zen.md', 'utf-8');
+const source = fs.readFileSync('skill.mdz', 'utf-8');
 const ast = parse(source);
 
 // Access parsed structure
@@ -143,24 +165,41 @@ for (const section of ast.sections) {
   console.log(section.title, section.anchor);
 }
 
-// Compile to LLM-ready format
-const result = compile(source, {
-  expandTypes: true,
-  resolveReferences: true,
-  transformSemantics: true,
-});
+// Validate and extract metadata
+const result = compile(source);
 
-console.log(result.output);
-console.log(result.stats);
+// Source is unchanged (no transformation)
+console.log(result.output);  // === source
+
+// Access validation results
+for (const diag of result.diagnostics) {
+  console.log(`${diag.severity}: ${diag.message} [${diag.code}]`);
+}
+
+// Access extracted metadata
+console.log(result.metadata.types);
+console.log(result.metadata.variables);
+console.log(result.metadata.references);
+
+// Access dependency graph
+console.log(result.dependencies.nodes);
+console.log(result.dependencies.edges);
 ```
+
+### Error Codes
+
+- **E008** - Type not defined in document
+- **E009** - Skill not found in registry
+- **E010** - Section reference broken
+- **W001** - Skill not declared in uses/imports
 
 ## IDE Support
 
 ### VS Code
 
-Install the `zen-lang` extension for:
+Install the MDZ extension for:
 
-- Syntax highlighting for `.zen.md` files
+- Syntax highlighting for `.mdz` files
 - Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)
 - Variable and type highlighting
 - Skill references ([[links]])
@@ -190,50 +229,40 @@ For the complete language specification, see:
 
 See the `examples/` directory for real-world skills:
 
-- [`the-scientist.zen.md`](examples/the-scientist.zen.md) - Hypothesis-driven iteration
-- [`debugger.zen.md`](examples/debugger.zen.md) - Skill execution tracing
-- [`skill-composer.zen.md`](examples/skill-composer.zen.md) - Multi-skill orchestration
-
-## Two-Layer Model
-
-Zen uses a two-layer architecture:
-
-**Source Format** - Human-authored, uses compact syntax:
-```markdown
-Execute [[skill]] with $validator: $Task
-```
-
-**Compiled Format** - Optimized for LLM consumption:
-```markdown
-Execute [skill] with validator (any executable instruction)
-```
-
-The compiler transforms:
-- `$Type` → `Type (description)`
-- `[[reference]]` → `[reference]` or resolved content
-- `{~~semantic}` → `(determine: semantic)`
+- [`the-scientist.mdz`](examples/the-scientist.mdz) - Hypothesis-driven iteration
+- [`debugger.mdz`](examples/debugger.mdz) - Skill execution tracing
+- [`skill-composer.mdz`](examples/skill-composer.mdz) - Multi-skill orchestration
 
 ## Design Philosophy
 
-1. **Markdown First** - Valid markdown, extended not replaced
-2. **Prose Friendly** - Read like natural language instructions
-3. **CAPS Keywords** - Visually distinct control flow
-4. **Semantic Types** - Hints for LLMs, not enforcement
-5. **Tool Friendly** - Easy to parse, highlight, complete
+1. **Source = Output** - The LLM sees what you write. No transformation layer.
+2. **Markdown First** - Valid markdown, extended not replaced
+3. **Prose Friendly** - Read like natural language instructions
+4. **CAPS Keywords** - Visually distinct control flow
+5. **Semantic Types** - Hints for LLMs, not enforcement
+6. **Validation First** - Catch errors before runtime, like dbt for SQL
 
 ## Roadmap
 
-### v0.2 (Planned)
+### v0.2 ✓
 - PARALLEL FOR EACH - Concurrent iteration
 - Import system - Explicit skill loading
 - Typed parameters - Type annotations in WITH clauses
 - BREAK/CONTINUE - Loop control
 
-### v0.3 (Considered)
-- Inline conditionals
-- Multi-line lambdas
+### v0.3 (Current)
+- Validator-first architecture
+- Source = Output (no transformation)
+- Dependency graph extraction
+- Error codes for validation diagnostics
+- Built-in primitive types ($String, $Number, $Boolean)
 
-See [`experiments/e5-enhancements.md`](experiments/e5-enhancements.md) for detailed proposals.
+### v0.4 (Planned)
+- Registry-based skill resolution
+- Cross-file validation
+- Cycle detection across skill graph
+
+See [`experiments/`](experiments/) for detailed proposals.
 
 ## Contributing
 
@@ -241,16 +270,16 @@ This project is experimental. Contributions welcome!
 
 ```bash
 # Clone
-git clone https://github.com/djgrant/zen
+git clone https://github.com/djgrant/mdz
 
 # Install
-npm install
+pnpm install
 
 # Build
-npm run build
+pnpm build
 
 # Test
-npm test
+pnpm test
 ```
 
 ## License

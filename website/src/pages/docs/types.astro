@@ -6,7 +6,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Type System</h1>
   
   <p class="lead">
-    Types in zen are semantic hints that guide LLM interpretation, not runtime enforcement.
+    Types in zen are contracts for tooling and semantic hints for LLMs—not runtime enforcement.
   </p>
 
   <h2>Philosophy</h2>
@@ -18,9 +18,27 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <ul>
     <li><strong>Descriptive</strong> — They document intent for humans</li>
     <li><strong>Interpretive</strong> — They guide LLM behavior</li>
-    <li><strong>Tooling-friendly</strong> — They enable autocomplete and validation</li>
-    <li><strong>Flexible</strong> — They are NOT runtime-checked</li>
+    <li><strong>Tooling-friendly</strong> — They enable validation and autocomplete</li>
+    <li><strong>Build-time checked</strong> — Contract compatibility verified before runtime</li>
   </ul>
+
+  <h2>Types as Contracts</h2>
+  
+  <p>
+    Types enable tooling to check that modules fit together correctly:
+  </p>
+  
+  <pre><code><span class="zen-comment"># In skill A</span>
+- <span class="zen-variable">$validator</span>: <span class="zen-type">$Task</span>
+
+<span class="zen-comment"># In skill B (referencing A)</span>
+Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span>:
+  - <span class="zen-variable">$validator</span> = 42  ← Error: <span class="zen-type">$Number</span> where <span class="zen-type">$Task</span> expected</code></pre>
+  
+  <p>
+    This mismatch is caught at build time—before the LLM ever sees it. Without zen, 
+    you'd discover it at runtime with a confused LLM.
+  </p>
 
   <h2>Defining Types</h2>
   
@@ -28,56 +46,63 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Natural language descriptions that help LLMs understand values:</p>
   
-  <pre><code>$Task = any task that an agent can execute
-$Hypothesis = a testable prediction about what will solve the problem
-$Observation = data collected from running an experiment</code></pre>
+  <pre><code><span class="zen-type">$Task</span> = any task that an agent can execute
+<span class="zen-type">$Hypothesis</span> = a testable prediction about what will solve the problem
+<span class="zen-type">$Observation</span> = data collected from running an experiment</code></pre>
 
   <h3>Enum Types</h3>
   
   <p>Constrained sets of string values:</p>
   
-  <pre><code>$Strategy = "fast" | "thorough"
-$Result = "confirmed" | "refuted" | "inconclusive"
-$Priority = "low" | "medium" | "high" | "critical"</code></pre>
+  <pre><code><span class="zen-type">$Strategy</span> = <span class="zen-string">"fast"</span> | <span class="zen-string">"thorough"</span>
+<span class="zen-type">$Result</span> = <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span> | <span class="zen-string">"inconclusive"</span>
+<span class="zen-type">$Priority</span> = <span class="zen-string">"low"</span> | <span class="zen-string">"medium"</span> | <span class="zen-string">"high"</span> | <span class="zen-string">"critical"</span></code></pre>
 
   <h3>Compound Types</h3>
   
   <p>Tuples of multiple types:</p>
   
-  <pre><code>$TaskWithPriority = ($Task, $Priority)
-$Transform = ($Task, $Strategy)</code></pre>
+  <pre><code><span class="zen-type">$TaskWithPriority</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Priority</span>)
+<span class="zen-type">$Transform</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)</code></pre>
 
   <h3>Array Types</h3>
   
   <p>Collections of a type:</p>
   
-  <pre><code>$Tasks = $Task[]
-$Transforms = ($Task, $Strategy)[]</code></pre>
+  <pre><code><span class="zen-type">$Tasks</span> = <span class="zen-type">$Task</span>[]
+<span class="zen-type">$Transforms</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)[]</code></pre>
 
   <h3>Function Types</h3>
   
   <p>Lambda expressions:</p>
   
-  <pre><code>$PathGenerator = $n =&gt; `output-&#123;$n&#125;.md`
-$Formatter = ($item, $index) =&gt; `&#123;$index&#125;. &#123;$item&#125;`</code></pre>
+  <pre><code><span class="zen-type">$PathGenerator</span> = <span class="zen-variable">$n</span> =&gt; `output-&#123;<span class="zen-variable">$n</span>&#125;.md`
+<span class="zen-type">$Formatter</span> = (<span class="zen-variable">$item</span>, <span class="zen-variable">$index</span>) =&gt; `&#123;<span class="zen-variable">$index</span>&#125;. &#123;<span class="zen-variable">$item</span>&#125;`</code></pre>
 
   <h2>Using Types</h2>
   
   <h3>Variable Declarations</h3>
   
-  <pre><code>- $task: $Task
-- $result: $Result = "pending"
-- $transforms: ($Task, $Strategy)[]</code></pre>
+  <pre><code>- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
+- <span class="zen-variable">$result</span>: <span class="zen-type">$Result</span> = <span class="zen-string">"pending"</span>
+- <span class="zen-variable">$transforms</span>: (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)[]</code></pre>
 
-  <h3>Type Expansion</h3>
+  <h3>What Tooling Checks</h3>
   
-  <p>When compiled, type references are expanded:</p>
+  <p>
+    The MDZ validator performs static analysis on types:
+  </p>
   
-  <pre><code># Source
-- $task: $Task
-
-# Compiled (with expandTypes: true)
-- $task: Task (any task that an agent can execute)</code></pre>
+  <ul>
+    <li><strong>Undefined types</strong> — Using <code>$Foo</code> without defining it</li>
+    <li><strong>Contract mismatches</strong> — Passing wrong type across skill boundaries</li>
+    <li><strong>Typos</strong> — <code>$Numbr</code> flagged with "did you mean <code>$Number</code>?"</li>
+  </ul>
+  
+  <p>
+    The LLM sees the types as you wrote them—<code>$Task</code> stays <code>$Task</code>. 
+    Types are signals to both tooling and the LLM, not something that gets transformed.
+  </p>
 
   <h2>Built-in Types</h2>
   

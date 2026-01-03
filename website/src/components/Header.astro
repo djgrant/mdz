@@ -1,9 +1,10 @@
 ---
 interface Props {
   currentPath?: string;
+  fullWidth?: boolean;
 }
 
-const { currentPath = '' } = Astro.props;
+const { currentPath = '', fullWidth = false } = Astro.props;
 
 const links = [
   { href: '/docs', label: 'Docs' },
@@ -13,10 +14,25 @@ const links = [
 ---
 
 <header class="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg)]/80 dark:bg-[var(--color-bg-dark)]/80 backdrop-blur-md border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-  <nav class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] h-16 flex items-center justify-between">
+  <nav class:list={[
+    'mx-auto px-[var(--spacing-page)] h-16 flex items-center justify-between',
+    fullWidth ? 'max-w-full' : 'max-w-[var(--max-width-content)]'
+  ]}>
     <!-- Logo -->
-    <a href="/" class="font-medium text-lg tracking-tight hover:text-[var(--color-accent)] transition-colors">
-      zen
+    <a href="/" class="flex items-center font-medium text-lg tracking-tight hover:text-[var(--color-accent)] transition-colors">
+      <svg class="h-7" viewBox="0 0 102 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- 4-line chevron: outer lines full, inner lines tighter angle -->
+        <line x1="4" y1="4" x2="18" y2="16" />
+        <line x1="4" y1="10" x2="13" y2="16" />
+        <line x1="4" y1="22" x2="13" y2="16" />
+        <line x1="4" y1="28" x2="18" y2="16" />
+        <!-- M -->
+        <polyline points="31,26 31,6 39,18 47,6 47,26" />
+        <!-- D -->
+        <polyline points="55,6 55,26 63,26 69,16 63,6 55,6" />
+        <!-- Z -->
+        <polyline points="75,6 89,6 75,26 89,26" />
+      </svg>
     </a>
     
     <!-- Navigation -->
@@ -37,7 +53,7 @@ const links = [
       
       <!-- GitHub -->
       <a 
-        href="https://github.com/djgrant/zen" 
+        href="https://github.com/djgrant/mdz" 
         target="_blank"
         rel="noopener noreferrer"
         class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] transition-colors"

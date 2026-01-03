@@ -6,72 +6,88 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Getting Started</h1>
   
   <p class="lead">
-    Install zen and write your first skill in under 5 minutes.
+    Install MDZ and write your first skill in under 5 minutes.
   </p>
 
   <h2>Installation</h2>
   
-  <pre><code class="language-bash">npm install zen-lang</code></pre>
+  <pre><code class="language-bash">npm install zenmarkdown</code></pre>
   
   <p>Or with your preferred package manager:</p>
   
-  <pre><code class="language-bash">pnpm add zen-lang
-yarn add zen-lang</code></pre>
+  <pre><code class="language-bash">pnpm add zenmarkdown
+yarn add zenmarkdown</code></pre>
 
   <h2>Your First Skill</h2>
   
   <p>
-    Create a file named <code>greeting.zen.md</code>:
+    Create a file named <code>greeting.mdz</code>:
   </p>
   
-  <pre><code>---
+  <pre><code><span class="zen-comment">---
 name: greeting
 description: When you need to greet someone
----
+---</span>
 
-## Types
+<span class="zen-heading">## Types</span>
 
-$Greeting = a friendly greeting message
-$Name = person's name
+<span class="zen-type">$Greeting</span> = a friendly greeting message
+<span class="zen-type">$Name</span> = person's name
 
-## Input
+<span class="zen-heading">## Input</span>
 
-- $name: $Name
+- <span class="zen-variable">$name</span>: <span class="zen-type">$Name</span>
 
-## Workflow
+<span class="zen-heading">## Workflow</span>
 
-1. Generate a $Greeting for $name
+1. Generate a <span class="zen-type">$Greeting</span> for <span class="zen-variable">$name</span>
 2. Make it appropriately warm and friendly
 3. Return the greeting</code></pre>
 
-  <h2>Compile Your Skill</h2>
+  <h2>Validate Your Skill</h2>
   
-  <pre><code class="language-bash">zen compile greeting.zen.md -o greeting.out.md</code></pre>
+  <p>Check for errors before the LLM ever sees it:</p>
   
-  <p>This produces a compiled skill with expanded types and transformed markers.</p>
+  <pre><code class="language-bash">mdz check greeting.mdz</code></pre>
+  
+  <p>
+    This validates syntax, references, and type contracts. Any issues are flagged 
+    now—not discovered at runtime with a confused LLM.
+  </p>
 
-  <h2>Validate Without Compiling</h2>
+  <h2>Build with Preprocessing (Optional)</h2>
   
-  <pre><code class="language-bash">zen check greeting.zen.md</code></pre>
+  <p>
+    If your skill uses macros (<code>&#123;&#123;IF&#125;&#125;</code> constructs) or you want 
+    reference inlining, run the build:
+  </p>
+  
+  <pre><code class="language-bash">mdz compile greeting.mdz -o ./dist</code></pre>
+  
+  <p>
+    Preprocessing resolves macros and optionally inlines referenced content. 
+    The output is still markdown—just with build-time decisions resolved.
+  </p>
 
   <h2>Use Programmatically</h2>
   
-  <pre><code class="language-typescript">import &#123; parse, compile &#125; from 'zen-lang';
+  <pre><code class="language-typescript">import &#123; parse, compile &#125; from 'zenmarkdown';
 
 // Parse to AST
 const ast = parse(source);
 console.log(ast.frontmatter?.name);
 
-// Compile to LLM-ready format
+// Validate and extract metadata
 const result = compile(source);
-console.log(result.output);
-console.log(result.stats);</code></pre>
+if (result.diagnostics.some(d => d.severity === 'error')) &#123;
+  console.error('Validation failed:', result.diagnostics);
+&#125;</code></pre>
 
   <h2>Next Steps</h2>
   
   <ul>
     <li><a href="/docs/syntax">Syntax Reference</a> — Complete syntax documentation</li>
-    <li><a href="/docs/types">Type System</a> — Learn about semantic types</li>
+    <li><a href="/docs/types">Type System</a> — Learn about type contracts</li>
     <li><a href="/docs/control-flow">Control Flow</a> — FOR EACH, WHILE, IF/THEN/ELSE</li>
     <li><a href="/examples">Examples</a> — Real-world skill examples</li>
   </ul>

@@ -1,28 +1,29 @@
 #!/usr/bin/env node
 /**
- * Zen CLI
+ * MDZ CLI (v0.3 - Validator-First)
  * 
- * Command-line interface for the zen language.
+ * Command-line interface for MDZ (Zen Markdown).
  * 
  * Usage:
- *   zen compile <file>  - Compile a skill to LLM-ready format
- *   zen check <file>    - Validate syntax without compiling
- *   zen parse <file>    - Output the AST as JSON
- *   zen lsp             - Start the language server (stdio)
- *   zen --help          - Show help
- *   zen --version       - Show version
+ *   mdz compile <file>  - Validate and output skill (unchanged)
+ *   mdz check <file>    - Validate syntax and references
+ *   mdz parse <file>    - Output the AST as JSON
+ *   mdz graph <file>    - Output dependency graph
+ *   mdz lsp             - Start the language server (stdio)
+ *   mdz --help          - Show help
+ *   mdz --version       - Show version
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from '../parser/parser';
-import { compile, CompileOptions } from '../compiler/compiler';
+import { compile, CompileOptions, buildFullDependencyGraph, createRegistry } from '../compiler/compiler';
 
 // ============================================================================
 // Version
 // ============================================================================
 
-const VERSION = '0.1.0';
+const VERSION = '0.3.0';
 
 // ============================================================================
 // CLI Entry Point
@@ -37,7 +38,7 @@ function main(): void {
   }
   
   if (args.includes('--version') || args.includes('-v')) {
-    console.log(`zen ${VERSION}`);
+    console.log(`mdz ${VERSION}`);
     return;
   }
 
@@ -54,12 +55,15 @@ function main(): void {
     case 'parse':
       parseCommand(rest);
       break;
+    case 'graph':
+      graphCommand(rest);
+      break;
     case 'lsp':
       lspCommand(rest);
       break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.error('Run "zen --help" for usage information.');
+      console.error('Run "mdz --help" for usage information.');
       process.exit(1);
   }
 }
@@ -74,7 +78,7 @@ function compileCommand(args: string[]): void {
 
   if (!filePath) {
     console.error('Error: No input file specified');
-    console.error('Usage: zen compile <file> [options]');
+    console.error('Usage: mdz compile <file> [options]');
     process.exit(1);
   }
 
@@ -86,7 +90,7 @@ function compileCommand(args: string[]): void {
   // Output diagnostics
   for (const diag of result.diagnostics) {
     const prefix = diag.severity === 'error' ? '✗' : diag.severity === 'warning' ? '⚠' : 'ℹ';
-    console.error(`${prefix} ${diag.message} (${diag.span.start.line}:${diag.span.start.column})`);
+    console.error(`${prefix} [${diag.code}] ${diag.message} (${diag.span.start.line}:${diag.span.start.column})`);
   }
 
   if (result.diagnostics.some(d => d.severity === 'error')) {
@@ -106,28 +110,35 @@ function compileCommand(args: string[]): void {
     }
 
     fs.writeFileSync(outPath, result.output);
-    console.log(`✓ Compiled to ${outPath}`);
+    console.log(`✓ Written to ${outPath}`);
   } else {
     console.log(result.output);
   }
 
   // Output stats if verbose
   if (args.includes('--verbose') || args.includes('-V')) {
-    console.error('\n--- Stats ---');
-    console.error(`Source length: ${result.stats.sourceLength} chars`);
-    console.error(`Output length: ${result.stats.outputLength} chars`);
-    console.error(`Expansion ratio: ${(result.stats.expansionRatio * 100).toFixed(1)}%`);
-    console.error(`Types expanded: ${result.stats.typesExpanded}`);
-    console.error(`References resolved: ${result.stats.referencesResolved}`);
-    console.error(`Semantic markers: ${result.stats.semanticMarkersTransformed}`);
-    console.error(`Control flow statements: ${result.stats.controlFlowStatements}`);
+    console.error('\n--- Validation Summary ---');
+    console.error(`Types: ${result.metadata.types.length}`);
+    console.error(`Variables: ${result.metadata.variables.length}`);
+    console.error(`References: ${result.metadata.references.length}`);
+    console.error(`Sections: ${result.metadata.sections.length}`);
+    console.error(`Dependencies: ${result.dependencies.nodes.length}`);
+    console.error(`Warnings: ${result.diagnostics.filter(d => d.severity === 'warning').length}`);
+    console.error(`Errors: ${result.diagnostics.filter(d => d.severity === 'error').length}`);
   }
 
   // Output source map if requested
   if (args.includes('--source-map')) {
-    const mapPath = filePath.replace(/\.md$/, '.map.json');
+    const mapPath = filePath.replace(/\.mdz$/, '.map.json');
     fs.writeFileSync(mapPath, JSON.stringify(result.sourceMap, null, 2));
     console.error(`✓ Source map written to ${mapPath}`);
+  }
+
+  // Output metadata if requested
+  if (args.includes('--metadata')) {
+    const metaPath = filePath.replace(/\.mdz$/, '.meta.json');
+    fs.writeFileSync(metaPath, JSON.stringify(result.metadata, null, 2));
+    console.error(`✓ Metadata written to ${metaPath}`);
   }
 }
 
@@ -136,35 +147,45 @@ function checkCommand(args: string[]): void {
 
   if (!filePath) {
     console.error('Error: No input file specified');
-    console.error('Usage: zen check <file>');
+    console.error('Usage: mdz check <file>');
     process.exit(1);
   }
 
   const source = readFile(filePath);
   if (source === null) return;
 
-  const ast = parse(source);
+  // Use compiler for full validation
+  const result = compile(source, {
+    validateTypes: true,
+    validateScope: true,
+    validateReferences: true,
+  });
   
   let hasErrors = false;
-  for (const error of ast.errors) {
-    console.error(`✗ ${error.message} (${error.span.start.line}:${error.span.start.column})`);
-    hasErrors = true;
-  }
+  let hasWarnings = false;
 
-  // Additional semantic checks
-  const warnings = performSemanticChecks(ast);
-  for (const warning of warnings) {
-    console.error(`⚠ ${warning.message} (${warning.span.start.line}:${warning.span.start.column})`);
+  for (const diag of result.diagnostics) {
+    const prefix = diag.severity === 'error' ? '✗' : diag.severity === 'warning' ? '⚠' : 'ℹ';
+    console.error(`${prefix} [${diag.code}] ${diag.message} (${diag.span.start.line}:${diag.span.start.column})`);
+    if (diag.severity === 'error') hasErrors = true;
+    if (diag.severity === 'warning') hasWarnings = true;
   }
 
   if (hasErrors) {
-    console.error(`\n✗ ${ast.errors.length} error(s) found`);
+    const errorCount = result.diagnostics.filter(d => d.severity === 'error').length;
+    console.error(`\n✗ ${errorCount} error(s) found`);
     process.exit(1);
   } else {
     console.log(`✓ ${filePath} is valid`);
-    if (warnings.length > 0) {
-      console.log(`  (${warnings.length} warning(s))`);
+    if (hasWarnings) {
+      const warnCount = result.diagnostics.filter(d => d.severity === 'warning').length;
+      console.log(`  (${warnCount} warning(s))`);
     }
+    
+    // Summary
+    console.log(`\n  Types: ${result.metadata.types.length}`);
+    console.log(`  Variables: ${result.metadata.variables.length}`);
+    console.log(`  Dependencies: ${result.dependencies.nodes.length}`);
   }
 }
 
@@ -173,7 +194,7 @@ function parseCommand(args: string[]): void {
 
   if (!filePath) {
     console.error('Error: No input file specified');
-    console.error('Usage: zen parse <file>');
+    console.error('Usage: mdz parse <file>');
     process.exit(1);
   }
 
@@ -187,14 +208,54 @@ function parseCommand(args: string[]): void {
   console.log(output);
 }
 
+function graphCommand(args: string[]): void {
+  const filePath = args.find(a => !a.startsWith('-'));
+
+  if (!filePath) {
+    console.error('Error: No input file specified');
+    console.error('Usage: mdz graph <file>');
+    process.exit(1);
+  }
+
+  const source = readFile(filePath);
+  if (source === null) return;
+
+  const result = compile(source);
+  
+  // Output format
+  const format = args.includes('--mermaid') ? 'mermaid' : 
+                 args.includes('--dot') ? 'dot' : 'json';
+
+  if (format === 'json') {
+    console.log(JSON.stringify(result.dependencies, null, 2));
+  } else if (format === 'mermaid') {
+    console.log('graph TD');
+    const name = result.metadata.name || 'source';
+    for (const edge of result.dependencies.edges) {
+      const style = edge.type === 'uses' ? '==>' : 
+                    edge.type === 'imports' ? '-->' : '-.->'; 
+      console.log(`  ${name} ${style} ${edge.target}`);
+    }
+  } else if (format === 'dot') {
+    console.log('digraph G {');
+    const name = result.metadata.name || 'source';
+    for (const edge of result.dependencies.edges) {
+      const style = edge.type === 'uses' ? 'bold' : 
+                    edge.type === 'imports' ? 'solid' : 'dashed';
+      console.log(`  "${name}" -> "${edge.target}" [style=${style}]`);
+    }
+    console.log('}');
+  }
+}
+
 function lspCommand(_args: string[]): void {
   // The LSP server is available as a library via src/lsp/server.ts
   // For stdio transport, we provide integration guidance
-  console.log('Zen Language Server');
+  console.log('MDZ Language Server');
   console.log('');
   console.log('The LSP server is available as a library:');
   console.log('');
-  console.log('  import { createLanguageServer } from "zen-lang/lsp/server";');
+  console.log('  import { createLanguageServer } from "zenmarkdown/lsp/server";');
   console.log('  const server = createLanguageServer();');
   console.log('');
   console.log('Features:');
@@ -204,7 +265,7 @@ function lspCommand(_args: string[]): void {
   console.log('  - Document symbols');
   console.log('  - Diagnostics');
   console.log('');
-  console.log('For VS Code integration, install the zen-lang extension.');
+  console.log('For VS Code integration, install the MDZ extension.');
   console.log('See: editors/vscode/');
 }
 
@@ -214,36 +275,47 @@ function lspCommand(_args: string[]): void {
 
 function showHelp(): void {
   console.log(`
-zen - A markdown extension language for multi-agent systems
+MDZ - Zen Markdown: A language for the world's most powerful runtime (v0.3)
 
-Usage: zen <command> [options]
+Usage: mdz <command> [options]
 
 Commands:
-  compile <file>   Compile a skill to LLM-ready format
-  check <file>     Validate syntax without compiling
+  compile <file>   Validate and output skill (source unchanged)
+  check <file>     Validate syntax, types, and references
   parse <file>     Output the AST as JSON
+  graph <file>     Output dependency graph
   lsp              Show language server information
 
 Compile Options:
   -o, --output <file>    Write output to file
-  -V, --verbose          Show compilation statistics
+  -V, --verbose          Show validation summary
   --source-map           Generate source map
-  --no-expand-types      Don't expand type definitions
-  --no-resolve-refs      Don't resolve references
-  --no-transform-sem     Don't transform semantic markers
-  --no-header            Don't include header comment
+  --metadata             Generate metadata JSON
+  --no-header            Don't include validation header
+
+Check Options:
+  (no additional options)
+
+Graph Options:
+  --mermaid              Output Mermaid format
+  --dot                  Output GraphViz DOT format
+  (default is JSON)
 
 General Options:
   -h, --help       Show this help message
   -v, --version    Show version number
 
 Examples:
-  zen compile skill.md                    Compile and print to stdout
-  zen compile skill.md -o skill.out.md    Compile to file
-  zen check skill.md                      Validate syntax
-  zen parse skill.md > ast.json           Export AST
+  mdz compile skill.mdz                    Validate and print to stdout
+  mdz compile skill.mdz -o skill.out.mdz   Validate and write to file
+  mdz check skill.mdz                      Check for errors
+  mdz graph skill.mdz --mermaid            Show dependencies as Mermaid
+  mdz parse skill.mdz > ast.json           Export AST
 
-For more information, see: https://github.com/djgrant/zen
+Note: v0.3 is validator-first. The compiler validates but does not transform.
+Source = Output (the LLM sees what you wrote).
+
+For more information, see: https://github.com/djgrant/mdz
   `.trim());
 }
 
@@ -267,63 +339,12 @@ function readFile(filePath: string): string | null {
 
 function parseCompileOptions(args: string[]): Partial<CompileOptions> {
   return {
-    expandTypes: !args.includes('--no-expand-types'),
-    resolveReferences: !args.includes('--no-resolve-refs'),
-    transformSemantics: !args.includes('--no-transform-sem'),
     includeHeader: !args.includes('--no-header'),
     generateSourceMap: args.includes('--source-map'),
+    validateReferences: true,
+    validateTypes: true,
+    validateScope: true,
   };
-}
-
-interface SemanticWarning {
-  message: string;
-  span: { start: { line: number; column: number }; end: { line: number; column: number } };
-}
-
-function performSemanticChecks(ast: ReturnType<typeof parse>): SemanticWarning[] {
-  const warnings: SemanticWarning[] = [];
-  const definedTypes = new Set<string>();
-  const definedVars = new Set<string>();
-  const usedTypes = new Set<string>();
-
-  // Collect definitions and usages
-  for (const section of ast.sections) {
-    for (const block of section.content) {
-      if (block.kind === 'TypeDefinition') {
-        if (definedTypes.has(block.name)) {
-          warnings.push({
-            message: `Duplicate type definition: $${block.name}`,
-            span: block.span,
-          });
-        }
-        definedTypes.add(block.name);
-      }
-
-      if (block.kind === 'VariableDeclaration') {
-        if (definedVars.has(block.name)) {
-          warnings.push({
-            message: `Duplicate variable declaration: $${block.name}`,
-            span: block.span,
-          });
-        }
-        definedVars.add(block.name);
-        
-        if (block.typeAnnotation) {
-          usedTypes.add(block.typeAnnotation.name);
-        }
-      }
-    }
-  }
-
-  // Check for undefined type references (against built-ins)
-  const builtins = new Set(['FilePath', 'String', 'Number', 'Boolean']);
-  for (const typeName of usedTypes) {
-    if (!definedTypes.has(typeName) && !builtins.has(typeName)) {
-      // Soft warning - type might be defined elsewhere
-    }
-  }
-
-  return warnings;
 }
 
 // ============================================================================

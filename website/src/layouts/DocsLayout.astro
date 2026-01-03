@@ -26,6 +26,7 @@ const sections = [
       { href: '/docs/types', label: 'Type System' },
       { href: '/docs/control-flow', label: 'Control Flow' },
       { href: '/docs/composition', label: 'Composition' },
+      { href: '/docs/higher-order', label: 'Higher-Order Skills' },
     ]
   },
   {
@@ -39,17 +40,17 @@ const sections = [
 ];
 ---
 
-<Layout title={`${title} - zen docs`} description={description}>
+<Layout title={`${title} - MDZ docs`} description={description}>
   <Header currentPath="/docs" />
   
-  <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-8">
-    <div class="flex gap-12">
+  <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-12">
+    <div class="flex gap-16">
       <!-- Sidebar -->
-      <aside class="hidden lg:block w-64 flex-shrink-0">
+      <aside class="hidden lg:block w-56 flex-shrink-0">
         <nav class="sticky top-24 space-y-8">
           {sections.map(section => (
             <div>
-              <h4 class="font-medium text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide mb-3">
+              <h4 class="nav-section-heading">
                 {section.title}
               </h4>
               <ul class="space-y-1">
@@ -58,10 +59,10 @@ const sections = [
                     <a 
                       href={link.href}
                       class:list={[
-                        'block py-1.5 px-3 text-sm rounded-md transition-colors',
+                        'block py-2 px-3 text-sm rounded-md transition-colors',
                         currentPath === link.href
                           ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium'
-                          : 'text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)]'
+                          : 'text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] hover:bg-black/5 dark:hover:bg-white/5'
                       ]}
                     >
                       {link.label}
@@ -76,7 +77,7 @@ const sections = [
       
       <!-- Content -->
       <main class="flex-1 min-w-0 max-w-[var(--max-width-prose)]">
-        <article class="prose prose-zinc dark:prose-invert prose-headings:font-medium prose-code:text-[var(--color-accent)] prose-a:text-[var(--color-accent)] prose-a:no-underline hover:prose-a:underline">
+        <article class="docs-content">
           <slot />
         </article>
       </main>
@@ -85,41 +86,244 @@ const sections = [
 </Layout>
 
 <style>
-  .prose {
-    --tw-prose-body: var(--color-text);
-    --tw-prose-headings: var(--color-text);
-    --tw-prose-links: var(--color-accent);
-    --tw-prose-code: var(--color-accent);
-    --tw-prose-pre-bg: #1E1E1E;
-    --tw-prose-pre-code: #D4D4D4;
+  /* Navigation section headings */
+  .nav-section-heading {
+    font-size: 0.85rem;
+    line-height: 1;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
   }
   
   @media (prefers-color-scheme: dark) {
-    .prose {
-      --tw-prose-body: var(--color-text-dark);
-      --tw-prose-headings: var(--color-text-dark);
+    .nav-section-heading {
+      color: var(--color-muted-dark);
+    }
+  }
+
+  /* Documentation typography */
+  .docs-content {
+    color: var(--color-text);
+    line-height: 1.75;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content {
+      color: var(--color-text-dark);
     }
   }
   
-  .prose h1 { font-size: 2rem; margin-top: 0; }
-  .prose h2 { font-size: 1.5rem; margin-top: 2rem; }
-  .prose h3 { font-size: 1.25rem; }
+  /* Headings */
+  .docs-content :global(h1) {
+    font-size: 2.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.5rem;
+    color: var(--color-text);
+  }
   
-  .prose pre {
-    background: #1E1E1E;
-    padding: 1.5rem;
+  .docs-content :global(h2) {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+  
+  .docs-content :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: var(--color-text);
+  }
+  
+  .docs-content :global(h4) {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(h1),
+    .docs-content :global(h2),
+    .docs-content :global(h3),
+    .docs-content :global(h4) {
+      color: var(--color-text-dark);
+    }
+    .docs-content :global(h2) {
+      border-bottom-color: var(--color-border-dark);
+    }
+  }
+  
+  /* Paragraphs and lead text */
+  .docs-content :global(p) {
+    margin-bottom: 1.25rem;
+  }
+  
+  .docs-content :global(p.lead),
+  .docs-content :global(> p:first-of-type) {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(p.lead),
+    .docs-content :global(> p:first-of-type) {
+      color: var(--color-muted-dark);
+    }
+  }
+  
+  /* Links */
+  .docs-content :global(a) {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .docs-content :global(a:hover) {
+    text-decoration: underline;
+  }
+  
+  /* Lists - tightened spacing */
+  .docs-content :global(ul),
+  .docs-content :global(ol) {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+  }
+  
+  .docs-content :global(ul) {
+    list-style-type: disc;
+  }
+  
+  .docs-content :global(ol) {
+    list-style-type: decimal;
+  }
+  
+  .docs-content :global(li) {
+    margin-bottom: 0.25rem;
+    padding-left: 0.25rem;
+  }
+  
+  .docs-content :global(li > ul),
+  .docs-content :global(li > ol) {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Code blocks with syntax highlighting */
+  .docs-content :global(pre) {
+    background: #1a1a1a;
+    color: #e5e5e5;
+    padding: 1.25rem 1.5rem;
     border-radius: 0.5rem;
     overflow-x: auto;
+    margin: 1.75rem 0;
+    font-size: 0.875rem;
+    line-height: 1.7;
   }
   
-  .prose code {
+  .docs-content :global(pre code) {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+  
+  /* Syntax highlighting classes in docs */
+  .docs-content :global(.zen-keyword) { color: var(--color-keyword); font-weight: 600; }
+  .docs-content :global(.zen-type) { color: var(--color-type); }
+  .docs-content :global(.zen-variable) { color: var(--color-variable); }
+  .docs-content :global(.zen-string) { color: var(--color-string); }
+  .docs-content :global(.zen-semantic) { color: var(--color-semantic); font-style: italic; }
+  .docs-content :global(.zen-reference) { color: var(--color-reference); }
+  .docs-content :global(.zen-comment) { color: #6A737D; font-style: italic; }
+  .docs-content :global(.zen-heading) { color: #E5E5E5; font-weight: bold; }
+  
+  /* Inline code */
+  .docs-content :global(code) {
     font-family: var(--font-mono);
-    font-size: 0.9em;
+    font-size: 0.875em;
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
   }
   
-  .prose :not(pre) > code {
-    background: var(--color-accent)/10;
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
+  /* Strong text */
+  .docs-content :global(strong) {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(strong) {
+      color: var(--color-text-dark);
+    }
+  }
+  
+  /* Blockquotes */
+  .docs-content :global(blockquote) {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--color-muted);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(blockquote) {
+      color: var(--color-muted-dark);
+    }
+  }
+  
+  /* Horizontal rules */
+  .docs-content :global(hr) {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 3rem 0;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(hr) {
+      border-top-color: var(--color-border-dark);
+    }
+  }
+  
+  /* Tables */
+  .docs-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.875rem;
+  }
+  
+  .docs-content :global(th),
+  .docs-content :global(td) {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .docs-content :global(th) {
+    font-weight: 600;
+    background: color-mix(in srgb, var(--color-border) 30%, transparent);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .docs-content :global(th),
+    .docs-content :global(td) {
+      border-bottom-color: var(--color-border-dark);
+    }
+    .docs-content :global(th) {
+      background: color-mix(in srgb, var(--color-border-dark) 30%, transparent);
+    }
   }
 </style>

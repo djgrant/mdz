@@ -1,5 +1,5 @@
 /**
- * Stress Tests - Edge Cases
+ * Stress Tests - Edge Cases (v0.3 - Validator-First)
  * 
  * Tests that push the boundaries of the zen parser
  * to find edge cases and limitations.
@@ -485,7 +485,7 @@ description: test
 });
 
 // ============================================================================
-// Compilation Edge Cases
+// Compilation Edge Cases (v0.3 - Validator-First)
 // ============================================================================
 
 describe('Compilation Edge Cases', () => {
@@ -501,8 +501,8 @@ Just text
     assert(result.diagnostics.filter(d => d.severity === 'error').length === 0, 'No errors');
   });
 
-  test('Compiles with all options disabled', () => {
-    const result = compile(`---
+  test('Output equals source (validator does not transform)', () => {
+    const source = `---
 name: test
 description: test
 ---
@@ -511,12 +511,10 @@ $Task = a task
 - $t: $Task = "test"
 Execute [[skill]]
 Write to {~~location}
-`, {
-      expandTypes: false,
-      resolveReferences: false,
-      transformSemantics: false,
-      includeHeader: false,
-    });
+`;
+    const result = compile(source, { includeHeader: false });
+    // v0.3: Source = Output
+    assert(result.output === source, 'Output should equal source');
     assert(result.output.includes('[[skill]]'), 'Should keep raw reference');
     assert(result.output.includes('{~~'), 'Should keep raw semantic');
   });
@@ -534,7 +532,8 @@ Execute [[skill]]
 `, { generateSourceMap: true });
     
     const types = new Set(result.sourceMap.map(e => e.type));
-    assert(types.has('type') || types.has('reference') || types.has('semantic'), 
+    // v0.3 uses 'type-def' not 'type'
+    assert(types.has('type-def') || types.has('reference') || types.has('semantic'), 
       'Should have meaningful source map types');
   });
 });

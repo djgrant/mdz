@@ -1,0 +1,12 @@
+<svg viewBox="0 0 72 28" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- M: angular strokes meeting at center -->
+    <path d="M2 24 L2 4 L10 14 L18 4 L18 24" />
+    
+    <!-- D: angular/pointy back like an arrow -->
+    <path d="M24 4 L24 24 L36 14 Z" />
+    
+    <!-- Z: tucked closer due to diagonal -->
+    <path d="M42 4 L56 4 L42 24 L56 24" />
+  </g>
+</svg>

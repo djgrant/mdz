@@ -100,3 +100,6 @@ pre {
 * {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
+
+/* Additional syntax highlighting for headings */
+.zen-heading { color: #E5E5E5; font-weight: bold; }

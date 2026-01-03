@@ -6,49 +6,68 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Documentation</h1>
   
   <p class="lead">
-    Zen is a markdown extension language for multi-agent systems. It's designed to be 
-    readable as natural prose, parseable by deterministic tools, and interpretable by LLMs.
+    MDZ (Zen Markdown) is a markdown extension for multi-agent systems—designed to be 
+    readable as prose, validated by tooling, and executed by LLMs.
   </p>
 
-  <h2>What is Zen?</h2>
+  <h2>What is MDZ?</h2>
   
   <p>
-    Zen extends standard markdown with constructs for expressing agent behaviors, 
-    skill composition, and orchestration patterns. A zen document (with <code>.zen.md</code> extension) 
-    is both valid markdown and a parseable program.
+    MDZ extends standard markdown with signals for expressing agent behaviors, 
+    skill composition, and orchestration patterns. An MDZ document (with <code>.mdz</code> extension) 
+    is both valid markdown and a format that tooling can validate.
+  </p>
+  
+  <p>
+    The LLM sees what you write. There's no hidden transformation—the source format 
+    <em>is</em> the execution format. Tooling exists to catch errors before runtime, 
+    not to compile into something else.
   </p>
 
   <h2>Key Features</h2>
   
   <ul>
-    <li><strong>Types</strong> — Semantic hints that guide LLM interpretation</li>
-    <li><strong>Variables</strong> — Named values with type annotations</li>
-    <li><strong>References</strong> — Wiki-style links to other skills</li>
-    <li><strong>Semantic Markers</strong> — LLM-interpreted placeholders</li>
-    <li><strong>Control Flow</strong> — CAPS keywords for loops and conditionals</li>
-    <li><strong>Composition</strong> — Skill delegation with parameters</li>
+    <li><strong>Types</strong> — Contracts that tooling validates across module boundaries</li>
+    <li><strong>Variables</strong> — Named values with type annotations for checking</li>
+    <li><strong>References</strong> — Wiki-style links that tooling validates exist</li>
+    <li><strong>Semantic Markers</strong> — Points where the LLM determines values from context</li>
+    <li><strong>Control Flow</strong> — CAPS keywords the LLM executes at runtime</li>
+    <li><strong>Composition</strong> — Skill delegation with validated parameters</li>
+    <li><strong>Higher-Order Skills</strong> — Skills that orchestrate other skills for complex workflows</li>
   </ul>
 
-  <h2>Two-Layer Model</h2>
+  <h2>The Validation Layer</h2>
   
   <p>
-    Zen uses a two-layer architecture:
+    Like a type checker for programming languages, MDZ tooling validates that 
+    modules fit together correctly:
   </p>
   
   <ul>
-    <li><strong>Source Format</strong> — Human-authored, uses compact syntax</li>
-    <li><strong>Compiled Format</strong> — Optimized for LLM consumption</li>
+    <li><strong>References exist</strong> — <code>[[skill]]</code> targets must be defined</li>
+    <li><strong>Types match</strong> — Passing <code>$Number</code> where <code>$Task</code> is expected gets flagged</li>
+    <li><strong>No cycles</strong> — Circular dependencies in your dependency graph are detected</li>
+    <li><strong>Syntax is valid</strong> — Malformed control flow or markers are caught</li>
   </ul>
   
   <p>
-    The compiler transforms types, references, and semantic markers into LLM-friendly formats.
+    Without this layer, you'd discover these issues at runtime—with a confused LLM 
+    that can't find the skill you referenced or doesn't understand the malformed instruction.
+  </p>
+
+  <h2>The Runtime</h2>
+  
+  <p>
+    The LLM is the runtime. It reads your skill, interprets the control flow constructs, 
+    makes tool calls, and executes what the document says. MDZ provides the authoring 
+    format and validation layer—not the execution engine.
   </p>
 
   <h2>Getting Started</h2>
   
   <p>
     Ready to dive in? Start with the <a href="/docs/getting-started">Quick Start guide</a> 
-    to install zen and write your first skill, or explore <a href="/examples">examples</a> 
-    to see zen in action.
+    to install MDZ and write your first skill, or explore <a href="/examples">examples</a> 
+    to see MDZ in action.
   </p>
 </DocsLayout>

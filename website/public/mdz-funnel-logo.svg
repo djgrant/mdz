@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Funnel/Chevron > -->
+  <path d="M4 8 L12 16 L4 24" />
+  
+  <!-- M - angular with converging inner strokes -->
+  <path d="M20 24 L20 8 L28 18 L36 8 L36 24" />
+  
+  <!-- D - angular back instead of curved -->
+  <path d="M44 8 L44 24 L52 24 L58 16 L52 8 Z" />
+  
+  <!-- Z - natural diagonal fits the aesthetic -->
+  <path d="M66 8 L82 8 L66 24 L82 24" />
+</svg>

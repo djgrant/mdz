@@ -20,9 +20,11 @@
  * // Parse to AST
  * const ast = parse(source);
  * 
- * // Compile to LLM-ready format
+ * // Compile to LLM-ready format (validates without transforming)
  * const result = compile(source);
- * console.log(result.output);
+ * console.log(result.output);  // source unchanged
+ * console.log(result.metadata); // extracted metadata
+ * console.log(result.dependencies); // dependency graph
  * ```
  */
 
@@ -31,15 +33,23 @@ export { parse } from './parser/parser';
 export { tokenize, Lexer, Token, TokenType } from './parser/lexer';
 export * as AST from './parser/ast';
 
-// Compiler
+// Compiler (v0.3 - validator-first)
 export { 
   compile, 
   Compiler,
   createRegistry,
+  buildFullDependencyGraph,
   CompileOptions,
   CompileResult,
   SkillRegistry,
   SourceMapEntry,
   Diagnostic,
-  CompileStats,
+  DocumentMetadata,
+  TypeInfo,
+  VariableInfo,
+  ReferenceInfo,
+  SectionInfo,
+  DependencyGraph,
+  DependencyEdge,
+  ImportInfo,
 } from './compiler/compiler';

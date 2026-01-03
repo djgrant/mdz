@@ -5,6 +5,56 @@ All notable changes to zen will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-03
+
+### Changed - Validator-First Architecture
+
+**This release fundamentally changes how the compiler works.**
+
+v0.3 adopts a validation-first model: the compiler validates source documents and extracts metadata, but does **not** transform the source. The LLM sees what you write.
+
+#### Removed
+- **Type expansion** - No longer transforms `$Task` → `Task (description)`
+- **Semantic marker transformation** - `{~~content}` stays as `{~~content}`, not `(determine: content)`
+- **Reference transformation** - `[[skill]]` stays as `[[skill]]`, not `[skill]`
+- **Compile flags** - Removed `--no-expand-types`, `--no-resolve-refs`, `--no-transform-sem`
+- **Two-layer model** - No more "source format" vs "compiled format"
+
+#### Added
+- **Validation diagnostics** with error codes:
+  - E008: Type not defined in document
+  - E009: Skill not found in registry
+  - E010: Section reference broken
+  - W001: Skill not declared in uses/imports
+- **Dependency graph extraction** - `result.dependencies` shows skill relationships
+- **`zen graph` command** - Visualize dependencies (JSON, Mermaid, DOT formats)
+- **`--metadata` flag** - Export extracted metadata to JSON
+- **`buildFullDependencyGraph()`** - Detect cycles across skill registry
+- **`createRegistry()`** - Build skill registry for cross-file validation
+
+#### Why This Change?
+
+The transformation model added complexity without clear benefits:
+- LLMs can interpret zen syntax directly
+- Transformations made debugging harder (source ≠ execution)
+- "What you write is what runs" is easier to reason about
+
+The new model is like **dbt for SQL**: you write the source, tooling validates it, the engine runs it unchanged.
+
+### Migration
+
+If you relied on compiled output format:
+- Update any tooling that expected transformed syntax
+- The source format IS the execution format now
+- `compile()` returns source unchanged in `result.output`
+
+### Breaking Changes
+
+- `CompileResult.output` now equals the input source (plus optional debug header)
+- Removed options: `expandTypes`, `resolveReferences`, `transformSemantics`
+- Added options: `validateTypes`, `validateScope`, `validateReferences`
+- CLI `zen compile` no longer transforms; use for validation + output
+
 ## [0.2.0] - 2026-01-03
 
 ### Added
@@ -145,7 +195,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v0.3
-- Inline conditionals (simple form only)
-- Multi-line lambda bodies (evaluate need)
-- TRY-CATCH (if use cases emerge)
+### Planned for v0.4
+- Registry-based skill resolution
+- Cross-file validation
+- Cycle detection across full skill graph

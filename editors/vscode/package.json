@@ -6,7 +6,7 @@
   "publisher": "djgrant",
   "repository": {
     "type": "git",
-    "url": "https://github.com/djgrant/zen"
+    "url": "https://github.com/djgrant/mdz"
   },
   "engines": {
     "vscode": "^1.85.0"

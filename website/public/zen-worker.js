@@ -1585,6 +1585,477 @@
     return new Parser(source).parse();
   }
 
+  // ../src/compiler/compiler.ts
+  var BUILTIN_PRIMITIVES = /* @__PURE__ */ new Set(["String", "Number", "Boolean"]);
+  var Compiler = class {
+    constructor(options = {}, registry) {
+      __publicField(this, "options");
+      __publicField(this, "registry");
+      __publicField(this, "diagnostics", []);
+      __publicField(this, "sourceMap", []);
+      __publicField(this, "metadata");
+      __publicField(this, "dependencies");
+      __publicField(this, "definedTypes", /* @__PURE__ */ new Set());
+      __publicField(this, "definedVariables", /* @__PURE__ */ new Set());
+      __publicField(this, "declaredDeps", /* @__PURE__ */ new Set());
+      this.options = {
+        includeHeader: false,
+        // Changed default: no header
+        generateSourceMap: true,
+        validateReferences: true,
+        validateTypes: true,
+        validateScope: true,
+        ...options
+      };
+      this.registry = registry || null;
+      this.metadata = this.createEmptyMetadata();
+      this.dependencies = { nodes: [], edges: [], cycles: [] };
+    }
+    createEmptyMetadata() {
+      return {
+        name: "",
+        description: "",
+        uses: [],
+        imports: [],
+        types: [],
+        variables: [],
+        references: [],
+        sections: []
+      };
+    }
+    compile(source) {
+      this.diagnostics = [];
+      this.sourceMap = [];
+      this.metadata = this.createEmptyMetadata();
+      this.dependencies = { nodes: [], edges: [], cycles: [] };
+      this.definedTypes.clear();
+      this.definedVariables.clear();
+      this.declaredDeps.clear();
+      const ast = parse(source);
+      for (const error of ast.errors) {
+        this.diagnostics.push({
+          severity: "error",
+          code: error.code,
+          message: error.message,
+          span: error.span
+        });
+      }
+      this.extractMetadata(ast);
+      this.buildDependencyGraph(ast);
+      if (this.options.validateTypes) {
+        this.validateTypes(ast);
+      }
+      if (this.options.validateScope) {
+        this.validateScope(ast);
+      }
+      if (this.options.validateReferences) {
+        this.validateReferences();
+      }
+      let output = source;
+      if (this.options.includeHeader) {
+        const header = `<!-- MDZ Validated: ${this.metadata.name || "unnamed"} -->
+<!-- Errors: ${this.diagnostics.filter((d) => d.severity === "error").length}, Warnings: ${this.diagnostics.filter((d) => d.severity === "warning").length} -->
+
+`;
+        output = header + source;
+      }
+      return {
+        output,
+        diagnostics: this.diagnostics,
+        metadata: this.metadata,
+        sourceMap: this.sourceMap,
+        dependencies: this.dependencies
+      };
+    }
+    // ==========================================================================
+    // Metadata Extraction
+    // ==========================================================================
+    extractMetadata(ast) {
+      if (ast.frontmatter) {
+        this.metadata.name = ast.frontmatter.name;
+        this.metadata.description = ast.frontmatter.description;
+        this.metadata.uses = [...ast.frontmatter.uses];
+        for (const use of ast.frontmatter.uses) {
+          this.declaredDeps.add(use);
+        }
+        for (const imp of ast.frontmatter.imports) {
+          this.metadata.imports.push({
+            path: imp.path,
+            skills: [...imp.skills],
+            aliases: new Map(imp.aliases)
+          });
+          for (const skill of imp.skills) {
+            this.declaredDeps.add(skill);
+          }
+        }
+      }
+      for (const section of ast.sections) {
+        if (section.title) {
+          this.metadata.sections.push({
+            title: section.title,
+            anchor: section.anchor,
+            level: section.level,
+            span: section.span
+          });
+        }
+        this.extractFromBlocks(section.content);
+      }
+    }
+    extractFromBlocks(blocks) {
+      for (const block of blocks) {
+        this.extractFromBlock(block);
+      }
+    }
+    extractFromBlock(block) {
+      switch (block.kind) {
+        case "TypeDefinition":
+          this.extractTypeDefinition(block);
+          break;
+        case "VariableDeclaration":
+          this.extractVariableDeclaration(block);
+          break;
+        case "ForEachStatement":
+        case "ParallelForEachStatement":
+          this.extractFromControlFlow(block);
+          break;
+        case "WhileStatement":
+          this.extractFromBlocks(block.body);
+          break;
+        case "IfStatement":
+          this.extractFromBlocks(block.thenBody);
+          if (block.elseBody) {
+            this.extractFromBlocks(block.elseBody);
+          }
+          break;
+        case "Paragraph":
+          this.extractFromParagraph(block);
+          break;
+        case "Delegation":
+          this.extractFromDelegation(block);
+          break;
+      }
+    }
+    extractTypeDefinition(def) {
+      const typeInfo = {
+        name: def.name,
+        definition: this.typeExprToString(def.typeExpr),
+        span: def.span
+      };
+      this.metadata.types.push(typeInfo);
+      this.definedTypes.add(def.name);
+      this.sourceMap.push({
+        source: def.span,
+        type: "type-def",
+        name: def.name
+      });
+    }
+    typeExprToString(expr) {
+      switch (expr.kind) {
+        case "SemanticType":
+          return expr.description;
+        case "EnumType":
+          return expr.values.map((v) => `"${v}"`).join(" | ");
+        case "TypeReference":
+          return `$${expr.name}`;
+        case "CompoundType":
+          return "(" + expr.elements.map((e) => this.typeExprToString(e)).join(", ") + ")";
+        case "ArrayType":
+          return this.typeExprToString(expr.elementType) + "[]";
+        case "FunctionType":
+          return `(${expr.params.join(", ")}) => ${this.typeExprToString(expr.returnType)}`;
+        default:
+          return "";
+      }
+    }
+    extractVariableDeclaration(decl) {
+      const varInfo = {
+        name: decl.name,
+        type: decl.typeAnnotation?.name || null,
+        hasDefault: decl.value !== null,
+        isRequired: decl.isRequired || false,
+        span: decl.span
+      };
+      this.metadata.variables.push(varInfo);
+      this.definedVariables.add(decl.name);
+      this.sourceMap.push({
+        source: decl.span,
+        type: "variable",
+        name: decl.name
+      });
+      if (decl.value) {
+        this.extractFromExpression(decl.value);
+      }
+    }
+    extractFromControlFlow(stmt) {
+      if (stmt.pattern.kind === "SimplePattern") {
+        this.definedVariables.add(stmt.pattern.name);
+      } else {
+        for (const name of stmt.pattern.names) {
+          this.definedVariables.add(name);
+        }
+      }
+      this.sourceMap.push({
+        source: stmt.span,
+        type: "control-flow",
+        name: stmt.kind
+      });
+      this.extractFromExpression(stmt.collection);
+      this.extractFromBlocks(stmt.body);
+    }
+    extractFromParagraph(para) {
+      for (const content of para.content) {
+        if (content.kind === "SkillReference") {
+          this.extractSkillReference(content);
+        } else if (content.kind === "SectionReference") {
+          this.extractSectionReference(content);
+        } else if (content.kind === "SemanticMarker") {
+          this.sourceMap.push({
+            source: content.span,
+            type: "semantic",
+            name: content.content
+          });
+        }
+      }
+    }
+    extractFromDelegation(deleg) {
+      if (deleg.target.kind === "SkillReference") {
+        this.extractSkillReference(deleg.target);
+      } else {
+        this.extractSectionReference(deleg.target);
+      }
+      for (const param of deleg.parameters) {
+        this.extractVariableDeclaration(param);
+      }
+    }
+    extractFromExpression(expr) {
+      switch (expr.kind) {
+        case "SkillReference":
+          this.extractSkillReference(expr);
+          break;
+        case "SectionReference":
+          this.extractSectionReference(expr);
+          break;
+        case "SemanticMarker":
+          this.sourceMap.push({
+            source: expr.span,
+            type: "semantic",
+            name: expr.content
+          });
+          break;
+        case "BinaryExpression":
+          this.extractFromExpression(expr.left);
+          this.extractFromExpression(expr.right);
+          break;
+        case "UnaryExpression":
+          this.extractFromExpression(expr.operand);
+          break;
+        case "ArrayLiteral":
+          for (const el of expr.elements) {
+            this.extractFromExpression(el);
+          }
+          break;
+        case "FunctionCall":
+          this.extractFromExpression(expr.callee);
+          for (const arg of expr.args) {
+            this.extractFromExpression(arg);
+          }
+          break;
+        case "MemberAccess":
+          this.extractFromExpression(expr.object);
+          break;
+        case "LambdaExpression":
+          this.extractFromExpression(expr.body);
+          break;
+      }
+    }
+    extractSkillReference(ref) {
+      this.metadata.references.push({
+        kind: "skill",
+        target: ref.skill,
+        skill: ref.skill,
+        span: ref.span
+      });
+      this.sourceMap.push({
+        source: ref.span,
+        type: "reference",
+        name: ref.skill
+      });
+    }
+    extractSectionReference(ref) {
+      this.metadata.references.push({
+        kind: "section",
+        target: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
+        skill: ref.skill || void 0,
+        section: ref.section,
+        span: ref.span
+      });
+      this.sourceMap.push({
+        source: ref.span,
+        type: "reference",
+        name: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`
+      });
+    }
+    // ==========================================================================
+    // Dependency Graph
+    // ==========================================================================
+    buildDependencyGraph(ast) {
+      const nodes = /* @__PURE__ */ new Set();
+      const edges = [];
+      if (ast.frontmatter) {
+        for (const use of ast.frontmatter.uses) {
+          nodes.add(use);
+          edges.push({ target: use, type: "uses" });
+        }
+        for (const imp of ast.frontmatter.imports) {
+          for (const skill of imp.skills) {
+            nodes.add(skill);
+            edges.push({ target: skill, type: "imports" });
+          }
+        }
+      }
+      for (const ref of this.metadata.references) {
+        if (ref.kind === "skill" && ref.skill) {
+          nodes.add(ref.skill);
+          edges.push({ target: ref.skill, type: "reference", span: ref.span });
+        } else if (ref.kind === "section" && ref.skill) {
+          nodes.add(ref.skill);
+          edges.push({ target: ref.skill, type: "reference", span: ref.span });
+        }
+      }
+      this.dependencies.nodes = Array.from(nodes);
+      this.dependencies.edges = edges;
+    }
+    // ==========================================================================
+    // Validation
+    // ==========================================================================
+    validateTypes(ast) {
+      for (const varInfo of this.metadata.variables) {
+        if (varInfo.type && !this.definedTypes.has(varInfo.type)) {
+          if (BUILTIN_PRIMITIVES.has(varInfo.type)) {
+            continue;
+          }
+          this.diagnostics.push({
+            severity: "warning",
+            code: "E008",
+            message: `Type '$${varInfo.type}' is not defined in this document`,
+            span: varInfo.span
+          });
+        }
+      }
+    }
+    validateScope(ast) {
+      const usedBeforeDefined = /* @__PURE__ */ new Set();
+      for (const section of ast.sections) {
+        this.checkScopeInBlocks(section.content, usedBeforeDefined);
+      }
+    }
+    checkScopeInBlocks(blocks, usedBeforeDefined) {
+      for (const block of blocks) {
+        if (block.kind === "VariableDeclaration") {
+          this.definedVariables.add(block.name);
+          if (block.value) {
+            this.checkExpressionScope(block.value, usedBeforeDefined);
+          }
+        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+          this.checkExpressionScope(block.collection, usedBeforeDefined);
+          if (block.pattern.kind === "SimplePattern") {
+            this.definedVariables.add(block.pattern.name);
+          } else {
+            for (const name of block.pattern.names) {
+              this.definedVariables.add(name);
+            }
+          }
+          this.checkScopeInBlocks(block.body, usedBeforeDefined);
+        } else if (block.kind === "WhileStatement") {
+          this.checkScopeInBlocks(block.body, usedBeforeDefined);
+        } else if (block.kind === "IfStatement") {
+          this.checkScopeInBlocks(block.thenBody, usedBeforeDefined);
+          if (block.elseBody) {
+            this.checkScopeInBlocks(block.elseBody, usedBeforeDefined);
+          }
+        } else if (block.kind === "Paragraph") {
+          for (const content of block.content) {
+            if (content.kind === "VariableReference") {
+              if (!this.definedVariables.has(content.name)) {
+                usedBeforeDefined.add(content.name);
+              }
+            }
+          }
+        }
+      }
+    }
+    checkExpressionScope(expr, usedBeforeDefined) {
+      if (expr.kind === "VariableReference") {
+        if (!this.definedVariables.has(expr.name)) {
+          usedBeforeDefined.add(expr.name);
+        }
+      } else if (expr.kind === "BinaryExpression") {
+        this.checkExpressionScope(expr.left, usedBeforeDefined);
+        this.checkExpressionScope(expr.right, usedBeforeDefined);
+      } else if (expr.kind === "UnaryExpression") {
+        this.checkExpressionScope(expr.operand, usedBeforeDefined);
+      } else if (expr.kind === "ArrayLiteral") {
+        for (const el of expr.elements) {
+          this.checkExpressionScope(el, usedBeforeDefined);
+        }
+      }
+    }
+    validateReferences() {
+      for (const ref of this.metadata.references) {
+        if (ref.kind === "skill" && ref.skill) {
+          if (!this.declaredDeps.has(ref.skill)) {
+            this.diagnostics.push({
+              severity: "warning",
+              code: "W001",
+              message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+              span: ref.span
+            });
+          }
+        } else if (ref.kind === "section" && ref.skill) {
+          if (!this.declaredDeps.has(ref.skill)) {
+            this.diagnostics.push({
+              severity: "warning",
+              code: "W001",
+              message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+              span: ref.span
+            });
+          }
+        }
+      }
+      for (const ref of this.metadata.references) {
+        if (ref.kind === "section" && !ref.skill && ref.section) {
+          const sectionExists = this.metadata.sections.some((s) => s.anchor === ref.section);
+          if (!sectionExists) {
+            this.diagnostics.push({
+              severity: "error",
+              code: "E010",
+              message: `Section '#${ref.section}' does not exist in this document`,
+              span: ref.span
+            });
+          }
+        }
+      }
+      if (this.registry) {
+        for (const ref of this.metadata.references) {
+          if (ref.kind === "skill" && ref.skill) {
+            const skill = this.registry.get(ref.skill);
+            if (!skill) {
+              this.diagnostics.push({
+                severity: "error",
+                code: "E009",
+                message: `Skill '${ref.skill}' is not found in registry`,
+                span: ref.span
+              });
+            }
+          }
+        }
+      }
+    }
+  };
+  function compile(source, options, registry) {
+    return new Compiler(options, registry).compile(source);
+  }
+
   // ../src/lsp/server.ts
   var ZenLanguageServer = class {
     constructor() {
@@ -2074,6 +2545,62 @@ ${targetState.ast.frontmatter.description}`;
       });
     }
   }
+  function handleValidate(id, source) {
+    try {
+      const compileResult = compile(source);
+      const result = {
+        diagnostics: compileResult.diagnostics.map((d) => ({
+          severity: d.severity,
+          code: d.code,
+          message: d.message,
+          line: d.span.start.line,
+          column: d.span.start.column,
+          endLine: d.span.end.line,
+          endColumn: d.span.end.column
+        })),
+        metadata: {
+          name: compileResult.metadata.name,
+          description: compileResult.metadata.description,
+          uses: compileResult.metadata.uses,
+          types: compileResult.metadata.types.map((t) => ({
+            name: t.name,
+            definition: t.definition
+          })),
+          variables: compileResult.metadata.variables.map((v) => ({
+            name: v.name,
+            type: v.type
+          })),
+          references: compileResult.metadata.references.map((r) => ({
+            kind: r.kind,
+            target: r.target
+          })),
+          sections: compileResult.metadata.sections.map((s) => ({
+            title: s.title,
+            anchor: s.anchor,
+            level: s.level
+          }))
+        },
+        dependencies: {
+          nodes: compileResult.dependencies.nodes,
+          edges: compileResult.dependencies.edges.map((e) => ({
+            target: e.target,
+            type: e.type
+          }))
+        }
+      };
+      postMessage({
+        type: "validate",
+        id,
+        result
+      });
+    } catch (error) {
+      postMessage({
+        type: "error",
+        id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
   function handleCompletions(id, uri, source, position) {
     try {
       lspServer.updateDocument(uri, source);
@@ -2129,6 +2656,9 @@ ${targetState.ast.frontmatter.description}`;
     switch (message.type) {
       case "parse":
         handleParse(message.id, message.source);
+        break;
+      case "validate":
+        handleValidate(message.id, message.source);
         break;
       case "completions":
         handleCompletions(message.id, message.uri, message.source, message.position);

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" fill="#0a0a0a"/>
+  <g transform="translate(45, 42)">
+    <!-- 4-line funnel: exact match to logo chevron proportions -->
+    <line x1="5" y1="12" x2="85" y2="48" stroke="#6366F1" stroke-width="8" stroke-linecap="round"/>
+    <line x1="5" y1="28" x2="58" y2="48" stroke="#6366F1" stroke-width="8" stroke-linecap="round"/>
+    <line x1="5" y1="68" x2="58" y2="48" stroke="#6366F1" stroke-width="8" stroke-linecap="round"/>
+    <line x1="5" y1="84" x2="85" y2="48" stroke="#6366F1" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

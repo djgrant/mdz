@@ -11,18 +11,18 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h2>Installation</h2>
   
-  <pre><code class="language-bash">npm install zen-lang</code></pre>
+  <pre><code class="language-bash">npm install zenmarkdown</code></pre>
 
   <h2>Parsing</h2>
   
-  <pre><code class="language-typescript">import &#123; parse &#125; from 'zen-lang';
+  <pre><code class="language-typescript">import &#123; parse &#125; from 'zenmarkdown';
 
-const source = `---
+const source = `<span class="zen-comment">---
 name: my-skill
 description: When you need to do something
----
+---</span>
 
-## Workflow
+<span class="zen-heading">## Workflow</span>
 
 1. Do the thing
 `;
@@ -32,33 +32,69 @@ const ast = parse(source);
 console.log(ast.frontmatter?.name);  // "my-skill"
 console.log(ast.sections.length);    // 1</code></pre>
 
-  <h2>Compiling</h2>
+  <h2>Validation</h2>
   
-  <pre><code class="language-typescript">import &#123; compile &#125; from 'zen-lang';
+  <p>
+    The primary use case: validate that a skill is correct before the LLM sees it.
+  </p>
+  
+  <pre><code class="language-typescript">import &#123; validate &#125; from 'zenmarkdown';
 
-const result = compile(source, &#123;
-  expandTypes: true,
-  resolveReferences: true,
-  transformSemantics: true,
+const diagnostics = validate(source);
+
+if (diagnostics.errors.length > 0) &#123;
+  console.error('Validation failed:');
+  for (const error of diagnostics.errors) &#123;
+    console.error(`  Line $&#123;error.line&#125;: $&#123;error.message&#125;`);
+  &#125;
+&#125; else &#123;
+  console.log('✓ Skill is valid');
+&#125;</code></pre>
+
+  <h3>Validation Options</h3>
+  
+  <pre><code class="language-typescript">interface ValidateOptions &#123;
+  // Provide a registry of available skills for reference checking
+  skillRegistry?: Map&lt;string, string&gt;;
+  
+  // Check type contracts across skill boundaries
+  checkContracts?: boolean;
+  
+  // Detect circular dependencies
+  checkCycles?: boolean;
+&#125;</code></pre>
+
+  <h2>Preprocessing (Optional)</h2>
+  
+  <p>
+    If your skill uses macros or you want reference inlining, use the build API:
+  </p>
+  
+  <pre><code class="language-typescript">import &#123; build &#125; from 'zenmarkdown';
+
+const result = build(source, &#123;
+  inlineReferences: true,  // Inline [[skill]] content
 &#125;);
 
-console.log(result.output);
-console.log(result.stats);</code></pre>
+console.log(result.output);  // Preprocessed markdown
+console.log(result.stats);   // Build statistics</code></pre>
 
-  <h3>Compile Options</h3>
+  <h3>Build Options</h3>
   
-  <pre><code class="language-typescript">interface CompileOptions &#123;
-  expandTypes: boolean;        // Expand $Type to include definition
-  resolveReferences: boolean;  // Convert [[ref]] to [ref]
-  transformSemantics: boolean; // Convert semantic markers
-  inlineSkills: boolean;       // Inline referenced skill content
-  generateSourceMap: boolean;  // Generate source map
-  includeHeader: boolean;      // Include header comment
+  <pre><code class="language-typescript">interface BuildOptions &#123;
+  // Inline referenced skill content
+  inlineReferences?: boolean;
+  
+  // Values for macro expansion
+  macroValues?: Record&lt;string, unknown&gt;;
+  
+  // Skill registry for reference resolution
+  skillRegistry?: Map&lt;string, string&gt;;
 &#125;</code></pre>
 
   <h2>AST Types</h2>
   
-  <pre><code class="language-typescript">import * as AST from 'zen-lang/ast';
+  <pre><code class="language-typescript">import * as AST from 'zenmarkdown/ast';
 
 // Document structure
 interface Document &#123;
@@ -81,25 +117,42 @@ interface Section &#123;
 
   <h2>Skill Registry</h2>
   
-  <p>Create a registry for skill resolution:</p>
+  <p>Create a registry for validation and reference resolution:</p>
   
-  <pre><code class="language-typescript">import &#123; compile, createRegistry &#125; from 'zen-lang';
+  <pre><code class="language-typescript">import &#123; validate, createRegistry &#125; from 'zenmarkdown';
 
 const registry = createRegistry(&#123;
   'helper-skill': helperSource,
   'another-skill': anotherSource,
 &#125;);
 
-const result = compile(source, &#123;
-  inlineSkills: true,
-&#125;, registry);</code></pre>
+// Validate with reference checking
+const diagnostics = validate(source, &#123;
+  skillRegistry: registry,
+  checkContracts: true,
+&#125;);</code></pre>
 
   <h2>Tokenizer</h2>
   
-  <pre><code class="language-typescript">import &#123; tokenize &#125; from 'zen-lang';
+  <pre><code class="language-typescript">import &#123; tokenize &#125; from 'zenmarkdown';
 
 const tokens = tokenize(source);
 for (const token of tokens) &#123;
   console.log(token.type, token.value);
+&#125;</code></pre>
+
+  <h2>Dependency Graph</h2>
+  
+  <pre><code class="language-typescript">import &#123; buildDependencyGraph &#125; from 'zenmarkdown';
+
+const graph = buildDependencyGraph(skillRegistry);
+
+// Get all skills that depend on 'work-packages'
+const dependents = graph.getDependents('work-packages');
+
+// Detect circular dependencies
+const cycles = graph.detectCycles();
+if (cycles.length > 0) &#123;
+  console.error('Circular dependencies:', cycles);
 &#125;</code></pre>
 </DocsLayout>

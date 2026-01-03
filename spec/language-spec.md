@@ -1,4 +1,4 @@
-# Zen Language Specification v0.2
+# Zen Language Specification v0.3
 
 > A markdown extension language for multi-agent systems
 
@@ -10,6 +10,8 @@ Zen extends markdown with constructs for expressing agent behaviors, composition
 - **Parseable** by deterministic tools
 - **Interpretable** by LLMs as executable instructions
 - **Composable** through skill references and delegation
+
+**Core principle: The LLM sees what you write.** There is no transformation layer between source and execution. Tooling validates and extracts metadata, but the source document is the execution format.
 
 ## Document Structure
 
@@ -223,8 +225,7 @@ At runtime:
 - `[[skill#section]]` loads only that section
 - `[[#section]]` refers to a section in the current document
 
-In compiled format:
-- References may be inlined or converted to prose
+References are passed to the LLM as-is. The LLM runtime (e.g., Claude's skill loader) resolves them.
 
 ## Semantic Markers
 
@@ -271,15 +272,6 @@ Semantic markers are valid in:
 ```
 
 This is a deliberate constraint to maintain clarity about what is being interpreted.
-
-### Semantic Marker Compilation
-
-In compiled format, `{~~content}` transforms to `(determine: content)`:
-
-```
-Source:   {~~appropriate location}
-Compiled: (determine: appropriate location)
-```
 
 ## Control Flow
 
@@ -375,19 +367,6 @@ BREAK and CONTINUE are valid in:
 - WHILE loops
 
 They are NOT valid outside of loops (parser error).
-
-### Control Flow Nesting
-
-Control flow can be nested:
-
-```
-FOR EACH $task IN $tasks:
-  - Process $task
-  - IF ($task.priority = "high") THEN:
-    - Expedite processing
-```
-
-Indentation indicates nesting level.
 
 ### Control Flow Philosophy
 
@@ -487,48 +466,55 @@ Workflows typically follow:
 2. Execution phase (loops, delegations, transformations)
 3. Completion phase (collect results, report)
 
-## Compilation
+## Validation
 
-### Two-Layer Model
+### Overview
 
-Zen uses a two-layer model:
+Zen tooling validates source documents without transforming them. The compiler:
+- Parses the document into an AST
+- Extracts metadata (types, variables, references, sections)
+- Builds a dependency graph
+- Reports errors and warnings
 
-- **Source format**: Human-authored, references other skills, uses compact syntax
-- **Compiled format**: Flattened, references resolved, optimized for LLM consumption
+**Source = Output.** The compiled output is the original source, unchanged.
 
-### Compilation Transformations
+### What Tooling Checks
 
-1. **Type expansion**: `$Task` → `Task (any task that an agent can execute)`
-2. **Reference resolution**: `[[skill]]` → resolved content or `[skill]`
-3. **Semantic marker transformation**: `{~~x}` → `(determine: x)`
-4. **Variable inlining**: Where statically determinable
-5. **Import resolution**: Aliases expanded to full names (v0.2)
+1. **Type references** - Warns when a type annotation references an undefined type
+2. **Skill references** - Warns when `[[skill]]` isn't declared in `uses:` or `imports:`
+3. **Section references** - Errors when `[[#section]]` references a non-existent section
+4. **Syntax errors** - Errors for malformed control flow, unterminated constructs, etc.
+5. **Scope** - Tracks variable definitions (informational)
+6. **Dependency cycles** - Detects circular dependencies across skills
 
-### Source Maps
+### Error Codes
 
-The compiler maintains source maps enabling:
-- Error messages with source locations
-- Debugging (trace compiled → source)
-- IDE integration
+| Code | Severity | Description |
+|------|----------|-------------|
+| E001-E007 | Error | Parse errors (syntax) |
+| E008 | Warning | Type not defined in document |
+| E009 | Error | Skill not found in registry |
+| E010 | Error | Section reference broken |
+| W001 | Warning | Skill not declared in uses/imports |
 
-### Compilation Example
+### Dependency Graph
 
-Source:
-```
-Execute [[orchestrate-map-reduce]] with $validator
-```
+The compiler extracts a dependency graph showing:
+- **Nodes**: Skills this document depends on
+- **Edges**: Relationship type (uses, imports, reference)
+- **Cycles**: Circular dependency chains (if any)
 
-Compiled:
-```
-Execute [orchestrate-map-reduce] with validator (any task that an agent can execute)
-```
+This enables build tools to:
+- Order skill loading
+- Detect problematic dependencies
+- Visualize system architecture
 
 ## Runtime Semantics
 
 ### Execution Model
 
 A zen skill executes as:
-1. LLM receives compiled skill content
+1. LLM receives skill content (as authored)
 2. LLM interprets control flow and delegations
 3. Tool calls implement side effects (file writes, sub-agent creation)
 4. Work packages track state between executions
@@ -547,7 +533,7 @@ Errors in zen are handled through:
 2. Semantic resilience: LLMs adapt to unexpected states
 3. Work package logging: State is persisted for debugging
 
-v0.2 does not define exception mechanisms.
+v0.3 does not define exception mechanisms.
 
 ## Tooling Requirements
 
@@ -560,6 +546,15 @@ A compliant parser must extract:
 - Skill and section references
 - Semantic markers
 - Control flow constructs (including PARALLEL, BREAK, CONTINUE in v0.2)
+
+### Validator Requirements
+
+A compliant validator must:
+- Report syntax errors with location
+- Check type reference validity
+- Check section reference validity
+- Build dependency graph
+- Support registry-based skill validation (optional)
 
 ### LSP Features
 
@@ -639,12 +634,13 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 - Enables internal linking
 - Natural for skill references
 
-### Why Two-Layer Model?
+### Why Source = Output? (v0.3)
 
-- Separates human authoring from LLM consumption
-- Enables optimization without changing source
-- Supports debugging via source maps
-- Future-proofs against LLM changes
+- The LLM sees what you write - no hidden transformations
+- Easier to debug - source is execution format
+- Simpler mental model - one format to understand
+- Like SQL: you write it, the engine runs it
+- Tooling validates but doesn't transform (like dbt for SQL)
 
 ### Why PARALLEL FOR EACH? (v0.2)
 
@@ -662,5 +658,6 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 
 ## Version History
 
+- **v0.3** (2026-01-03): Validator-first architecture - source = output, validation focus
 - **v0.2** (2026-01-03): Added PARALLEL FOR EACH, imports, typed parameters, BREAK/CONTINUE
 - **v0.1** (2026-01-03): Initial specification based on Phase 1-2 validation

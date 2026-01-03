@@ -1,8 +1,8 @@
 /**
- * Integration Tests
+ * Integration Tests - v0.3 Validator-First
  * 
- * End-to-end tests using simpler skill examples
- * that match current parser capabilities.
+ * End-to-end tests using simpler skill examples.
+ * Updated for the new compiler that validates rather than transforms.
  */
 
 import * as fs from 'fs';
@@ -152,14 +152,21 @@ describe('Simple Skill Parsing', () => {
     assertEqual(errors.length, 0);
   });
 
-  test('expands types in compilation', () => {
-    const result = compile(simpleSkill);
-    assert(result.output.includes('any task that an agent can execute'), 'Task should be expanded');
+  test('preserves source unchanged (no expansion)', () => {
+    const result = compile(simpleSkill, { includeHeader: false });
+    // Source should be preserved exactly
+    assertEqual(result.output, simpleSkill);
+    // Type definitions still present as authored
+    assert(result.output.includes('$Task = any task'), 'Type def preserved');
+    // No expansion text
+    assert(!result.output.includes('Task (any task'), 'No expansion');
   });
 
-  test('resolves references', () => {
+  test('extracts metadata for references', () => {
     const result = compile(simpleSkill);
-    assert(result.output.includes('[base-skill]'), 'Reference should be resolved');
+    // Reference should be in metadata
+    const skillRefs = result.metadata.references.filter(r => r.kind === 'skill');
+    assert(skillRefs.some(r => r.target === 'base-skill'), 'Should find base-skill ref');
   });
 });
 
@@ -199,11 +206,13 @@ describe('Control Flow Skill Parsing', () => {
     assert(ifs.length >= 1, 'Should have IF');
   });
 
-  test('compiles control flow', () => {
-    const result = compile(controlFlowSkill);
+  test('compiles control flow (preserves source)', () => {
+    const result = compile(controlFlowSkill, { includeHeader: false });
     assert(result.output.includes('FOR EACH'), 'FOR EACH in output');
     assert(result.output.includes('WHILE'), 'WHILE in output');
-    assert(result.stats.controlFlowStatements > 0, 'Control flow counted');
+    // Control flow tracked in source map
+    const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
+    assert(cfEntries.length > 0, 'Control flow in source map');
   });
 });
 
@@ -217,11 +226,16 @@ describe('Semantic Skill Parsing', () => {
     assertEqual(doc.errors.length, 0);
   });
 
-  test('transforms semantic markers on compile', () => {
-    const result = compile(semanticSkill);
-    assert(result.output.includes('(determine:'), 'Semantic should be transformed');
-    assert(!result.output.includes('{~~'), 'No raw markers');
-    assert(result.stats.semanticMarkersTransformed > 0, 'Markers counted');
+  test('preserves semantic markers (no transformation)', () => {
+    const result = compile(semanticSkill, { includeHeader: false });
+    // Semantic markers should be preserved
+    assert(result.output.includes('{~~appropriate location}'), 'Marker preserved');
+    assert(result.output.includes('{~~best approach'), 'Marker preserved');
+    // No transformation applied
+    assert(!result.output.includes('(determine:'), 'No transformation');
+    // Markers tracked in source map
+    const semEntries = result.sourceMap.filter(e => e.type === 'semantic');
+    assert(semEntries.length >= 2, 'Semantic markers in source map');
   });
 });
 
@@ -229,16 +243,22 @@ describe('Semantic Skill Parsing', () => {
 // Compilation Statistics
 // ============================================================================
 
-describe('Compilation Statistics', () => {
-  test('calculates expansion ratio', () => {
+describe('Compilation Metadata', () => {
+  test('extracts types and variables', () => {
     const result = compile(simpleSkill);
-    assert(result.stats.expansionRatio > 1, 'Should expand');
-    assert(result.stats.outputLength > result.stats.sourceLength, 'Output larger');
+    assert(result.metadata.types.length >= 2, 'Should extract types');
+    assert(result.metadata.variables.length >= 2, 'Should extract variables');
   });
 
   test('generates source map entries', () => {
     const result = compile(simpleSkill, { generateSourceMap: true });
     assert(result.sourceMap.length > 0, 'Should have entries');
+  });
+
+  test('builds dependency graph', () => {
+    const result = compile(simpleSkill);
+    assert(result.dependencies.nodes.includes('base-skill'), 'Should include base-skill');
+    assert(result.dependencies.edges.length > 0, 'Should have edges');
   });
 });
 
@@ -280,8 +300,8 @@ name: empty
 description: Empty skill
 ---
 `;
-    const result = compile(skill);
-    assert(result.output.includes('name: empty'), 'Has name');
+    const result = compile(skill, { includeHeader: false });
+    assertEqual(result.output, skill, 'Preserves source');
   });
 
   test('handles unicode content', () => {
@@ -303,7 +323,7 @@ Content with unicode: 日本語
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Integration Tests ===\n');
+console.log('\n=== Zen Integration Tests (v0.3 Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

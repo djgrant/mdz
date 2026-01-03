@@ -1,11 +1,13 @@
 /**
- * v0.2 Feature Tests
+ * v0.2 Feature Tests - Updated for v0.3 Validator-First
  * 
- * Comprehensive tests for new v0.2 language features:
+ * Comprehensive tests for v0.2 language features:
  * - PARALLEL FOR EACH
  * - Extended imports in frontmatter
  * - Typed parameters in WITH clause
  * - BREAK and CONTINUE
+ * 
+ * Updated: No longer tests transformation (source = output)
  */
 
 import { parse } from '../src/parser/parser';
@@ -153,23 +155,24 @@ PARALLEL FOR EACH $b IN $bs:
   });
 });
 
-describe('PARALLEL FOR EACH - Compilation', () => {
-  test('compiles basic PARALLEL FOR EACH', () => {
-    const result = compile(`---
+describe('PARALLEL FOR EACH - Compilation (Validator-First)', () => {
+  test('preserves PARALLEL FOR EACH in output', () => {
+    const source = `---
 name: test
 description: test
 ---
 
 PARALLEL FOR EACH $item IN $items:
   - Process $item
-`);
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source should be preserved');
     assertIncludes(result.output, 'PARALLEL FOR EACH');
     assertIncludes(result.output, '$item');
     assertIncludes(result.output, '$items');
-    assert(result.stats.parallelStatements > 0, 'Should count parallel statements');
   });
 
-  test('includes parallel execution comment', () => {
+  test('tracks PARALLEL FOR EACH in source map', () => {
     const result = compile(`---
 name: test
 description: test
@@ -178,10 +181,11 @@ description: test
 PARALLEL FOR EACH $task IN $tasks:
   - Execute $task
 `);
-    assertIncludes(result.output, 'concurrently');
+    const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
+    assert(cfEntries.length > 0, 'Should track in source map');
   });
 
-  test('counts control flow correctly', () => {
+  test('extracts multiple control flow constructs', () => {
     const result = compile(`---
 name: test
 description: test
@@ -193,8 +197,8 @@ PARALLEL FOR EACH $a IN $as:
 FOR EACH $b IN $bs:
   - Process $b
 `);
-    assertEqual(result.stats.controlFlowStatements, 2);
-    assertEqual(result.stats.parallelStatements, 1);
+    const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
+    assert(cfEntries.length >= 2, 'Should track both loops');
   });
 });
 
@@ -316,9 +320,9 @@ CONTINUE
   });
 });
 
-describe('BREAK and CONTINUE - Compilation', () => {
-  test('compiles BREAK statement', () => {
-    const result = compile(`---
+describe('BREAK and CONTINUE - Compilation (Validator-First)', () => {
+  test('preserves BREAK statement', () => {
+    const source = `---
 name: test
 description: test
 ---
@@ -326,13 +330,14 @@ description: test
 FOR EACH $item IN $items:
   - IF $done THEN:
     - BREAK
-`);
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source preserved');
     assertIncludes(result.output, 'BREAK');
-    assert(result.stats.breakStatements > 0, 'Should count BREAK');
   });
 
-  test('compiles CONTINUE statement', () => {
-    const result = compile(`---
+  test('preserves CONTINUE statement', () => {
+    const source = `---
 name: test
 description: test
 ---
@@ -340,12 +345,13 @@ description: test
 FOR EACH $item IN $items:
   - IF $skip THEN:
     - CONTINUE
-`);
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source preserved');
     assertIncludes(result.output, 'CONTINUE');
-    assert(result.stats.continueStatements > 0, 'Should count CONTINUE');
   });
 
-  test('compiles both BREAK and CONTINUE', () => {
+  test('preserves both BREAK and CONTINUE', () => {
     const result = compile(`---
 name: test
 description: test
@@ -425,8 +431,23 @@ description: test
   });
 });
 
-describe('Extended Imports - Compilation', () => {
-  test('compiles imports in frontmatter', () => {
+describe('Extended Imports - Compilation (Validator-First)', () => {
+  test('preserves imports in output', () => {
+    const source = `---
+name: test
+description: test
+imports:
+  - path: "./skills/"
+    skills: [simplify]
+---
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source preserved');
+    assertIncludes(result.output, 'imports:');
+    assertIncludes(result.output, './skills/');
+  });
+
+  test('extracts imports into metadata', () => {
     const result = compile(`---
 name: test
 description: test
@@ -435,12 +456,11 @@ imports:
     skills: [simplify]
 ---
 `);
-    assertIncludes(result.output, 'imports:');
-    assertIncludes(result.output, './skills/');
-    assert(result.stats.importDeclarations === 1, 'Should count imports');
+    assertEqual(result.metadata.imports.length, 1);
+    assertEqual(result.metadata.imports[0].path, './skills/');
   });
 
-  test('preserves aliases in compiled output', () => {
+  test('preserves aliases in output', () => {
     const result = compile(`---
 name: test
 description: test
@@ -495,8 +515,22 @@ description: test
   });
 });
 
-describe('Typed Parameters - Compilation', () => {
-  test('compiles typed parameter with value', () => {
+describe('Typed Parameters - Compilation (Validator-First)', () => {
+  test('preserves typed parameters in output', () => {
+    const source = `---
+name: test
+description: test
+---
+
+$Task = any task
+
+- $param: $Task = "value"
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source preserved');
+  });
+
+  test('extracts typed parameters into metadata', () => {
     const result = compile(`---
 name: test
 description: test
@@ -506,8 +540,10 @@ $Task = any task
 
 - $param: $Task = "value"
 `);
-    assertIncludes(result.output, 'param');
-    assertIncludes(result.output, 'Task');
+    const paramVar = result.metadata.variables.find(v => v.name === 'param');
+    assert(paramVar !== undefined, 'Should find param');
+    assertEqual(paramVar?.type, 'Task');
+    assertEqual(paramVar?.hasDefault, true);
   });
 });
 
@@ -548,7 +584,8 @@ PARALLEL FOR EACH $item IN $items:
     const doc = parse(source);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     
-    const result = compile(source);
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Source preserved');
     assertIncludes(result.output, 'PARALLEL FOR EACH');
     assertIncludes(result.output, 'CONTINUE');
     assertIncludes(result.output, 'BREAK');
@@ -700,7 +737,7 @@ FOR EACH $a IN $as:
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen v0.2 Feature Tests ===\n');
+console.log('\n=== Zen v0.2 Feature Tests (Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

@@ -1,8 +1,11 @@
 /**
- * Zen Compiler
+ * MDZ Compiler - v0.3 Validator-First Refactor
  * 
- * Compiles zen source to LLM-ready format.
- * v0.2: Added PARALLEL FOR EACH, BREAK, CONTINUE, typed parameters, imports
+ * The compiler validates MDZ source and extracts metadata.
+ * It does NOT transform source - the LLM sees MDZ as authored.
+ * 
+ * Key change from v0.2: Removed all expansion/transformation logic.
+ * The compiler now validates, extracts dependency graphs, and checks contracts.
  */
 
 import { parse } from '../parser/parser';
@@ -13,60 +16,101 @@ import * as AST from '../parser/ast';
 // ============================================================================
 
 export interface CompileOptions {
-  /** Expand $TypeName to include definitions */
-  expandTypes: boolean;
-  /** Convert [[ref]] to [ref] */
-  resolveReferences: boolean;
-  /** Convert {~~x} to (determine: x) */
-  transformSemantics: boolean;
-  /** Inline skill content from registry */
-  inlineSkills: boolean;
+  /** Include header comment in output (for debugging) */
+  includeHeader: boolean;
   /** Generate source map for debugging */
   generateSourceMap: boolean;
-  /** Include header comment in output */
-  includeHeader: boolean;
+  /** Validate references exist (requires registry) */
+  validateReferences: boolean;
+  /** Check type consistency */
+  validateTypes: boolean;
+  /** Check variable scope */
+  validateScope: boolean;
 }
 
 export interface SourceMapEntry {
-  /** Original source position */
   source: AST.Span;
-  /** Compiled output position */
-  compiled: AST.Span;
-  /** Type of mapping */
-  type: 'type' | 'variable' | 'reference' | 'semantic' | 'control-flow';
-  /** Original text */
-  original: string;
-  /** Compiled text */
-  transformed: string;
+  type: 'type-def' | 'variable' | 'reference' | 'semantic' | 'control-flow';
+  name: string;
 }
 
 export interface CompileResult {
-  /** Compiled output */
+  /** The original source, unchanged (we don't transform) */
   output: string;
-  /** Source map entries */
-  sourceMap: SourceMapEntry[];
-  /** Compilation statistics */
-  stats: CompileStats;
-  /** Any errors or warnings */
+  /** Validation diagnostics */
   diagnostics: Diagnostic[];
+  /** Extracted metadata */
+  metadata: DocumentMetadata;
+  /** Source map entries (for IDE integration) */
+  sourceMap: SourceMapEntry[];
+  /** Dependency graph */
+  dependencies: DependencyGraph;
 }
 
-export interface CompileStats {
-  sourceLength: number;
-  outputLength: number;
-  expansionRatio: number;
-  typesExpanded: number;
-  referencesResolved: number;
-  semanticMarkersTransformed: number;
-  controlFlowStatements: number;
-  parallelStatements: number;      // v0.2
-  breakStatements: number;          // v0.2
-  continueStatements: number;       // v0.2
-  importDeclarations: number;       // v0.2
+export interface DocumentMetadata {
+  name: string;
+  description: string;
+  uses: string[];
+  imports: ImportInfo[];
+  types: TypeInfo[];
+  variables: VariableInfo[];
+  references: ReferenceInfo[];
+  sections: SectionInfo[];
+}
+
+export interface ImportInfo {
+  path: string;
+  skills: string[];
+  aliases: Map<string, string>;
+}
+
+export interface TypeInfo {
+  name: string;
+  definition: string;
+  span: AST.Span;
+}
+
+export interface VariableInfo {
+  name: string;
+  type: string | null;
+  hasDefault: boolean;
+  isRequired: boolean;
+  span: AST.Span;
+}
+
+export interface ReferenceInfo {
+  kind: 'skill' | 'section';
+  target: string;
+  skill?: string;
+  section?: string;
+  span: AST.Span;
+}
+
+export interface SectionInfo {
+  title: string;
+  anchor: string;
+  level: number;
+  span: AST.Span;
+}
+
+export interface DependencyGraph {
+  /** Skills this document depends on (from uses: and [[refs]]) */
+  nodes: string[];
+  /** Edges from this document to dependencies */
+  edges: DependencyEdge[];
+  /** Detected cycles (if any) */
+  cycles: string[][];
+}
+
+export interface DependencyEdge {
+  target: string;
+  type: 'uses' | 'imports' | 'reference';
+  span?: AST.Span;
 }
 
 export interface Diagnostic {
   severity: 'error' | 'warning' | 'info';
+  code: string;
   message: string;
   span: AST.Span;
 }
@@ -74,6 +118,7 @@ export interface Diagnostic {
 export interface SkillRegistry {
   get(name: string): SkillContent | undefined;
   getSection(skillName: string, sectionName: string): string | undefined;
+  list(): string[];
 }
 
 export interface SkillContent {
@@ -83,48 +128,66 @@ export interface SkillContent {
 }
 
 // ============================================================================
+// Built-in Types
+// ============================================================================
+
+/**
+ * Built-in primitive types that don't require explicit definition.
+ * Using these types will not trigger "type not defined" warnings.
+ */
+const BUILTIN_PRIMITIVES = new Set(['String', 'Number', 'Boolean']);
+
+// ============================================================================
 // Compiler
 // ============================================================================
 
 export class Compiler {
   private options: CompileOptions;
   private registry: SkillRegistry | null;
-  private sourceMap: SourceMapEntry[] = [];
   private diagnostics: Diagnostic[] = [];
-  private stats: CompileStats;
-  private typeMap: Map<string, string> = new Map();
+  private sourceMap: SourceMapEntry[] = [];
+  private metadata: DocumentMetadata;
+  private dependencies: DependencyGraph;
+  private definedTypes: Set<string> = new Set();
+  private definedVariables: Set<string> = new Set();
+  private declaredDeps: Set<string> = new Set();
 
   constructor(options: Partial<CompileOptions> = {}, registry?: SkillRegistry) {
     this.options = {
-      expandTypes: true,
-      resolveReferences: true,
-      transformSemantics: true,
-      inlineSkills: false,
+      includeHeader: false,  // Changed default: no header
       generateSourceMap: true,
-      includeHeader: true,
+      validateReferences: true,
+      validateTypes: true,
+      validateScope: true,
       ...options,
     };
     this.registry = registry || null;
-    this.stats = {
-      sourceLength: 0,
-      outputLength: 0,
-      expansionRatio: 0,
-      typesExpanded: 0,
-      referencesResolved: 0,
-      semanticMarkersTransformed: 0,
-      controlFlowStatements: 0,
-      parallelStatements: 0,
-      breakStatements: 0,
-      continueStatements: 0,
-      importDeclarations: 0,
+    this.metadata = this.createEmptyMetadata();
+    this.dependencies = { nodes: [], edges: [], cycles: [] };
+  }
+
+  private createEmptyMetadata(): DocumentMetadata {
+    return {
+      name: '',
+      description: '',
+      uses: [],
+      imports: [],
+      types: [],
+      variables: [],
+      references: [],
+      sections: [],
     };
   }
 
   compile(source: string): CompileResult {
-    this.stats.sourceLength = source.length;
-    this.sourceMap = [];
+    // Reset state
     this.diagnostics = [];
-    this.typeMap.clear();
+    this.sourceMap = [];
+    this.metadata = this.createEmptyMetadata();
+    this.dependencies = { nodes: [], edges: [], cycles: [] };
+    this.definedTypes.clear();
+    this.definedVariables.clear();
+    this.declaredDeps.clear();
 
     // Parse source
     const ast = parse(source);
@@ -133,560 +196,493 @@ export class Compiler {
     for (const error of ast.errors) {
       this.diagnostics.push({
         severity: 'error',
+        code: error.code,
         message: error.message,
         span: error.span,
       });
     }
 
-    // Build type map
-    this.buildTypeMap(ast);
-
-    // v0.2: Track imports
-    if (ast.frontmatter?.imports) {
-      this.stats.importDeclarations = ast.frontmatter.imports.length;
+    // Extract metadata and validate
+    this.extractMetadata(ast);
+    this.buildDependencyGraph(ast);
+    
+    if (this.options.validateTypes) {
+      this.validateTypes(ast);
+    }
+    if (this.options.validateScope) {
+      this.validateScope(ast);
+    }
+    if (this.options.validateReferences) {
+      this.validateReferences();
     }
 
-    // Compile to output
-    let output = this.compileDocument(ast);
-
-    // Add header
+    // Output is the original source, unchanged
+    // We only prepend a header if requested (for debugging)
+    let output = source;
     if (this.options.includeHeader) {
-      const header = this.generateHeader(ast);
-      output = header + output;
+      const header = `<!-- MDZ Validated: ${this.metadata.name || 'unnamed'} -->\n<!-- Errors: ${this.diagnostics.filter(d => d.severity === 'error').length}, Warnings: ${this.diagnostics.filter(d => d.severity === 'warning').length} -->\n\n`;
+      output = header + source;
     }
-
-    this.stats.outputLength = output.length;
-    this.stats.expansionRatio = output.length / source.length;
 
     return {
       output,
-      sourceMap: this.sourceMap,
-      stats: this.stats,
       diagnostics: this.diagnostics,
+      metadata: this.metadata,
+      sourceMap: this.sourceMap,
+      dependencies: this.dependencies,
     };
   }
 
   // ==========================================================================
-  // Type Map
+  // Metadata Extraction
   // ==========================================================================
 
-  private buildTypeMap(ast: AST.Document): void {
-    for (const section of ast.sections) {
-      for (const block of section.content) {
-        if (block.kind === 'TypeDefinition') {
-          const def = this.compileTypeExpr(block.typeExpr);
-          this.typeMap.set(block.name, def);
+  private extractMetadata(ast: AST.Document): void {
+    // Extract frontmatter
+    if (ast.frontmatter) {
+      this.metadata.name = ast.frontmatter.name;
+      this.metadata.description = ast.frontmatter.description;
+      this.metadata.uses = [...ast.frontmatter.uses];
+      
+      // Track declared dependencies
+      for (const use of ast.frontmatter.uses) {
+        this.declaredDeps.add(use);
+      }
+
+      // Extract imports
+      for (const imp of ast.frontmatter.imports) {
+        this.metadata.imports.push({
+          path: imp.path,
+          skills: [...imp.skills],
+          aliases: new Map(imp.aliases),
+        });
+        // Track imported skills as declared deps
+        for (const skill of imp.skills) {
+          this.declaredDeps.add(skill);
         }
       }
     }
+
+    // Extract sections
+    for (const section of ast.sections) {
+      if (section.title) {
+        this.metadata.sections.push({
+          title: section.title,
+          anchor: section.anchor,
+          level: section.level,
+          span: section.span,
+        });
+      }
+
+      // Extract types, variables, and references from section content
+      this.extractFromBlocks(section.content);
+    }
   }
 
-  private compileTypeExpr(expr: AST.TypeExpr): string {
+  private extractFromBlocks(blocks: AST.Block[]): void {
+    for (const block of blocks) {
+      this.extractFromBlock(block);
+    }
+  }
+
+  private extractFromBlock(block: AST.Block): void {
+    switch (block.kind) {
+      case 'TypeDefinition':
+        this.extractTypeDefinition(block);
+        break;
+      case 'VariableDeclaration':
+        this.extractVariableDeclaration(block);
+        break;
+      case 'ForEachStatement':
+      case 'ParallelForEachStatement':
+        this.extractFromControlFlow(block);
+        break;
+      case 'WhileStatement':
+        this.extractFromBlocks(block.body);
+        break;
+      case 'IfStatement':
+        this.extractFromBlocks(block.thenBody);
+        if (block.elseBody) {
+          this.extractFromBlocks(block.elseBody);
+        }
+        break;
+      case 'Paragraph':
+        this.extractFromParagraph(block);
+        break;
+      case 'Delegation':
+        this.extractFromDelegation(block);
+        break;
+    }
+  }
+
+  private extractTypeDefinition(def: AST.TypeDefinition): void {
+    const typeInfo: TypeInfo = {
+      name: def.name,
+      definition: this.typeExprToString(def.typeExpr),
+      span: def.span,
+    };
+    this.metadata.types.push(typeInfo);
+    this.definedTypes.add(def.name);
+
+    this.sourceMap.push({
+      source: def.span,
+      type: 'type-def',
+      name: def.name,
+    });
+  }
+
+  private typeExprToString(expr: AST.TypeExpr): string {
     switch (expr.kind) {
       case 'SemanticType':
         return expr.description;
       case 'EnumType':
         return expr.values.map(v => `"${v}"`).join(' | ');
       case 'TypeReference':
-        return this.typeMap.get(expr.name) || expr.name;
+        return `$${expr.name}`;
       case 'CompoundType':
-        return '(' + expr.elements.map(e => this.compileTypeExpr(e)).join(', ') + ')';
+        return '(' + expr.elements.map(e => this.typeExprToString(e)).join(', ') + ')';
       case 'ArrayType':
-        return this.compileTypeExpr(expr.elementType) + '[]';
+        return this.typeExprToString(expr.elementType) + '[]';
       case 'FunctionType':
-        return `(${expr.params.join(', ')}) => ${this.compileTypeExpr(expr.returnType)}`;
+        return `(${expr.params.join(', ')}) => ${this.typeExprToString(expr.returnType)}`;
       default:
         return '';
     }
   }
 
-  // ==========================================================================
-  // Document Compilation
-  // ==========================================================================
+  private extractVariableDeclaration(decl: AST.VariableDeclaration): void {
+    const varInfo: VariableInfo = {
+      name: decl.name,
+      type: decl.typeAnnotation?.name || null,
+      hasDefault: decl.value !== null,
+      isRequired: decl.isRequired || false,
+      span: decl.span,
+    };
+    this.metadata.variables.push(varInfo);
+    this.definedVariables.add(decl.name);
 
-  private generateHeader(ast: AST.Document): string {
-    const name = ast.frontmatter?.name || 'unknown';
-    const timestamp = new Date().toISOString();
-    
-    return `<!-- Compiled Zen Skill: ${name} -->
-<!-- Generated: ${timestamp} -->
-<!-- Source map entries: ${this.sourceMap.length} -->
+    this.sourceMap.push({
+      source: decl.span,
+      type: 'variable',
+      name: decl.name,
+    });
 
-`;
+    // Extract references from value expression
+    if (decl.value) {
+      this.extractFromExpression(decl.value);
+    }
   }
 
-  private compileDocument(ast: AST.Document): string {
-    let output = '';
-
-    // Frontmatter
-    if (ast.frontmatter) {
-      output += this.compileFrontmatter(ast.frontmatter);
-    }
-
-    // Sections
-    for (const section of ast.sections) {
-      output += this.compileSection(section);
-    }
-
-    return output;
-  }
-
-  private compileFrontmatter(fm: AST.Frontmatter): string {
-    let output = '---\n';
-    output += `name: ${fm.name}\n`;
-    output += `description: ${fm.description}\n`;
-    if (fm.uses.length > 0) {
-      output += 'uses:\n';
-      for (const use of fm.uses) {
-        output += `  - ${use}\n`;
+  private extractFromControlFlow(stmt: AST.ForEachStatement | AST.ParallelForEachStatement): void {
+    // Track loop variable
+    if (stmt.pattern.kind === 'SimplePattern') {
+      this.definedVariables.add(stmt.pattern.name);
+    } else {
+      for (const name of stmt.pattern.names) {
+        this.definedVariables.add(name);
       }
     }
-    // v0.2: Include imports in compiled output
-    if (fm.imports.length > 0) {
-      output += 'imports:\n';
-      for (const imp of fm.imports) {
-        output += `  - path: "${imp.path}"\n`;
-        if (imp.skills.length > 0) {
-          output += `    skills: [${imp.skills.join(', ')}]\n`;
+
+    this.sourceMap.push({
+      source: stmt.span,
+      type: 'control-flow',
+      name: stmt.kind,
+    });
+
+    this.extractFromExpression(stmt.collection);
+    this.extractFromBlocks(stmt.body);
+  }
+
+  private extractFromParagraph(para: AST.Paragraph): void {
+    for (const content of para.content) {
+      if (content.kind === 'SkillReference') {
+        this.extractSkillReference(content);
+      } else if (content.kind === 'SectionReference') {
+        this.extractSectionReference(content);
+      } else if (content.kind === 'SemanticMarker') {
+        this.sourceMap.push({
+          source: content.span,
+          type: 'semantic',
+          name: content.content,
+        });
+      }
+    }
+  }
+
+  private extractFromDelegation(deleg: AST.Delegation): void {
+    if (deleg.target.kind === 'SkillReference') {
+      this.extractSkillReference(deleg.target);
+    } else {
+      this.extractSectionReference(deleg.target);
+    }
+    
+    for (const param of deleg.parameters) {
+      this.extractVariableDeclaration(param);
+    }
+  }
+
+  private extractFromExpression(expr: AST.Expression): void {
+    switch (expr.kind) {
+      case 'SkillReference':
+        this.extractSkillReference(expr);
+        break;
+      case 'SectionReference':
+        this.extractSectionReference(expr);
+        break;
+      case 'SemanticMarker':
+        this.sourceMap.push({
+          source: expr.span,
+          type: 'semantic',
+          name: expr.content,
+        });
+        break;
+      case 'BinaryExpression':
+        this.extractFromExpression(expr.left);
+        this.extractFromExpression(expr.right);
+        break;
+      case 'UnaryExpression':
+        this.extractFromExpression(expr.operand);
+        break;
+      case 'ArrayLiteral':
+        for (const el of expr.elements) {
+          this.extractFromExpression(el);
         }
-        if (imp.aliases.size > 0) {
-          output += '    alias:\n';
-          for (const [from, to] of imp.aliases) {
-            output += `      ${from}: ${to}\n`;
+        break;
+      case 'FunctionCall':
+        this.extractFromExpression(expr.callee);
+        for (const arg of expr.args) {
+          this.extractFromExpression(arg);
+        }
+        break;
+      case 'MemberAccess':
+        this.extractFromExpression(expr.object);
+        break;
+      case 'LambdaExpression':
+        this.extractFromExpression(expr.body);
+        break;
+    }
+  }
+
+  private extractSkillReference(ref: AST.SkillReference): void {
+    this.metadata.references.push({
+      kind: 'skill',
+      target: ref.skill,
+      skill: ref.skill,
+      span: ref.span,
+    });
+
+    this.sourceMap.push({
+      source: ref.span,
+      type: 'reference',
+      name: ref.skill,
+    });
+  }
+
+  private extractSectionReference(ref: AST.SectionReference): void {
+    this.metadata.references.push({
+      kind: 'section',
+      target: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
+      skill: ref.skill || undefined,
+      section: ref.section,
+      span: ref.span,
+    });
+
+    this.sourceMap.push({
+      source: ref.span,
+      type: 'reference',
+      name: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
+    });
+  }
+
+  // ==========================================================================
+  // Dependency Graph
+  // ==========================================================================
+
+  private buildDependencyGraph(ast: AST.Document): void {
+    const nodes = new Set<string>();
+    const edges: DependencyEdge[] = [];
+
+    // Add uses: dependencies
+    if (ast.frontmatter) {
+      for (const use of ast.frontmatter.uses) {
+        nodes.add(use);
+        edges.push({ target: use, type: 'uses' });
+      }
+
+      // Add imports: dependencies
+      for (const imp of ast.frontmatter.imports) {
+        for (const skill of imp.skills) {
+          nodes.add(skill);
+          edges.push({ target: skill, type: 'imports' });
+        }
+      }
+    }
+
+    // Add reference dependencies
+    for (const ref of this.metadata.references) {
+      if (ref.kind === 'skill' && ref.skill) {
+        nodes.add(ref.skill);
+        edges.push({ target: ref.skill, type: 'reference', span: ref.span });
+      } else if (ref.kind === 'section' && ref.skill) {
+        nodes.add(ref.skill);
+        edges.push({ target: ref.skill, type: 'reference', span: ref.span });
+      }
+    }
+
+    this.dependencies.nodes = Array.from(nodes);
+    this.dependencies.edges = edges;
+
+    // Cycle detection would require the full graph of all skills
+    // For now, we just report the local dependency structure
+    // Full cycle detection requires the registry to have all skills loaded
+  }
+
+  // ==========================================================================
+  // Validation
+  // ==========================================================================
+
+  private validateTypes(ast: AST.Document): void {
+    // Check that type references resolve to defined types
+    for (const varInfo of this.metadata.variables) {
+      if (varInfo.type && !this.definedTypes.has(varInfo.type)) {
+        // Skip built-in primitive types - they don't need explicit definition
+        if (BUILTIN_PRIMITIVES.has(varInfo.type)) {
+          continue;
+        }
+        this.diagnostics.push({
+          severity: 'warning',
+          code: 'E008',
+          message: `Type '$${varInfo.type}' is not defined in this document`,
+          span: varInfo.span,
+        });
+      }
+    }
+  }
+
+  private validateScope(ast: AST.Document): void {
+    // Check that variables are defined before use
+    // This is a simplified check - full implementation would track scope properly
+    const usedBeforeDefined = new Set<string>();
+
+    for (const section of ast.sections) {
+      this.checkScopeInBlocks(section.content, usedBeforeDefined);
+    }
+  }
+
+  private checkScopeInBlocks(blocks: AST.Block[], usedBeforeDefined: Set<string>): void {
+    for (const block of blocks) {
+      if (block.kind === 'VariableDeclaration') {
+        // Variable is being defined
+        this.definedVariables.add(block.name);
+        // Check if value uses undefined variables
+        if (block.value) {
+          this.checkExpressionScope(block.value, usedBeforeDefined);
+        }
+      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+        // Check collection expression
+        this.checkExpressionScope(block.collection, usedBeforeDefined);
+        // Loop variable is defined for body
+        if (block.pattern.kind === 'SimplePattern') {
+          this.definedVariables.add(block.pattern.name);
+        } else {
+          for (const name of block.pattern.names) {
+            this.definedVariables.add(name);
+          }
+        }
+        this.checkScopeInBlocks(block.body, usedBeforeDefined);
+      } else if (block.kind === 'WhileStatement') {
+        this.checkScopeInBlocks(block.body, usedBeforeDefined);
+      } else if (block.kind === 'IfStatement') {
+        this.checkScopeInBlocks(block.thenBody, usedBeforeDefined);
+        if (block.elseBody) {
+          this.checkScopeInBlocks(block.elseBody, usedBeforeDefined);
+        }
+      } else if (block.kind === 'Paragraph') {
+        for (const content of block.content) {
+          if (content.kind === 'VariableReference') {
+            if (!this.definedVariables.has(content.name)) {
+              usedBeforeDefined.add(content.name);
+            }
           }
         }
       }
     }
-    output += '---\n\n';
-    return output;
   }
 
-  private compileSection(section: AST.Section): string {
-    let output = '';
-
-    if (section.title) {
-      output += '#'.repeat(section.level) + ' ' + section.title + '\n\n';
-    }
-
-    for (const block of section.content) {
-      output += this.compileBlock(block);
-    }
-
-    return output;
-  }
-
-  private compileBlock(block: AST.Block): string {
-    switch (block.kind) {
-      case 'TypeDefinition':
-        return this.compileTypeDefinition(block);
-      case 'VariableDeclaration':
-        return this.compileVariableDeclaration(block);
-      case 'ForEachStatement':
-        return this.compileForEach(block);
-      case 'ParallelForEachStatement':  // v0.2
-        return this.compileParallelForEach(block);
-      case 'WhileStatement':
-        return this.compileWhile(block);
-      case 'IfStatement':
-        return this.compileIf(block);
-      case 'BreakStatement':  // v0.2
-        return this.compileBreak(block);
-      case 'ContinueStatement':  // v0.2
-        return this.compileContinue(block);
-      case 'Paragraph':
-        return this.compileParagraph(block);
-      case 'CodeBlock':
-        return this.compileCodeBlock(block);
-      case 'List':
-        return this.compileList(block);
-      case 'HorizontalRule':
-        return '---\n\n';
-      case 'Delegation':
-        return this.compileDelegation(block);
-      default:
-        return '';
+  private checkExpressionScope(expr: AST.Expression, usedBeforeDefined: Set<string>): void {
+    if (expr.kind === 'VariableReference') {
+      if (!this.definedVariables.has(expr.name)) {
+        // Don't report as error - could be a semantic reference
+        // Just track it
+        usedBeforeDefined.add(expr.name);
+      }
+    } else if (expr.kind === 'BinaryExpression') {
+      this.checkExpressionScope(expr.left, usedBeforeDefined);
+      this.checkExpressionScope(expr.right, usedBeforeDefined);
+    } else if (expr.kind === 'UnaryExpression') {
+      this.checkExpressionScope(expr.operand, usedBeforeDefined);
+    } else if (expr.kind === 'ArrayLiteral') {
+      for (const el of expr.elements) {
+        this.checkExpressionScope(el, usedBeforeDefined);
+      }
     }
   }
 
-  // ==========================================================================
-  // Type Definitions
-  // ==========================================================================
-
-  private compileTypeDefinition(def: AST.TypeDefinition): string {
-    const compiled = this.compileTypeExpr(def.typeExpr);
-    return `$${def.name} = ${compiled}\n`;
-  }
-
-  // ==========================================================================
-  // Variables
-  // ==========================================================================
-
-  private compileVariableDeclaration(decl: AST.VariableDeclaration): string {
-    let output = `$${decl.name}`;
-
-    if (decl.typeAnnotation) {
-      const typeDef = this.typeMap.get(decl.typeAnnotation.name);
-      if (this.options.expandTypes && typeDef) {
-        output += `: ${decl.typeAnnotation.name} (${typeDef})`;
-        this.stats.typesExpanded++;
-        this.addSourceMap(decl.typeAnnotation.span, 'type', 
-          `$${decl.typeAnnotation.name}`, 
-          `${decl.typeAnnotation.name} (${typeDef})`);
-      } else {
-        output += `: $${decl.typeAnnotation.name}`;
+  private validateReferences(): void {
+    // Check that skill references are declared in uses: or imports:
+    for (const ref of this.metadata.references) {
+      if (ref.kind === 'skill' && ref.skill) {
+        if (!this.declaredDeps.has(ref.skill)) {
+          this.diagnostics.push({
+            severity: 'warning',
+            code: 'W001',
+            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+            span: ref.span,
+          });
+        }
+      } else if (ref.kind === 'section' && ref.skill) {
+        if (!this.declaredDeps.has(ref.skill)) {
+          this.diagnostics.push({
+            severity: 'warning',
+            code: 'W001',
+            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+            span: ref.span,
+          });
+        }
       }
     }
 
-    if (decl.value) {
-      output += ' = ' + this.compileExpression(decl.value);
-    } else if (decl.isRequired) {
-      // v0.2: Required parameter indicator
-      output += '  # Required';
-    }
-
-    return '- ' + output + '\n';
-  }
-
-  // ==========================================================================
-  // Expressions
-  // ==========================================================================
-
-  private compileExpression(expr: AST.Expression): string {
-    switch (expr.kind) {
-      case 'StringLiteral':
-        return `"${expr.value}"`;
-      case 'NumberLiteral':
-        return String(expr.value);
-      case 'BooleanLiteral':
-        return String(expr.value);
-      case 'ArrayLiteral':
-        return '[' + expr.elements.map(e => this.compileExpression(e)).join(', ') + ']';
-      case 'TemplateLiteral':
-        return this.compileTemplateLiteral(expr);
-      case 'VariableReference':
-        return this.compileVariableReference(expr);
-      case 'FunctionCall':
-        return this.compileFunctionCall(expr);
-      case 'SkillReference':
-        return this.compileSkillReference(expr);
-      case 'SectionReference':
-        return this.compileSectionReference(expr);
-      case 'SemanticMarker':
-        return this.compileSemanticMarker(expr);
-      case 'BinaryExpression':
-        return this.compileBinaryExpression(expr);
-      case 'UnaryExpression':
-        return this.compileUnaryExpression(expr);
-      case 'MemberAccess':
-        return this.compileMemberAccess(expr);
-      case 'LambdaExpression':
-        return this.compileLambdaExpression(expr);
-      case 'InlineText':
-        return expr.text;
-      default:
-        return '';
-    }
-  }
-
-  private compileTemplateLiteral(expr: AST.TemplateLiteral): string {
-    let output = '`';
-    for (const part of expr.parts) {
-      if (typeof part === 'string') {
-        output += part;
-      } else {
-        output += '${' + this.compileExpression(part) + '}';
-      }
-    }
-    output += '`';
-    return output;
-  }
-
-  private compileVariableReference(expr: AST.VariableReference): string {
-    // Check if this is a type reference and should be expanded
-    const typeDef = this.typeMap.get(expr.name);
-    if (this.options.expandTypes && typeDef && expr.name[0] === expr.name[0].toUpperCase()) {
-      this.stats.typesExpanded++;
-      this.addSourceMap(expr.span, 'type', `$${expr.name}`, `${expr.name} (${typeDef})`);
-      return `${expr.name} (${typeDef})`;
-    }
-    return `$${expr.name}`;
-  }
-
-  private compileFunctionCall(expr: AST.FunctionCall): string {
-    const callee = this.compileExpression(expr.callee);
-    const args = expr.args.map(a => this.compileExpression(a)).join(', ');
-    return `${callee}(${args})`;
-  }
-
-  private compileSkillReference(expr: AST.SkillReference): string {
-    this.stats.referencesResolved++;
-    
-    if (this.options.inlineSkills && this.registry) {
-      const skill = this.registry.get(expr.skill);
-      if (skill) {
-        this.addSourceMap(expr.span, 'reference', `[[${expr.skill}]]`, '[inlined content]');
-        return `[${expr.skill}]\n${skill.source}\n[/${expr.skill}]`;
+    // Check that local section references resolve
+    for (const ref of this.metadata.references) {
+      if (ref.kind === 'section' && !ref.skill && ref.section) {
+        const sectionExists = this.metadata.sections.some(s => s.anchor === ref.section);
+        if (!sectionExists) {
+          this.diagnostics.push({
+            severity: 'error',
+            code: 'E010',
+            message: `Section '#${ref.section}' does not exist in this document`,
+            span: ref.span,
+          });
+        }
       }
     }
 
-    if (this.options.resolveReferences) {
-      this.addSourceMap(expr.span, 'reference', `[[${expr.skill}]]`, `[${expr.skill}]`);
-      return `[${expr.skill}]`;
-    }
-
-    return `[[${expr.skill}]]`;
-  }
-
-  private compileSectionReference(expr: AST.SectionReference): string {
-    this.stats.referencesResolved++;
-    
-    const ref = expr.skill 
-      ? `${expr.skill}#${expr.section}`
-      : `#${expr.section}`;
-
-    if (this.options.inlineSkills && this.registry && expr.skill) {
-      const content = this.registry.getSection(expr.skill, expr.section);
-      if (content) {
-        this.addSourceMap(expr.span, 'reference', `[[${ref}]]`, '[inlined section]');
-        return content;
+    // If registry available, check that referenced skills exist
+    if (this.registry) {
+      for (const ref of this.metadata.references) {
+        if (ref.kind === 'skill' && ref.skill) {
+          const skill = this.registry.get(ref.skill);
+          if (!skill) {
+            this.diagnostics.push({
+              severity: 'error',
+              code: 'E009',
+              message: `Skill '${ref.skill}' is not found in registry`,
+              span: ref.span,
+            });
+          }
+        }
       }
     }
-
-    if (this.options.resolveReferences) {
-      this.addSourceMap(expr.span, 'reference', `[[${ref}]]`, `[${ref}]`);
-      return `[${ref}]`;
-    }
-
-    return `[[${ref}]]`;
-  }
-
-  private compileSemanticMarker(expr: AST.SemanticMarker): string {
-    this.stats.semanticMarkersTransformed++;
-    
-    if (this.options.transformSemantics) {
-      const transformed = `(determine: ${expr.content})`;
-      this.addSourceMap(expr.span, 'semantic', `{~~${expr.content}}`, transformed);
-      return transformed;
-    }
-
-    return `{~~${expr.content}}`;
-  }
-
-  private compileBinaryExpression(expr: AST.BinaryExpression): string {
-    const left = this.compileExpression(expr.left);
-    const right = this.compileExpression(expr.right);
-    return `${left} ${expr.operator} ${right}`;
-  }
-
-  private compileUnaryExpression(expr: AST.UnaryExpression): string {
-    return `${expr.operator} ${this.compileExpression(expr.operand)}`;
-  }
-
-  private compileMemberAccess(expr: AST.MemberAccess): string {
-    return `${this.compileExpression(expr.object)}.${expr.property}`;
-  }
-
-  private compileLambdaExpression(expr: AST.LambdaExpression): string {
-    const params = expr.params.length === 1 
-      ? `$${expr.params[0]}`
-      : `(${expr.params.map(p => `$${p}`).join(', ')})`;
-    return `${params} => ${this.compileExpression(expr.body)}`;
-  }
-
-  // ==========================================================================
-  // Control Flow
-  // ==========================================================================
-
-  private compileForEach(stmt: AST.ForEachStatement): string {
-    this.stats.controlFlowStatements++;
-    
-    const pattern = this.compilePattern(stmt.pattern);
-    const collection = this.compileExpression(stmt.collection);
-    let output = `FOR EACH ${pattern} IN ${collection}:\n`;
-    
-    for (const block of stmt.body) {
-      output += '  ' + this.compileBlock(block).replace(/\n/g, '\n  ').trimEnd() + '\n';
-    }
-    
-    return output + '\n';
-  }
-
-  // v0.2: PARALLEL FOR EACH
-  private compileParallelForEach(stmt: AST.ParallelForEachStatement): string {
-    this.stats.controlFlowStatements++;
-    this.stats.parallelStatements++;
-    
-    const pattern = this.compilePattern(stmt.pattern);
-    const collection = this.compileExpression(stmt.collection);
-    let output = `PARALLEL FOR EACH ${pattern} IN ${collection}:\n`;
-    
-    // Add a comment indicating parallel execution semantics
-    output += '  # Iterations execute concurrently, results collected when all complete\n';
-    
-    for (const block of stmt.body) {
-      output += '  ' + this.compileBlock(block).replace(/\n/g, '\n  ').trimEnd() + '\n';
-    }
-    
-    return output + '\n';
-  }
-
-  private compileWhile(stmt: AST.WhileStatement): string {
-    this.stats.controlFlowStatements++;
-    
-    const condition = this.compileCondition(stmt.condition);
-    let output = `WHILE (${condition}):\n`;
-    
-    for (const block of stmt.body) {
-      output += '  ' + this.compileBlock(block).replace(/\n/g, '\n  ').trimEnd() + '\n';
-    }
-    
-    return output + '\n';
-  }
-
-  private compileIf(stmt: AST.IfStatement): string {
-    this.stats.controlFlowStatements++;
-    
-    const condition = this.compileCondition(stmt.condition);
-    let output = `IF ${condition} THEN:\n`;
-    
-    for (const block of stmt.thenBody) {
-      output += '  ' + this.compileBlock(block).replace(/\n/g, '\n  ').trimEnd() + '\n';
-    }
-    
-    if (stmt.elseBody) {
-      output += 'ELSE:\n';
-      for (const block of stmt.elseBody) {
-        output += '  ' + this.compileBlock(block).replace(/\n/g, '\n  ').trimEnd() + '\n';
-      }
-    }
-    
-    return output + '\n';
-  }
-
-  // v0.2: BREAK statement
-  private compileBreak(stmt: AST.BreakStatement): string {
-    this.stats.breakStatements++;
-    return '- BREAK\n';
-  }
-
-  // v0.2: CONTINUE statement
-  private compileContinue(stmt: AST.ContinueStatement): string {
-    this.stats.continueStatements++;
-    return '- CONTINUE\n';
-  }
-
-  private compilePattern(pattern: AST.Pattern): string {
-    if (pattern.kind === 'SimplePattern') {
-      return `$${pattern.name}`;
-    }
-    return `(${pattern.names.map(n => `$${n}`).join(', ')})`;
-  }
-
-  private compileCondition(cond: AST.Condition): string {
-    switch (cond.kind) {
-      case 'SemanticCondition':
-        return (cond.negated ? 'NOT ' : '') + cond.text;
-      case 'DeterministicCondition':
-        return `${this.compileExpression(cond.left)} ${cond.operator} ${this.compileExpression(cond.right)}`;
-      case 'CompoundCondition':
-        return `${this.compileCondition(cond.left)} ${cond.operator} ${this.compileCondition(cond.right)}`;
-    }
-  }
-
-  // ==========================================================================
-  // Prose Content
-  // ==========================================================================
-
-  private compileParagraph(para: AST.Paragraph): string {
-    let output = '';
-    for (const item of para.content) {
-      output += this.compileInlineContent(item);
-    }
-    return output + '\n\n';
-  }
-
-  private compileInlineContent(content: AST.InlineContent): string {
-    switch (content.kind) {
-      case 'InlineText':
-        return content.text + ' ';
-      case 'VariableReference':
-        return this.compileVariableReference(content) + ' ';
-      case 'SkillReference':
-        return this.compileSkillReference(content) + ' ';
-      case 'SectionReference':
-        return this.compileSectionReference(content) + ' ';
-      case 'SemanticMarker':
-        return this.compileSemanticMarker(content) + ' ';
-      case 'Emphasis':
-        return `*${content.content}* `;
-      case 'Strong':
-        return `**${content.content}** `;
-      case 'CodeSpan':
-        return `\`${content.content}\` `;
-      default:
-        return '';
-    }
-  }
-
-  private compileCodeBlock(block: AST.CodeBlock): string {
-    const lang = block.language || '';
-    return '```' + lang + '\n' + block.content + '\n```\n\n';
-  }
-
-  private compileList(list: AST.List): string {
-    let output = '';
-    list.items.forEach((item, i) => {
-      const marker = list.ordered ? `${i + 1}. ` : '- ';
-      let line = marker;
-      for (const content of item.content) {
-        line += this.compileInlineContent(content);
-      }
-      output += line.trimEnd() + '\n';
-      if (item.nested) {
-        output += this.compileList(item.nested).split('\n').map(l => '  ' + l).join('\n');
-      }
-    });
-    return output + '\n';
-  }
-
-  private compileDelegation(deleg: AST.Delegation): string {
-    let output = deleg.verb + ' ';
-    
-    if (deleg.target.kind === 'SkillReference') {
-      output += this.compileSkillReference(deleg.target);
-    } else {
-      output += this.compileSectionReference(deleg.target);
-    }
-
-    if (deleg.parameters.length > 0) {
-      output += ' WITH:\n';
-      for (const param of deleg.parameters) {
-        output += '  ' + this.compileVariableDeclaration(param);
-      }
-    }
-
-    return output + '\n';
-  }
-
-  // ==========================================================================
-  // Source Map
-  // ==========================================================================
-
-  private addSourceMap(
-    sourceSpan: AST.Span, 
-    type: SourceMapEntry['type'],
-    original: string,
-    transformed: string
-  ): void {
-    if (!this.options.generateSourceMap) return;
-
-    this.sourceMap.push({
-      source: sourceSpan,
-      compiled: sourceSpan, // Simplified: same position for now
-      type,
-      original,
-      transformed,
-    });
   }
 }
 
@@ -730,9 +726,65 @@ export function createRegistry(skills: Record<string, string>): SkillRegistry {
       const section = skill.ast.sections.find(s => s.anchor === sectionName);
       if (!section) return undefined;
       
-      // Return section title for now
-      // Full implementation would extract section content
       return `[Section: ${section.title}]`;
+    },
+
+    list(): string[] {
+      return Object.keys(skills);
     }
   };
+}
+
+/**
+ * Extract dependency graph from multiple skills
+ * Detects cycles across the entire graph
+ */
+export function buildFullDependencyGraph(
+  registry: SkillRegistry
+): { graph: Map<string, string[]>; cycles: string[][] } {
+  const graph = new Map<string, string[]>();
+  const skillNames = registry.list();
+
+  // Build adjacency list
+  for (const name of skillNames) {
+    const skill = registry.get(name);
+    if (skill) {
+      const result = compile(skill.source, { validateReferences: false });
+      graph.set(name, result.dependencies.nodes);
+    }
+  }
+
+  // Detect cycles using DFS
+  const cycles: string[][] = [];
+  const visited = new Set<string>();
+  const recStack = new Set<string>();
+  const path: string[] = [];
+
+  function dfs(node: string): void {
+    visited.add(node);
+    recStack.add(node);
+    path.push(node);
+
+    const deps = graph.get(node) || [];
+    for (const dep of deps) {
+      if (!visited.has(dep)) {
+        dfs(dep);
+      } else if (recStack.has(dep)) {
+        // Found cycle
+        const cycleStart = path.indexOf(dep);
+        cycles.push([...path.slice(cycleStart), dep]);
+      }
+    }
+
+    path.pop();
+    recStack.delete(node);
+  }
+
+  for (const name of skillNames) {
+    if (!visited.has(name)) {
+      dfs(name);
+    }
+  }
+
+  return { graph, cycles };
 }

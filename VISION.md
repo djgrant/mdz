@@ -1,6 +1,6 @@
 # Zen Markdown Vision Document
 
-> A superset of markdown (.mdz) for multi-agent systems, with tooling that guides developers into the pit of success.
+> A superset of markdown (.mdz) for multi-agent systems that unlocks LLM runtime capabilities, with tooling that guides developers into the pit of success.
 
 ## Core Assumptions
 

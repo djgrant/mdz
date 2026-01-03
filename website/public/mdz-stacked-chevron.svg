@@ -1,0 +1,18 @@
+<svg viewBox="0 0 56 40" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 4-line chevron spanning both rows -->
+    <path d="M2 4 L10 20 L2 36"/>
+    <path d="M5 7 L11.5 20 L5 33"/>
+    <path d="M8 10 L13 20 L8 30"/>
+    <path d="M11 13 L14.5 20 L11 27"/>
+    
+    <!-- M - angular strokes (top row) -->
+    <path d="M22 16 L22 6 L28 14 L34 6 L34 16"/>
+    
+    <!-- D - angular/pointy back (top row) -->
+    <path d="M40 6 L40 16 L48 16 L54 11 L48 6 L40 6"/>
+    
+    <!-- Z - natural diagonal (bottom row, centered under MD) -->
+    <path d="M28 24 L42 24 L28 36 L42 36"/>
+  </g>
+</svg>

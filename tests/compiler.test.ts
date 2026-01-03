@@ -1,10 +1,10 @@
 /**
- * Compiler Tests
+ * Compiler Tests - v0.3 Validator-First
  * 
- * Tests for the zen compiler.
+ * Tests for the refactored zen compiler that validates rather than transforms.
  */
 
-import { compile, createRegistry } from '../src/compiler/compiler';
+import { compile, createRegistry, buildFullDependencyGraph } from '../src/compiler/compiler';
 
 // ============================================================================
 // Test Runner
@@ -35,15 +35,15 @@ function assert(condition: boolean, message: string): void {
   }
 }
 
-function assertIncludes(str: string, substr: string, message?: string): void {
-  if (!str.includes(substr)) {
-    throw new Error(message || `Expected "${str}" to include "${substr}"`);
+function assertEqual<T>(actual: T, expected: T, message?: string): void {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
   }
 }
 
-function assertNotIncludes(str: string, substr: string, message?: string): void {
-  if (str.includes(substr)) {
-    throw new Error(message || `Expected "${str}" to NOT include "${substr}"`);
+function assertIncludes(str: string, substr: string, message?: string): void {
+  if (!str.includes(substr)) {
+    throw new Error(message || `Expected "${str}" to include "${substr}"`);
   }
 }
 
@@ -53,51 +53,26 @@ function describe(name: string, fn: () => void): void {
 }
 
 // ============================================================================
-// Compilation Tests
+// Core Principle: No Transformation
 // ============================================================================
 
-describe('Basic Compilation', () => {
-  test('compiles minimal document', () => {
-    const result = compile(`---
+describe('No Transformation (Source = Output)', () => {
+  test('output equals source (no header)', () => {
+    const source = `---
 name: test
 description: A test
 ---
 
 ## Section
 
-Some content.
-`);
-    assertIncludes(result.output, 'name: test');
-    assertIncludes(result.output, '## Section');
-    assert(result.diagnostics.length === 0, 'No errors');
+Some content with $variable and [[skill]] and {~~semantic marker}.
+`;
+    const result = compile(source, { includeHeader: false });
+    assertEqual(result.output, source, 'Output should equal source exactly');
   });
 
-  test('includes header by default', () => {
-    const result = compile(`---
-name: test
-description: test
----
-`);
-    assertIncludes(result.output, '<!-- Compiled Zen Skill: test -->');
-  });
-
-  test('can exclude header', () => {
-    const result = compile(`---
-name: test
-description: test
----
-`, { includeHeader: false });
-    assertNotIncludes(result.output, '<!-- Compiled');
-  });
-});
-
-// ============================================================================
-// Type Expansion Tests
-// ============================================================================
-
-describe('Type Expansion', () => {
-  test('expands type references', () => {
-    const result = compile(`---
+  test('$Type stays as $Type (no expansion)', () => {
+    const source = `---
 name: test
 description: test
 ---
@@ -105,269 +80,357 @@ description: test
 $Task = any executable instruction
 
 - $current: $Task = do something
-`);
-    assertIncludes(result.output, 'Task (any executable instruction)');
-    assert(result.stats.typesExpanded > 0, 'Should expand types');
+`;
+    const result = compile(source, { includeHeader: false });
+    assertIncludes(result.output, '$Task = any executable instruction');
+    assertIncludes(result.output, '$current: $Task');
+    assert(!result.output.includes('Task (any executable instruction)'), 
+      'Types should NOT be expanded');
   });
 
-  test('expands enum types', () => {
-    const result = compile(`---
+  test('{~~marker} stays as {~~marker} (no transformation)', () => {
+    const source = `---
 name: test
 description: test
 ---
 
-$Status = "pending" | "done"
-`);
-    assertIncludes(result.output, '"pending" | "done"');
+Write to {~~appropriate location}
+`;
+    const result = compile(source, { includeHeader: false });
+    assertIncludes(result.output, '{~~appropriate location}');
+    assert(!result.output.includes('(determine:'), 
+      'Semantic markers should NOT be transformed');
   });
 
-  test('can disable type expansion', () => {
+  test('[[reference]] stays as [[reference]]', () => {
+    const source = `---
+name: test
+description: test
+---
+
+Execute [[other-skill]]
+`;
+    const result = compile(source, { includeHeader: false });
+    assertIncludes(result.output, '[[other-skill]]');
+    assert(!result.output.includes('[other-skill]') || result.output.includes('[[other-skill]]'),
+      'References should NOT be transformed');
+  });
+});
+
+// ============================================================================
+// Metadata Extraction
+// ============================================================================
+
+describe('Metadata Extraction', () => {
+  test('extracts frontmatter metadata', () => {
+    const result = compile(`---
+name: test-skill
+description: A test skill
+uses:
+  - helper
+  - orchestrate
+---
+
+## Content
+`);
+    assertEqual(result.metadata.name, 'test-skill');
+    assertEqual(result.metadata.description, 'A test skill');
+    assertEqual(result.metadata.uses, ['helper', 'orchestrate']);
+  });
+
+  test('extracts type definitions', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
 $Task = any executable instruction
-
-- $current: $Task = value
-`, { expandTypes: false });
-    assertIncludes(result.output, '$Task');
-    // Type definition line still contains description
-    assertIncludes(result.output, '$Task');
-  });
-});
-
-// ============================================================================
-// Reference Resolution Tests
-// ============================================================================
-
-describe('Reference Resolution', () => {
-  test('resolves skill references', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-Execute [[other-skill]]
+$Strategy = "fast" | "slow"
 `);
-    assertIncludes(result.output, '[other-skill]');
-    assertNotIncludes(result.output, '[[other-skill]]');
-    assert(result.stats.referencesResolved > 0, 'Should resolve refs');
+    assertEqual(result.metadata.types.length, 2);
+    assertEqual(result.metadata.types[0].name, 'Task');
+    assertEqual(result.metadata.types[1].name, 'Strategy');
   });
 
-  test('resolves section references', () => {
+  test('extracts variable declarations', () => {
     const result = compile(`---
 name: test
 description: test
 ---
+
+- $count = 0
+- $path: $FilePath = "output.md"
+`);
+    assertEqual(result.metadata.variables.length, 2);
+    assertEqual(result.metadata.variables[0].name, 'count');
+    assertEqual(result.metadata.variables[1].name, 'path');
+    assertEqual(result.metadata.variables[1].type, 'FilePath');
+  });
+
+  test('extracts skill references', () => {
+    const result = compile(`---
+name: test
+description: test
+uses:
+  - orchestrate
+---
+
+Execute [[orchestrate]]
+See [[helper]]
+`);
+    const skillRefs = result.metadata.references.filter(r => r.kind === 'skill');
+    assertEqual(skillRefs.length, 2);
+    assertEqual(skillRefs[0].target, 'orchestrate');
+    assertEqual(skillRefs[1].target, 'helper');
+  });
+
+  test('extracts section references', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+## My Section
 
 See [[#my-section]]
+See [[other-skill#other-section]]
 `);
-    assertIncludes(result.output, '[#my-section]');
-    assertNotIncludes(result.output, '[[#my-section]]');
+    const sectionRefs = result.metadata.references.filter(r => r.kind === 'section');
+    assertEqual(sectionRefs.length, 2);
+    assertEqual(sectionRefs[0].section, 'my-section');
+    assertEqual(sectionRefs[1].skill, 'other-skill');
   });
 
-  test('resolves cross-skill section references', () => {
+  test('extracts sections with anchors', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-See [[skill#section]]
+## First Section
+
+## Second Section
+
+### Nested Section
 `);
-    assertIncludes(result.output, '[skill#section]');
-  });
-
-  test('can disable reference resolution', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-See [[skill]]
-`, { resolveReferences: false });
-    assertIncludes(result.output, '[[skill]]');
+    assertEqual(result.metadata.sections.length, 3);
+    assertEqual(result.metadata.sections[0].anchor, 'first-section');
+    assertEqual(result.metadata.sections[1].anchor, 'second-section');
+    assertEqual(result.metadata.sections[2].level, 3);
   });
 });
 
 // ============================================================================
-// Semantic Marker Tests
+// Dependency Graph
 // ============================================================================
 
-describe('Semantic Marker Transformation', () => {
-  test('transforms semantic markers', () => {
+describe('Dependency Graph', () => {
+  test('builds graph from uses:', () => {
     const result = compile(`---
 name: test
 description: test
+uses:
+  - skill-a
+  - skill-b
 ---
-
-Write to {~~appropriate location}
 `);
-    assertIncludes(result.output, '(determine: appropriate location)');
-    assertNotIncludes(result.output, '{~~');
-    assert(result.stats.semanticMarkersTransformed > 0, 'Should transform markers');
+    assert(result.dependencies.nodes.includes('skill-a'), 'Should include skill-a');
+    assert(result.dependencies.nodes.includes('skill-b'), 'Should include skill-b');
+    
+    const usesEdges = result.dependencies.edges.filter(e => e.type === 'uses');
+    assertEqual(usesEdges.length, 2);
   });
 
-  test('can disable semantic transformation', () => {
+  test('builds graph from inline references', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-Write to {~~appropriate location}
-`, { transformSemantics: false });
-    assertIncludes(result.output, '{~~appropriate location}');
-    assertNotIncludes(result.output, '(determine:');
+Execute [[inline-skill]]
+`);
+    assert(result.dependencies.nodes.includes('inline-skill'), 'Should include inline-skill');
+    
+    const refEdges = result.dependencies.edges.filter(e => e.type === 'reference');
+    assertEqual(refEdges.length, 1);
+    assertEqual(refEdges[0].target, 'inline-skill');
+  });
+
+  test('deduplicates dependencies', () => {
+    const result = compile(`---
+name: test
+description: test
+uses:
+  - helper
+---
+
+Execute [[helper]]
+Execute [[helper]] again
+`);
+    const helperNodes = result.dependencies.nodes.filter(n => n === 'helper');
+    assertEqual(helperNodes.length, 1, 'Should deduplicate nodes');
   });
 });
 
 // ============================================================================
-// Control Flow Tests
+// Validation
 // ============================================================================
 
-describe('Control Flow Compilation', () => {
-  test('compiles FOR EACH', () => {
+describe('Validation - Types', () => {
+  test('warns on undefined type reference', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - Process $item
-`);
-    assertIncludes(result.output, 'FOR EACH');
-    assertIncludes(result.output, '$item');
-    assertIncludes(result.output, '$items');
-    assert(result.stats.controlFlowStatements > 0, 'Should count control flow');
+- $x: $UndefinedType = value
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 1);
+    assertIncludes(typeWarnings[0].message, 'UndefinedType');
   });
 
-  test('compiles WHILE', () => {
+  test('no warning when type is defined', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-WHILE ($count < 5):
-  - Iterate
-`);
-    assertIncludes(result.output, 'WHILE');
+$Task = any task
+
+- $x: $Task = value
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 0, 'Should not warn when type is defined');
+  });
+});
+
+describe('Validation - References', () => {
+  test('warns on undeclared skill reference', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+Execute [[undeclared-skill]]
+`, { validateReferences: true });
+    
+    const refWarnings = result.diagnostics.filter(d => d.code === 'W001');
+    assertEqual(refWarnings.length, 1);
+    assertIncludes(refWarnings[0].message, 'undeclared-skill');
   });
 
-  test('compiles IF THEN ELSE', () => {
+  test('no warning when skill is declared in uses:', () => {
+    const result = compile(`---
+name: test
+description: test
+uses:
+  - declared-skill
+---
+
+Execute [[declared-skill]]
+`, { validateReferences: true });
+    
+    const refWarnings = result.diagnostics.filter(d => d.code === 'W001');
+    assertEqual(refWarnings.length, 0);
+  });
+
+  test('errors on undefined local section reference', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-IF $x = 1 THEN:
-  - Do this
-ELSE:
-  - Do that
-`);
-    assertIncludes(result.output, 'IF');
-    assertIncludes(result.output, 'THEN');
-    assertIncludes(result.output, 'ELSE');
+See [[#nonexistent-section]]
+`, { validateReferences: true });
+    
+    const sectionErrors = result.diagnostics.filter(d => d.code === 'E010');
+    assertEqual(sectionErrors.length, 1);
+    assertIncludes(sectionErrors[0].message, 'nonexistent-section');
+  });
+
+  test('no error when local section exists', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+## My Section
+
+See [[#my-section]]
+`, { validateReferences: true });
+    
+    const sectionErrors = result.diagnostics.filter(d => d.code === 'E010');
+    assertEqual(sectionErrors.length, 0);
   });
 });
 
 // ============================================================================
-// Source Map Tests
+// Source Maps
 // ============================================================================
 
 describe('Source Maps', () => {
-  test('generates source map entries', () => {
+  test('generates source map entries for types', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
 $Task = any task
+`, { generateSourceMap: true });
+    
+    const typeEntries = result.sourceMap.filter(e => e.type === 'type-def');
+    assertEqual(typeEntries.length, 1);
+    assertEqual(typeEntries[0].name, 'Task');
+  });
+
+  test('generates source map entries for variables', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $x = value
+- $y = other
+`, { generateSourceMap: true });
+    
+    const varEntries = result.sourceMap.filter(e => e.type === 'variable');
+    assertEqual(varEntries.length, 2);
+  });
+
+  test('generates source map entries for references', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+[[skill-ref]]
+[[#section-ref]]
+`, { generateSourceMap: true });
+    
+    const refEntries = result.sourceMap.filter(e => e.type === 'reference');
+    assertEqual(refEntries.length, 2);
+  });
+
+  test('generates source map entries for semantic markers', () => {
+    const result = compile(`---
+name: test
+description: test
+---
 
 Write to {~~location}
-Execute [[skill]]
 `, { generateSourceMap: true });
-    assert(result.sourceMap.length > 0, 'Should have source map entries');
-  });
-
-  test('source map includes type expansions', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-$Task = any task
-- $x: $Task = value
-`, { generateSourceMap: true });
-    const typeEntries = result.sourceMap.filter(e => e.type === 'type');
-    assert(typeEntries.length > 0, 'Should have type entries');
-  });
-
-  test('source map includes semantic markers', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-{~~something}
-`, { generateSourceMap: true });
+    
     const semEntries = result.sourceMap.filter(e => e.type === 'semantic');
-    assert(semEntries.length > 0, 'Should have semantic entries');
+    assertEqual(semEntries.length, 1);
+    assertEqual(semEntries[0].name, 'location');
   });
 });
 
 // ============================================================================
-// Statistics Tests
-// ============================================================================
-
-describe('Compilation Statistics', () => {
-  test('tracks source and output length', () => {
-    const source = `---
-name: test
-description: test
----
-
-Content here.
-`;
-    const result = compile(source);
-    assert(result.stats.sourceLength === source.length, 'Source length');
-    assert(result.stats.outputLength > 0, 'Output length');
-  });
-
-  test('calculates expansion ratio', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-$Task = a very long description of what a task is
-
-- $x: $Task = value
-`);
-    assert(result.stats.expansionRatio > 1, 'Should expand');
-  });
-
-  test('counts transformations', () => {
-    const result = compile(`---
-name: test
-description: test
----
-
-$Task = task description
-$Status = "a" | "b"
-
-- $x: $Task = {~~dynamic}
-- $y: $Status = "a"
-
-See [[skill]]
-`);
-    assert(result.stats.typesExpanded > 0, 'Types');
-    assert(result.stats.referencesResolved > 0, 'References');
-    assert(result.stats.semanticMarkersTransformed > 0, 'Semantics');
-  });
-});
-
-// ============================================================================
-// Skill Registry Tests
+// Skill Registry
 // ============================================================================
 
 describe('Skill Registry', () => {
@@ -379,46 +442,110 @@ description: A helper skill
 ---
 
 ## Content
-
-Helper content here.
 `,
     });
 
     const skill = registry.get('helper');
     assert(skill !== undefined, 'Should find skill');
-    assert(skill?.name === 'helper', 'Correct name');
+    assertEqual(skill?.name, 'helper');
   });
 
-  test('returns undefined for unknown skill', () => {
-    const registry = createRegistry({});
-    const skill = registry.get('unknown');
-    assert(skill === undefined, 'Should be undefined');
-  });
-
-  test('can get section from skill', () => {
+  test('lists available skills', () => {
     const registry = createRegistry({
-      'helper': `---
-name: helper
-description: test
----
-
-## My Section
-
-Section content.
-`,
+      'skill-a': '---\nname: a\ndescription: a\n---',
+      'skill-b': '---\nname: b\ndescription: b\n---',
     });
 
-    const section = registry.getSection('helper', 'my-section');
-    assert(section !== undefined, 'Should find section');
+    const list = registry.list();
+    assert(list.includes('skill-a'), 'Should include skill-a');
+    assert(list.includes('skill-b'), 'Should include skill-b');
+  });
+
+  test('validates references against registry', () => {
+    const registry = createRegistry({
+      'existing-skill': '---\nname: existing\ndescription: exists\n---',
+    });
+
+    const result = compile(`---
+name: test
+description: test
+uses:
+  - existing-skill
+  - missing-skill
+---
+
+[[existing-skill]]
+[[missing-skill]]
+`, { validateReferences: true }, registry);
+
+    const registryErrors = result.diagnostics.filter(d => d.code === 'E009');
+    assertEqual(registryErrors.length, 1);
+    assertIncludes(registryErrors[0].message, 'missing-skill');
   });
 });
 
 // ============================================================================
-// Error Handling Tests
+// Full Graph Cycle Detection
+// ============================================================================
+
+describe('Full Graph Cycle Detection', () => {
+  test('detects cycles in multi-skill graph', () => {
+    const registry = createRegistry({
+      'skill-a': `---
+name: skill-a
+description: A
+uses:
+  - skill-b
+---`,
+      'skill-b': `---
+name: skill-b
+description: B
+uses:
+  - skill-c
+---`,
+      'skill-c': `---
+name: skill-c
+description: C
+uses:
+  - skill-a
+---`,
+    });
+
+    const { cycles } = buildFullDependencyGraph(registry);
+    assert(cycles.length > 0, 'Should detect cycle');
+  });
+
+  test('no cycles in acyclic graph', () => {
+    const registry = createRegistry({
+      'skill-a': `---
+name: skill-a
+description: A
+uses:
+  - skill-b
+---`,
+      'skill-b': `---
+name: skill-b
+description: B
+---`,
+    });
+
+    const { cycles } = buildFullDependencyGraph(registry);
+    assertEqual(cycles.length, 0, 'Should not detect cycles');
+  });
+});
+
+// ============================================================================
+// Error Handling
 // ============================================================================
 
 describe('Error Handling', () => {
-  test('reports parse errors in diagnostics', () => {
+  test('handles empty source', () => {
+    const result = compile('');
+    assertEqual(result.diagnostics.filter(d => d.severity === 'error').length, 0);
+    assertEqual(result.output, '');
+  });
+
+  test('collects parse errors in diagnostics', () => {
     const result = compile(`---
 name: test
 description: test
@@ -426,23 +553,17 @@ description: test
 
 FOR EACH without proper syntax
 `);
-    // Should compile without crashing
+    // Should compile without crashing, may have diagnostics
     assert(result.output.length > 0, 'Should produce output');
-  });
-
-  test('handles empty source', () => {
-    const result = compile('');
-    assert(result.output.length >= 0, 'Should handle empty');
-    assert(result.diagnostics.length === 0, 'No errors for empty');
   });
 });
 
 // ============================================================================
-// Integration Tests
+// Integration: Full Skill
 // ============================================================================
 
-describe('Full Skill Compilation', () => {
-  test('compiles complete orchestrate-map-reduce pattern', () => {
+describe('Full Skill Validation', () => {
+  test('validates complete orchestrate-map-reduce skill', () => {
     const result = compile(`---
 name: orchestrate-map-reduce
 description: Fan out to multiple agents
@@ -454,7 +575,6 @@ uses:
 
 $Task = any task that an agent can execute
 $Strategy = "accumulate" | "independent"
-$ValidationResult = "progress" | "regression" | "plateau"
 
 ## Input
 
@@ -472,8 +592,6 @@ $ValidationResult = "progress" | "regression" | "plateau"
    - Execute iteration
    - IF $result = "progress" THEN:
      - Update $current
-   - ELSE:
-     - Try different approach
 
 4. Return findings
 
@@ -481,22 +599,26 @@ $ValidationResult = "progress" | "regression" | "plateau"
 
 Handle a single iteration.
 `);
+
+    // Source unchanged
+    assertIncludes(result.output, '$Task = any task');
+    assertIncludes(result.output, '{~~appropriate location}');
+    assertIncludes(result.output, '[[#iteration-manager]]');
     
-    // Check structure preserved
-    assertIncludes(result.output, 'orchestrate-map-reduce');
-    assertIncludes(result.output, '## Types');
-    assertIncludes(result.output, '## Workflow');
+    // Metadata extracted
+    assertEqual(result.metadata.name, 'orchestrate-map-reduce');
+    assertEqual(result.metadata.types.length, 2);
+    assert(result.metadata.sections.some(s => s.anchor === 'iteration-manager'), 
+      'Should find iteration-manager section');
     
-    // Check transformations applied
-    assertIncludes(result.output, '(determine:'); // Semantic transformed
-    assertIncludes(result.output, '[#iteration-manager]'); // Reference resolved
+    // Local section reference should validate
+    const sectionErrors = result.diagnostics.filter(d => d.code === 'E010');
+    assertEqual(sectionErrors.length, 0, 'Local section should be found');
     
-    // Check types expanded
-    assertIncludes(result.output, 'any task that an agent can execute');
-    
-    // Check stats
-    assert(result.stats.expansionRatio > 1, 'Should expand');
-    assert(result.diagnostics.length === 0, 'No errors');
+    // work-packages is declared, so no warning for it
+    const wpWarnings = result.diagnostics.filter(d => 
+      d.code === 'W001' && d.message.includes('work-packages'));
+    assertEqual(wpWarnings.length, 0);
   });
 });
 
@@ -504,7 +626,7 @@ Handle a single iteration.
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Compiler Tests ===\n');
+console.log('\n=== Zen Compiler Tests (v0.3 Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);
@@ -513,3 +635,79 @@ console.log(`Failed: ${ctx.failed}`);
 if (ctx.failed > 0) {
   process.exit(1);
 }
+
+// ============================================================================
+// Built-in Primitive Types
+// ============================================================================
+
+describe('Built-in Primitive Types', () => {
+  test('$String does not trigger type warning', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $name: $String = "hello"
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 0, '$String should be a built-in primitive');
+  });
+
+  test('$Number does not trigger type warning', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $count: $Number = 42
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 0, '$Number should be a built-in primitive');
+  });
+
+  test('$Boolean does not trigger type warning', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $enabled: $Boolean = true
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 0, '$Boolean should be a built-in primitive');
+  });
+
+  test('$FilePath triggers type warning (not a primitive)', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $path: $FilePath = "/some/path"
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 1, '$FilePath should trigger warning');
+    assertIncludes(typeWarnings[0].message, 'FilePath');
+  });
+
+  test('multiple primitives in same document', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $name: $String = "test"
+- $count: $Number = 0
+- $enabled: $Boolean = true
+- $custom: $CustomType = value
+`, { validateTypes: true });
+    
+    const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
+    assertEqual(typeWarnings.length, 1, 'Only $CustomType should trigger warning');
+    assertIncludes(typeWarnings[0].message, 'CustomType');
+  });
+});

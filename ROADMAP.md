@@ -4,30 +4,34 @@
 
 This roadmap outlines areas for exploration, not a fixed sequence. Each area may reveal insights that reshape priorities.
 
-## Current State
+## Current State (v0.3)
 
-A very early stage prototype that will be barely representative of what we're moving to.
+**Tooling Refactor: COMPLETE** ✓
 
-- Parser and compiler exist but do transformations we no longer want (type expansion, semantic marker transformation)
-- Website and playground exist but demonstrate the wrong value proposition
-- 148 tests, most testing behaviors we're moving away from
-- Language spec (v0.2) needs revision to match new vision
+The compiler has been refactored to validator-first approach:
+- ✓ Source = Output (no transformations)
+- ✓ Metadata extraction (types, variables, references, sections)
+- ✓ Dependency graph extraction from `uses:` and `[[refs]]`
+- ✓ Cycle detection across skill graphs
+- ✓ Type validation (warns on undefined type references)
+- ✓ Reference validation (warns on undeclared skills, errors on broken local sections)
+- ✓ Source maps for IDE integration
+- ✓ CLI updated with `check`, `graph`, and validation commands
+- ✓ 155 tests passing
+
+Old expansion-based compiler preserved in `compiler.ts.backup`.
 
 ## Areas for Exploration
 
-### 1. Tooling Refactor
+### 1. Tooling Refactor ✓ COMPLETE
 
-**Goal:** Parser for validation, not transformation.
+See "Current State" above.
 
-**Ideas to explore:**
-- Strip compiler of expansion logic, keep only preprocessing (macros, grammar preamble, reference inlining)
-- Implement contract checking: do call sites match declared interfaces?
-- Build dependency graph extraction from `uses:` and `[[refs]]`
-- Consider: should validation be incremental (per-file) or whole-project?
-
-**Open questions:**
-- How strict? Errors vs warnings?
-- What's the error message UX?
+**Remaining opportunities:**
+- Advanced contract checking (call site interface matching)
+- Cross-skill type consistency checking
+- Required parameter validation at call sites
+- Incremental validation (per-file vs whole-project)
 
 ### 2. Macro System
 
@@ -43,34 +47,32 @@ A very early stage prototype that will be barely representative of what we're mo
 - How do variants get named?
 - How does the runtime know which variant to load?
 
-### 3. Dependency Graph
+### 3. Dependency Graph ✓ BASIC COMPLETE
 
-**Goal:** Visualize and validate module relationships.
+Implemented in v0.3 compiler:
+- ✓ Extract from `uses:` and `imports:` frontmatter
+- ✓ Extract from inline `[[references]]`
+- ✓ Cycle detection with `buildFullDependencyGraph()`
+- ✓ CLI `graph` command with JSON/Mermaid/DOT output
 
-**Ideas to explore:**
-- Extract graph from `uses:` declarations and `[[references]]`
-- Cycle detection
-- Visualization output (Mermaid, DOT, interactive)
-- Integration with playground
-
-**Open questions:**
-- Include runtime delegations or just static refs?
-- How to handle conditional dependencies?
+**Remaining opportunities:**
+- Visualization in playground
+- Handle conditional dependencies
+- Impact analysis tooling
 
 ### 4. Playground Reimagining
 
 **Goal:** Demonstrate zen's actual value proposition.
 
 **Ideas to explore:**
-- Show preprocessing modes (grammar preamble vs natural language)
-- Show macro expansion / variant splitting
-- Show dependency graph visualization
-- Show validation catching errors before runtime
+- Show validation catching errors (NOW POSSIBLE with v0.3)
+- Show dependency graph visualization (NOW POSSIBLE - graph data available)
 - Show compression ratio (source lines vs inlined output)
+- Show preprocessing modes (if implemented)
 
 **Open questions:**
 - What demonstrations will create a "penny-drop" moment?
-- Should there be elements of an interactive tutorial as well as a sandbox?
+- Should there be elements of an interactive tutorial?
 
 ### 5. Benchmarks
 
@@ -92,37 +94,34 @@ A very early stage prototype that will be barely representative of what we're mo
 **Ideas to explore:**
 - Output structure matching OpenCode conventions
 - Grammar preamble as part of skill loading
+- Use zen validation in skill authoring workflow
 
 **Assumptions:**
-- OpenCode does not need to understand zen, it just receives compiled output?
-- Precompilation happens by compiling files into an .opencode directory
+- OpenCode receives zen source directly (since source = output)
+- Validation happens during skill development, not at runtime
 
 ### 7. Spec Revision
 
 **Goal:** Language spec that matches the vision.
 
 **Ideas to explore:**
-- Remove expansion semantics
+- Remove expansion semantics ✓ (done in implementation)
 - Clarify macro vs control flow distinction
 - Document deterministic compilation constraint
 - Add preprocessing modes
 
 **Decided:**
 - Version as v0.3
-- No need to maintain any backward compatibility
+- No backward compatibility needed
 
 ### 8. Website & Documentation
 
 **Goal:** Communicate the refined vision.
 
 **Ideas to explore:**
-- Update messaging
-- UI design system
+- Update messaging to reflect validator-first approach
+- Update playground to show validation, dependency graphs
 - Documentation reflecting actual tooling behavior
-
-**Open questions:**
-- What's the primary audience? (developers building MAS)
-- What's the learning path?
 
 ## Not On Roadmap
 
@@ -135,12 +134,12 @@ Things we're explicitly not pursuing now:
 
 ## Sequencing Thoughts
 
-No fixed order, but some natural dependencies:
+Natural dependencies with tooling refactor complete:
 
-1. **Tooling refactor** unblocks most other work
-2. **Benchmarks** could validate or invalidate assumptions early
-3. **Playground** depends on having the right tooling to demonstrate
-4. **Spec revision** should follow experimentation, not lead it
+1. ~~**Tooling refactor**~~ ✓ DONE - unblocks other work
+2. **Benchmarks** can now proceed
+3. **Playground** has the tooling data it needs
+4. **Spec revision** can document what's implemented
 
 It's ok to CTRL+A DELETE. This is high-velocity experimental work.
 
