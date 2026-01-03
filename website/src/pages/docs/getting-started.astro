@@ -1,0 +1,78 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Getting Started">
+  <h1>Getting Started</h1>
+  
+  <p class="lead">
+    Install zen and write your first skill in under 5 minutes.
+  </p>
+
+  <h2>Installation</h2>
+  
+  <pre><code class="language-bash">npm install zen-lang</code></pre>
+  
+  <p>Or with your preferred package manager:</p>
+  
+  <pre><code class="language-bash">pnpm add zen-lang
+yarn add zen-lang</code></pre>
+
+  <h2>Your First Skill</h2>
+  
+  <p>
+    Create a file named <code>greeting.zen.md</code>:
+  </p>
+  
+  <pre><code>---
+name: greeting
+description: When you need to greet someone
+---
+
+## Types
+
+$Greeting = a friendly greeting message
+$Name = person's name
+
+## Input
+
+- $name: $Name
+
+## Workflow
+
+1. Generate a $Greeting for $name
+2. Make it appropriately warm and friendly
+3. Return the greeting</code></pre>
+
+  <h2>Compile Your Skill</h2>
+  
+  <pre><code class="language-bash">zen compile greeting.zen.md -o greeting.out.md</code></pre>
+  
+  <p>This produces a compiled skill with expanded types and transformed markers.</p>
+
+  <h2>Validate Without Compiling</h2>
+  
+  <pre><code class="language-bash">zen check greeting.zen.md</code></pre>
+
+  <h2>Use Programmatically</h2>
+  
+  <pre><code class="language-typescript">import &#123; parse, compile &#125; from 'zen-lang';
+
+// Parse to AST
+const ast = parse(source);
+console.log(ast.frontmatter?.name);
+
+// Compile to LLM-ready format
+const result = compile(source);
+console.log(result.output);
+console.log(result.stats);</code></pre>
+
+  <h2>Next Steps</h2>
+  
+  <ul>
+    <li><a href="/docs/syntax">Syntax Reference</a> — Complete syntax documentation</li>
+    <li><a href="/docs/types">Type System</a> — Learn about semantic types</li>
+    <li><a href="/docs/control-flow">Control Flow</a> — FOR EACH, WHILE, IF/THEN/ELSE</li>
+    <li><a href="/examples">Examples</a> — Real-world skill examples</li>
+  </ul>
+</DocsLayout>

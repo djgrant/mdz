@@ -1,0 +1,75 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="IDE Support">
+  <h1>IDE Support</h1>
+  
+  <p class="lead">
+    Syntax highlighting and editor support for zen.
+  </p>
+
+  <h2>VS Code</h2>
+  
+  <p>
+    Install the <code>zen-lang</code> extension for:
+  </p>
+  
+  <ul>
+    <li>Syntax highlighting for <code>.zen.md</code> files</li>
+    <li>Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)</li>
+    <li>Variable and type highlighting</li>
+    <li>Skill references ([[links]])</li>
+    <li>Semantic markers</li>
+  </ul>
+
+  <h3>Installing from Source</h3>
+  
+  <pre><code class="language-bash">cd editors/vscode
+npm install
+npm run compile
+# Copy to ~/.vscode/extensions/</code></pre>
+
+  <h2>TextMate Grammar</h2>
+  
+  <p>
+    A standalone TextMate grammar is available at <code>editors/zen.tmLanguage.json</code> 
+    for use with other editors that support TextMate grammars:
+  </p>
+  
+  <ul>
+    <li>Sublime Text</li>
+    <li>Atom</li>
+    <li>TextMate</li>
+    <li>Any editor with TextMate bundle support</li>
+  </ul>
+
+  <h2>Language Features</h2>
+  
+  <p>The grammar highlights:</p>
+  
+  <ul>
+    <li><strong>Frontmatter</strong> — YAML metadata</li>
+    <li><strong>Headings</strong> — Section markers</li>
+    <li><strong>Types</strong> — <code>$TypeName</code> in cyan</li>
+    <li><strong>Variables</strong> — <code>$varName</code> in yellow</li>
+    <li><strong>Keywords</strong> — FOR EACH, WHILE, etc. in purple</li>
+    <li><strong>References</strong> — [[links]] in blue</li>
+    <li><strong>Semantics</strong> — semantic markers in pink</li>
+    <li><strong>Strings</strong> — "quoted" in green</li>
+  </ul>
+
+  <h2>LSP (Planned)</h2>
+  
+  <p>
+    Future LSP support will enable:
+  </p>
+  
+  <ul>
+    <li>Autocomplete after [[, $, and semantic marker open</li>
+    <li>Hover information for types and variables</li>
+    <li>Go-to-definition for references</li>
+    <li>Error diagnostics</li>
+    <li>Code actions</li>
+  </ul>
+</DocsLayout>

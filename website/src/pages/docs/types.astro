@@ -1,0 +1,101 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Type System">
+  <h1>Type System</h1>
+  
+  <p class="lead">
+    Types in zen are semantic hints that guide LLM interpretation, not runtime enforcement.
+  </p>
+
+  <h2>Philosophy</h2>
+  
+  <p>
+    Unlike traditional programming languages, zen types are:
+  </p>
+  
+  <ul>
+    <li><strong>Descriptive</strong> — They document intent for humans</li>
+    <li><strong>Interpretive</strong> — They guide LLM behavior</li>
+    <li><strong>Tooling-friendly</strong> — They enable autocomplete and validation</li>
+    <li><strong>Flexible</strong> — They are NOT runtime-checked</li>
+  </ul>
+
+  <h2>Defining Types</h2>
+  
+  <h3>Semantic Types</h3>
+  
+  <p>Natural language descriptions that help LLMs understand values:</p>
+  
+  <pre><code>$Task = any task that an agent can execute
+$Hypothesis = a testable prediction about what will solve the problem
+$Observation = data collected from running an experiment</code></pre>
+
+  <h3>Enum Types</h3>
+  
+  <p>Constrained sets of string values:</p>
+  
+  <pre><code>$Strategy = "fast" | "thorough"
+$Result = "confirmed" | "refuted" | "inconclusive"
+$Priority = "low" | "medium" | "high" | "critical"</code></pre>
+
+  <h3>Compound Types</h3>
+  
+  <p>Tuples of multiple types:</p>
+  
+  <pre><code>$TaskWithPriority = ($Task, $Priority)
+$Transform = ($Task, $Strategy)</code></pre>
+
+  <h3>Array Types</h3>
+  
+  <p>Collections of a type:</p>
+  
+  <pre><code>$Tasks = $Task[]
+$Transforms = ($Task, $Strategy)[]</code></pre>
+
+  <h3>Function Types</h3>
+  
+  <p>Lambda expressions:</p>
+  
+  <pre><code>$PathGenerator = $n =&gt; `output-&#123;$n&#125;.md`
+$Formatter = ($item, $index) =&gt; `&#123;$index&#125;. &#123;$item&#125;`</code></pre>
+
+  <h2>Using Types</h2>
+  
+  <h3>Variable Declarations</h3>
+  
+  <pre><code>- $task: $Task
+- $result: $Result = "pending"
+- $transforms: ($Task, $Strategy)[]</code></pre>
+
+  <h3>Type Expansion</h3>
+  
+  <p>When compiled, type references are expanded:</p>
+  
+  <pre><code># Source
+- $task: $Task
+
+# Compiled (with expandTypes: true)
+- $task: Task (any task that an agent can execute)</code></pre>
+
+  <h2>Built-in Types</h2>
+  
+  <p>These types are implicitly available:</p>
+  
+  <ul>
+    <li><code>$String</code> — text content</li>
+    <li><code>$Number</code> — numeric value</li>
+    <li><code>$Boolean</code> — true or false</li>
+    <li><code>$FilePath</code> — a file system path</li>
+  </ul>
+
+  <h2>Best Practices</h2>
+  
+  <ul>
+    <li>Use descriptive names: <code>$Hypothesis</code> not <code>$H</code></li>
+    <li>Write clear descriptions: think "what would help an LLM understand this?"</li>
+    <li>Use enums for fixed sets of options</li>
+    <li>Define types at the top of your skill in a <code>## Types</code> section</li>
+  </ul>
+</DocsLayout>

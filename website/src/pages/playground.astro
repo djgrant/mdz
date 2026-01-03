@@ -1,0 +1,454 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+---
+
+<Layout title="Playground - zen">
+  <Header currentPath="/playground" />
+  
+  <div class="h-[calc(100vh-4rem)] flex flex-col">
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]">
+      <div class="flex items-center gap-4">
+        <!-- Examples dropdown -->
+        <select id="examples" class="text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-3 py-1.5 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+          <option value="">Select an example...</option>
+          <option value="hello">Hello World</option>
+          <option value="scientist">The Scientist</option>
+          <option value="debugger">Debugger</option>
+        </select>
+        
+        <!-- Options -->
+        <div class="flex items-center gap-3 text-sm">
+          <label class="flex items-center gap-1.5 text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+            <input type="checkbox" id="expandTypes" checked class="rounded">
+            Expand types
+          </label>
+          <label class="flex items-center gap-1.5 text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+            <input type="checkbox" id="transformSemantics" checked class="rounded">
+            Transform semantics
+          </label>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="share" class="text-sm px-3 py-1.5 text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] transition-colors">
+          Share
+        </button>
+        <button id="copy" class="text-sm px-3 py-1.5 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-light)] transition-colors">
+          Copy Output
+        </button>
+      </div>
+    </div>
+    
+    <!-- Editor panels -->
+    <div class="flex-1 flex">
+      <!-- Source editor -->
+      <div class="flex-1 flex flex-col border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+        <div class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+          Source
+        </div>
+        <div id="editor" class="flex-1"></div>
+      </div>
+      
+      <!-- Output panel -->
+      <div class="flex-1 flex flex-col">
+        <div class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+          Compiled Output
+        </div>
+        <div id="output" class="flex-1"></div>
+      </div>
+    </div>
+    
+    <!-- Status bar -->
+    <div class="flex items-center justify-between px-4 py-1.5 text-xs border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+      <div class="flex items-center gap-4">
+        <span id="errors">Errors: 0</span>
+        <span id="stats"></span>
+      </div>
+      <div id="position">Line 1, Col 1</div>
+    </div>
+  </div>
+</Layout>
+
+<!-- Load Monaco from CDN -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script is:inline>
+  // Default example
+  const defaultSource = `---
+name: hello-world
+description: When you want to get started with zen
+---
+
+## Types
+
+$Greeting = a friendly greeting message
+$Tone = "formal" | "casual" | "enthusiastic"
+
+## Input
+
+- $name: $String = "World"
+- $tone: $Tone = "casual"
+
+## Workflow
+
+1. Create a $Greeting for $name
+2. Make it {~~appropriately warm for the tone}
+3. IF $tone = "enthusiastic" THEN:
+   - Add extra exclamation marks
+4. Return the greeting
+`;
+
+  const examples = {
+    hello: defaultSource,
+    scientist: `---
+name: the-scientist
+description: When orchestrating hypothesis-driven iteration
+uses:
+  - work-packages
+---
+
+## Types
+
+$Hypothesis = a testable prediction
+$Result = "confirmed" | "refuted" | "inconclusive"
+
+## Input
+
+- $problem: $String
+- $maxIterations: $Number = 5
+
+## Context
+
+- $currentHypothesis: $Hypothesis
+- $iteration = 0
+
+## Workflow
+
+WHILE (NOT diminishing returns AND $iteration < $maxIterations):
+  - Formulate $currentHypothesis
+  - Design experiment to test it
+  - Delegate to [[#experiment-prompt]]
+  - IF $result = "confirmed" THEN:
+    - Commit changes
+    - Update hypothesis
+  - ELSE:
+    - Record what didn't work
+  - Increment $iteration
+
+## Experiment Prompt
+
+Run the experiment precisely and report observations.
+`,
+    debugger: `---
+name: debugger
+description: When you need to trace skill execution
+---
+
+## Types
+
+$TraceLevel = "minimal" | "verbose" | "debug"
+$TraceEvent = a record of something during execution
+
+## Input
+
+- $skill: $String
+- $traceLevel: $TraceLevel = "verbose"
+
+## Workflow
+
+FOR EACH $statement IN $skill.statements:
+  - Log entry: {~~formatted statement preview}
+  - IF $traceLevel = "debug" THEN:
+    - Log all variable values
+  - Execute statement
+  - Log exit with duration
+
+Generate trace summary at {~~appropriate location}
+`,
+  };
+
+  // Monaco configuration
+  require.config({ 
+    paths: { 
+      vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' 
+    }
+  });
+
+  require(['vs/editor/editor.main'], function() {
+    // Register zen language
+    monaco.languages.register({ id: 'zen' });
+    
+    // Tokenizer based on TextMate grammar
+    monaco.languages.setMonarchTokensProvider('zen', {
+      tokenizer: {
+        root: [
+          // Frontmatter
+          [/^---$/, 'meta.frontmatter'],
+          
+          // Headings
+          [/^#+\s+.*$/, 'markup.heading'],
+          
+          // Control flow keywords
+          [/\b(FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH)\b/, 'keyword'],
+          
+          // Semantic markers
+          [/\{~~/, { token: 'delimiter.semantic', next: '@semantic' }],
+          
+          // References
+          [/\[\[/, { token: 'delimiter.reference', next: '@reference' }],
+          
+          // Types ($UpperCase)
+          [/\$[A-Z][a-zA-Z0-9]*/, 'type'],
+          
+          // Variables ($lowerCase)
+          [/\$[a-z][a-zA-Z0-9-]*/, 'variable'],
+          
+          // Strings
+          [/"[^"]*"/, 'string'],
+          
+          // Template literals
+          [/`/, { token: 'string.template', next: '@template' }],
+          
+          // Numbers
+          [/-?\d+(\.\d+)?/, 'number'],
+          
+          // Operators
+          [/=>/, 'operator.arrow'],
+          [/[=!<>]=?/, 'operator'],
+          [/\|/, 'operator.pipe'],
+          
+          // Comments (blockquotes)
+          [/^>.*$/, 'comment'],
+        ],
+        
+        semantic: [
+          [/[^}]+/, 'string.semantic'],
+          [/\}/, { token: 'delimiter.semantic', next: '@pop' }],
+        ],
+        
+        reference: [
+          [/[^\]]+/, 'entity.reference'],
+          [/\]\]/, { token: 'delimiter.reference', next: '@pop' }],
+        ],
+        
+        template: [
+          [/\$\{[^}]*\}/, 'variable.interpolated'],
+          [/\{~~[^}]*\}/, 'string.semantic'],
+          [/[^`$\{]+/, 'string.template'],
+          [/`/, { token: 'string.template', next: '@pop' }],
+        ],
+      },
+    });
+
+    // Define theme
+    monaco.editor.defineTheme('zen-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'meta.frontmatter', foreground: '6A737D' },
+        { token: 'markup.heading', foreground: 'E5E5E5', fontStyle: 'bold' },
+        { token: 'keyword', foreground: '8B5CF6', fontStyle: 'bold' },
+        { token: 'type', foreground: '06B6D4' },
+        { token: 'variable', foreground: 'F59E0B' },
+        { token: 'string', foreground: '22C55E' },
+        { token: 'string.semantic', foreground: 'EC4899', fontStyle: 'italic' },
+        { token: 'string.template', foreground: '22C55E' },
+        { token: 'entity.reference', foreground: '3B82F6' },
+        { token: 'delimiter.semantic', foreground: 'EC4899' },
+        { token: 'delimiter.reference', foreground: '3B82F6' },
+        { token: 'operator', foreground: 'A3A3A3' },
+        { token: 'operator.arrow', foreground: '8B5CF6' },
+        { token: 'operator.pipe', foreground: '8B5CF6' },
+        { token: 'number', foreground: 'F59E0B' },
+        { token: 'comment', foreground: '6A737D', fontStyle: 'italic' },
+      ],
+      colors: {
+        'editor.background': '#0A0A0A',
+        'editor.foreground': '#EDEDED',
+        'editorLineNumber.foreground': '#4B5563',
+        'editorCursor.foreground': '#6366F1',
+        'editor.selectionBackground': '#6366F140',
+      },
+    });
+
+    // Light theme
+    monaco.editor.defineTheme('zen-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: 'meta.frontmatter', foreground: '6A737D' },
+        { token: 'markup.heading', foreground: '171717', fontStyle: 'bold' },
+        { token: 'keyword', foreground: '7C3AED', fontStyle: 'bold' },
+        { token: 'type', foreground: '0891B2' },
+        { token: 'variable', foreground: 'D97706' },
+        { token: 'string', foreground: '16A34A' },
+        { token: 'string.semantic', foreground: 'DB2777', fontStyle: 'italic' },
+        { token: 'entity.reference', foreground: '2563EB' },
+        { token: 'delimiter.semantic', foreground: 'DB2777' },
+        { token: 'delimiter.reference', foreground: '2563EB' },
+        { token: 'number', foreground: 'D97706' },
+        { token: 'comment', foreground: '6B7280', fontStyle: 'italic' },
+      ],
+      colors: {
+        'editor.background': '#FAFAFA',
+        'editor.foreground': '#171717',
+        'editorLineNumber.foreground': '#9CA3AF',
+        'editorCursor.foreground': '#6366F1',
+        'editor.selectionBackground': '#6366F130',
+      },
+    });
+
+    // Detect dark mode
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Create source editor
+    const editor = monaco.editor.create(document.getElementById('editor'), {
+      value: defaultSource,
+      language: 'zen',
+      theme: isDark ? 'zen-dark' : 'zen-light',
+      fontSize: 14,
+      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      minimap: { enabled: false },
+      lineNumbers: 'on',
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      padding: { top: 16, bottom: 16 },
+      wordWrap: 'on',
+    });
+
+    // Create output viewer
+    const output = monaco.editor.create(document.getElementById('output'), {
+      value: '',
+      language: 'markdown',
+      theme: isDark ? 'zen-dark' : 'zen-light',
+      fontSize: 14,
+      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      minimap: { enabled: false },
+      lineNumbers: 'on',
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      readOnly: true,
+      padding: { top: 16, bottom: 16 },
+      wordWrap: 'on',
+    });
+
+    // Simple compiler (placeholder - will be replaced with actual compiler)
+    function compile(source) {
+      const expandTypes = document.getElementById('expandTypes').checked;
+      const transformSemantics = document.getElementById('transformSemantics').checked;
+      
+      let compiled = source;
+      
+      // Extract type definitions
+      const typeMap = new Map();
+      const typeRegex = /\$([A-Z][a-zA-Z0-9]*)\s*=\s*(.+)$/gm;
+      let match;
+      while ((match = typeRegex.exec(source)) !== null) {
+        typeMap.set(match[1], match[2].trim());
+      }
+      
+      if (expandTypes) {
+        // Expand type references in variable declarations
+        typeMap.forEach((def, name) => {
+          // Match $name: $Type patterns and expand
+          const varTypeRegex = new RegExp(`(\\$[a-z][a-zA-Z0-9-]*):\\s*\\$${name}(?![a-zA-Z])`, 'g');
+          compiled = compiled.replace(varTypeRegex, `$1: ${name} (${def})`);
+        });
+      }
+      
+      if (transformSemantics) {
+        // Transform {~~content} to (determine: content)
+        compiled = compiled.replace(/\{~~([^}]+)\}/g, '(determine: $1)');
+      }
+      
+      // Transform [[ref]] to [ref]
+      compiled = compiled.replace(/\[\[([^\]]+)\]\]/g, '[$1]');
+      
+      // Add header
+      const nameMatch = source.match(/name:\s*(.+)/);
+      const skillName = nameMatch ? nameMatch[1].trim() : 'unknown';
+      compiled = `<!-- Compiled Zen Skill: ${skillName} -->\n<!-- Generated: ${new Date().toISOString()} -->\n\n${compiled}`;
+      
+      return {
+        output: compiled,
+        stats: {
+          sourceLength: source.length,
+          outputLength: compiled.length,
+          typesExpanded: typeMap.size,
+        },
+        errors: [],
+      };
+    }
+
+    // Update output on change
+    function updateOutput() {
+      const source = editor.getValue();
+      const result = compile(source);
+      output.setValue(result.output);
+      
+      // Update stats
+      document.getElementById('stats').textContent = 
+        `Types: ${result.stats.typesExpanded} | Chars: ${result.stats.sourceLength} → ${result.stats.outputLength}`;
+      document.getElementById('errors').textContent = `Errors: ${result.errors.length}`;
+    }
+
+    editor.onDidChangeModelContent(updateOutput);
+    document.getElementById('expandTypes').addEventListener('change', updateOutput);
+    document.getElementById('transformSemantics').addEventListener('change', updateOutput);
+
+    // Update position
+    editor.onDidChangeCursorPosition((e) => {
+      document.getElementById('position').textContent = 
+        `Line ${e.position.lineNumber}, Col ${e.position.column}`;
+    });
+
+    // Example selector
+    document.getElementById('examples').addEventListener('change', (e) => {
+      if (e.target.value && examples[e.target.value]) {
+        editor.setValue(examples[e.target.value]);
+      }
+    });
+
+    // Copy button
+    document.getElementById('copy').addEventListener('click', () => {
+      navigator.clipboard.writeText(output.getValue());
+      const btn = document.getElementById('copy');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy Output', 2000);
+    });
+
+    // Share button
+    document.getElementById('share').addEventListener('click', () => {
+      const source = editor.getValue();
+      const encoded = btoa(encodeURIComponent(source));
+      const url = `${window.location.origin}/playground?code=${encoded}`;
+      navigator.clipboard.writeText(url);
+      const btn = document.getElementById('share');
+      btn.textContent = 'URL Copied!';
+      setTimeout(() => btn.textContent = 'Share', 2000);
+    });
+
+    // Load from URL if present
+    const params = new URLSearchParams(window.location.search);
+    const codeParam = params.get('code');
+    if (codeParam) {
+      try {
+        const decoded = decodeURIComponent(atob(codeParam));
+        editor.setValue(decoded);
+      } catch (e) {
+        console.error('Failed to decode URL parameter');
+      }
+    }
+
+    // Initial compile
+    updateOutput();
+
+    // Handle dark mode changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      const theme = e.matches ? 'zen-dark' : 'zen-light';
+      monaco.editor.setTheme(theme);
+    });
+  });
+</script>

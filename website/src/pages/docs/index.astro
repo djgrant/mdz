@@ -1,0 +1,54 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Documentation">
+  <h1>Documentation</h1>
+  
+  <p class="lead">
+    Zen is a markdown extension language for multi-agent systems. It's designed to be 
+    readable as natural prose, parseable by deterministic tools, and interpretable by LLMs.
+  </p>
+
+  <h2>What is Zen?</h2>
+  
+  <p>
+    Zen extends standard markdown with constructs for expressing agent behaviors, 
+    skill composition, and orchestration patterns. A zen document (with <code>.zen.md</code> extension) 
+    is both valid markdown and a parseable program.
+  </p>
+
+  <h2>Key Features</h2>
+  
+  <ul>
+    <li><strong>Types</strong> — Semantic hints that guide LLM interpretation</li>
+    <li><strong>Variables</strong> — Named values with type annotations</li>
+    <li><strong>References</strong> — Wiki-style links to other skills</li>
+    <li><strong>Semantic Markers</strong> — LLM-interpreted placeholders</li>
+    <li><strong>Control Flow</strong> — CAPS keywords for loops and conditionals</li>
+    <li><strong>Composition</strong> — Skill delegation with parameters</li>
+  </ul>
+
+  <h2>Two-Layer Model</h2>
+  
+  <p>
+    Zen uses a two-layer architecture:
+  </p>
+  
+  <ul>
+    <li><strong>Source Format</strong> — Human-authored, uses compact syntax</li>
+    <li><strong>Compiled Format</strong> — Optimized for LLM consumption</li>
+  </ul>
+  
+  <p>
+    The compiler transforms types, references, and semantic markers into LLM-friendly formats.
+  </p>
+
+  <h2>Getting Started</h2>
+  
+  <p>
+    Ready to dive in? Start with the <a href="/docs/getting-started">Quick Start guide</a> 
+    to install zen and write your first skill, or explore <a href="/examples">examples</a> 
+    to see zen in action.
+  </p>
+</DocsLayout>

@@ -1,0 +1,81 @@
+{
+  "name": "zen-lang",
+  "displayName": "Zen Language",
+  "description": "Language support for Zen (.zen.md) - a markdown extension for multi-agent systems",
+  "version": "0.1.0",
+  "publisher": "djgrant",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djgrant/zen"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:zen"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "zen",
+        "aliases": ["Zen", "zen"],
+        "extensions": [".zen.md"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "zen",
+        "scopeName": "source.zen.md",
+        "path": "./syntaxes/zen.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "zen.compile",
+        "title": "Zen: Compile Current File"
+      },
+      {
+        "command": "zen.check",
+        "title": "Zen: Check Syntax"
+      }
+    ],
+    "configuration": {
+      "title": "Zen",
+      "properties": {
+        "zen.expandTypes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Expand type references during compilation"
+        },
+        "zen.resolveReferences": {
+          "type": "boolean",
+          "default": true,
+          "description": "Resolve skill references during compilation"
+        },
+        "zen.transformSemantics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Transform semantic markers during compilation"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

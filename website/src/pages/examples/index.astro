@@ -1,0 +1,126 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+---
+
+<Layout title="Examples - zen">
+  <Header currentPath="/examples" />
+  
+  <main class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-12">
+    <h1 class="text-3xl font-medium mb-4 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+      Examples
+    </h1>
+    <p class="text-lg text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-12 max-w-2xl">
+      Real-world zen skills demonstrating different patterns and use cases.
+    </p>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- The Scientist -->
+      <a href="/playground?example=scientist" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">🔬</span>
+          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+            The Scientist
+          </h3>
+        </div>
+        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+          Hypothesis-driven iteration with sub-agents. Demonstrates WHILE loops, 
+          conditional branching, and skill composition.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            control-flow
+          </span>
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            composition
+          </span>
+        </div>
+      </a>
+      
+      <!-- Debugger -->
+      <a href="/playground?example=debugger" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">🐛</span>
+          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+            Debugger
+          </h3>
+        </div>
+        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+          Trace and debug skill execution. Shows FOR EACH iteration, 
+          nested conditionals, and semantic markers.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            iteration
+          </span>
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            nesting
+          </span>
+        </div>
+      </a>
+      
+      <!-- Skill Composer -->
+      <a href="/playground?example=composer" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">🎼</span>
+          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+            Skill Composer
+          </h3>
+        </div>
+        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+          Compose multiple skills into coordinated workflows. Demonstrates 
+          dependency management and execution modes.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            composition
+          </span>
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            dependencies
+          </span>
+        </div>
+      </a>
+      
+      <!-- Hello World -->
+      <a href="/playground" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">👋</span>
+          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+            Hello World
+          </h3>
+        </div>
+        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+          A simple greeting skill. Perfect for understanding the basics: 
+          types, variables, and simple conditionals.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            beginner
+          </span>
+          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
+            basics
+          </span>
+        </div>
+      </a>
+      
+      <!-- Create Your Own -->
+      <a href="/playground" class="group block p-6 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-2xl">✨</span>
+          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+            Create Your Own
+          </h3>
+        </div>
+        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+          Start from scratch in the playground. Experiment with zen syntax 
+          and see compilation in real-time.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-0.5 text-xs rounded border border-[var(--color-border)] dark:border-[var(--color-border-dark)] text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+            playground
+          </span>
+        </div>
+      </a>
+    </div>
+  </main>
+</Layout>

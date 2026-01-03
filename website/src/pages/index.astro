@@ -1,0 +1,267 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+
+const codeExample = `---
+name: the-scientist
+description: Hypothesis-driven iteration
+uses:
+  - work-packages
+---
+
+## Types
+
+$Hypothesis = a testable prediction
+$Result = "confirmed" | "refuted"
+
+## Workflow
+
+WHILE (NOT diminishing returns):
+  - Formulate $hypothesis
+  - Delegate to [[experiment]]
+  - IF $result = "confirmed" THEN:
+    - Update at {~~appropriate location}`;
+---
+
+<Layout title="zen - Markdown for Multi-Agent Systems">
+  <Header currentPath="/" />
+  
+  <main>
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+      <!-- Subtle gradient background -->
+      <div class="absolute inset-0 bg-gradient-to-b from-[var(--color-accent)]/5 to-transparent pointer-events-none"></div>
+      
+      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-24 md:py-32">
+        <div class="max-w-3xl">
+          <!-- Tagline -->
+          <p class="text-[var(--color-accent)] font-medium mb-4 text-sm tracking-wide uppercase">
+            Language for AI Agents
+          </p>
+          
+          <!-- Headline -->
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+            Write agent behaviors<br />
+            in readable markdown
+          </h1>
+          
+          <!-- Description -->
+          <p class="text-lg md:text-xl text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-10 max-w-2xl leading-relaxed">
+            Zen extends markdown with constructs for multi-agent systems. 
+            Define skills, compose workflows, and orchestrate—all in prose 
+            that humans and LLMs can understand.
+          </p>
+          
+          <!-- CTAs -->
+          <div class="flex flex-wrap gap-4">
+            <a 
+              href="/docs/getting-started" 
+              class="inline-flex items-center px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-light)] text-white font-medium rounded-lg transition-colors"
+            >
+              Get Started
+              <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+            <a 
+              href="/playground" 
+              class="inline-flex items-center px-6 py-3 border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] text-[var(--color-text)] dark:text-[var(--color-text-dark)] font-medium rounded-lg transition-colors"
+            >
+              Try Playground
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Code Example Section -->
+    <section class="py-16 md:py-24">
+      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
+        <div class="grid md:grid-cols-2 gap-8 items-start">
+          <!-- Code Example -->
+          <div class="relative">
+            <div class="absolute -inset-2 bg-gradient-to-r from-[var(--color-accent)]/20 to-transparent rounded-xl blur-xl opacity-50"></div>
+            <pre class="relative rounded-xl text-sm leading-relaxed" set:html={codeExample.replace(/</g, '&lt;').replace(/>/g, '&gt;')} />
+          </div>
+          
+          <!-- Features -->
+          <div class="space-y-8">
+            <div>
+              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+                Readable as Prose
+              </h3>
+              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+                Skills read like natural language instructions. No special training required 
+                to understand what an agent will do.
+              </p>
+            </div>
+            
+            <div>
+              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+                Parseable by Tools
+              </h3>
+              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+                Deterministic syntax enables IDE support, static analysis, and 
+                composition tooling. Autocomplete, hover info, go-to-definition.
+              </p>
+            </div>
+            
+            <div>
+              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+                Interpretable by LLMs
+              </h3>
+              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+                Compile to optimized prompts. Semantic markers let LLMs determine 
+                context-appropriate values at runtime.
+              </p>
+            </div>
+            
+            <div>
+              <h3 class="font-medium text-lg mb-2 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+                Composable Skills
+              </h3>
+              <p class="text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+                Reference other skills with [[wiki-links]]. Build complex behaviors 
+                from simple, reusable components.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Syntax Overview Section -->
+    <section class="py-16 md:py-24 bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)] border-y border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
+        <h2 class="text-2xl md:text-3xl font-medium mb-12 text-center text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+          Syntax at a Glance
+        </h2>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Types -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-type)]">Types</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              Semantic hints for values
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>$Task = any executable instruction
+$Strategy = "fast" | "thorough"</code></pre>
+          </div>
+          
+          <!-- Variables -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-variable)]">Variables</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              Named values with optional types
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>- $task: $Task
+- $path = $n =&gt; `output-$n.md`</code></pre>
+          </div>
+          
+          <!-- References -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-reference)]">References</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              Links to skills and sections
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>[[skill-name]]
+[[skill#section]]
+[[#local-section]]</code></pre>
+          </div>
+          
+          <!-- Semantic Markers -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-semantic)]">Semantic Markers</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              LLM-interpreted content
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>&#123;~~appropriate location&#125;
+&#123;~~best strategy for $task&#125;</code></pre>
+          </div>
+          
+          <!-- Control Flow -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-keyword)]">Control Flow</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              CAPS keywords for visibility
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>FOR EACH $item IN $list:
+WHILE (condition):
+IF $x = "y" THEN:</code></pre>
+          </div>
+          
+          <!-- Composition -->
+          <div class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+            <h3 class="font-medium mb-3 text-[var(--color-accent)]">Composition</h3>
+            <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
+              Delegate with parameters
+            </p>
+            <pre class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg"><code>Execute [[skill]] WITH:
+  - $param = value
+  - $validator = [[#check]]</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="py-16 md:py-24">
+      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
+        <div class="max-w-2xl mx-auto text-center">
+          <h2 class="text-2xl md:text-3xl font-medium mb-6 text-[var(--color-text)] dark:text-[var(--color-text-dark)]">
+            Get Started in Seconds
+          </h2>
+          
+          <div class="mb-8">
+            <pre class="inline-block text-left text-sm rounded-xl"><code># Install
+npm install zen-lang
+
+# Compile a skill
+zen compile skill.zen.md -o skill.out.md
+
+# Validate syntax
+zen check skill.zen.md</code></pre>
+          </div>
+          
+          <div class="flex flex-wrap justify-center gap-4">
+            <a 
+              href="/docs" 
+              class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
+            >
+              Read the docs
+              <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+            <span class="text-[var(--color-muted)]">·</span>
+            <a 
+              href="/examples" 
+              class="inline-flex items-center text-[var(--color-accent)] hover:text-[var(--color-accent-light)] font-medium transition-colors"
+            >
+              Browse examples
+              <svg class="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+      <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)]">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+          <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+            zen is open source under MIT license
+          </p>
+          <div class="flex gap-6">
+            <a href="https://github.com/djgrant/zen" class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)] transition-colors">
+              GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+</Layout>

@@ -1,0 +1,119 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Control Flow">
+  <h1>Control Flow</h1>
+  
+  <p class="lead">
+    Zen uses CAPS keywords for control flow to visually distinguish executable 
+    structure from prose content.
+  </p>
+
+  <h2>FOR EACH</h2>
+  
+  <p>Iterate over a collection:</p>
+  
+  <pre><code>FOR EACH $item IN $collection:
+  - Process $item
+  - Next step</code></pre>
+
+  <h3>With Destructuring</h3>
+  
+  <p>Unpack tuples during iteration:</p>
+  
+  <pre><code>FOR EACH ($task, $priority) IN $items:
+  - Execute $task
+  - IF $priority = "high" THEN:
+    - Expedite processing</code></pre>
+
+  <h2>WHILE</h2>
+  
+  <p>Loop with a condition:</p>
+  
+  <pre><code>WHILE (condition AND $iterations &lt; 5):
+  - Perform iteration
+  - Update state</code></pre>
+
+  <h3>Condition Types</h3>
+  
+  <p>Conditions can be:</p>
+  
+  <ul>
+    <li><strong>Deterministic</strong>: <code>$x &lt; 5</code>, <code>$status = "active"</code></li>
+    <li><strong>Semantic</strong>: <code>NOT diminishing returns</code> (LLM interprets)</li>
+    <li><strong>Combined</strong>: <code>NOT complete AND $count &lt; 10</code></li>
+  </ul>
+
+  <h2>IF/THEN/ELSE</h2>
+  
+  <p>Conditional branching:</p>
+  
+  <pre><code>IF $condition THEN:
+  - Do this
+ELSE:
+  - Do that</code></pre>
+
+  <h3>Multi-line Branches</h3>
+  
+  <pre><code>IF $strategy = "accumulate" THEN:
+  - Validate incrementally
+  - Update on success
+  - Log progress
+ELSE:
+  - Collect all candidates
+  - Validate at end
+  - Report summary</code></pre>
+
+  <h3>Comparison Operators</h3>
+  
+  <ul>
+    <li><code>=</code> — equality</li>
+    <li><code>!=</code> — inequality</li>
+    <li><code>&lt;</code>, <code>&gt;</code> — less than, greater than</li>
+    <li><code>&lt;=</code>, <code>&gt;=</code> — less/greater than or equal</li>
+  </ul>
+
+  <h3>Logical Operators</h3>
+  
+  <ul>
+    <li><code>AND</code> — both conditions must be true</li>
+    <li><code>OR</code> — either condition can be true</li>
+    <li><code>NOT</code> — negates a condition</li>
+  </ul>
+
+  <h2>Nesting</h2>
+  
+  <p>Control flow can be nested. Indentation indicates the block:</p>
+  
+  <pre><code>FOR EACH $task IN $tasks:
+  - Process $task
+  - IF $task.priority = "high" THEN:
+    - WHILE (NOT complete):
+      - Execute step
+      - Check progress
+    - Log completion
+  - Move to next task</code></pre>
+
+  <h2>Semantic Conditions</h2>
+  
+  <p>
+    LLMs can interpret natural language conditions. Use them when the 
+    condition requires understanding context:
+  </p>
+  
+  <pre><code>WHILE (NOT diminishing returns):
+  - Continue iterating
+
+IF the result looks promising THEN:
+  - Proceed with optimization</code></pre>
+
+  <h2>Design Philosophy</h2>
+  
+  <ul>
+    <li><strong>CAPS Keywords</strong> — Visually distinct from prose</li>
+    <li><strong>Explicit Termination</strong> — Always include bounds to prevent infinite loops</li>
+    <li><strong>Mixed Conditions</strong> — Combine deterministic checks with semantic interpretation</li>
+    <li><strong>Clear Indentation</strong> — Structure is visible at a glance</li>
+  </ul>
+</DocsLayout>

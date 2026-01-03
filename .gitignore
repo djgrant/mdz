@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+website/dist/
+*.js.map
+*.d.ts.map
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+*.swp

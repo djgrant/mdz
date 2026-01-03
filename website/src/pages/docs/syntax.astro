@@ -1,0 +1,163 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Syntax Reference">
+  <h1>Syntax Reference</h1>
+  
+  <p class="lead">
+    Complete reference for zen syntax, from document structure to control flow.
+  </p>
+
+  <h2>Document Structure</h2>
+  
+  <p>A zen document is a valid markdown file with these extensions:</p>
+  
+  <pre><code>---
+frontmatter (YAML)
+---
+
+# Heading
+
+Body content with zen constructs</code></pre>
+
+  <h3>Frontmatter</h3>
+  
+  <p>Required and optional fields in YAML frontmatter:</p>
+  
+  <pre><code>---
+name: skill-name              # Required: identifier (kebab-case)
+description: When...          # Required: trigger description
+uses:                         # Optional: skill dependencies
+  - skill-a
+  - skill-b
+---</code></pre>
+
+  <h2>Types</h2>
+  
+  <h3>Type Definitions</h3>
+  
+  <p>Types provide semantic hints about values:</p>
+  
+  <pre><code>$TypeName = natural language description
+
+$Task = any task that an agent can execute
+$Strategy = "accumulate" | "independent"
+$Result = "success" | "failure" | "pending"</code></pre>
+
+  <h3>Type Syntax</h3>
+  
+  <ul>
+    <li><strong>Semantic</strong>: <code>$Task = any executable instruction</code></li>
+    <li><strong>Enum</strong>: <code>$Strategy = "fast" | "thorough"</code></li>
+    <li><strong>Compound</strong>: <code>($Task, $Strategy)</code></li>
+    <li><strong>Array</strong>: <code>$Task[]</code></li>
+    <li><strong>Function</strong>: <code>$Fn = $x =&gt; expression</code></li>
+  </ul>
+
+  <h2>Variables</h2>
+  
+  <h3>Declaration</h3>
+  
+  <pre><code>$name: $Type = value
+$name = value</code></pre>
+
+  <h3>Examples</h3>
+  
+  <pre><code>- $current: $FilePath = $SolutionPath(0)
+- $iterations = 0
+- $result: $ValidationResult</code></pre>
+
+  <h3>Lambda Expressions</h3>
+  
+  <pre><code>$FunctionName = $param =&gt; expression
+$FunctionName = ($a, $b) =&gt; expression
+
+$SolutionPath = $n =&gt; `output-$n.md`</code></pre>
+
+  <h2>References</h2>
+  
+  <h3>Skill References</h3>
+  
+  <pre><code>[[skill-name]]</code></pre>
+
+  <h3>Section References</h3>
+  
+  <pre><code>[[skill-name#section-name]]   # Section in another skill
+[[#section-name]]             # Section in current skill</code></pre>
+
+  <h2>Semantic Markers</h2>
+  
+  <p>Mark content for LLM interpretation:</p>
+  
+  <pre><code>&#123;~~appropriate location for this output&#125;
+&#123;~~determine best strategy for $task&#125;</code></pre>
+
+  <p>Variables are expanded before interpretation:</p>
+  
+  <pre><code>&#123;~~the path for candidate $n&#125;
+# First $n is resolved, then LLM interprets</code></pre>
+
+  <h2>Control Flow</h2>
+  
+  <h3>FOR EACH</h3>
+  
+  <pre><code>FOR EACH $item IN $collection:
+  - Process $item
+  - Next step
+
+FOR EACH ($task, $strategy) IN $transforms:
+  - Execute $task with $strategy</code></pre>
+
+  <h3>WHILE</h3>
+  
+  <pre><code>WHILE (condition AND $iterations &lt; 5):
+  - Perform iteration
+  - Update state</code></pre>
+
+  <h3>IF/THEN/ELSE</h3>
+  
+  <pre><code>IF $condition THEN:
+  - Do this
+ELSE:
+  - Do that
+
+IF $strategy = "accumulate" THEN:
+  - Validate incrementally
+ELSE:
+  - Collect all candidates</code></pre>
+
+  <h2>Composition</h2>
+  
+  <h3>Skill Delegation</h3>
+  
+  <pre><code>Execute [[orchestrate-map-reduce]] WITH:
+  - $transforms = [("Apply heuristic", "accumulate")]
+  - $validator = [[#validate-essence]]
+  - $return = "Report findings"</code></pre>
+
+  <h3>Parameter Passing</h3>
+  
+  <pre><code>Delegate to [[skill-name]] WITH:
+  - $param1 = value1
+  - $param2 = value2</code></pre>
+
+  <h2>Conventional Sections</h2>
+  
+  <p>While not required, these sections are conventional:</p>
+  
+  <pre><code>## Types
+Type definitions
+
+## Input
+Input parameter declarations
+
+## Context
+Contextual variable declarations
+
+## Workflow
+Main execution steps
+
+## [Section Name]
+Reusable prompts/sub-sections</code></pre>
+</DocsLayout>

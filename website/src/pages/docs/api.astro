@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="API">
+  <h1>Programmatic API</h1>
+  
+  <p class="lead">
+    Use zen programmatically in your TypeScript or JavaScript projects.
+  </p>
+
+  <h2>Installation</h2>
+  
+  <pre><code class="language-bash">npm install zen-lang</code></pre>
+
+  <h2>Parsing</h2>
+  
+  <pre><code class="language-typescript">import &#123; parse &#125; from 'zen-lang';
+
+const source = `---
+name: my-skill
+description: When you need to do something
+---
+
+## Workflow
+
+1. Do the thing
+`;
+
+const ast = parse(source);
+
+console.log(ast.frontmatter?.name);  // "my-skill"
+console.log(ast.sections.length);    // 1</code></pre>
+
+  <h2>Compiling</h2>
+  
+  <pre><code class="language-typescript">import &#123; compile &#125; from 'zen-lang';
+
+const result = compile(source, &#123;
+  expandTypes: true,
+  resolveReferences: true,
+  transformSemantics: true,
+&#125;);
+
+console.log(result.output);
+console.log(result.stats);</code></pre>
+
+  <h3>Compile Options</h3>
+  
+  <pre><code class="language-typescript">interface CompileOptions &#123;
+  expandTypes: boolean;        // Expand $Type to include definition
+  resolveReferences: boolean;  // Convert [[ref]] to [ref]
+  transformSemantics: boolean; // Convert semantic markers
+  inlineSkills: boolean;       // Inline referenced skill content
+  generateSourceMap: boolean;  // Generate source map
+  includeHeader: boolean;      // Include header comment
+&#125;</code></pre>
+
+  <h2>AST Types</h2>
+  
+  <pre><code class="language-typescript">import * as AST from 'zen-lang/ast';
+
+// Document structure
+interface Document &#123;
+  kind: 'Document';
+  frontmatter: Frontmatter | null;
+  sections: Section[];
+  errors: ParseError[];
+  span: Span;
+&#125;
+
+// Section
+interface Section &#123;
+  kind: 'Section';
+  level: number;
+  title: string;
+  anchor: string;
+  content: Block[];
+  span: Span;
+&#125;</code></pre>
+
+  <h2>Skill Registry</h2>
+  
+  <p>Create a registry for skill resolution:</p>
+  
+  <pre><code class="language-typescript">import &#123; compile, createRegistry &#125; from 'zen-lang';
+
+const registry = createRegistry(&#123;
+  'helper-skill': helperSource,
+  'another-skill': anotherSource,
+&#125;);
+
+const result = compile(source, &#123;
+  inlineSkills: true,
+&#125;, registry);</code></pre>
+
+  <h2>Tokenizer</h2>
+  
+  <pre><code class="language-typescript">import &#123; tokenize &#125; from 'zen-lang';
+
+const tokens = tokenize(source);
+for (const token of tokens) &#123;
+  console.log(token.type, token.value);
+&#125;</code></pre>
+</DocsLayout>

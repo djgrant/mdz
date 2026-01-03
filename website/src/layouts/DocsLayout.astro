@@ -1,0 +1,125 @@
+---
+import Layout from './Layout.astro';
+import Header from '../components/Header.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const sections = [
+  { 
+    title: 'Getting Started',
+    links: [
+      { href: '/docs', label: 'Overview' },
+      { href: '/docs/getting-started', label: 'Quick Start' },
+      { href: '/docs/concepts', label: 'Core Concepts' },
+    ]
+  },
+  {
+    title: 'Language',
+    links: [
+      { href: '/docs/syntax', label: 'Syntax Reference' },
+      { href: '/docs/types', label: 'Type System' },
+      { href: '/docs/control-flow', label: 'Control Flow' },
+      { href: '/docs/composition', label: 'Composition' },
+    ]
+  },
+  {
+    title: 'Tools',
+    links: [
+      { href: '/docs/cli', label: 'CLI' },
+      { href: '/docs/api', label: 'API' },
+      { href: '/docs/ide', label: 'IDE Support' },
+    ]
+  },
+];
+---
+
+<Layout title={`${title} - zen docs`} description={description}>
+  <Header currentPath="/docs" />
+  
+  <div class="max-w-[var(--max-width-content)] mx-auto px-[var(--spacing-page)] py-8">
+    <div class="flex gap-12">
+      <!-- Sidebar -->
+      <aside class="hidden lg:block w-64 flex-shrink-0">
+        <nav class="sticky top-24 space-y-8">
+          {sections.map(section => (
+            <div>
+              <h4 class="font-medium text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide mb-3">
+                {section.title}
+              </h4>
+              <ul class="space-y-1">
+                {section.links.map(link => (
+                  <li>
+                    <a 
+                      href={link.href}
+                      class:list={[
+                        'block py-1.5 px-3 text-sm rounded-md transition-colors',
+                        currentPath === link.href
+                          ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium'
+                          : 'text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] hover:text-[var(--color-text)] dark:hover:text-[var(--color-text-dark)]'
+                      ]}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </aside>
+      
+      <!-- Content -->
+      <main class="flex-1 min-w-0 max-w-[var(--max-width-prose)]">
+        <article class="prose prose-zinc dark:prose-invert prose-headings:font-medium prose-code:text-[var(--color-accent)] prose-a:text-[var(--color-accent)] prose-a:no-underline hover:prose-a:underline">
+          <slot />
+        </article>
+      </main>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .prose {
+    --tw-prose-body: var(--color-text);
+    --tw-prose-headings: var(--color-text);
+    --tw-prose-links: var(--color-accent);
+    --tw-prose-code: var(--color-accent);
+    --tw-prose-pre-bg: #1E1E1E;
+    --tw-prose-pre-code: #D4D4D4;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .prose {
+      --tw-prose-body: var(--color-text-dark);
+      --tw-prose-headings: var(--color-text-dark);
+    }
+  }
+  
+  .prose h1 { font-size: 2rem; margin-top: 0; }
+  .prose h2 { font-size: 1.5rem; margin-top: 2rem; }
+  .prose h3 { font-size: 1.25rem; }
+  
+  .prose pre {
+    background: #1E1E1E;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+  
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+  
+  .prose :not(pre) > code {
+    background: var(--color-accent)/10;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+  }
+</style>

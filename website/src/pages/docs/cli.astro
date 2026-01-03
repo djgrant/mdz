@@ -1,0 +1,65 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="CLI">
+  <h1>Command Line Interface</h1>
+  
+  <p class="lead">
+    Use the zen CLI to compile, validate, and inspect skills.
+  </p>
+
+  <h2>Installation</h2>
+  
+  <pre><code class="language-bash">npm install -g zen-lang</code></pre>
+
+  <h2>Commands</h2>
+  
+  <h3>compile</h3>
+  
+  <p>Compile a skill to LLM-ready format:</p>
+  
+  <pre><code class="language-bash">zen compile &lt;file&gt; [options]</code></pre>
+
+  <h4>Options</h4>
+  
+  <ul>
+    <li><code>-o, --output &lt;file&gt;</code> — Write output to file</li>
+    <li><code>-V, --verbose</code> — Show compilation statistics</li>
+    <li><code>--source-map</code> — Generate source map</li>
+    <li><code>--no-expand-types</code> — Don't expand type definitions</li>
+    <li><code>--no-resolve-refs</code> — Don't resolve references</li>
+    <li><code>--no-transform-sem</code> — Don't transform semantic markers</li>
+    <li><code>--no-header</code> — Don't include header comment</li>
+  </ul>
+
+  <h4>Examples</h4>
+  
+  <pre><code class="language-bash"># Compile to stdout
+zen compile skill.zen.md
+
+# Compile to file
+zen compile skill.zen.md -o skill.out.md
+
+# Compile with stats
+zen compile skill.zen.md -V</code></pre>
+
+  <h3>check</h3>
+  
+  <p>Validate syntax without compiling:</p>
+  
+  <pre><code class="language-bash">zen check &lt;file&gt;</code></pre>
+
+  <h3>parse</h3>
+  
+  <p>Output the AST as JSON:</p>
+  
+  <pre><code class="language-bash">zen parse &lt;file&gt;</code></pre>
+
+  <h2>Exit Codes</h2>
+  
+  <ul>
+    <li><code>0</code> — Success</li>
+    <li><code>1</code> — Error (invalid syntax, file not found, etc.)</li>
+  </ul>
+</DocsLayout>

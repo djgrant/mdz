@@ -1,0 +1,134 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Composition">
+  <h1>Composition</h1>
+  
+  <p class="lead">
+    Skills in zen compose through references and delegation, enabling 
+    complex behaviors from simple components.
+  </p>
+
+  <h2>Skill References</h2>
+  
+  <p>Reference another skill using wiki-link syntax:</p>
+  
+  <pre><code>[[skill-name]]</code></pre>
+
+  <p>In prose:</p>
+  
+  <pre><code>Execute the task using [[orchestrate-map-reduce]] methodology.</code></pre>
+
+  <h2>Section References</h2>
+  
+  <h3>Within Current Skill</h3>
+  
+  <pre><code>[[#section-name]]</code></pre>
+
+  <h3>In Another Skill</h3>
+  
+  <pre><code>[[skill-name#section-name]]</code></pre>
+
+  <h3>Section Names</h3>
+  
+  <p>Section names are derived from headings by:</p>
+  
+  <ol>
+    <li>Converting to lowercase</li>
+    <li>Replacing spaces with hyphens</li>
+    <li>Removing special characters</li>
+  </ol>
+  
+  <pre><code>## Validate Prompt
+→ [[#validate-prompt]]
+
+## 2. Execute Phase
+→ [[#2-execute-phase]]</code></pre>
+
+  <h2>Delegation with Parameters</h2>
+  
+  <p>Pass parameters when delegating to a skill:</p>
+  
+  <pre><code>Execute [[orchestrate-map-reduce]] WITH:
+  - $transforms = [("Apply heuristic", "accumulate")]
+  - $validator = [[#validate-essence]]
+  - $return = "Report findings"</code></pre>
+
+  <h3>Inline Parameters</h3>
+  
+  <p>For simple cases:</p>
+  
+  <pre><code>Use [[#section]] passing $current and $next</code></pre>
+
+  <h2>Dependency Declaration</h2>
+  
+  <p>Declare skill dependencies in frontmatter:</p>
+  
+  <pre><code>---
+name: my-skill
+description: When orchestrating complex workflows
+uses:
+  - orchestrate
+  - work-packages
+  - the-scientist
+---</code></pre>
+
+  <h3>Benefits</h3>
+  
+  <ul>
+    <li>Load order optimization</li>
+    <li>Circular dependency detection</li>
+    <li>Tooling autocomplete</li>
+    <li>Documentation of relationships</li>
+  </ul>
+
+  <h2>Patterns</h2>
+  
+  <h3>Sub-Agent Delegation</h3>
+  
+  <pre><code>Delegate to sub-agent with [[#experiment-prompt]]:
+  - The experiment work package
+  - Access to [[work-packages]] skill</code></pre>
+
+  <h3>Conditional Delegation</h3>
+  
+  <pre><code>IF $result = "failure" THEN:
+  - Attempt recovery using [[#recovery-strategy]]
+ELSE:
+  - Continue with [[#main-workflow]]</code></pre>
+
+  <h3>Iterative Composition</h3>
+  
+  <pre><code>FOR EACH $skill IN $skills:
+  - Load $skill source
+  - Execute with [[orchestrate]]
+  - Collect results</code></pre>
+
+  <h2>Reference Resolution</h2>
+  
+  <p>At compile time:</p>
+  
+  <ul>
+    <li><code>[[skill]]</code> → <code>[skill]</code> (prose-friendly)</li>
+    <li><code>[[skill#section]]</code> → <code>[skill#section]</code></li>
+    <li><code>[[#section]]</code> → <code>[#section]</code></li>
+  </ul>
+  
+  <p>With <code>inlineSkills: true</code>:</p>
+  
+  <ul>
+    <li>Referenced skill content is embedded</li>
+    <li>Section content is included inline</li>
+  </ul>
+
+  <h2>Best Practices</h2>
+  
+  <ul>
+    <li>Declare all dependencies in frontmatter</li>
+    <li>Create reusable prompt sections within skills</li>
+    <li>Use descriptive section names</li>
+    <li>Keep skills focused and composable</li>
+    <li>Document expected parameters</li>
+  </ul>
+</DocsLayout>

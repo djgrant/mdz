@@ -1,0 +1,84 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Core Concepts">
+  <h1>Core Concepts</h1>
+  
+  <p class="lead">
+    Understanding the fundamental ideas behind zen.
+  </p>
+
+  <h2>Skills</h2>
+  
+  <p>
+    A skill is a zen document that defines agent behavior. Skills are:
+  </p>
+  
+  <ul>
+    <li>Self-contained units of behavior</li>
+    <li>Composable through references</li>
+    <li>Documented through frontmatter</li>
+    <li>Compilable to LLM-ready prompts</li>
+  </ul>
+
+  <h2>Two-Layer Model</h2>
+  
+  <p>
+    Zen separates human authoring from LLM consumption:
+  </p>
+  
+  <ul>
+    <li><strong>Source Format</strong> — Compact, referenceable, human-friendly</li>
+    <li><strong>Compiled Format</strong> — Expanded, flattened, LLM-optimized</li>
+  </ul>
+
+  <h2>Semantic Hints</h2>
+  
+  <p>
+    Types and markers provide hints without enforcement:
+  </p>
+  
+  <ul>
+    <li>Types describe what values represent</li>
+    <li>Semantic markers let LLMs determine appropriate values</li>
+    <li>Neither is checked at runtime</li>
+  </ul>
+
+  <h2>CAPS Keywords</h2>
+  
+  <p>
+    Control flow uses uppercase keywords for visibility:
+  </p>
+  
+  <pre><code>FOR EACH, WHILE, IF, THEN, ELSE, AND, OR, NOT, WITH, IN</code></pre>
+  
+  <p>
+    This makes structure scannable and avoids conflicts with prose.
+  </p>
+
+  <h2>References</h2>
+  
+  <p>
+    Wiki-style <code>[[links]]</code> connect skills and sections:
+  </p>
+  
+  <ul>
+    <li>Enable modular skill design</li>
+    <li>Support skill reuse</li>
+    <li>Create traceable dependencies</li>
+  </ul>
+
+  <h2>Prose First</h2>
+  
+  <p>
+    Zen skills read like natural language:
+  </p>
+  
+  <ul>
+    <li>No cryptic syntax</li>
+    <li>Readable by non-programmers</li>
+    <li>Self-documenting</li>
+    <li>Valid markdown</li>
+  </ul>
+</DocsLayout>
