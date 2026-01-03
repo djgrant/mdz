@@ -4,11 +4,12 @@
   "version": "0.1.0",
   "description": "Documentation and playground for the zen language",
   "scripts": {
-    "dev": "npm run bundle:compiler && astro dev",
-    "build": "npm run bundle:compiler && astro build",
+    "dev": "npm run bundle:compiler && npm run build:worker && astro dev",
+    "build": "npm run bundle:compiler && npm run build:worker && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "bundle:compiler": "node scripts/bundle-compiler.js"
+    "bundle:compiler": "node scripts/bundle-compiler.js",
+    "build:worker": "node scripts/build-worker.js"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",

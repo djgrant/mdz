@@ -82,6 +82,47 @@ import Header from '../components/Header.astro';
   // Import the zen compiler
   import { compile as zenCompile, parse as zenParse } from '/zen-compiler.js';
 
+  // Initialize WebWorker for LSP features
+  const worker = new Worker('/zen-worker.js');
+  let requestId = 0;
+  const pendingRequests = new Map();
+
+  // Promise-based wrapper for worker requests
+  function sendWorkerRequest(type, params) {
+    return new Promise((resolve, reject) => {
+      const id = ++requestId;
+      pendingRequests.set(id, { resolve, reject });
+      worker.postMessage({ type, id, ...params });
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (pendingRequests.has(id)) {
+          pendingRequests.delete(id);
+          reject(new Error(`Worker request timeout: ${type}`));
+        }
+      }, 5000);
+    });
+  }
+
+  // Handle worker responses
+  worker.onmessage = (event) => {
+    const { type, id, result, error } = event.data;
+    const pending = pendingRequests.get(id);
+
+    if (pending) {
+      pendingRequests.delete(id);
+      if (error) {
+        pending.reject(new Error(error));
+      } else {
+        pending.resolve(result);
+      }
+    }
+  };
+
+  worker.onerror = (error) => {
+    console.error('Worker error:', error);
+  };
+
   // Default example
   const defaultSource = `---
 name: hello-world
@@ -309,7 +350,7 @@ Generate trace summary at {~~appropriate location}
 
     // Detect dark mode
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     // Create source editor
     const editor = monaco.editor.create(document.getElementById('editor'), {
       value: defaultSource,
@@ -324,6 +365,187 @@ Generate trace summary at {~~appropriate location}
       padding: { top: 16, bottom: 16 },
       wordWrap: 'on',
     });
+
+    // LSP to Monaco type conversions
+    function lspToMonacoPosition(line, character) {
+      // LSP is 0-based line and character, Monaco is 1-based
+      return { lineNumber: line + 1, column: character + 1 };
+    }
+
+    function monacoToLspPosition(position) {
+      // Monaco is 1-based, LSP is 0-based
+      return { line: position.lineNumber - 1, character: position.column - 1 };
+    }
+
+    function lspCompletionKindToMonaco(kind) {
+      const kindMap = {
+        'text': monaco.languages.CompletionItemKind.Text,
+        'method': monaco.languages.CompletionItemKind.Method,
+        'function': monaco.languages.CompletionItemKind.Function,
+        'constructor': monaco.languages.CompletionItemKind.Constructor,
+        'field': monaco.languages.CompletionItemKind.Field,
+        'variable': monaco.languages.CompletionItemKind.Variable,
+        'class': monaco.languages.CompletionItemKind.Class,
+        'interface': monaco.languages.CompletionItemKind.Interface,
+        'module': monaco.languages.CompletionItemKind.Module,
+        'property': monaco.languages.CompletionItemKind.Property,
+        'unit': monaco.languages.CompletionItemKind.Unit,
+        'value': monaco.languages.CompletionItemKind.Value,
+        'enum': monaco.languages.CompletionItemKind.Enum,
+        'keyword': monaco.languages.CompletionItemKind.Keyword,
+        'snippet': monaco.languages.CompletionItemKind.Snippet,
+        'color': monaco.languages.CompletionItemKind.Color,
+        'reference': monaco.languages.CompletionItemKind.Reference,
+        'file': monaco.languages.CompletionItemKind.File,
+        'folder': monaco.languages.CompletionItemKind.Folder,
+        'enumMember': monaco.languages.CompletionItemKind.EnumMember,
+        'constant': monaco.languages.CompletionItemKind.Constant,
+        'struct': monaco.languages.CompletionItemKind.Struct,
+        'event': monaco.languages.CompletionItemKind.Event,
+        'operator': monaco.languages.CompletionItemKind.Operator,
+        'typeParameter': monaco.languages.CompletionItemKind.TypeParameter,
+      };
+      return kindMap[kind] || monaco.languages.CompletionItemKind.Text;
+    }
+
+    function lspDiagnosticSeverityToMonaco(severity) {
+      const severityMap = {
+        'error': monaco.MarkerSeverity.Error,
+        'warning': monaco.MarkerSeverity.Warning,
+        'info': monaco.MarkerSeverity.Info,
+        'hint': monaco.MarkerSeverity.Hint,
+      };
+      return severityMap[severity] || monaco.MarkerSeverity.Error;
+    }
+
+    // Register completion provider
+    monaco.languages.registerCompletionItemProvider('zen', {
+      triggerCharacters: ['[', '$'],
+      provideCompletionItems: async (model, position) => {
+        try {
+          const source = model.getValue();
+          const uri = model.uri.toString();
+          const lspPos = monacoToLspPosition(position);
+
+          const result = await sendWorkerRequest('completions', {
+            uri,
+            source,
+            position: lspPos,
+          });
+
+          if (!result || !Array.isArray(result)) {
+            return { suggestions: [] };
+          }
+
+          const suggestions = result.map(item => {
+            const monacoItem = {
+              label: item.label,
+              kind: lspCompletionKindToMonaco(item.kind || 'text'),
+              insertText: item.insertText || item.label,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              documentation: item.documentation,
+              detail: item.detail,
+              sortText: item.sortText,
+              filterText: item.filterText,
+            };
+
+            // Add range if provided
+            if (item.range) {
+              monacoItem.range = {
+                startLineNumber: item.range.start.line + 1,
+                startColumn: item.range.start.character + 1,
+                endLineNumber: item.range.end.line + 1,
+                endColumn: item.range.end.character + 1,
+              };
+            }
+
+            return monacoItem;
+          });
+
+          return { suggestions };
+        } catch (error) {
+          console.error('Completion error:', error);
+          return { suggestions: [] };
+        }
+      },
+    });
+
+    // Register hover provider
+    monaco.languages.registerHoverProvider('zen', {
+      provideHover: async (model, position) => {
+        try {
+          const source = model.getValue();
+          const uri = model.uri.toString();
+          const lspPos = monacoToLspPosition(position);
+
+          const result = await sendWorkerRequest('hover', {
+            uri,
+            source,
+            position: lspPos,
+          });
+
+          if (!result || !result.contents) {
+            return null;
+          }
+
+          const hover = {
+            contents: Array.isArray(result.contents)
+              ? result.contents.map(c => ({ value: typeof c === 'string' ? c : c.value }))
+              : [{ value: typeof result.contents === 'string' ? result.contents : result.contents.value }],
+          };
+
+          if (result.range) {
+            hover.range = {
+              startLineNumber: result.range.start.line + 1,
+              startColumn: result.range.start.character + 1,
+              endLineNumber: result.range.end.line + 1,
+              endColumn: result.range.end.character + 1,
+            };
+          }
+
+          return hover;
+        } catch (error) {
+          console.error('Hover error:', error);
+          return null;
+        }
+      },
+    });
+
+    // Diagnostics with debouncing
+    let diagnosticsTimeout;
+    async function updateDiagnostics() {
+      clearTimeout(diagnosticsTimeout);
+      diagnosticsTimeout = setTimeout(async () => {
+        try {
+          const source = editor.getValue();
+          const uri = editor.getModel().uri.toString();
+
+          const result = await sendWorkerRequest('diagnostics', {
+            uri,
+            source,
+          });
+
+          if (!result || !Array.isArray(result)) {
+            return;
+          }
+
+          const markers = result.map(diagnostic => ({
+            severity: lspDiagnosticSeverityToMonaco(diagnostic.severity || 'error'),
+            startLineNumber: diagnostic.range.start.line + 1,
+            startColumn: diagnostic.range.start.character + 1,
+            endLineNumber: diagnostic.range.end.line + 1,
+            endColumn: diagnostic.range.end.character + 1,
+            message: diagnostic.message,
+            source: diagnostic.source || 'zen',
+            code: diagnostic.code,
+          }));
+
+          monaco.editor.setModelMarkers(editor.getModel(), 'zen', markers);
+        } catch (error) {
+          console.error('Diagnostics error:', error);
+        }
+      }, 150);
+    }
 
     // Create output viewer
     const output = monaco.editor.create(document.getElementById('output'), {
@@ -415,7 +637,10 @@ Generate trace summary at {~~appropriate location}
       }
     }
 
-    editor.onDidChangeModelContent(updateOutput);
+    editor.onDidChangeModelContent(() => {
+      updateOutput();
+      updateDiagnostics();
+    });
     document.getElementById('expandTypes').addEventListener('change', updateOutput);
     document.getElementById('transformSemantics').addEventListener('change', updateOutput);
     document.getElementById('resolveRefs').addEventListener('change', updateOutput);
@@ -430,6 +655,7 @@ Generate trace summary at {~~appropriate location}
     document.getElementById('examples').addEventListener('change', (e) => {
       if (e.target.value && examples[e.target.value]) {
         editor.setValue(examples[e.target.value]);
+        updateDiagnostics();
       }
     });
 
@@ -464,8 +690,9 @@ Generate trace summary at {~~appropriate location}
       }
     }
 
-    // Initial compile
+    // Initial compile and diagnostics
     updateOutput();
+    updateDiagnostics();
 
     // Handle dark mode changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
