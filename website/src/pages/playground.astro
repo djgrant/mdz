@@ -28,6 +28,10 @@ import Header from '../components/Header.astro';
             <input type="checkbox" id="transformSemantics" checked class="rounded">
             Transform semantics
           </label>
+          <label class="flex items-center gap-1.5 text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+            <input type="checkbox" id="resolveRefs" checked class="rounded">
+            Resolve refs
+          </label>
         </div>
       </div>
       
@@ -74,7 +78,10 @@ import Header from '../components/Header.astro';
 <!-- Load Monaco from CDN -->
 <script is:inline src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 
-<script is:inline>
+<script type="module">
+  // Import the zen compiler
+  import { compile as zenCompile, parse as zenParse } from '/zen-compiler.js';
+
   // Default example
   const defaultSource = `---
 name: hello-world
@@ -191,7 +198,7 @@ Generate trace summary at {~~appropriate location}
           [/^#+\s+.*$/, 'markup.heading'],
           
           // Control flow keywords
-          [/\b(FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH)\b/, 'keyword'],
+          [/\b(PARALLEL FOR EACH|FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/, 'keyword'],
           
           // Semantic markers
           [/\{~~/, { token: 'delimiter.semantic', next: '@semantic' }],
@@ -334,52 +341,44 @@ Generate trace summary at {~~appropriate location}
       wordWrap: 'on',
     });
 
-    // Simple compiler (placeholder - will be replaced with actual compiler)
+    // Compile function using real zen compiler
     function compile(source) {
       const expandTypes = document.getElementById('expandTypes').checked;
       const transformSemantics = document.getElementById('transformSemantics').checked;
+      const resolveRefs = document.getElementById('resolveRefs').checked;
       
-      let compiled = source;
-      
-      // Extract type definitions
-      const typeMap = new Map();
-      const typeRegex = /\$([A-Z][a-zA-Z0-9]*)\s*=\s*(.+)$/gm;
-      let match;
-      while ((match = typeRegex.exec(source)) !== null) {
-        typeMap.set(match[1], match[2].trim());
-      }
-      
-      if (expandTypes) {
-        // Expand type references in variable declarations
-        typeMap.forEach((def, name) => {
-          // Match $name: $Type patterns and expand
-          const varTypeRegex = new RegExp(`(\\$[a-z][a-zA-Z0-9-]*):\\s*\\$${name}(?![a-zA-Z])`, 'g');
-          compiled = compiled.replace(varTypeRegex, `$1: ${name} (${def})`);
+      try {
+        const result = zenCompile(source, {
+          expandTypes,
+          transformSemantics,
+          resolveReferences: resolveRefs,
+          includeHeader: true,
+          generateSourceMap: true,
+          inlineSkills: false,
         });
+        
+        return {
+          output: result.output,
+          stats: result.stats,
+          errors: result.diagnostics.filter(d => d.severity === 'error'),
+          warnings: result.diagnostics.filter(d => d.severity === 'warning'),
+        };
+      } catch (err) {
+        console.error('Compilation error:', err);
+        return {
+          output: `<!-- Compilation Error -->\n\n${err.message}\n\n<!-- Source -->\n${source}`,
+          stats: {
+            sourceLength: source.length,
+            outputLength: 0,
+            typesExpanded: 0,
+            referencesResolved: 0,
+            semanticMarkersTransformed: 0,
+            controlFlowStatements: 0,
+          },
+          errors: [{ message: err.message, span: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } }],
+          warnings: [],
+        };
       }
-      
-      if (transformSemantics) {
-        // Transform {~~content} to (determine: content)
-        compiled = compiled.replace(/\{~~([^}]+)\}/g, '(determine: $1)');
-      }
-      
-      // Transform [[ref]] to [ref]
-      compiled = compiled.replace(/\[\[([^\]]+)\]\]/g, '[$1]');
-      
-      // Add header
-      const nameMatch = source.match(/name:\s*(.+)/);
-      const skillName = nameMatch ? nameMatch[1].trim() : 'unknown';
-      compiled = `<!-- Compiled Zen Skill: ${skillName} -->\n<!-- Generated: ${new Date().toISOString()} -->\n\n${compiled}`;
-      
-      return {
-        output: compiled,
-        stats: {
-          sourceLength: source.length,
-          outputLength: compiled.length,
-          typesExpanded: typeMap.size,
-        },
-        errors: [],
-      };
     }
 
     // Update output on change
@@ -389,14 +388,37 @@ Generate trace summary at {~~appropriate location}
       output.setValue(result.output);
       
       // Update stats
-      document.getElementById('stats').textContent = 
-        `Types: ${result.stats.typesExpanded} | Chars: ${result.stats.sourceLength} → ${result.stats.outputLength}`;
-      document.getElementById('errors').textContent = `Errors: ${result.errors.length}`;
+      const statsText = [
+        `Types: ${result.stats.typesExpanded}`,
+        `Refs: ${result.stats.referencesResolved}`,
+        `Semantic: ${result.stats.semanticMarkersTransformed}`,
+        `Control: ${result.stats.controlFlowStatements}`,
+        `Chars: ${result.stats.sourceLength} → ${result.stats.outputLength}`,
+      ].join(' | ');
+      
+      document.getElementById('stats').textContent = statsText;
+      
+      const errorCount = result.errors.length;
+      const warningCount = result.warnings?.length || 0;
+      let errorsText = `Errors: ${errorCount}`;
+      if (warningCount > 0) {
+        errorsText += ` Warnings: ${warningCount}`;
+      }
+      document.getElementById('errors').textContent = errorsText;
+      
+      // Update error styling
+      const errorsEl = document.getElementById('errors');
+      if (errorCount > 0) {
+        errorsEl.classList.add('text-red-500');
+      } else {
+        errorsEl.classList.remove('text-red-500');
+      }
     }
 
     editor.onDidChangeModelContent(updateOutput);
     document.getElementById('expandTypes').addEventListener('change', updateOutput);
     document.getElementById('transformSemantics').addEventListener('change', updateOutput);
+    document.getElementById('resolveRefs').addEventListener('change', updateOutput);
 
     // Update position
     editor.onDidChangeCursorPosition((e) => {

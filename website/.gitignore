@@ -22,3 +22,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+# Generated compiler bundle (built from source)
+public/zen-compiler.js
+public/zen-compiler.js.map
+public/zen-compiler.min.js
+public/zen-compiler.min.js.map
