@@ -5,9 +5,9 @@
  * to find edge cases and limitations.
  */
 
-import { parse } from '../../src/parser/parser';
-import { compile } from '../../src/compiler/compiler';
-import * as AST from '../../src/parser/ast';
+import { parse } from '../packages/core/src/parser/parser';
+import { compile } from '../packages/core/src/compiler/compiler';
+import * as AST from '../packages/core/src/parser/ast';
 
 // ============================================================================
 // Test Infrastructure

@@ -10,8 +10,7 @@
  * - Document symbols
  */
 
-import { parse } from '../parser/parser';
-import * as AST from '../parser/ast';
+import { parse, AST } from '@mdz/core';
 
 // ============================================================================
 // LSP Types (subset needed for implementation)

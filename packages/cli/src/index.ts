@@ -16,8 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from '../parser/parser';
-import { compile, CompileOptions, buildFullDependencyGraph, createRegistry } from '../compiler/compiler';
+import { parse, compile, CompileOptions } from '@mdz/core';
 
 // ============================================================================
 // Version

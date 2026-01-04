@@ -5,23 +5,34 @@ MDZ is a component-based architecture for multi-agent systems. It provides a mar
 ## Project Structure
 
 ```
-src/
-├── cli/           # CLI commands (mdz compile, check, graph, lsp)
-├── compiler/      # Validator-first compiler (no transformations)
-├── lsp/           # Language Server Protocol implementation
-└── parser/        # Lexer, parser, AST definitions
+packages/
+├── core/              # Parser, compiler, AST (the core library)
+│   └── src/
+│       ├── parser/    # Lexer, parser, AST definitions
+│       ├── compiler/  # Validator-first compiler
+│       └── index.ts   # Main exports
+├── cli/               # CLI tool (mdz command)
+│   └── src/
+└── lsp/               # Language Server Protocol implementation
+    └── src/
+
+src/                   # Legacy location (still used by tests, being migrated)
+├── cli/
+├── compiler/
+├── lsp/
+└── parser/
 
 spec/
-├── grammar.md     # Formal grammar specification (v0.3)
-└── language-spec.md  # Language specification (v0.3)
+├── grammar.md         # Formal grammar specification (v0.3)
+└── language-spec.md   # Language specification (v0.3)
 
 editors/
-├── vscode/        # VS Code extension (syntax highlighting)
-└── zed/           # Zed extension (syntax highlighting)
+├── vscode/            # VS Code extension (syntax highlighting)
+└── zed/               # Zed extension (syntax highlighting)
 
-examples/          # Example MDZ skills
-tests/             # Test suites
-website/           # Documentation website and playground
+examples/              # Example MDZ skills
+tests/                 # Test suites
+website/               # Documentation website and playground
 ```
 
 ## Key Principles
@@ -60,7 +71,8 @@ Work packages are tracked in `.opencode/work/`:
 ```bash
 pnpm install          # Install dependencies
 pnpm test             # Run tests
-pnpm build            # Build all packages
+pnpm build            # Build root package
+pnpm build:packages   # Build all packages
 ```
 
 ## Current State (v0.3)
@@ -71,3 +83,4 @@ pnpm build            # Build all packages
 - ✓ LSP server for IDE integration
 - ✓ VS Code and Zed extensions
 - ✓ Web playground with live validation
+- ✓ Monorepo structure with packages/

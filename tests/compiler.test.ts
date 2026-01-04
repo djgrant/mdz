@@ -4,7 +4,7 @@
  * Tests for the refactored zen compiler that validates rather than transforms.
  */
 
-import { compile, createRegistry, buildFullDependencyGraph } from '../src/compiler/compiler';
+import { compile, createRegistry, buildFullDependencyGraph } from '../packages/core/src/compiler/compiler';
 
 // ============================================================================
 // Test Runner

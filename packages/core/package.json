@@ -1,0 +1,26 @@
+{
+  "name": "@zenmarkdown/core",
+  "version": "0.3.0",
+  "description": "MDZ parser and compiler - core library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mdz",
+    "markdown",
+    "parser",
+    "compiler",
+    "multi-agent"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

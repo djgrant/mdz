@@ -1,0 +1,27 @@
+{
+  "name": "@zenmarkdown/lsp",
+  "version": "0.3.0",
+  "description": "MDZ Language Server Protocol implementation",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mdz",
+    "lsp",
+    "language-server"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@zenmarkdown/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

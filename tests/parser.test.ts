@@ -4,8 +4,8 @@
  * Tests for the MDZ parser.
  */
 
-import { parse } from '../src/parser/parser';
-import * as AST from '../src/parser/ast';
+import { parse } from '../packages/core/src/parser/parser';
+import * as AST from '../packages/core/src/parser/ast';
 
 // ============================================================================
 // Test Runner (Simple Node.js native test runner compatible)

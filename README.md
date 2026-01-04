@@ -216,7 +216,7 @@ npm run compile
 
 ### TextMate Grammar
 
-A standalone TextMate grammar is available at `editors/zen.tmLanguage.json` for use with other editors.
+The TextMate grammar is available at `editors/vscode/syntaxes/zen.tmLanguage.json` for use with other editors.
 
 ## Language Specification
 
@@ -262,7 +262,7 @@ See the `examples/` directory for real-world skills:
 - Cross-file validation
 - Cycle detection across skill graph
 
-See [`experiments/`](experiments/) for detailed proposals.
+See [`ROADMAP.md`](ROADMAP.md) for detailed proposals.
 
 ## Contributing
 

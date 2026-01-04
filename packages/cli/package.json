@@ -1,0 +1,28 @@
+{
+  "name": "@zenmarkdown/cli",
+  "version": "0.3.0",
+  "description": "MDZ command-line interface",
+  "bin": {
+    "mdz": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mdz",
+    "cli",
+    "markdown"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@zenmarkdown/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

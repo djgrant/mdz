@@ -7,8 +7,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from '../src/parser/parser';
-import { compile } from '../src/compiler/compiler';
+import { parse } from '../packages/core/src/parser/parser';
+import { compile } from '../packages/core/src/compiler/compiler';
 
 // ============================================================================
 // Test Runner
