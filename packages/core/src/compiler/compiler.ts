@@ -763,11 +763,6 @@ export class Compiler {
       }
     }
 
-    if (skillParams.length === 0) {
-      // No parameters defined, skip validation
-      return;
-    }
-
     // Check provided parameters
     const providedParams = new Set(deleg.parameters.map(p => p.name));
     const requiredParams = skillParams.filter(p => p.isRequired);
@@ -784,16 +779,18 @@ export class Compiler {
       }
     }
 
-    // Check extra parameters
-    for (const param of deleg.parameters) {
-      const expected = skillParams.find(p => p.name === param.name);
-      if (!expected) {
-        this.diagnostics.push({
-          severity: 'warning',
-          code: 'W002',
-          message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
-          span: param.span,
-        });
+    // Check extra parameters (only if parameters are provided)
+    if (deleg.parameters.length > 0) {
+      for (const param of deleg.parameters) {
+        const expected = skillParams.find(p => p.name === param.name);
+        if (!expected) {
+          this.diagnostics.push({
+            severity: 'warning',
+            code: 'W002',
+            message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+            span: param.span,
+          });
+        }
       }
     }
   }

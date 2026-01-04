@@ -53,23 +53,10 @@ FOR EACH $skill IN $plan:
 
 ### 3. Execute Composition
 
-IF $mode = "sequential" THEN:
-  - FOR EACH $skill IN $plan:
-    - Execute $skill with results from dependencies
-    - Store result in $results
-    - IF {~~execution failed} THEN:
-      - Attempt recovery using [[#recovery-strategy]]
-
-ELSE:
-  IF $mode = "parallel" THEN:
-    - Group $plan into parallel batches (same level in DAG)
-    - FOR EACH $batch IN $batches:
-      - Execute all skills in $batch concurrently
-      - Wait for all to complete
-      - Merge results
-  ELSE:
-    - Execute based on runtime conditions
-    - Branch execution path based on intermediate results
+Execute [[orchestrate]] WITH:
+- $plan = $plan
+- $mode = $mode
+- $results = $results
 
 ### 4. Synthesize Results
 

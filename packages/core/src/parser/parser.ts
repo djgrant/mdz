@@ -1332,10 +1332,19 @@ export class Parser {
       this.advance(); // consume WITH
       this.expect('COLON'); // WITH:
 
-      const indentedBlocks = this.parseIndentedBlocks();
-      for (const block of indentedBlocks) {
-        if (block.kind === 'VariableDeclaration') {
-          parameters.push(block);
+      this.skipNewlines();
+
+      // Parse WITH parameters as list items (like Input sections)
+      while (this.check('LIST_MARKER') && !this.isAtEnd()) {
+        this.advance(); // consume LIST_MARKER
+        const param = this.parseVariableDeclaration(true); // true for inWithClause
+        parameters.push(param);
+
+        this.skipNewlines();
+
+        // Stop if we hit a non-list-marker or heading
+        if (!this.check('LIST_MARKER') || this.check('HEADING')) {
+          break;
         }
       }
     }

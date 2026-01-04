@@ -367,6 +367,67 @@ See [[#my-section]]
   });
 });
 
+describe('Validation - Contracts', () => {
+  test('errors on missing required parameter', () => {
+    const skillSource = `---
+name: test-skill
+description: test
+---
+
+## Input
+
+- $requiredParam: $String
+
+Execute [[test-skill]]
+`;
+
+    const result = compile(skillSource, { validateContracts: true });
+
+    const contractErrors = result.diagnostics.filter(d => d.code === 'E011');
+    assertEqual(contractErrors.length, 1);
+    assertIncludes(contractErrors[0].message, 'requiredParam');
+    assertIncludes(contractErrors[0].message, 'missing');
+  });
+
+  test('no error when required parameter is provided', () => {
+    const skillSource = `---
+name: test-skill
+description: test
+---
+
+## Input
+
+- $requiredParam: $String
+
+Execute [[test-skill]] WITH:
+- $requiredParam = "value"
+`;
+
+    const result = compile(skillSource, { validateContracts: true });
+
+    const contractErrors = result.diagnostics.filter(d => d.code === 'E011');
+    assertEqual(contractErrors.length, 0);
+  });
+
+  test('warns on extra parameter', () => {
+    const skillSource = `---
+name: test-skill
+description: test
+---
+
+Execute [[test-skill]] WITH:
+- $extraParam = "value"
+`;
+
+    const result = compile(skillSource, { validateContracts: true });
+
+    const contractWarnings = result.diagnostics.filter(d => d.code === 'W002');
+    assertEqual(contractWarnings.length, 1);
+    assertIncludes(contractWarnings[0].message, 'extraParam');
+    assertIncludes(contractWarnings[0].message, 'not defined');
+  });
+});
+
 // ============================================================================
 // Source Maps
 // ============================================================================

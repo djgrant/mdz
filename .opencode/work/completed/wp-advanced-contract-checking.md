@@ -28,7 +28,27 @@ Contract checking catches integration errors before runtime.
 - ✅ Extract parameter requirements from Input sections (extractParameters method)
 - ✅ Validate call sites provide required parameters (validateContracts method)
 - ✅ Emit diagnostics for mismatches (E011 for missing required params, W002 for extra params)
+- ✅ Fixed parser to correctly handle `WITH:` parameter syntax using list markers
+- ✅ Added comprehensive unit tests for contract validation scenarios
+- ✅ Updated examples to demonstrate working delegation with parameters
 
 ## Evaluation
 
-Contract checking successfully catches parameter mismatches before runtime. The DX is good - developers get clear error messages when delegating to skills with incorrect parameters. This prevents integration bugs that would only surface during execution.
+**Issues Fixed:**
+
+1. **Parser Bug Fixed**: Updated `parseDelegation()` to parse WITH parameters as list items (using `-` markers) instead of indented blocks, matching the Input section parsing pattern.
+
+2. **Tests Added**: Added comprehensive contract validation tests covering missing required parameters, provided parameters, and extra parameters.
+
+3. **Examples Updated**: Modified skill-composer.mdz to demonstrate delegation with WITH parameters.
+
+4. **Validation Logic Improved**: Modified contract validation to check for extra parameters even when no parameters are defined in the target skill.
+
+**Verification:**
+
+- All parser tests pass (32/32)
+- All compiler tests pass (34/34)
+- Contract validation correctly identifies missing required parameters, accepts valid delegations, and warns about extra parameters
+- Examples compile without errors and demonstrate proper syntax
+
+The implementation now provides reliable contract checking with good developer experience.

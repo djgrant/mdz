@@ -239,6 +239,29 @@ Execute [[orchestrate-map-reduce]]
     assertEqual((delegs[0].target as AST.SkillReference).skill, 'orchestrate-map-reduce');
   });
 
+  test('parses delegation with WITH parameters', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process-data]] WITH:
+- $input: $String
+- $format = "json"
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters.length, 2);
+    assertEqual(delegs[0].parameters[0].name, 'input');
+    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'String');
+    assertEqual(delegs[0].parameters[0].isRequired, true);
+    assertEqual(delegs[0].parameters[1].name, 'format');
+    assertEqual(delegs[0].parameters[1].value!.kind, 'StringLiteral');
+    assertEqual((delegs[0].parameters[1].value as AST.StringLiteral).value, 'json');
+  });
+
   test('parses section reference in current doc', () => {
     const doc = parse(`---
 name: test
