@@ -4,7 +4,7 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
-  // ../src/parser/ast.ts
+  // ../packages/core/src/parser/ast.ts
   function createSpan(startLine, startColumn, startOffset, endLine, endColumn, endOffset) {
     return {
       start: { line: startLine, column: startColumn, offset: startOffset },
@@ -18,7 +18,7 @@
     };
   }
 
-  // ../src/parser/lexer.ts
+  // ../packages/core/src/parser/lexer.ts
   var Lexer = class {
     constructor(source) {
       __publicField(this, "source");
@@ -472,7 +472,7 @@
     return new Lexer(source).tokenize();
   }
 
-  // ../src/parser/parser.ts
+  // ../packages/core/src/parser/parser.ts
   var Parser = class {
     // v0.2: Track if we're inside a loop
     constructor(source) {
@@ -1585,7 +1585,7 @@
     return new Parser(source).parse();
   }
 
-  // ../src/compiler/compiler.ts
+  // ../packages/core/src/compiler/compiler.ts
   var BUILTIN_PRIMITIVES = /* @__PURE__ */ new Set(["String", "Number", "Boolean"]);
   var Compiler = class {
     constructor(options = {}, registry) {
@@ -2056,7 +2056,7 @@
     return new Compiler(options, registry).compile(source);
   }
 
-  // ../src/lsp/server.ts
+  // ../packages/lsp/src/server.ts
   var ZenLanguageServer = class {
     constructor() {
       __publicField(this, "documents", /* @__PURE__ */ new Map());

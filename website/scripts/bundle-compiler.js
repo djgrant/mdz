@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const rootDir = resolve(__dirname, '../..');
+const coreDir = resolve(rootDir, 'packages/core');
 const outDir = resolve(__dirname, '../public');
 
 async function bundle() {
@@ -26,7 +27,7 @@ async function bundle() {
 
   try {
     const result = await esbuild.build({
-      entryPoints: [resolve(rootDir, 'src/index.ts')],
+      entryPoints: [resolve(coreDir, 'src/index.ts')],
       bundle: true,
       format: 'esm',
       platform: 'browser',
@@ -51,7 +52,7 @@ async function bundle() {
 
     // Also create a minified version
     const minResult = await esbuild.build({
-      entryPoints: [resolve(rootDir, 'src/index.ts')],
+      entryPoints: [resolve(coreDir, 'src/index.ts')],
       bundle: true,
       format: 'esm',
       platform: 'browser',

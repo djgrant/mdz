@@ -9,11 +9,11 @@
  * - diagnostics: Get syntax/semantic errors (legacy, use validate instead)
  */
 
-import { parse } from '../../src/parser/parser';
-import { compile, CompileResult, Diagnostic as CompilerDiagnostic, DependencyGraph, DocumentMetadata } from '../../src/compiler/compiler';
-import { ZenLanguageServer } from '../../src/lsp/server';
-import type { Document } from '../../src/parser/ast';
-import type { Position, CompletionItem, Hover, Diagnostic } from '../../src/lsp/server';
+import { parse } from '../../packages/core/src/parser/parser';
+import { compile, CompileResult, Diagnostic as CompilerDiagnostic, DependencyGraph, DocumentMetadata } from '../../packages/core/src/compiler/compiler';
+import { ZenLanguageServer } from '../../packages/lsp/src/server';
+import type { Document } from '../../packages/core/src/parser/ast';
+import type { Position, CompletionItem, Hover, Diagnostic } from '../../packages/lsp/src/server';
 
 // ============================================================================
 // Message Types

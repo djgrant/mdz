@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const rootDir = resolve(__dirname, '../..');
+const coreDir = resolve(rootDir, 'packages/core');
 const outDir = resolve(__dirname, '../public');
 
 async function bundle() {
@@ -41,6 +42,10 @@ async function bundle() {
       define: {
         'process.env.NODE_ENV': '"production"',
       },
+      // Resolve @mdz/core to actual path
+      alias: {
+        '@mdz/core': resolve(coreDir, 'src/index.ts'),
+      },
     });
 
     // Get bundle size info
@@ -67,6 +72,10 @@ async function bundle() {
       metafile: true,
       define: {
         'process.env.NODE_ENV': '"production"',
+      },
+      // Resolve @mdz/core to actual path
+      alias: {
+        '@mdz/core': resolve(coreDir, 'src/index.ts'),
       },
     });
 
