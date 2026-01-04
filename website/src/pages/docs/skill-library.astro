@@ -13,7 +13,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
    <p>Organize your skills in a simple hierarchy:</p>
 
-   <pre><code>skills/
+   <pre><code class="language-text">skills/
 ├── personal/
 │   ├── greeting.mdz
 │   └── code-review.mdz
@@ -47,7 +47,7 @@ git push origin v1.2.3</code></pre>
 
    <p>Include version in frontmatter (optional):</p>
 
-   <pre><code>---
+   <pre><code class="language-yaml">---
 name: greeting
 version: 1.2.3
 description: A friendly greeting skill
@@ -75,7 +75,7 @@ description: A friendly greeting skill
 
    <p>Build complex skills by composing simpler ones:</p>
 
-   <pre><code>---
+   <pre><code class="language-mdz">---
 name: complex-task
 description: A multi-step task
 ---
@@ -94,7 +94,7 @@ Finally, apply another-skill.</code></pre>
 
    <p>Skills can import others for reuse:</p>
 
-   <pre><code>---
+   <pre><code class="language-yaml">---
 name: dependent-skill
 imports:
   - base-skill.mdz

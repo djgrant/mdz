@@ -58,7 +58,7 @@ mkdir skills</code></pre>
      Create <code>skills/task-processor.mdz</code> with this content (see <a href="/docs/syntax">syntax reference</a> for details):
    </p>
 
-   <pre><code>---
+   <pre><code class="language-mdz">---
 name: task-processor
 description: When processing tasks with validation and error handling
 ---
@@ -134,7 +134,7 @@ Handle common failure modes:
      Copy the workflow section and use it in your LLM prompts. For example, in Claude Desktop:
    </p>
 
-   <pre><code>You are a task processor. Follow this process:
+   <pre><code class="language-mdz">You are a task processor. Follow this process:
 
 ## Types
 $Task = a unit of work with inputs and expected outputs
@@ -172,7 +172,7 @@ Task to process: [PASTE YOUR TASK HERE]</code></pre>
     Organize your skills in a dedicated directory structure for maintainability:
   </p>
 
-   <pre><code>your-project/
+   <pre><code class="language-text">your-project/
 ├── skills/
 │   ├── core/           # Fundamental skills
 │   │   ├── reasoning.mdz
@@ -261,7 +261,7 @@ mdz compile code-review.mdz --metadata  # Generate metadata JSON</code></pre>
     Use MDZ skills by copying their workflow sections into Claude prompts:
   </p>
 
-  <pre><code>You are a senior developer conducting a code review. Follow this process:
+  <pre><code class="language-mdz">You are a senior developer conducting a code review. Follow this process:
 
 ## Types
 $CodeChange = a set of file modifications with context

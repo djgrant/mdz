@@ -46,7 +46,7 @@ $User = person with name and email</code></pre>
      This produces the following token stream (simplified):
    </p>
 
-   <pre><code>[FRONTMATTER_START '---'], [LOWER_IDENT 'name'], [COLON ':' ], 
+   <pre><code class="language-json">[FRONTMATTER_START '---'], [LOWER_IDENT 'name'], [COLON ':' ], 
 [LOWER_IDENT 'example'], [FRONTMATTER_END '---'], [HEADING '## Types'],
 [TYPE_IDENT '$User'], [ASSIGN '='], [TEXT 'person with name and email'], [EOF]</code></pre>
 
@@ -80,7 +80,7 @@ $User = person with name and email</code></pre>
 
    <h4>Grammar Productions</h4>
 
-   <pre><code>Document ::= Frontmatter? Section* EOF
+   <pre><code class="language-ebnf">Document ::= Frontmatter? Section* EOF
 
 Frontmatter ::= FRONTMATTER_START FrontmatterContent* FRONTMATTER_END
 
@@ -263,7 +263,7 @@ name: calculator
      For malformed frontmatter like:
    </p>
 
-   <pre><code>---
+   <pre><code class="language-mdz">---
 name: example
 description: missing closing dashes
 ---
@@ -297,7 +297,7 @@ description: missing closing dashes
      For undefined type reference:
    </p>
 
-   <pre><code>$user: UnknownType = "john"</code></pre>
+   <pre><code class="language-mdz">$user: UnknownType = "john"</code></pre>
 
    <p>
      Produces warning:
@@ -324,7 +324,7 @@ description: missing closing dashes
 
    <h4>Example Scope Error</h4>
 
-   <pre><code>FOR EACH $item IN $items:
+   <pre><code class="language-mdz">FOR EACH $item IN $items:
   - $result = $undefined_var + 1</code></pre>
 
    <p>
@@ -351,7 +351,7 @@ description: missing closing dashes
 
    <h4>Example Reference Error</h4>
 
-   <pre><code>uses:
+   <pre><code class="language-mdz">uses:
   - math
 
 ## Workflow
