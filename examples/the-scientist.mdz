@@ -42,25 +42,25 @@ $Strategy = "accumulate" | "independent"
 
 WHILE (NOT diminishing returns AND $iteration < $maxIterations):
   
-  #### 2a. Design Experiment
+#### 2a. Design Experiment
   
   1. Create experiment work package at $workPackagePath($iteration)
   2. Define experiment steps to test $currentHypothesis
   3. Establish success criteria that are {~~measurable and objective}
   
-  #### 2b. Run Experiment
+#### 2b. Run Experiment
   
   Delegate to sub-agent with [[#experiment-prompt]]:
     - The experiment work package
     - Access to [[work-packages]] skill
   
-  #### 2c. Observe Results
+#### 2c. Observe Results
   
   1. Read experiment work package results
   2. Extract $observations from the results
   3. Update master work package with findings
   
-  #### 2d. Evaluate
+#### 2d. Evaluate
   
   1. Determine $result: $ValidationResult by comparing to success criteria
   
