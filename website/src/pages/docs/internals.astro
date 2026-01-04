@@ -1,0 +1,342 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Language Internals">
+  <h1>Language Internals</h1>
+
+  <p class="lead">
+    Deep dive into how MDZ works under the hood: parser architecture, AST structure, validation pipeline, compiler internals, and LSP integration.
+  </p>
+
+  <h2>Parser Architecture</h2>
+
+  <p>
+    MDZ uses a two-phase parsing approach: lexical analysis followed by recursive descent parsing.
+  </p>
+
+  <h3>Lexical Analysis</h3>
+
+  <p>
+    The <strong>lexer</strong> tokenizes source text into a stream of tokens. It handles:
+  </p>
+
+  <ul>
+    <li>Indentation-based block structure</li>
+    <li>Markdown constructs (headings, lists, code blocks)</li>
+    <li>MDZ-specific tokens (variables, references, semantic markers)</li>
+    <li>Control flow keywords (FOR, WHILE, IF, etc.)</li>
+  </ul>
+
+  <p>
+    Key features:
+  </p>
+
+  <ul>
+    <li><strong>Indentation awareness</strong> — Uses a stack to track nesting levels</li>
+    <li><strong>Context-sensitive tokenization</strong> — Different rules for frontmatter vs. content</li>
+    <li><strong>Template literal support</strong> — Handles template strings with interpolation</li>
+    <li><strong>Semantic marker parsing</strong> — Recognizes semantic markers</li>
+  </ul>
+
+  <h3>Recursive Descent Parser</h3>
+
+  <p>
+    The <strong>parser</strong> builds an Abstract Syntax Tree (AST) using recursive descent:
+  </p>
+
+  <ul>
+    <li><strong>Document</strong> — Top-level structure with frontmatter and sections</li>
+    <li><strong>Sections</strong> — Heading-based content organization</li>
+    <li><strong>Blocks</strong> — Type defs, variables, control flow, prose</li>
+    <li><strong>Expressions</strong> — Values, operations, references</li>
+  </ul>
+
+  <p>
+    The parser maintains state for:
+  </p>
+
+  <ul>
+    <li>Loop depth (for BREAK/CONTINUE validation)</li>
+    <li>Parse errors (recoverable syntax issues)</li>
+    <li>Source spans (for error reporting and IDE features)</li>
+  </ul>
+
+  <h2>AST Structure</h2>
+
+  <p>
+    The AST is a complete representation of the parsed document, with full type safety and source location tracking.
+  </p>
+
+  <h3>Core Types</h3>
+
+  <p>
+    Every AST node extends <code>BaseNode</code> with a <code>kind</code> discriminant and <code>span</code> for source location tracking.
+  </p>
+
+  <h3>Document Structure</h3>
+
+  <p>
+    The root is a <code>Document</code> containing frontmatter and sections, with parse errors collected during parsing.
+  </p>
+
+  <h3>Document Structure</h3>
+
+  <p>
+    The root is a <code>Document</code> containing frontmatter and sections, with parse errors collected during parsing.
+  </p>
+
+  <h3>Block Types</h3>
+
+  <p>
+    Blocks represent the different constructs that can appear in sections: type definitions, variable declarations, control flow statements (FOR EACH, WHILE, IF), delegation, and prose content (paragraphs, code blocks, lists).
+  </p>
+
+  <h3>Expression Types</h3>
+
+  <p>
+    Expressions handle values and computations: literals, variable references, function calls, skill/section references, semantic markers, and binary operations.
+  </p>
+
+  <h3>Type System</h3>
+
+  <p>
+    MDZ's type system supports semantic types (descriptive), enums, compound types (tuples), arrays, functions, and type references.
+  </p>
+
+  <h3>Control Flow</h3>
+
+  <p>
+    Control structures are represented as executable blocks: FOR EACH loops (sequential and parallel), WHILE loops, IF/THEN/ELSE statements, and BREAK/CONTINUE statements for loop control.
+  </p>
+
+  <h2>Validation Pipeline</h2>
+
+  <p>
+    MDZ uses a multi-stage validation pipeline to catch issues before runtime.
+  </p>
+
+  <h3>Stage 1: Parse Validation</h3>
+
+  <p>
+    During parsing, the parser detects and recovers from syntax errors:
+  </p>
+
+  <ul>
+    <li>Malformed frontmatter</li>
+    <li>Unclosed brackets or markers</li>
+    <li>Invalid indentation</li>
+    <li>Missing required tokens</li>
+  </ul>
+
+  <p>
+    Parse errors are recoverable—the parser continues and attaches errors to the AST.
+  </p>
+
+  <h3>Stage 2: Type Validation</h3>
+
+  <p>
+    The compiler checks that all type references resolve:
+  </p>
+
+  <ul>
+    <li>Variable type annotations reference defined types</li>
+    <li>Built-in primitives (String, Number, Boolean) are automatically recognized</li>
+    <li>Undefined types trigger warnings (not errors, as semantic types are flexible)</li>
+  </ul>
+
+  <h3>Stage 3: Scope Validation</h3>
+
+  <p>
+    Variables must be defined before use:
+  </p>
+
+  <ul>
+    <li>Tracks variable declarations in scope</li>
+    <li>Validates variable references in expressions</li>
+    <li>Handles loop variables and block scoping</li>
+    <li>Semantic references (variables that represent concepts) are tracked but not strictly validated</li>
+  </ul>
+
+  <h3>Stage 4: Reference Validation</h3>
+
+  <p>
+    Skill and section references must resolve:
+  </p>
+
+  <ul>
+    <li>Skills referenced with <code>[[skill]]</code> must be declared in <code>uses:</code> or <code>imports:</code></li>
+    <li>Local section references <code>[[#section]]</code> must exist in the current document</li>
+    <li>Cross-skill section references require the skill to be available in the registry</li>
+  </ul>
+
+  <h3>Stage 5: Dependency Analysis</h3>
+
+  <p>
+    The compiler builds a dependency graph:
+  </p>
+
+  <ul>
+    <li>Extracts dependencies from <code>uses:</code>, <code>imports:</code>, and inline references</li>
+    <li>Detects circular dependencies that could cause infinite loops</li>
+    <li>Generates visualization data for <code>mdz graph</code></li>
+  </ul>
+
+  <h2>Compiler Internals</h2>
+
+  <p>
+    The MDZ compiler is validator-first: it validates without transforming the source.
+  </p>
+
+  <h3>Source = Output Principle</h3>
+
+  <p>
+    <strong>The LLM sees exactly what you write.</strong> No code generation, no transpilation. The compiler:
+  </p>
+
+  <ul>
+    <li>Parses the source into AST</li>
+    <li>Extracts metadata and validates</li>
+    <li>Returns the original source unchanged</li>
+    <li>Provides diagnostics and dependency information</li>
+  </ul>
+
+  <h3>Metadata Extraction</h3>
+
+  <p>
+    The compiler extracts structured information for tooling: document metadata, type definitions, variable declarations, skill/section references, and section anchors.
+  </p>
+
+  <h3>Skill Registry</h3>
+
+  <p>
+    For cross-skill validation, the compiler uses a skill registry that provides access to other skills' ASTs and content. The registry enables validating references, checking type consistency, and providing IDE completions.
+  </p>
+
+  <h3>Dependency Graph Construction</h3>
+
+  <p>
+    Dependencies are extracted from multiple sources:
+  </p>
+
+  <ul>
+    <li><strong>uses:</strong> — Explicit skill dependencies</li>
+    <li><strong>imports:</strong> — Imported skills with aliases</li>
+    <li><strong>references:</strong> — Inline <code>[[skill]]</code> and <code>[[skill#section]]</code></li>
+  </ul>
+
+  <p>
+    Cycle detection uses DFS with a recursion stack to identify circular dependencies.
+  </p>
+
+  <h3>Diagnostic System</h3>
+
+  <p>
+    Validation produces structured diagnostics with severity levels (error, warning, info), error codes, messages, and source locations. Common error codes include undefined variables, types, skill references, and section references.
+  </p>
+
+  <h2>LSP Integration</h2>
+
+  <p>
+    The Language Server Protocol implementation provides IDE features for MDZ files.
+  </p>
+
+  <h3>Document State Management</h3>
+
+  <p>
+    The LSP server maintains state for each open document, including the parsed AST, extracted types and variables, references, and semantic markers for fast IDE operations.
+  </p>
+
+  <h3>Go-to-Definition</h3>
+
+  <p>
+    Supports navigation to:
+  </p>
+
+  <ul>
+    <li>Variable declarations from usage sites</li>
+    <li>Type definitions from references</li>
+    <li>Skill definitions from <code>[[skill]]</code> references</li>
+    <li>Section anchors from <code>[[#section]]</code> references</li>
+  </ul>
+
+  <h3>Hover Information</h3>
+
+  <p>
+    Provides contextual information on hover:
+  </p>
+
+  <ul>
+    <li>Type definitions and their structure</li>
+    <li>Variable types and lambda status</li>
+    <li>Skill descriptions from frontmatter</li>
+    <li>Reference targets</li>
+  </ul>
+
+  <h3>Autocompletion</h3>
+
+  <p>
+    Context-aware completions for:
+  </p>
+
+  <ul>
+    <li><strong>Skills</strong> — After <code>[[</code>, shows available skills</li>
+    <li><strong>Variables/Types</strong> — After <code>$</code>, shows defined names</li>
+    <li><strong>Semantic markers</strong> — After semantic marker syntax, suggests common patterns</li>
+    <li><strong>Keywords</strong> — At line start, suggests control flow constructs</li>
+  </ul>
+
+  <h3>Diagnostics</h3>
+
+  <p>
+    Real-time validation in the editor:
+  </p>
+
+  <ul>
+    <li>Parse errors from the parser</li>
+    <li>Undefined skill references</li>
+    <li>Type and scope issues</li>
+  </ul>
+
+  <h3>Document Symbols</h3>
+
+  <p>
+    Provides outline/symbol view:
+  </p>
+
+  <ul>
+    <li>Sections as top-level symbols</li>
+    <li>Types and variables as children</li>
+    <li>Control flow structures</li>
+  </ul>
+
+  <h3>Skill Registry Integration</h3>
+
+  <p>
+    The LSP maintains a workspace skill registry:
+  </p>
+
+  <ul>
+    <li>Auto-registers skills from open documents</li>
+    <li>Provides cross-file completions</li>
+    <li>Validates cross-skill references</li>
+  </ul>
+
+  <h2>Putting It All Together</h2>
+
+  <p>
+    When you run <code>mdz compile skill.mdz</code>:
+  </p>
+
+  <ol>
+    <li><strong>Lexer</strong> tokenizes the source</li>
+    <li><strong>Parser</strong> builds the AST</li>
+    <li><strong>Compiler</strong> extracts metadata and validates</li>
+    <li><strong>Output</strong> returns the original source (unchanged)</li>
+    <li><strong>LSP</strong> provides IDE features during editing</li>
+  </ol>
+
+  <p>
+    This architecture ensures MDZ skills are validated at build time while remaining readable by both humans and LLMs at runtime.
+  </p>
+</DocsLayout>

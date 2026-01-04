@@ -1,0 +1,237 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Using MDZ in Your Project">
+  <h1>Using MDZ in Your Project</h1>
+
+  <p class="lead">
+    Bridge the gap from playground examples to real-world adoption. Learn how to structure, validate, and integrate MDZ skills into your agent workflows.
+  </p>
+
+  <h2>Workflow Overview</h2>
+
+  <p>
+    Using MDZ in a project follows three core steps:
+  </p>
+
+  <ol>
+    <li><strong>Write Skills</strong> - Author reusable MDZ skills for specific tasks</li>
+    <li><strong>Validate</strong> - Check syntax, types, and references before runtime</li>
+    <li><strong>Integrate</strong> - Use validated skills with agents and LLMs</li>
+  </ol>
+
+  <h2>Project Structure</h2>
+
+  <p>
+    Organize your skills in a dedicated directory structure for maintainability:
+  </p>
+
+  <pre><code>your-project/
+├── skills/
+│   ├── core/           # Fundamental skills
+│   │   ├── reasoning.mdz
+│   │   └── planning.mdz
+│   ├── domain/         # Domain-specific skills
+│   │   ├── code-review.mdz
+│   │   └── testing.mdz
+│   └── orchestration/  # Multi-skill workflows
+│       └── project-manager.mdz
+├── agents/
+│   └── my-agent.ts     # Agent that uses skills
+├── package.json
+└── mdz.config.json     # Optional: skill registry config</code></pre>
+
+  <h2>Writing and Validating Skills</h2>
+
+  <p>
+    Create skills for common patterns in your project:
+  </p>
+
+  <pre><code><span class="zen-comment">---
+name: code-review
+description: When reviewing code changes for quality and correctness
+uses:
+  - reasoning
+---</span>
+
+<span class="zen-heading">## Types</span>
+
+<span class="zen-type">$CodeChange</span> = a set of file modifications with context
+<span class="zen-type">$ReviewFocus</span> = "security" | "performance" | "maintainability" | "correctness"
+<span class="zen-type">$Issue</span> = identified problem with severity and location
+
+<span class="zen-heading">## Input</span>
+
+- <span class="zen-variable">$changes</span>: <span class="zen-type">$CodeChange</span>
+- <span class="zen-variable">$focus</span>: <span class="zen-type">$ReviewFocus</span>[] = ["correctness", "maintainability"]
+
+<span class="zen-heading">## Context</span>
+
+- <span class="zen-variable">$issues</span>: <span class="zen-type">$Issue</span>[] = []
+
+<span class="zen-heading">## Workflow</span>
+
+1. Analyze <span class="zen-variable">$changes</span> for patterns and potential issues
+2. FOR EACH <span class="zen-variable">$area</span> IN <span class="zen-variable">$focus</span>:
+   - Apply focused review for <span class="zen-variable">$area</span>
+   - Add identified issues to <span class="zen-variable">$issues</span>
+3. Generate review summary with prioritized recommendations</code></pre>
+
+  <p>
+    Validate your skills to catch issues early:
+  </p>
+
+  <pre><code class="language-bash">cd skills
+mdz check code-review.mdz
+mdz check domain/*.mdz  # Validate all domain skills</code></pre>
+
+  <h2>Integration with Tools</h2>
+
+  <h3>Claude Desktop</h3>
+
+  <p>
+    Use MDZ skills by copying their workflow sections into Claude prompts:
+  </p>
+
+  <pre><code>You are a senior developer conducting a code review. Follow this process:
+
+## Types
+$CodeChange = a set of file modifications with context
+$ReviewFocus = "security" | "performance" | "maintainability" | "correctness"
+$Issue = identified problem with severity and location
+
+## Input
+- $changes: $CodeChange (provided below)
+- $focus: $ReviewFocus[] = ["correctness", "maintainability"]
+
+## Workflow
+1. Analyze $changes for patterns and potential issues
+2. FOR EACH $area IN $focus:
+   - Apply focused review for $area
+   - Document identified issues
+3. Generate review summary with prioritized recommendations
+
+Code changes to review:
+[PASTE YOUR CODE CHANGES HERE]</code></pre>
+
+  <h3>OpenCode Agents</h3>
+
+  <p>
+    Load MDZ skills directly in OpenCode agent configurations:
+  </p>
+
+  <pre><code class="language-typescript">import &#123; skill &#125; from 'opencode';
+
+const codeReviewer = skill('code-review');
+
+// Use in agent workflow
+const reviewResult = await codeReviewer.execute(&#123;
+  changes: codeChanges,
+  focus: ['security', 'performance']
+&#125;);</code></pre>
+
+  <p>
+    Or reference skills in agent prompts:
+  </p>
+
+  <pre><code class="language-typescript">const agent = new Agent(&#123;
+  skills: ['skills/code-review.mdz', 'skills/testing.mdz'],
+  prompt: `You have access to specialized skills. Use [[code-review]] for code reviews.`
+&#125;);</code></pre>
+
+  <h3>Custom Agent Frameworks</h3>
+
+  <p>
+    Parse and integrate MDZ skills programmatically:
+  </p>
+
+  <pre><code class="language-typescript">import &#123; parse, compile &#125; from 'zenmarkdown';
+import * as fs from 'fs';
+
+class SkillLoader &#123;
+  loadSkill(filePath: string) &#123;
+    const source = fs.readFileSync(filePath, 'utf-8');
+    const result = compile(source);
+
+    if (result.diagnostics.some(d => d.severity === 'error')) &#123;
+      throw new Error('Skill validation failed');
+    &#125;
+
+    return &#123;
+      metadata: result.metadata,
+      workflow: this.extractWorkflow(result.output),
+      source: result.output
+    &#125;;
+  &#125;
+
+  private extractWorkflow(source: string) &#123;
+    // Extract ## Workflow section for LLM consumption
+    const lines = source.split('\n');
+    const workflowStart = lines.findIndex(line => line.startsWith('## Workflow'));
+    // ... extract workflow content
+  &#125;
+&#125;</code></pre>
+
+  <h2>Copy-Paste Starting Point</h2>
+
+  <p>
+    Use this template to create your first project skill:
+  </p>
+
+  <pre><code><span class="zen-comment">---
+name: task-processor
+description: When processing tasks with validation and error handling
+---</span>
+
+<span class="zen-heading">## Types</span>
+
+<span class="zen-type">$Task</span> = a unit of work with inputs and expected outputs
+<span class="zen-type">$Result</span> = successful completion or error details
+
+<span class="zen-heading">## Input</span>
+
+- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
+
+<span class="zen-heading">## Context</span>
+
+- <span class="zen-variable">$attempts</span> = 0
+- <span class="zen-variable">$maxAttempts</span> = 3
+
+<span class="zen-heading">## Workflow</span>
+
+1. Validate <span class="zen-variable">$task</span> inputs and requirements
+2. WHILE <span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span>:
+   - Execute <span class="zen-variable">$task</span>
+   - IF execution succeeded THEN:
+     - Return success result
+   - ELSE:
+     - Increment <span class="zen-variable">$attempts</span>
+     - Log error and retry strategy
+3. Return failure result with collected errors
+
+<span class="zen-heading">## Error Handling</span>
+
+Handle common failure modes:
+- Invalid inputs
+- Resource unavailability
+- Timeout conditions</code></pre>
+
+  <h2>Best Practices</h2>
+
+  <ul>
+    <li><strong>Validate Early</strong> - Run <code>mdz check</code> in CI/CD pipelines</li>
+    <li><strong>Skill Composition</strong> - Build complex workflows from simpler skills</li>
+    <li><strong>Type Contracts</strong> - Define clear input/output types for reliability</li>
+    <li><strong>Version Control</strong> - Track skill evolution alongside code changes</li>
+    <li><strong>Testing</strong> - Test skills with representative inputs and edge cases</li>
+  </ul>
+
+  <h2>Next Steps</h2>
+
+  <ul>
+    <li><a href="/docs/composition">Skill Composition</a> - Learn to combine skills effectively</li>
+    <li><a href="/docs/api">API Reference</a> - Programmatic skill integration</li>
+    <li><a href="/examples">Examples</a> - Real-world skill implementations</li>
+  </ul>
+</DocsLayout>

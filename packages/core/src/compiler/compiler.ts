@@ -26,6 +26,8 @@ export interface CompileOptions {
   validateTypes: boolean;
   /** Check variable scope */
   validateScope: boolean;
+  /** Check contract matching for delegations */
+  validateContracts: boolean;
 }
 
 export interface SourceMapEntry {
@@ -56,6 +58,7 @@ export interface DocumentMetadata {
   variables: VariableInfo[];
   references: ReferenceInfo[];
   sections: SectionInfo[];
+  parameters: VariableInfo[];
 }
 
 export interface ImportInfo {
@@ -159,6 +162,7 @@ export class Compiler {
       validateReferences: true,
       validateTypes: true,
       validateScope: true,
+      validateContracts: true,
       ...options,
     };
     this.registry = registry || null;
@@ -176,6 +180,7 @@ export class Compiler {
       variables: [],
       references: [],
       sections: [],
+      parameters: [],
     };
   }
 
@@ -214,6 +219,9 @@ export class Compiler {
     }
     if (this.options.validateReferences) {
       this.validateReferences();
+    }
+    if (this.options.validateContracts) {
+      this.validateContracts(ast);
     }
 
     // Output is the original source, unchanged
@@ -272,6 +280,11 @@ export class Compiler {
           level: section.level,
           span: section.span,
         });
+      }
+
+      // Extract parameters from Input section
+      if (section.title === 'Input') {
+        this.extractParameters(section.content);
       }
 
       // Extract types, variables, and references from section content
@@ -418,6 +431,20 @@ export class Compiler {
     
     for (const param of deleg.parameters) {
       this.extractVariableDeclaration(param);
+    }
+  }
+
+  private extractParameters(blocks: AST.Block[]): void {
+    for (const block of blocks) {
+      if (block.kind === 'VariableDeclaration') {
+        this.metadata.parameters.push({
+          name: block.name,
+          type: block.typeAnnotation?.name || null,
+          hasDefault: block.value !== null,
+          isRequired: !block.value,
+          span: block.span,
+        });
+      }
     }
   }
 
@@ -681,6 +708,92 @@ export class Compiler {
             });
           }
         }
+      }
+    }
+  }
+
+  private validateContracts(ast: AST.Document): void {
+    // Find all Delegation blocks
+    const delegations: AST.Delegation[] = [];
+    this.findDelegations(ast.sections, delegations);
+
+    for (const deleg of delegations) {
+      if (deleg.target.kind === 'SkillReference' && deleg.target.skill) {
+        this.validateDelegationParameters(deleg);
+      }
+    }
+  }
+
+  private findDelegations(sections: AST.Section[], delegations: AST.Delegation[]): void {
+    for (const section of sections) {
+      this.findDelegationsInBlocks(section.content, delegations);
+    }
+  }
+
+  private findDelegationsInBlocks(blocks: AST.Block[], delegations: AST.Delegation[]): void {
+    for (const block of blocks) {
+      if (block.kind === 'Delegation') {
+        delegations.push(block);
+      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+        this.findDelegationsInBlocks(block.body, delegations);
+      } else if (block.kind === 'WhileStatement') {
+        this.findDelegationsInBlocks(block.body, delegations);
+      } else if (block.kind === 'IfStatement') {
+        this.findDelegationsInBlocks(block.thenBody, delegations);
+        if (block.elseBody) {
+          this.findDelegationsInBlocks(block.elseBody, delegations);
+        }
+      }
+    }
+  }
+
+  private validateDelegationParameters(deleg: AST.Delegation): void {
+    const skillName = deleg.target.skill!;
+    let skillParams: VariableInfo[] = [];
+
+    // If it's the current document's skill, use this.metadata.parameters
+    if (skillName === this.metadata.name) {
+      skillParams = this.metadata.parameters;
+    } else if (this.registry) {
+      // Get from registry
+      const skill = this.registry.get(skillName);
+      if (skill) {
+        const skillCompileResult = compile(skill.source, { validateReferences: false, validateContracts: false });
+        skillParams = skillCompileResult.metadata.parameters;
+      }
+    }
+
+    if (skillParams.length === 0) {
+      // No parameters defined, skip validation
+      return;
+    }
+
+    // Check provided parameters
+    const providedParams = new Set(deleg.parameters.map(p => p.name));
+    const requiredParams = skillParams.filter(p => p.isRequired);
+
+    // Check missing required parameters
+    for (const req of requiredParams) {
+      if (!providedParams.has(req.name)) {
+        this.diagnostics.push({
+          severity: 'error',
+          code: 'E011',
+          message: `Required parameter '${req.name}' is missing for skill '${skillName}'`,
+          span: deleg.span,
+        });
+      }
+    }
+
+    // Check extra parameters
+    for (const param of deleg.parameters) {
+      const expected = skillParams.find(p => p.name === param.name);
+      if (!expected) {
+        this.diagnostics.push({
+          severity: 'warning',
+          code: 'W002',
+          message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+          span: param.span,
+        });
       }
     }
   }

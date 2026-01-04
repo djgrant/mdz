@@ -11,24 +11,26 @@ const { title, description } = Astro.props;
 const currentPath = Astro.url.pathname;
 
 const sections = [
-  { 
-    title: 'Getting Started',
-    links: [
-      { href: '/docs', label: 'Overview' },
-      { href: '/docs/getting-started', label: 'Quick Start' },
-      { href: '/docs/concepts', label: 'Core Concepts' },
-    ]
-  },
-  {
-    title: 'Language',
-    links: [
-      { href: '/docs/syntax', label: 'Syntax Reference' },
-      { href: '/docs/types', label: 'Type System' },
-      { href: '/docs/control-flow', label: 'Control Flow' },
-      { href: '/docs/composition', label: 'Composition' },
-      { href: '/docs/higher-order', label: 'Higher-Order Skills' },
-    ]
-  },
+   {
+     title: 'Getting Started',
+     links: [
+       { href: '/docs', label: 'Overview' },
+       { href: '/docs/getting-started', label: 'Quick Start' },
+       { href: '/docs/using-in-project', label: 'Using in Project' },
+       { href: '/docs/concepts', label: 'Core Concepts' },
+     ]
+   },
+   {
+     title: 'Language',
+     links: [
+       { href: '/docs/syntax', label: 'Syntax Reference' },
+       { href: '/docs/types', label: 'Type System' },
+       { href: '/docs/control-flow', label: 'Control Flow' },
+       { href: '/docs/composition', label: 'Composition' },
+       { href: '/docs/higher-order', label: 'Higher-Order Skills' },
+       { href: '/docs/internals', label: 'Language Internals' },
+     ]
+   },
   {
     title: 'Tools',
     links: [

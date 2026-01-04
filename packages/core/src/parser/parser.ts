@@ -324,6 +324,17 @@ export class Parser {
       return this.parseBlockquote();
     }
 
+    // Delegation
+    if (this.check('LOWER_IDENT') || this.check('UPPER_IDENT')) {
+      const verb = this.current().value.toLowerCase();
+      if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke') {
+        const lookahead = this.peek(1);
+        if (lookahead?.type === 'DOUBLE_LBRACKET') {
+          return this.parseDelegation();
+        }
+      }
+    }
+
     // Default: paragraph
     if (!this.isAtEnd() && !this.check('HEADING') && !this.check('NEWLINE')) {
       return this.parseParagraph();
@@ -1306,6 +1317,38 @@ export class Parser {
   private parseHorizontalRule(): AST.HorizontalRule {
     const token = this.advance();
     return { kind: 'HorizontalRule', span: token.span };
+  }
+
+  private parseDelegation(): AST.Delegation {
+    const verbToken = this.advance();
+    const verb = verbToken.value;
+
+    const target = this.parseReference();
+
+    const parameters: AST.VariableDeclaration[] = [];
+
+    // Check for WITH
+    if (this.check('WITH')) {
+      this.advance(); // consume WITH
+      this.expect('COLON'); // WITH:
+
+      const indentedBlocks = this.parseIndentedBlocks();
+      for (const block of indentedBlocks) {
+        if (block.kind === 'VariableDeclaration') {
+          parameters.push(block);
+        }
+      }
+    }
+
+    const span = AST.mergeSpans(verbToken.span, this.previous().span);
+
+    return {
+      kind: 'Delegation',
+      verb,
+      target,
+      parameters,
+      span,
+    };
   }
 
   private parseBlockquote(): AST.Paragraph {

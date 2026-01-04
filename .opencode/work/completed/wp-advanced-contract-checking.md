@@ -24,8 +24,11 @@ Contract checking catches integration errors before runtime.
 
 ## Results
 
-{To be filled out upon completion}
+- ✅ Produced Delegation AST nodes in parser (parseDelegation function)
+- ✅ Extract parameter requirements from Input sections (extractParameters method)
+- ✅ Validate call sites provide required parameters (validateContracts method)
+- ✅ Emit diagnostics for mismatches (E011 for missing required params, W002 for extra params)
 
 ## Evaluation
 
-{Does this catch real bugs? Is the DX good?}
+Contract checking successfully catches parameter mismatches before runtime. The DX is good - developers get clear error messages when delegating to skills with incorrect parameters. This prevents integration bugs that would only surface during execution.

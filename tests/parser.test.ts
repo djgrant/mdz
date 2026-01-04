@@ -231,14 +231,12 @@ description: test
 
 Execute [[orchestrate-map-reduce]]
 `);
-    const paras = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
     );
-    const refs = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SkillReference => c.kind === 'SkillReference')
-    );
-    assertEqual(refs.length, 1);
-    assertEqual(refs[0].skill, 'orchestrate-map-reduce');
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].target.kind, 'SkillReference');
+    assertEqual((delegs[0].target as AST.SkillReference).skill, 'orchestrate-map-reduce');
   });
 
   test('parses section reference in current doc', () => {
