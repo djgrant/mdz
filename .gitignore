@@ -14,11 +14,12 @@ website/dist/
 .idea/
 *.swp
 
-# OpenCode workspace
-.opencode/
-.screenshots/
+# OpenCode workspace (except work packages)
+.opencode/*
+!.opencode/work/
 
 # Test artifacts
 test-execution.js
 test-loop.mdz
 logo-concepts.html
+.screenshots/
