@@ -7,7 +7,7 @@
     "dev": "pnpm bundle:compiler && pnpm build:worker && astro dev",
     "build": "pnpm bundle:compiler && pnpm build:worker && astro build",
     "preview": "astro preview",
-    "deploy": "pnpm build && wrangler pages deploy dist --project-name=zen",
+    "push": "pnpm build && npx wrangler pages deploy dist --project-name=mdz-website",
     "astro": "astro",
     "bundle:compiler": "node scripts/bundle-compiler.js",
     "build:worker": "node scripts/build-worker.js"
@@ -19,6 +19,7 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260103.0",
     "esbuild": "^0.24.2"
   }
 }

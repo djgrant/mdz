@@ -17,7 +17,8 @@
     "test:edge-cases": "pnpm build && node dist/tests/edge-cases.test.js",
     "test:v02": "pnpm build && node dist/tests/v02-features.test.js",
     "cli": "pnpm build && node dist/src/cli/index.js",
-    "web": "pnpm -F zen-website --"
+    "web": "pnpm -F zen-website --",
+    "deploy": "pnpm -F zen-website push"
   },
   "keywords": [
     "markdown",
