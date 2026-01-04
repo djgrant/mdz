@@ -10,10 +10,10 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   </p>
 
   <h2>Directory Structure</h2>
-  
-  <p>Organize your skills in a clear hierarchy:</p>
-  
-  <pre><code>skills/
+
+   <p>Organize your skills in a simple hierarchy:</p>
+
+   <pre><code>skills/
 ├── personal/
 │   ├── greeting.mdz
 │   └── code-review.mdz
@@ -27,63 +27,99 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     └── communication/
         ├── email.mdz
         └── meeting-notes.mdz</code></pre>
-  
-  <p>This structure separates personal, team, and shared skills while grouping by domain.</p>
 
-  <h2>Versioning Strategy</h2>
-  
-  <p>Use semantic versioning (SemVer) for skills:</p>
-  
-  <ul>
-    <li><strong>MAJOR</strong> - Breaking changes to inputs, outputs, or behavior</li>
-    <li><strong>MINOR</strong> - New features or enhancements, backward compatible</li>
-    <li><strong>PATCH</strong> - Bug fixes and minor improvements</li>
-  </ul>
-  
-  <p>Tag releases in git for easy reference:</p>
-  
-  <pre><code class="language-bash">git tag v1.2.3
+   <p>This structure separates personal, team, and shared skills. For larger organizations, consider domain-specific subdirectories or role-based folders.</p>
+
+   <h2>Versioning Strategy</h2>
+
+   <p>Optional semantic versioning for skills when formal releases are needed:</p>
+
+   <ul>
+     <li><strong>MAJOR</strong> - Breaking changes</li>
+     <li><strong>MINOR</strong> - New features, backward compatible</li>
+     <li><strong>PATCH</strong> - Bug fixes</li>
+   </ul>
+
+   <p>Tag releases in git:</p>
+
+   <pre><code class="language-bash">git tag v1.2.3
 git push origin v1.2.3</code></pre>
-  
-  <p>Include version in skill frontmatter for tracking:</p>
-  
-  <pre><code>---
+
+   <p>Include version in frontmatter (optional):</p>
+
+   <pre><code>---
 name: greeting
 version: 1.2.3
 description: A friendly greeting skill
 ---</code></pre>
 
-  <h2>Sharing Patterns</h2>
-  
-  <p>Share skills through version-controlled repositories:</p>
-  
-  <ul>
-    <li><strong>Git Repositories</strong> - Host on GitHub, GitLab, or similar</li>
-    <li><strong>Public Sharing</strong> - Open-source community skills</li>
-    <li><strong>Private Sharing</strong> - Internal team or organization skills</li>
-    <li><strong>Git Submodules</strong> - Include shared skills in your projects</li>
-  </ul>
-  
-  <p>Add a shared skill library:</p>
-  
-  <pre><code class="language-bash">git submodule add https://github.com/user/shared-skills.git skills/shared</code></pre>
-  
-  <p>For distribution, consider packaging compiled skills as npm packages if needed.</p>
+   <p>For casual use, versioning can be informal or omitted.</p>
 
-  <h2>Team Workflows</h2>
-  
-  <p>Treat skills as code with standard development practices:</p>
-  
-  <ul>
-    <li>Use feature branches for developing new skills</li>
-    <li>Require pull request reviews before merging</li>
-    <li>Validate skills in CI/CD pipelines</li>
-    <li>Document skill usage and examples</li>
-  </ul>
-  
-  <p>Example GitHub Actions workflow for validation:</p>
-  
-  <pre><code class="language-yaml">name: Validate Skills
+   <h2>Sharing Patterns</h2>
+
+   <p>Share skills simply:</p>
+
+   <ul>
+     <li><strong>Copy-Paste</strong> - Direct file sharing for quick reuse</li>
+     <li><strong>Git Clone</strong> - Clone repositories locally</li>
+     <li><strong>Git Subtrees</strong> - Merge shared skills into your repo</li>
+     <li><strong>Git Submodules</strong> - Reference external repos (complex, use cautiously)</li>
+     <li><strong>NPM Packages</strong> - Package compiled skills for distribution</li>
+   </ul>
+
+   <p>Example with git subtree:</p>
+
+   <pre><code class="language-bash">git subtree add --prefix skills/shared https://github.com/user/shared-skills.git main</code></pre>
+
+   <h2>Skill Composition</h2>
+
+   <p>Build complex skills by composing simpler ones:</p>
+
+   <pre><code>---
+name: complex-task
+description: A multi-step task
+---
+
+# Complex Task
+
+Use basic-skill to start.
+
+Then, process the output.
+
+Finally, apply another-skill.</code></pre>
+
+   <p>Reference other skills to avoid duplication.</p>
+
+   <h2>Dependency Management</h2>
+
+   <p>Skills can import others for reuse:</p>
+
+   <pre><code>---
+name: dependent-skill
+imports:
+  - base-skill.mdz
+---</code></pre>
+
+   <p>Check dependency graphs:</p>
+
+   <pre><code class="language-bash">mdz graph your-skill.mdz</code></pre>
+
+   <p>Avoid circular dependencies for clean architecture.</p>
+
+   <h2>Team Workflows</h2>
+
+   <p>Treat skills as lightweight code:</p>
+
+   <ul>
+     <li>Use branches for development</li>
+     <li>Review changes via pull requests</li>
+     <li>Validate in CI</li>
+     <li>Document usage</li>
+   </ul>
+
+   <p>CI example:</p>
+
+   <pre><code class="language-yaml">name: Validate Skills
 on: [push, pull_request]
 jobs:
   validate:
@@ -91,8 +127,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npm install -g zenmarkdown
+      - run: npm install -g @mdz/cli
       - run: mdz check skills/**/*.mdz</code></pre>
-  
-  <p>Regularly update shared submodules and test integrations.</p>
+
+   <h2>Skill Testing</h2>
+
+   <p>Test skills beyond validation:</p>
+
+   <ul>
+     <li>Manual testing with sample inputs</li>
+     <li>Integration tests for compositions</li>
+     <li>Regression tests for updates</li>
+   </ul>
+
+   <p>Use MDZ CLI for basic checks:</p>
+
+   <pre><code class="language-bash">mdz check your-skill.mdz</code></pre>
+
+   <h2>Migration Paths</h2>
+
+   <p>Migrate personal skills to shared:</p>
+
+   <ol>
+     <li>Copy skill to shared directory</li>
+     <li>Update frontmatter (add version, description)</li>
+     <li>Commit to shared repo</li>
+     <li>Update import paths in dependent files</li>
+   </ol>
+
+   <p>For team to organization-wide, repeat with broader access.</p>
+
+   <h2>Skill Registry</h2>
+
+   <p>Discover skills:</p>
+
+   <ul>
+     <li>GitHub search with "mdz-skill" topic</li>
+     <li>Community forums and discussions</li>
+     <li>Future: Official MDZ skill registry</li>
+   </ul>
 </DocsLayout>

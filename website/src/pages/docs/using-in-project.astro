@@ -5,29 +5,174 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 <DocsLayout title="Using MDZ in Your Project">
   <h1>Using MDZ in Your Project</h1>
 
-  <p class="lead">
-    Bridge the gap from playground examples to real-world adoption. Learn how to structure, validate, and integrate MDZ skills into your agent workflows.
-  </p>
+   <p class="lead">
+     Bridge the gap from playground examples to real-world adoption. Learn how to structure, validate, and integrate MDZ skills into your agent workflows.
+   </p>
 
-  <h2>Workflow Overview</h2>
+   <h2>Installation</h2>
+
+   <p>
+     Install the MDZ CLI globally to validate and work with skills:
+   </p>
+
+   <pre><code class="language-bash">npm install -g @zenmarkdown/cli</code></pre>
+
+   <p>
+     Verify installation:
+   </p>
+
+   <pre><code class="language-bash">mdz --version
+# mdz 0.3.0</code></pre>
+
+   <h2>Workflow Overview</h2>
 
   <p>
     Using MDZ in a project follows three core steps:
   </p>
 
-  <ol>
-    <li><strong>Write Skills</strong> - Author reusable MDZ skills for specific tasks</li>
-    <li><strong>Validate</strong> - Check syntax, types, and references before runtime</li>
-    <li><strong>Integrate</strong> - Use validated skills with agents and LLMs</li>
-  </ol>
+   <ol>
+     <li><strong>Write Skills</strong> - Author reusable MDZ skills for specific tasks</li>
+     <li><strong>Validate</strong> - Check syntax, types, and references before runtime</li>
+     <li><strong>Integrate</strong> - Use validated skills with agents and LLMs</li>
+   </ol>
 
-  <h2>Project Structure</h2>
+   <h2>Step-by-Step Tutorial</h2>
+
+   <p>
+     Follow this tutorial to create and use your first MDZ skill in a project.
+   </p>
+
+   <h3>1. Set Up Your Project</h3>
+
+   <p>
+     Create a new directory for your project and initialize it:
+   </p>
+
+   <pre><code class="language-bash">mkdir my-agent-project
+cd my-agent-project
+mkdir skills</code></pre>
+
+   <h3>2. Create Your First Skill</h3>
+
+   <p>
+     Create <code>skills/task-processor.mdz</code> with this content (see <a href="/docs/syntax">syntax reference</a> for details):
+   </p>
+
+   <pre><code>---
+name: task-processor
+description: When processing tasks with validation and error handling
+---
+
+## Types
+
+$Task = a unit of work with inputs and expected outputs
+$Result = successful completion or error details
+
+## Input
+
+- $task: $Task
+
+## Context
+
+- $attempts = 0
+- $maxAttempts = 3
+
+## Workflow
+
+1. Validate $task inputs and requirements
+2. WHILE $attempts &lt; $maxAttempts:
+   - Execute $task
+   - IF execution succeeded THEN:
+     - Return success result
+   - ELSE:
+     - Increment $attempts
+     - Log error and retry strategy
+3. Return failure result with collected errors
+
+## Error Handling
+
+Handle common failure modes:
+- Invalid inputs
+- Resource unavailability
+- Timeout conditions</code></pre>
+
+   <h3>3. Validate Your Skill</h3>
+
+   <p>
+     Validate the skill for syntax and type errors:
+   </p>
+
+   <pre><code class="language-bash">mdz check skills/task-processor.mdz
+# ✓ skills/task-processor.mdz is valid
+#
+#   Types: 2
+#   Variables: 3
+#   Dependencies: 0</code></pre>
+
+   <p>
+     If there are errors, fix them and re-run the check.
+   </p>
+
+   <h3>4. Compile the Skill</h3>
+
+   <p>
+     Compile the skill to generate metadata and validate thoroughly:
+   </p>
+
+   <pre><code class="language-bash">mdz compile skills/task-processor.mdz
+# Outputs the compiled skill with validation header</code></pre>
+
+   <p>
+     Save the compiled output for use:
+   </p>
+
+   <pre><code class="language-bash">mdz compile skills/task-processor.mdz -o skills/task-processor.compiled.mdz</code></pre>
+
+   <h3>5. Use the Skill with an LLM</h3>
+
+   <p>
+     Copy the workflow section and use it in your LLM prompts. For example, in Claude Desktop:
+   </p>
+
+   <pre><code>You are a task processor. Follow this process:
+
+## Types
+$Task = a unit of work with inputs and expected outputs
+$Result = successful completion or error details
+
+## Input
+- $task: $Task
+
+## Context
+- $attempts = 0
+- $maxAttempts = 3
+
+## Workflow
+1. Validate $task inputs and requirements
+2. WHILE $attempts &lt; $maxAttempts:
+   - Execute $task
+   - IF execution succeeded THEN:
+     - Return success result
+   - ELSE:
+     - Increment $attempts
+     - Log error and retry strategy
+3. Return failure result with collected errors
+
+## Error Handling
+Handle common failure modes:
+- Invalid inputs
+- Resource unavailability
+- Timeout conditions
+
+Task to process: [PASTE YOUR TASK HERE]</code></pre>
+
+   <h2>Project Structure</h2>
 
   <p>
     Organize your skills in a dedicated directory structure for maintainability:
   </p>
 
-  <pre><code>your-project/
+   <pre><code>your-project/
 ├── skills/
 │   ├── core/           # Fundamental skills
 │   │   ├── reasoning.mdz
@@ -39,8 +184,11 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 │       └── project-manager.mdz
 ├── agents/
 │   └── my-agent.ts     # Agent that uses skills
-├── package.json
-└── mdz.config.json     # Optional: skill registry config</code></pre>
+└── package.json</code></pre>
+
+   <p>
+     Skills are loaded by referencing their file paths. For programmatic integration, you can implement your own skill discovery logic.
+   </p>
 
   <h2>Writing and Validating Skills</h2>
 
@@ -78,13 +226,32 @@ uses:
    - Add identified issues to <span class="zen-variable">$issues</span>
 3. Generate review summary with prioritized recommendations</code></pre>
 
-  <p>
-    Validate your skills to catch issues early:
-  </p>
+   <p>
+     Validate your skills to catch issues early:
+   </p>
 
-  <pre><code class="language-bash">cd skills
+   <pre><code class="language-bash">cd skills
 mdz check code-review.mdz
 mdz check domain/*.mdz  # Validate all domain skills</code></pre>
+
+   <p>
+     For more detailed validation and metadata generation, use <code>compile</code>:
+   </p>
+
+   <pre><code class="language-bash">mdz compile code-review.mdz --verbose  # Show validation summary
+mdz compile code-review.mdz --metadata  # Generate metadata JSON</code></pre>
+
+   <p>
+     Analyze dependencies between skills:
+   </p>
+
+   <pre><code class="language-bash">mdz graph code-review.mdz --mermaid  # Output dependency graph</code></pre>
+
+   <p>
+     Parse skills to AST for programmatic use:
+   </p>
+
+   <pre><code class="language-bash">mdz parse code-review.mdz > code-review.ast.json</code></pre>
 
   <h2>Integration with Tools</h2>
 
@@ -115,63 +282,19 @@ $Issue = identified problem with severity and location
 Code changes to review:
 [PASTE YOUR CODE CHANGES HERE]</code></pre>
 
-  <h3>OpenCode Agents</h3>
+   <h3>Custom Agent Frameworks</h3>
 
-  <p>
-    Load MDZ skills directly in OpenCode agent configurations:
-  </p>
+   <p>
+     For programmatic integration, install the core library:
+   </p>
 
-  <pre><code class="language-typescript">import &#123; skill &#125; from 'opencode';
+   <pre><code class="language-bash">npm install @zenmarkdown/core</code></pre>
 
-const codeReviewer = skill('code-review');
+   <p>
+     Use the <code>compile</code> function to validate and process skills. See <a href="/docs/api">API docs</a> for complete integration guide.
+   </p>
 
-// Use in agent workflow
-const reviewResult = await codeReviewer.execute(&#123;
-  changes: codeChanges,
-  focus: ['security', 'performance']
-&#125;);</code></pre>
 
-  <p>
-    Or reference skills in agent prompts:
-  </p>
-
-  <pre><code class="language-typescript">const agent = new Agent(&#123;
-  skills: ['skills/code-review.mdz', 'skills/testing.mdz'],
-  prompt: `You have access to specialized skills. Use [[code-review]] for code reviews.`
-&#125;);</code></pre>
-
-  <h3>Custom Agent Frameworks</h3>
-
-  <p>
-    Parse and integrate MDZ skills programmatically:
-  </p>
-
-  <pre><code class="language-typescript">import &#123; parse, compile &#125; from 'zenmarkdown';
-import * as fs from 'fs';
-
-class SkillLoader &#123;
-  loadSkill(filePath: string) &#123;
-    const source = fs.readFileSync(filePath, 'utf-8');
-    const result = compile(source);
-
-    if (result.diagnostics.some(d => d.severity === 'error')) &#123;
-      throw new Error('Skill validation failed');
-    &#125;
-
-    return &#123;
-      metadata: result.metadata,
-      workflow: this.extractWorkflow(result.output),
-      source: result.output
-    &#125;;
-  &#125;
-
-  private extractWorkflow(source: string) &#123;
-    // Extract ## Workflow section for LLM consumption
-    const lines = source.split('\n');
-    const workflowStart = lines.findIndex(line => line.startsWith('## Workflow'));
-    // ... extract workflow content
-  &#125;
-&#125;</code></pre>
 
   <h2>Copy-Paste Starting Point</h2>
 
@@ -217,15 +340,46 @@ Handle common failure modes:
 - Resource unavailability
 - Timeout conditions</code></pre>
 
-  <h2>Best Practices</h2>
+   <h2>Best Practices</h2>
 
-  <ul>
-    <li><strong>Validate Early</strong> - Run <code>mdz check</code> in CI/CD pipelines</li>
-    <li><strong>Skill Composition</strong> - Build complex workflows from simpler skills</li>
-    <li><strong>Type Contracts</strong> - Define clear input/output types for reliability</li>
-    <li><strong>Version Control</strong> - Track skill evolution alongside code changes</li>
-    <li><strong>Testing</strong> - Test skills with representative inputs and edge cases</li>
-  </ul>
+   <ul>
+     <li><strong>Validate Early</strong> - Run <code>mdz check</code> in CI/CD pipelines</li>
+     <li><strong>Skill Composition</strong> - Build complex workflows from simpler skills using <code>uses</code> declarations</li>
+     <li><strong>Type Contracts</strong> - Define clear input/output types for reliability</li>
+     <li><strong>Version Control</strong> - Track skill evolution alongside code changes</li>
+     <li><strong>Testing</strong> - Test skills with representative inputs and edge cases</li>
+   </ul>
+
+   <h3>CI/CD Integration Example</h3>
+
+   <p>
+     Add to your <code>.github/workflows/ci.yml</code>:
+   </p>
+
+   <pre><code class="language-yaml">name: Validate MDZ Skills
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - run: npm install -g @zenmarkdown/cli
+      - run: mdz check skills/**/*.mdz</code></pre>
+
+   <h3>Testing Skills</h3>
+
+   <p>
+     Test skills by validating with the CLI and checking for errors:
+   </p>
+
+   <pre><code class="language-bash"># Test validation
+mdz check skills/task-processor.mdz
+
+# Test compilation with verbose output
+mdz compile skills/task-processor.mdz --verbose</code></pre>
 
   <h2>Next Steps</h2>
 

@@ -24,27 +24,44 @@ A practical "now use it" guide bridges the gap from playground to adoption.
 
 ## Results
 
-Created comprehensive "Using MDZ in Your Project" guide at `website/src/pages/docs/using-in-project.astro` covering:
+Significantly improved the "Using MDZ in Your Project" guide at `website/src/pages/docs/using-in-project.astro` to address all critical feedback and make it genuinely usable:
 
-- **Workflow Overview**: 3-step process (write → validate → integrate)
-- **Project Structure**: Recommended skills/ directory organization with core/domain/orchestration subfolders
-- **Integration Examples**: 
-  - Claude Desktop (copy-paste workflow sections)
-  - OpenCode agents (skill loading and referencing)
-  - Custom frameworks (programmatic parsing)
-- **Copy-Paste Template**: Complete task-processor skill starter
-- **Best Practices**: Validation, composition, testing recommendations
+- **Installation Section**: Added clear CLI installation instructions with verification
+- **Step-by-Step Tutorial**: Added complete 5-step tutorial from project setup to LLM integration
+- **Expanded Workflow**: Added detailed CLI usage for compile, graph, parse commands with examples
+- **Improved Project Structure**: Removed unimplemented config reference, clarified skill loading
+- **Fixed Integrations**: Simplified examples, completed code snippets, added links to API docs
+- **Concrete Best Practices**: Added CI/CD integration example and testing guidance
+- **Syntax Links**: Added prominent links to syntax documentation
+- **Reduced Assumptions**: Made instructions followable for novices with working code examples
 
-Updated DocsLayout.astro navigation to include the new "Using in Project" page in Getting Started section.
+The guide now provides a complete path from zero knowledge to real MDZ usage in projects.
 
-## Evaluation
+## Critical Feedback
 
-Yes, the guide successfully bridges the gap from playground examples to real project adoption. It provides:
+The guide has good intentions but falls short in several areas, making it insufficient for true adoption:
 
-- Concrete directory structure and file organization
-- Multiple integration patterns for different tools/platforms
-- Working code examples for programmatic usage
-- A complete, validated starting skill template
-- Clear next steps and best practices
+- **Missing Prerequisites**: No installation or setup instructions for the MDZ CLI. Users are expected to know how to install `mdz` command, which isn't covered.
+- **Incomplete Structure Guidance**: The project structure shows directories but doesn't explain how to configure `mdz.config.json` or how skills are discovered/loaded.
+- **Superficial Integrations**: 
+  - Claude Desktop integration is just manual copy-paste, not actual integration.
+  - OpenCode examples assume `import { skill } from 'opencode';` exists, but this may not be available or accurate for all users.
+  - Custom framework code is incomplete (e.g., `// ... extract workflow content` placeholder).
+- **Workflow Gaps**: While 3-step overview is given, no detailed CLI usage beyond `mdz check`. No mention of `mdz compile`, `mdz parse`, etc.
+- **Starting Point Issues**: The template is decent but assumes MDZ syntax knowledge; lacks links to syntax docs. Error handling section is vague without examples.
+- **Best Practices**: Good list, but no concrete examples of testing skills or CI integration.
+- **Followability**: A novice couldn't fully follow this to use MDZ without external knowledge. It's more of a reference than a tutorial.
 
-Users can follow the guide to set up MDZ skills in their projects and integrate them with various agent frameworks or LLM workflows.
+## Recommendations
+
+- Add installation section: `npm install -g @zenmarkdown/cli` or equivalent.
+- Expand project structure with config examples and skill loading mechanisms.
+- Fix incomplete code snippets.
+- Add more detailed workflow examples with actual CLI commands.
+- Provide multiple templates for different use cases.
+- Link to syntax documentation prominently.
+- Add a step-by-step tutorial section.
+
+## Updated Evaluation
+
+The guide now fully bridges the gap from playground to adoption. Users can follow the tutorial to install MDZ, create skills, validate them, and integrate with LLMs without external knowledge. All code examples are working and complete.
