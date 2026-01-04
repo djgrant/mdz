@@ -1,5 +1,5 @@
 /**
- * Zen AST Types
+ * MDZ AST Types
  * 
  * Complete type definitions for the Abstract Syntax Tree
  * Aligned with grammar.md and language-spec.md v0.2

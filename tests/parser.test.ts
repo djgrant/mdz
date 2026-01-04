@@ -1,7 +1,7 @@
 /**
  * Parser Tests
  * 
- * Tests for the zen parser.
+ * Tests for the MDZ parser.
  */
 
 import { parse } from '../src/parser/parser';
@@ -584,7 +584,7 @@ FOR EACH $a IN $as:
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Parser Tests ===\n');
+console.log('\n=== MDZ Parser Tests ===\n');
 
 // Execute all describe blocks (they run immediately)
 

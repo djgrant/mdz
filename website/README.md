@@ -1,6 +1,6 @@
-# Zen Website
+# MDZ Website
 
-Documentation and interactive playground for the zen language.
+Documentation and interactive playground for MDZ.
 
 ## Development
 
@@ -49,7 +49,7 @@ The site uses a minimal design system with:
 
 The playground uses Monaco Editor (VS Code's editor) with:
 
-- Custom zen syntax highlighting
+- Custom MDZ syntax highlighting
 - Live compilation preview
 - Example loading
 - URL-based sharing

@@ -1,7 +1,7 @@
 /**
- * Zen Parser
+ * MDZ Parser
  * 
- * Recursive descent parser for zen documents.
+ * Recursive descent parser for MDZ documents.
  * v0.2: Added PARALLEL FOR EACH, BREAK, CONTINUE, typed parameters, imports
  */
 

@@ -323,7 +323,7 @@ Content with unicode: 日本語
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Integration Tests (v0.3 Validator-First) ===\n');
+console.log('\n=== MDZ Integration Tests (v0.3 Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

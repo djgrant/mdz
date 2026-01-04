@@ -1,9 +1,9 @@
 /**
- * Zen Language Server Worker Entry Point
+ * MDZ Language Server Worker Entry Point
  *
- * This worker provides LSP-like functionality for the zen playground:
- * - parse: Parse zen code and return AST
- * - validate: Validate zen code and return diagnostics + metadata + dependencies
+ * This worker provides LSP-like functionality for the MDZ playground:
+ * - parse: Parse MDZ code and return AST
+ * - validate: Validate MDZ code and return diagnostics + metadata + dependencies
  * - completions: Get autocomplete suggestions
  * - hover: Get hover information
  * - diagnostics: Get syntax/semantic errors (legacy, use validate instead)

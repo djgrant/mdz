@@ -1,11 +1,11 @@
 /**
- * Zen Language
+ * MDZ (ZenMarkdown)
  * 
  * A markdown extension language for multi-agent systems.
  * 
  * @example
  * ```typescript
- * import { parse, compile } from 'zen-lang';
+ * import { parse, compile } from 'zenmarkdown';
  * 
  * const source = `---
  * name: my-skill

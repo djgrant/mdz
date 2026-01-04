@@ -737,7 +737,7 @@ FOR EACH $a IN $as:
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen v0.2 Feature Tests (Validator-First) ===\n');
+console.log('\n=== MDZ v0.2 Feature Tests (Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

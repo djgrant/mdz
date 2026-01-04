@@ -1,7 +1,7 @@
 /**
- * Zen Lexer
+ * MDZ Lexer
  * 
- * Tokenizes zen source into a stream of tokens.
+ * Tokenizes MDZ source into a stream of tokens.
  * v0.2: Added PARALLEL, BREAK, CONTINUE keywords
  */
 

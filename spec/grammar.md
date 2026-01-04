@@ -1,8 +1,10 @@
-# Zen Grammar Specification
+# MDZ Grammar Specification
 
 ## Overview
 
-This document defines the formal grammar for Zen v0.2 in Extended Backus-Naur Form (EBNF).
+This document defines the formal grammar for MDZ v0.3 in Extended Backus-Naur Form (EBNF).
+
+**Core principle:** The source document is the execution format. The grammar defines what tooling can validate—not what gets transformed.
 
 ## Notation
 
@@ -55,6 +57,7 @@ template_expr   = '${' expression '}' | '{~~' semantic_content '}' ;
 ### Keywords
 
 ```ebnf
+/* Runtime control flow - executed by the LLM */
 FOR             = "FOR" ;
 EACH            = "EACH" ;
 IN              = "IN" ;
@@ -126,10 +129,10 @@ block           = type_definition
                 ;
 ```
 
-### Frontmatter Schema (v0.2)
+### Frontmatter Schema
 
 ```ebnf
-/* Extended for v0.2 with imports */
+/* Frontmatter fields for skill metadata */
 frontmatter_fields = name_field description_field [ uses_field ] [ imports_field ] ;
 
 imports_field   = "imports:" newline { import_entry } ;
@@ -181,7 +184,7 @@ var_name        = dollar ident ;
 
 type_annotation = colon type_reference ;
 
-/* v0.2: In WITH clauses, typed param without value is required */
+/* In WITH clauses, typed param without value is required */
 required_param  = var_name type_annotation ;  /* No assign_op or expression */
 
 expression      = lambda_expr
@@ -233,18 +236,20 @@ semantic_char     = ? any char except '}' and '$' ? ;
 
 ### Control Flow
 
+MDZ distinguishes between **runtime control flow** (CAPS keywords executed by the LLM) and **macros** (not yet implemented, but conceptually `{{IF}}` for build-time expansion).
+
 ```ebnf
+/* Runtime control flow - LLM interprets at execution time */
 control_flow      = for_each_stmt
-                  | parallel_for_each_stmt     /* v0.2 */
+                  | parallel_for_each_stmt
                   | while_stmt
                   | if_then_stmt
-                  | break_stmt                  /* v0.2 */
-                  | continue_stmt               /* v0.2 */
+                  | break_stmt
+                  | continue_stmt
                   ;
 
 for_each_stmt     = FOR EACH pattern IN collection colon newline block_body ;
 
-/* v0.2: PARALLEL FOR EACH */
 parallel_for_each_stmt = PARALLEL FOR EACH pattern IN collection colon newline block_body ;
 
 pattern           = var_name
@@ -258,7 +263,6 @@ while_stmt        = WHILE lparen condition rparen colon newline block_body ;
 if_then_stmt      = IF condition THEN colon newline block_body [ else_clause ] ;
 else_clause       = ELSE colon newline block_body ;
 
-/* v0.2: BREAK and CONTINUE */
 break_stmt        = [ list_marker ] BREAK newline ;
 continue_stmt     = [ list_marker ] CONTINUE newline ;
 
@@ -266,7 +270,10 @@ condition         = comparison_expr { logical_op comparison_expr } ;
 comparison_expr   = simple_condition | lparen condition rparen ;
 simple_condition  = semantic_condition | deterministic_condition ;
 
-semantic_condition = NOT? { word } ;  /* LLM interprets: "diminishing returns" */
+/* Semantic conditions: LLM interprets the meaning */
+semantic_condition = NOT? { word } ;  /* e.g., "diminishing returns" */
+
+/* Deterministic conditions: compiler can validate */
 deterministic_condition = var_reference comparison_op value_expr ;
 
 comparison_op     = '=' | "!=" | '<' | '>' | "<=" | ">=" ;
@@ -276,6 +283,17 @@ block_body        = { indented_line } ;
 indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 ```
 
+### Control Flow vs Macros
+
+| Construct | Syntax | When Resolved | Who Resolves |
+|-----------|--------|---------------|--------------|
+| Runtime IF | `IF $x THEN:` | Runtime | LLM |
+| Build-time IF | `{{IF (x)}}` | Build time | Tooling |
+| Runtime WHILE | `WHILE (cond):` | Runtime | LLM |
+| Runtime FOR EACH | `FOR EACH $x IN $y:` | Runtime | LLM |
+
+**Note:** The `{{macro}}` syntax is specified here for completeness but is not yet implemented in the parser or compiler.
+
 ### Composition
 
 ```ebnf
@@ -283,7 +301,6 @@ delegation        = delegate_verb reference [ with_clause ] ;
 delegate_verb     = "Execute" | "Delegate" | "Use" | ? verb phrase ? ;
 
 with_clause       = WITH colon newline { with_param } ;
-/* v0.2: with_param can be required (no default value) */
 with_param        = list_marker ( var_decl | required_param ) newline ;
 ```
 
@@ -387,7 +404,7 @@ Done with loop              ← Outside block
 - `[[#section]]` - Section reference in current document
 - `[[name#section]]` - Section in another skill
 
-#### Rule 6: BREAK/CONTINUE Scope (v0.2)
+#### Rule 6: BREAK/CONTINUE Scope
 
 BREAK and CONTINUE are only valid within loops:
 - FOR EACH loops
@@ -411,8 +428,8 @@ error_unmatched_bracket  = ( "[[" | "[" | "{~~" ) { any_char } EOF ;
 error_unclosed_semantic  = "{~~" { any_char } ( newline newline | EOF ) ;
 error_invalid_type_name  = dollar lower_ident assign_op { any_char } newline ;
 error_malformed_control  = ( FOR | WHILE | IF | PARALLEL ) { any_char } ( newline | EOF ) ;
-error_break_outside_loop = BREAK ; /* v0.2: When not inside a loop */
-error_continue_outside_loop = CONTINUE ; /* v0.2: When not inside a loop */
+error_break_outside_loop = BREAK ; /* When not inside a loop */
+error_continue_outside_loop = CONTINUE ; /* When not inside a loop */
 ```
 
 ## Whitespace Handling
@@ -429,11 +446,33 @@ indent_level    = { whitespace whitespace } ;  /* Each level = 2 spaces */
 around_op       = { whitespace } operator { whitespace } ;
 ```
 
+## What Tooling Validates
+
+The grammar enables deterministic validation:
+
+| What | How Checked | Error Code |
+|------|-------------|------------|
+| Syntax correctness | Parser rules | E001-E007 |
+| Type reference exists | Symbol table lookup | E008 (warning) |
+| Skill reference declared | Frontmatter `uses:` check | W001 (warning) |
+| Section reference valid | Heading extraction | E010 (error) |
+| BREAK/CONTINUE in loop | Loop depth tracking | E011 (error) |
+| Dependency cycles | Graph analysis | E012 (error) |
+
+## What Tooling Does NOT Do
+
+The grammar describes validation, not transformation:
+
+- **No type expansion** - `$Task` stays `$Task`
+- **No reference inlining** - `[[skill]]` stays `[[skill]]`
+- **No semantic transformation** - `{~~content}` stays `{~~content}`
+- **No output compilation** - Source IS the output
+
 ## Examples
 
-### Complete Skill Example with v0.2 Features
+### Complete Skill Example
 
-```zen
+```mdz
 ---
 name: parallel-processor
 description: When you need to process items concurrently
@@ -442,7 +481,7 @@ uses:
 imports:
   - path: "./helpers/"
     skills: [item-validator]
-  - path: "@zen/stdlib"
+  - path: "@mdz/stdlib"
     alias:
       orchestrate-map-reduce: omr
 ---
@@ -497,8 +536,16 @@ Execute [[omr]] WITH:
 
 ## Version
 
-Grammar version: 0.2
-Aligned with: language-spec.md v0.2
+Grammar version: 0.3
+Aligned with: language-spec.md v0.3
+
+### Changes from v0.2
+
+- Aligned version number with language-spec.md
+- Added "What Tooling Validates" section
+- Added "What Tooling Does NOT Do" section (source = output)
+- Added control flow vs macros distinction table
+- Clarified that macros (`{{IF}}`) are not yet implemented
 
 ### Changes from v0.1
 

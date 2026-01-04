@@ -1,7 +1,7 @@
 /**
- * Zen Language Server
+ * MDZ Language Server
  * 
- * A minimal LSP implementation for zen files.
+ * A minimal LSP implementation for MDZ files.
  * Supports:
  * - Go-to-definition for [[references]] and $variables
  * - Hover information for types

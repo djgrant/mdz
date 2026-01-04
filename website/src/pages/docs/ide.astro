@@ -6,7 +6,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>IDE Support</h1>
   
   <p class="lead">
-    Syntax highlighting and editor support for zen.
+    Syntax highlighting, LSP features, and editor support for MDZ.
   </p>
 
   <h2>VS Code</h2>
@@ -59,17 +59,29 @@ npm run compile
     <li><strong>Strings</strong> — "quoted" in green</li>
   </ul>
 
-  <h2>LSP (Planned)</h2>
+  <h2>Language Server (LSP)</h2>
   
   <p>
-    Future LSP support will enable:
+    MDZ includes a language server with the following features:
   </p>
   
   <ul>
-    <li>Autocomplete after [[, $, and semantic marker open</li>
+    <li>Autocomplete after <code>[[</code>, <code>$</code>, and <code>&#123;~~</code></li>
     <li>Hover information for types and variables</li>
     <li>Go-to-definition for references</li>
     <li>Error diagnostics</li>
-    <li>Code actions</li>
+    <li>Document symbols</li>
   </ul>
+  
+  <h3>Using the LSP</h3>
+  
+  <pre><code class="language-typescript">import &#123; createLanguageServer &#125; from 'zenmarkdown/lsp/server';
+
+const server = createLanguageServer();
+// Connect to your editor's LSP client</code></pre>
+  
+  <p>
+    For VS Code integration, the extension handles LSP setup automatically.
+    See <code>editors/vscode/</code> for implementation details.
+  </p>
 </DocsLayout>

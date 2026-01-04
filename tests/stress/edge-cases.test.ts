@@ -1,7 +1,7 @@
 /**
  * Stress Tests - Edge Cases (v0.3 - Validator-First)
  * 
- * Tests that push the boundaries of the zen parser
+ * Tests that push the boundaries of the MDZ parser
  * to find edge cases and limitations.
  */
 
@@ -542,7 +542,7 @@ Execute [[skill]]
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Stress Tests - Edge Cases ===\n');
+console.log('\n=== MDZ Stress Tests - Edge Cases ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

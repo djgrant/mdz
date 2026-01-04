@@ -1,10 +1,10 @@
-# Zen Language Specification v0.3
+# MDZ Language Specification v0.3
 
 > A markdown extension language for multi-agent systems
 
 ## Overview
 
-Zen extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. The language is designed to be:
+MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. The language is designed to be:
 
 - **Readable** as natural prose
 - **Parseable** by deterministic tools
@@ -15,7 +15,7 @@ Zen extends markdown with constructs for expressing agent behaviors, composition
 
 ## Document Structure
 
-A zen document is a valid markdown file with these extensions:
+An MDZ document is a valid markdown file with these extensions:
 
 ```
 ---
@@ -24,7 +24,7 @@ frontmatter (YAML)
 
 # Heading
 
-Body content with zen constructs
+Body content with MDZ constructs
 ```
 
 ### Frontmatter Schema
@@ -470,7 +470,7 @@ Workflows typically follow:
 
 ### Overview
 
-Zen tooling validates source documents without transforming them. The compiler:
+MDZ tooling validates source documents without transforming them. The compiler:
 - Parses the document into an AST
 - Extracts metadata (types, variables, references, sections)
 - Builds a dependency graph
@@ -513,7 +513,7 @@ This enables build tools to:
 
 ### Execution Model
 
-A zen skill executes as:
+An MDZ skill executes as:
 1. LLM receives skill content (as authored)
 2. LLM interprets control flow and delegations
 3. Tool calls implement side effects (file writes, sub-agent creation)

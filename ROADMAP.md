@@ -146,24 +146,109 @@ Implemented in v0.3 compiler:
 - Graph command signature documented as directory but takes file
 - IDE/LSP docs marked "planned" but LSP server exists
 
-### 9. Data Persistence in Markdown
+### 9. Persistent State Interface
 
-**Status:** NOT IMPLEMENTED (exploratory)
+**Status:** DESIGN PHASE
 
-**Goal:** Explore language constructs for persisting data within markdown documents.
+**Goal:** Define how MDZ skills can declare persistent state, without mandating a specific storage backend.
 
-**Ideas to explore:**
-- Could skills define persistent state that survives across executions?
-- What syntax would represent stored/cached values?
-- How would this interact with version control?
-- Is this a dead end or a genuine capability gap?
+#### The Design Question
+
+MDZ needs to support skills that persist data across executions. The question is: should MDZ define the storage mechanism, or just the interface?
+
+**Our position:** MDZ defines the *interface*, not the implementation.
+
+#### Potential Syntax Approaches
+
+```mdz
+# Option A: Explicit backend reference
+PERSIST $tasks TO [[beads]]
+PERSIST $learnings TO [[markdown-store]]
+
+# Option B: Declare persistence, runtime decides
+$tasks: $Task[] (persistent)
+
+# Option C: Persistent sections
+## State (persistent)
+$completed_items: $Item[]
+$learning_log: $String[]
+```
+
+The skill author declares *what* persists. The runtime/platform decides *how*.
+
+#### Storage Backend Comparison
+
+We evaluated several approaches for persistent state:
+
+**SQLite + JSONL (e.g., Beads)**
+- Pros: Fast indexed queries, dependency graphs, transactions, multi-agent safe
+- Cons: Data not human-editable, requires CLI for all interactions, sync daemon complexity
+- Best for: Complex queries, relationships between items, high-volume data
+
+**Markdown Files**
+- Pros: Human readable/editable, git-friendly, shared ownership, browsable in editor
+- Cons: Queries require parsing all files, no transactions, relationships are awkward
+- Best for: Human-agent collaboration, simple state, <500 items
+
+**Hybrid (Markdown + Query Tool)**
+- Pros: Human editable, efficient queries via filename metadata, no daemon
+- Cons: Limited query complexity, no relationships
+- Best for: Structured task tracking, roadmaps, backlogs
+
+#### Performance Analysis
+
+File system operations vs SQLite at scale:
+
+| Scale | Files | Directory listing | SQLite query |
+|-------|-------|-------------------|--------------|
+| Small | 10-100 | instant | overkill |
+| Medium | 100-1,000 | <100ms | <5ms |
+| Large | 1,000-10,000 | 100-500ms | <10ms |
+| Very Large | 10,000+ | 1s+ | <50ms |
+
+**Key insight:** The scaling wall for markdown isn't item count—it's query complexity and relationships.
+
+- Simple priority/status queries: Markdown scales to ~1,000 items comfortably
+- "What blocks X?" queries: Need indexed storage regardless of count
+- Dependency graphs: Need structured storage from the start
+
+#### Decision Framework
+
+Choose **markdown** when:
+- Humans need to browse/edit directly
+- State is simple (priority, status, tags)
+- Items are independent (no dependency graphs)
+- Count stays under ~500
+
+Choose **structured storage** (SQLite/Beads) when:
+- Queries involve relationships ("what depends on X?")
+- Multi-agent concurrent writes
+- Count exceeds ~1,000
+- Complex filtering/aggregation needed
+
+Choose **hybrid** when:
+- Want human editability AND efficient queries
+- Metadata fits in filenames
+- No complex relationships needed
+
+#### For MDZ
+
+The language should be agnostic. A skill might declare:
+
+```mdz
+---
+persists:
+  - $task_queue
+  - $completed_items
+---
+```
+
+The runtime binds this to whatever storage backend is configured. This keeps skills portable across different execution environments.
 
 **Open questions:**
-- What use cases require persistence that can't be handled externally?
-- How would LLMs read/write persistent sections?
-- Is this better solved at the runtime/platform level?
-
-*Note: This may be a dead end, but worth exploring to understand the boundary between document and state.*
+- What's the minimal interface MDZ needs to define?
+- How do skills declare schema for persistent state?
+- Should MDZ support querying persistent state, or leave that to the runtime?
 
 ## Not On Roadmap
 
@@ -187,3 +272,46 @@ Natural dependencies with tooling refactor complete:
 It's ok to CTRL+A DELETE. This is high-velocity experimental work.
 
 This roadmap contains pins for explorations, not routes to destinations.
+
+---
+
+## Issues & Ideas Backlog
+
+### Issues (bugs/fixes)
+
+- [ ] Fix all type assignment references to use `:` not `=`
+- [ ] Check all code examples to ensure they make sense and are meaningful
+- [x] Replace remaining "zen" references with "MDZ" in prose and `mdz` in code
+
+### Tooling Ideas
+
+- [ ] **Prompt-to-MDZ** - Convert natural language prompts to efficient MDZ syntax (for those who prefer writing in English)
+- [ ] **Unit testing framework** - Test workflows with mock data; vitest and/or evalite compatibility
+- [ ] **Execution tracing** - Observe how LLM interpreted the program, what paths it took. Dump for analysis. Investigate: fork evalite or build on vitest?
+- [ ] **Model comparison** - Compare performance between different models
+- [ ] **Production observability** - Shallow exploration of monitoring/debugging in production
+- [ ] **Zed extension** - Editor support for Zed
+
+### Documentation Ideas
+
+- [ ] **Advanced language spec section** - Deep dive on how it works under the hood
+- [ ] **Documentation review** - Full audit of how well docs explain the concepts
+- [ ] **Real-world example** - Something that shows a genuine, compelling use case
+
+### Research
+
+- [ ] **Onboarding flow** - Optimal ways to get developers started. What should the flow be?
+- [ ] **UX research** - Does user understand proposition in 3 seconds? Tech at high level in 30 seconds? Ship something in 30 minutes? (aim lower)
+
+### Marketing & Growth
+
+- [ ] **Stickiness exploration** - What workflows should we suggest to make the tool really sticky?
+- [ ] **HN post strategy** - Approach beyond usual "best timing" advice
+- [ ] **Audience capture** - Email list, followers, Discord? Target: developers
+- [ ] **GitHub stars** - Strategy to grow visibility
+
+### Transparency & Build in Public
+
+- [ ] **Everything on website** - Knowledge graph, roadmap, all code properly documented
+- [ ] **Documentation hooks** - Ensure code stays documented (automated checks)
+- [ ] **Build in public** - Show we're using LLM workflows to build this (transparency/meta-demonstration)

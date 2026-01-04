@@ -626,7 +626,7 @@ Handle a single iteration.
 // Run Tests
 // ============================================================================
 
-console.log('\n=== Zen Compiler Tests (v0.3 Validator-First) ===\n');
+console.log('\n=== MDZ Compiler Tests (v0.3 Validator-First) ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

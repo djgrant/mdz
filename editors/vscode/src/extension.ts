@@ -4,7 +4,7 @@ import * as path from 'path';
 let client: any; // Would be LanguageClient in full impl
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('Zen language extension is now active');
+  console.log('MDZ language extension is now active');
 
   // Register compile command
   const compileCommand = vscode.commands.registerCommand('zen.compile', async () => {

@@ -6,7 +6,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Command Line Interface</h1>
   
   <p class="lead">
-    Use the MDZ CLI to validate, build, and inspect skills.
+    Use the MDZ CLI to validate, compile, and inspect skills.
   </p>
 
   <h2>Installation</h2>
@@ -19,7 +19,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Validate a skill for errors—the primary command:</p>
   
-  <pre><code class="language-bash">zen check &lt;file&gt;</code></pre>
+  <pre><code class="language-bash">mdz check &lt;file&gt;</code></pre>
   
   <p>
     This validates syntax, references, type contracts, and dependencies. Errors are 
@@ -29,7 +29,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h4>What It Checks</h4>
   
   <ul>
-    <li><strong>Syntax</strong> — Valid zen constructs</li>
+    <li><strong>Syntax</strong> — Valid MDZ constructs</li>
     <li><strong>References</strong> — <code>[[skill]]</code> targets exist</li>
     <li><strong>Types</strong> — Contracts match across boundaries</li>
     <li><strong>Dependencies</strong> — No circular references</li>
@@ -38,69 +38,76 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h4>Example</h4>
   
-  <pre><code class="language-bash">zen check my-skill.mdz
+  <pre><code class="language-bash">mdz check my-skill.mdz
 
-✓ Syntax valid
-✓ 3 references resolved
-✓ 2 type contracts verified
-✓ No circular dependencies
+✓ my-skill.mdz is valid
+  Types: 3
+  Variables: 5
+  Dependencies: 2</code></pre>
 
-my-skill.mdz is valid</code></pre>
-
-  <h3>build</h3>
+  <h3>compile</h3>
   
-  <p>Preprocess a skill (optional—only needed for macros or reference inlining):</p>
+  <p>Validate and output a skill (source unchanged):</p>
   
-  <pre><code class="language-bash">zen build &lt;file&gt; [options]</code></pre>
+  <pre><code class="language-bash">mdz compile &lt;file&gt; [options]</code></pre>
 
   <h4>Options</h4>
   
   <ul>
     <li><code>-o, --output &lt;file&gt;</code> — Write output to file</li>
-    <li><code>-V, --verbose</code> — Show build statistics</li>
-    <li><code>--inline-refs</code> — Inline referenced skill content</li>
+    <li><code>-V, --verbose</code> — Show validation summary</li>
+    <li><code>--source-map</code> — Generate source map</li>
+    <li><code>--metadata</code> — Generate metadata JSON</li>
   </ul>
   
   <p>
-    Build resolves macros (<code>&#123;&#123;IF&#125;&#125;</code> constructs) and optionally 
-    inlines references. The output is still markdown—just with build-time decisions resolved.
+    The compiler validates the skill and outputs the source unchanged. MDZ is 
+    validator-first: the LLM sees exactly what you wrote.
   </p>
 
   <h4>Example</h4>
   
-  <pre><code class="language-bash"># Preprocess and write to dist/
-zen build skill.mdz -o ./dist
+  <pre><code class="language-bash"># Validate and write to output file
+mdz compile skill.mdz -o skill.out.mdz
 
-# Inline all referenced skills
-zen build skill.mdz --inline-refs -o ./dist</code></pre>
+# Show validation summary
+mdz compile skill.mdz -V</code></pre>
 
   <h3>parse</h3>
   
   <p>Output the AST as JSON (useful for tooling integration):</p>
   
-  <pre><code class="language-bash">zen parse &lt;file&gt;</code></pre>
+  <pre><code class="language-bash">mdz parse &lt;file&gt;</code></pre>
 
   <h3>graph</h3>
   
-  <p>Visualize the dependency graph:</p>
+  <p>Output the dependency graph for a skill:</p>
   
-  <pre><code class="language-bash">zen graph &lt;directory&gt;</code></pre>
+  <pre><code class="language-bash">mdz graph &lt;file&gt; [options]</code></pre>
+  
+  <h4>Options</h4>
+  
+  <ul>
+    <li><code>--mermaid</code> — Output Mermaid format</li>
+    <li><code>--dot</code> — Output GraphViz DOT format</li>
+    <li>(default is JSON)</li>
+  </ul>
   
   <p>
-    Shows how skills reference each other. Useful for understanding complex agent systems.
+    Shows which skills are referenced via <code>uses:</code> and <code>imports:</code>.
   </p>
 
   <h2>Exit Codes</h2>
   
   <ul>
-    <li><code>0</code> — Success (validation passed, build complete)</li>
+    <li><code>0</code> — Success (validation passed)</li>
     <li><code>1</code> — Error (validation failed, file not found, etc.)</li>
   </ul>
 
   <h2>Integration with CI/CD</h2>
   
   <p>
-    Run <code>zen check</code> in your pipeline to catch errors before deployment:
+    Run <code>mdz check</code> in your pipeline to catch errors before deployment:
   </p>
   
   <pre><code class="language-yaml"># GitHub Actions example
