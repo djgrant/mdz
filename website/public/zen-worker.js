@@ -719,6 +719,15 @@
       if (this.check("BLOCKQUOTE")) {
         return this.parseBlockquote();
       }
+      if (this.check("LOWER_IDENT") || this.check("UPPER_IDENT")) {
+        const verb = this.current().value.toLowerCase();
+        if (verb === "execute" || verb === "call" || verb === "run" || verb === "invoke") {
+          const lookahead = this.peek(1);
+          if (lookahead?.type === "DOUBLE_LBRACKET") {
+            return this.parseDelegation();
+          }
+        }
+      }
       if (!this.isAtEnd() && !this.check("HEADING") && !this.check("NEWLINE")) {
         return this.parseParagraph();
       }
@@ -1521,6 +1530,34 @@
       const token = this.advance();
       return { kind: "HorizontalRule", span: token.span };
     }
+    parseDelegation() {
+      const verbToken = this.advance();
+      const verb = verbToken.value;
+      const target = this.parseReference();
+      const parameters = [];
+      if (this.check("WITH")) {
+        this.advance();
+        this.expect("COLON");
+        this.skipNewlines();
+        while (this.check("LIST_MARKER") && !this.isAtEnd()) {
+          this.advance();
+          const param = this.parseVariableDeclaration(true);
+          parameters.push(param);
+          this.skipNewlines();
+          if (!this.check("LIST_MARKER") || this.check("HEADING")) {
+            break;
+          }
+        }
+      }
+      const span = mergeSpans(verbToken.span, this.previous().span);
+      return {
+        kind: "Delegation",
+        verb,
+        target,
+        parameters,
+        span
+      };
+    }
     parseBlockquote() {
       const token = this.advance();
       const content = token.value.slice(1).trim();
@@ -1605,6 +1642,7 @@
         validateReferences: true,
         validateTypes: true,
         validateScope: true,
+        validateContracts: true,
         ...options
       };
       this.registry = registry || null;
@@ -1620,7 +1658,8 @@
         types: [],
         variables: [],
         references: [],
-        sections: []
+        sections: [],
+        parameters: []
       };
     }
     compile(source) {
@@ -1650,6 +1689,9 @@
       }
       if (this.options.validateReferences) {
         this.validateReferences();
+      }
+      if (this.options.validateContracts) {
+        this.validateContracts(ast);
       }
       let output = source;
       if (this.options.includeHeader) {
@@ -1697,6 +1739,9 @@
             level: section.level,
             span: section.span
           });
+        }
+        if (section.title === "Input") {
+          this.extractParameters(section.content);
         }
         this.extractFromBlocks(section.content);
       }
@@ -1825,6 +1870,19 @@
       }
       for (const param of deleg.parameters) {
         this.extractVariableDeclaration(param);
+      }
+    }
+    extractParameters(blocks) {
+      for (const block of blocks) {
+        if (block.kind === "VariableDeclaration") {
+          this.metadata.parameters.push({
+            name: block.name,
+            type: block.typeAnnotation?.name || null,
+            hasDefault: block.value !== null,
+            isRequired: !block.value,
+            span: block.span
+          });
+        }
       }
     }
     extractFromExpression(expr) {
@@ -2047,6 +2105,74 @@
                 span: ref.span
               });
             }
+          }
+        }
+      }
+    }
+    validateContracts(ast) {
+      const delegations = [];
+      this.findDelegations(ast.sections, delegations);
+      for (const deleg of delegations) {
+        if (deleg.target.kind === "SkillReference" && deleg.target.skill) {
+          this.validateDelegationParameters(deleg);
+        }
+      }
+    }
+    findDelegations(sections, delegations) {
+      for (const section of sections) {
+        this.findDelegationsInBlocks(section.content, delegations);
+      }
+    }
+    findDelegationsInBlocks(blocks, delegations) {
+      for (const block of blocks) {
+        if (block.kind === "Delegation") {
+          delegations.push(block);
+        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+          this.findDelegationsInBlocks(block.body, delegations);
+        } else if (block.kind === "WhileStatement") {
+          this.findDelegationsInBlocks(block.body, delegations);
+        } else if (block.kind === "IfStatement") {
+          this.findDelegationsInBlocks(block.thenBody, delegations);
+          if (block.elseBody) {
+            this.findDelegationsInBlocks(block.elseBody, delegations);
+          }
+        }
+      }
+    }
+    validateDelegationParameters(deleg) {
+      const skillName = deleg.target.skill;
+      let skillParams = [];
+      if (skillName === this.metadata.name) {
+        skillParams = this.metadata.parameters;
+      } else if (this.registry) {
+        const skill = this.registry.get(skillName);
+        if (skill) {
+          const skillCompileResult = compile(skill.source, { validateReferences: false, validateContracts: false });
+          skillParams = skillCompileResult.metadata.parameters;
+        }
+      }
+      const providedParams = new Set(deleg.parameters.map((p) => p.name));
+      const requiredParams = skillParams.filter((p) => p.isRequired);
+      for (const req of requiredParams) {
+        if (!providedParams.has(req.name)) {
+          this.diagnostics.push({
+            severity: "error",
+            code: "E011",
+            message: `Required parameter '${req.name}' is missing for skill '${skillName}'`,
+            span: deleg.span
+          });
+        }
+      }
+      if (deleg.parameters.length > 0) {
+        for (const param of deleg.parameters) {
+          const expected = skillParams.find((p) => p.name === param.name);
+          if (!expected) {
+            this.diagnostics.push({
+              severity: "warning",
+              code: "W002",
+              message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+              span: param.span
+            });
           }
         }
       }
