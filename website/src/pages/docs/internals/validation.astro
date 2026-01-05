@@ -1,0 +1,246 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout title="Validation">
+  <h1>Validation</h1>
+
+  <p class="lead">
+    MDZ uses a multi-stage validation pipeline to catch issues before runtime. The pipeline runs after parsing and includes concrete diagnostic examples.
+  </p>
+
+  <h2>Validation Pipeline Overview</h2>
+
+  <p>
+    The validation pipeline consists of five stages, each catching different categories of issues:
+  </p>
+
+  <ol>
+    <li><strong>Parse Validation</strong> — Syntax errors during parsing</li>
+    <li><strong>Type Validation</strong> — Type reference resolution</li>
+    <li><strong>Scope Validation</strong> — Variable definition and usage</li>
+    <li><strong>Reference Validation</strong> — Skill and section references</li>
+    <li><strong>Dependency Analysis</strong> — Cross-skill dependencies and cycles</li>
+  </ol>
+
+  <h2>Stage 1: Parse Validation</h2>
+
+  <p>
+    During parsing, the parser detects and recovers from syntax errors:
+  </p>
+
+  <ul>
+    <li>Malformed frontmatter</li>
+    <li>Unclosed brackets or markers</li>
+    <li>Invalid indentation</li>
+    <li>Missing required tokens</li>
+  </ul>
+
+  <p>
+    Parse errors are recoverable—the parser continues and attaches errors to the AST.
+  </p>
+
+  <h3>Example Parse Error</h3>
+
+  <p>
+    For malformed frontmatter like:
+  </p>
+
+  <pre><code class="language-mdz">---
+name: example
+description: missing closing dashes
+---
+## Content</code></pre>
+
+  <p>
+    The parser produces:
+  </p>
+
+  <ul>
+    <li><strong>Diagnostic:</strong> E013 - Invalid frontmatter</li>
+    <li><strong>Message:</strong> "Frontmatter section not properly closed"</li>
+    <li><strong>Span:</strong> Lines 1-3, recoverable</li>
+  </ul>
+
+  <h2>Stage 2: Type Validation</h2>
+
+  <p>
+    The compiler checks that all type references resolve:
+  </p>
+
+  <ul>
+    <li>Variable type annotations reference defined types</li>
+    <li>Built-in primitives (String, Number, Boolean) are automatically recognized</li>
+    <li>Undefined types trigger warnings (not errors, as semantic types are flexible)</li>
+  </ul>
+
+  <h3>Example Type Error</h3>
+
+  <p>
+    For undefined type reference:
+  </p>
+
+  <pre><code class="language-mdz">$user: UnknownType = "john"</code></pre>
+
+  <p>
+    Produces warning:
+  </p>
+
+  <ul>
+    <li><strong>Diagnostic:</strong> W008 - Undefined type</li>
+    <li><strong>Message:</strong> "Type 'UnknownType' is not defined"</li>
+    <li><strong>Span:</strong> Position of 'UnknownType'</li>
+  </ul>
+
+  <h2>Stage 3: Scope Validation</h2>
+
+  <p>
+    Variables must be defined before use:
+  </p>
+
+  <ul>
+    <li>Tracks variable declarations in scope</li>
+    <li>Validates variable references in expressions</li>
+    <li>Handles loop variables and block scoping</li>
+    <li>Semantic references (variables that represent concepts) are tracked but not strictly validated</li>
+  </ul>
+
+  <h3>Example Scope Error</h3>
+
+  <pre><code class="language-mdz">FOR EACH $item IN $items:
+  - $result = $undefined_var + 1</code></pre>
+
+  <p>
+    Produces error:
+  </p>
+
+  <ul>
+    <li><strong>Diagnostic:</strong> E007 - Undefined variable</li>
+    <li><strong>Message:</strong> "Variable '$undefined_var' is not defined in scope"</li>
+    <li><strong>Span:</strong> Position of '$undefined_var'</li>
+  </ul>
+
+  <h2>Stage 4: Reference Validation</h2>
+
+  <p>
+    Skill and section references must resolve:
+  </p>
+
+  <ul>
+    <li>Skills referenced with <code>[[skill]]</code> must be declared in <code>uses:</code></li>
+    <li>Local section references <code>[[#section]]</code> must exist in the current document</li>
+    <li>Cross-skill section references require the skill to be available in the registry</li>
+  </ul>
+
+  <h3>Example Reference Error</h3>
+
+  <pre><code class="language-mdz">uses:
+  - math
+
+## Workflow
+
+1. Use [[advanced-math#calculate]] function</code></pre>
+
+  <p>
+    If 'advanced-math' is not in uses, produces error:
+  </p>
+
+  <ul>
+    <li><strong>Diagnostic:</strong> E009 - Undefined skill reference</li>
+    <li><strong>Message:</strong> "Skill 'advanced-math' is not declared in uses"</li>
+    <li><strong>Span:</strong> Position of '[[advanced-math]]'</li>
+  </ul>
+
+  <h2>Stage 5: Dependency Analysis</h2>
+
+  <p>
+    The compiler builds a dependency graph using DFS cycle detection:
+  </p>
+
+  <ul>
+    <li>Extracts dependencies from <code>uses:</code> and inline references</li>
+    <li>Detects circular dependencies that could cause infinite loops</li>
+    <li>Generates visualization data for <code>mdz graph</code></li>
+  </ul>
+
+  <h3>Example Cycle Error</h3>
+
+  <p>
+    If skill A uses B, B uses C, C uses A:
+  </p>
+
+  <ul>
+    <li><strong>Diagnostic:</strong> E999 - Circular dependency</li>
+    <li><strong>Message:</strong> "Circular dependency detected: A → B → C → A"</li>
+    <li><strong>Span:</strong> Location of the problematic reference</li>
+  </ul>
+
+  <h2>Error Codes Reference</h2>
+
+  <p>
+    Complete list of validation error and warning codes:
+  </p>
+
+  <h3>Parse Errors (E001-E015)</h3>
+
+  <ul>
+    <li><strong>E001</strong> — Unexpected token</li>
+    <li><strong>E002</strong> — Expected token not found</li>
+    <li><strong>E003</strong> — Invalid indentation</li>
+    <li><strong>E004</strong> — Unclosed bracket</li>
+    <li><strong>E005</strong> — Unclosed semantic marker</li>
+    <li><strong>E006</strong> — Invalid control flow syntax</li>
+    <li><strong>E013</strong> — Invalid frontmatter</li>
+    <li><strong>E014</strong> — BREAK/CONTINUE outside loop</li>
+  </ul>
+
+  <h3>Semantic Errors (E007-E012)</h3>
+
+  <ul>
+    <li><strong>E007</strong> — Undefined variable reference</li>
+    <li><strong>E008</strong> — Undefined type reference (often warning)</li>
+    <li><strong>E009</strong> — Undefined skill reference</li>
+    <li><strong>E010</strong> — Undefined section reference</li>
+    <li><strong>E011</strong> — Duplicate definition</li>
+    <li><strong>E012</strong> — Invalid reference format</li>
+  </ul>
+
+  <h3>Dependency Errors (E999)</h3>
+
+  <ul>
+    <li><strong>E999</strong> — Circular dependency detected</li>
+  </ul>
+
+  <h3>Warnings (W001-W010)</h3>
+
+  <ul>
+    <li><strong>W001</strong> — Skill not declared in uses</li>
+    <li><strong>W002</strong> — Unused variable</li>
+    <li><strong>W003</strong> — Unused type</li>
+    <li><strong>W008</strong> — Type not defined (semantic types are flexible)</li>
+  </ul>
+
+  <h2>Diagnostic Output Format</h2>
+
+  <p>
+    Diagnostics are structured for both CLI and IDE consumption:
+  </p>
+
+  <pre><code class="language-text">skill.mdz:15:7 E007 Variable '$undefined_var' is not defined in scope
+  |
+15|   - $result = $undefined_var + 1
+  |               ^^^^^^^^^^^^^^^
+  |
+  = help: Did you mean '$defined_var'?</code></pre>
+
+  <p>
+    The format includes:
+  </p>
+
+  <ul>
+    <li>File location (file:line:column)</li>
+    <li>Error code and message</li>
+    <li>Source context with caret indicator</li>
+    <li>Suggestions when available</li>
+  </ul>
+</DocsLayout>
