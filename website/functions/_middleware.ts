@@ -6,7 +6,7 @@ interface Env {
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
-  const { AUTH_USER = "ramnivas", AUTH_PASS = "flute" } = context.env;
+  const { AUTH_USER = "friend", AUTH_PASS = "notfoe" } = context.env;
 
   const auth = context.request.headers.get("Authorization");
 
