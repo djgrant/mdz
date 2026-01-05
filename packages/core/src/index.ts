@@ -51,5 +51,4 @@ export {
   SectionInfo,
   DependencyGraph,
   DependencyEdge,
-  ImportInfo,
 } from './compiler/compiler';

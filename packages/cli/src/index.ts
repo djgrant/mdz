@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse, compile, CompileOptions } from '@mdz/core';
+import { parse, compile, CompileOptions, Diagnostic } from '@zenmarkdown/core';
 
 // ============================================================================
 // Version
@@ -92,7 +92,7 @@ function compileCommand(args: string[]): void {
     console.error(`${prefix} [${diag.code}] ${diag.message} (${diag.span.start.line}:${diag.span.start.column})`);
   }
 
-  if (result.diagnostics.some(d => d.severity === 'error')) {
+  if (result.diagnostics.some((d: Diagnostic) => d.severity === 'error')) {
     process.exit(1);
   }
 
@@ -122,8 +122,8 @@ function compileCommand(args: string[]): void {
     console.error(`References: ${result.metadata.references.length}`);
     console.error(`Sections: ${result.metadata.sections.length}`);
     console.error(`Dependencies: ${result.dependencies.nodes.length}`);
-    console.error(`Warnings: ${result.diagnostics.filter(d => d.severity === 'warning').length}`);
-    console.error(`Errors: ${result.diagnostics.filter(d => d.severity === 'error').length}`);
+    console.error(`Warnings: ${result.diagnostics.filter((d: Diagnostic) => d.severity === 'warning').length}`);
+    console.error(`Errors: ${result.diagnostics.filter((d: Diagnostic) => d.severity === 'error').length}`);
   }
 
   // Output source map if requested
@@ -171,13 +171,13 @@ function checkCommand(args: string[]): void {
   }
 
   if (hasErrors) {
-    const errorCount = result.diagnostics.filter(d => d.severity === 'error').length;
+    const errorCount = result.diagnostics.filter((d: Diagnostic) => d.severity === 'error').length;
     console.error(`\n✗ ${errorCount} error(s) found`);
     process.exit(1);
   } else {
     console.log(`✓ ${filePath} is valid`);
     if (hasWarnings) {
-      const warnCount = result.diagnostics.filter(d => d.severity === 'warning').length;
+      const warnCount = result.diagnostics.filter((d: Diagnostic) => d.severity === 'warning').length;
       console.log(`  (${warnCount} warning(s))`);
     }
     

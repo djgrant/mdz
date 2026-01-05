@@ -10,7 +10,7 @@
  * - Document symbols
  */
 
-import { parse, AST } from '@mdz/core';
+import { parse, AST } from '@zenmarkdown/core';
 
 // ============================================================================
 // LSP Types (subset needed for implementation)
@@ -366,11 +366,11 @@ export class ZenLanguageServer {
       case 'SemanticType':
         return expr.description;
       case 'EnumType':
-        return expr.values.map(v => `"${v}"`).join(' | ');
+        return expr.values.map((v: string) => `"${v}"`).join(' | ');
       case 'TypeReference':
         return `$${expr.name}`;
       case 'CompoundType':
-        return `(${expr.elements.map(e => this.typeExprToString(e)).join(', ')})`;
+        return `(${expr.elements.map((e: AST.TypeExpr) => this.typeExprToString(e)).join(', ')})`;
       case 'ArrayType':
         return `${this.typeExprToString(expr.elementType)}[]`;
       case 'FunctionType':
@@ -451,7 +451,7 @@ export class ZenLanguageServer {
         if (targetState) {
           // If section specified, find that section
           if (ref.section) {
-            const section = targetState.ast.sections.find(s => s.anchor === ref.section);
+            const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.section);
             if (section) {
               return {
                 uri: targetState.uri,
