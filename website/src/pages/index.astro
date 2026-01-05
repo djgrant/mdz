@@ -17,7 +17,7 @@ const codeExample = `<span class="zen-comment">---</span>
 
 <span class="zen-heading">## Types</span>
 
-<span class="zen-type">$Hypothesis</span>: a testable prediction
+<span class="zen-type">$Hypothesis</span>: <span class="zen-semantic">/a testable prediction/</span>
 <span class="zen-type">$Outcome</span>: <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span>
 
 <span class="zen-heading">## Workflow</span>
@@ -25,7 +25,7 @@ const codeExample = `<span class="zen-comment">---</span>
 <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/problem solved/</span> <span class="zen-keyword">DO</span>:
   - Formulate <span class="zen-variable">$hypothesis</span>: <span class="zen-type">$Hypothesis</span>
   - Execute <span class="zen-reference">[[experiment]]</span> <span class="zen-keyword">WITH</span>:
-    - <span class="zen-variable">$hypothesis</span>: <span class="zen-variable">$hypothesis</span>
+    - <span class="zen-variable">$hypothesis</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$outcome</span> = <span class="zen-string">"confirmed"</span> <span class="zen-keyword">THEN</span>:
     - Return <span class="zen-variable">$solution</span>`;
 ---
@@ -327,7 +327,7 @@ const codeExample = `<span class="zen-comment">---</span>
             Contracts for tooling to check
           </p>
           <pre
-            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-type">$Task</span>: any executable instruction
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-type">$Task</span>: <span class="zen-semantic">/any executable instruction/</span>
 <span class="zen-type">$Strategy</span>: <span class="zen-string">"fast"</span> | <span class="zen-string">"thorough"</span></code></pre>
         </div>
 

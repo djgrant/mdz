@@ -206,7 +206,7 @@ uses:
 
 ## Types
 
-$Hypothesis: a testable prediction about what will solve the problem
+$Hypothesis: /a testable prediction about what will solve the problem/
 $Result: "confirmed" | "refuted" | "inconclusive"
 
 ## Input
@@ -309,7 +309,7 @@ uses:
 
 ## Types
 
-$SkillRef: reference to another skill
+$SkillRef: /reference to another skill/
 $CompositionMode: "sequential" | "parallel"
 
 ## Input
@@ -340,8 +340,8 @@ Apply [[simplify]] to reduce complexity
 ### 4. Execute
 
 Execute [[orchestrate]] WITH:
-  - $skills = $skills
-  - $mode = $mode
+  - $skills
+  - $mode
 `,
       insight:
         "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together.",
