@@ -3,8 +3,6 @@ name: skill-composer
 description: When composing multiple skills into a coordinated workflow
 uses:
   - orchestrate
-  - work-packages
-  - the-scientist
 ---
 
 ## Types
@@ -13,19 +11,18 @@ $SkillRef: reference to another skill
 $CompositionMode: "sequential" | "parallel" | "conditional"
 $DependencyGraph: directed graph of skill dependencies
 $ExecutionPlan: ordered list of skill executions
+$SkillResult: tuple of skill reference and its output string
 
 ## Input
 
 - $skills: $SkillRef[]                 <!-- skills to compose -->
 - $mode: $CompositionMode = "sequential"
-- $entryPoint: $SkillRef               <!-- first skill to execute -->
 
 ## Context
 
 - $graph: $DependencyGraph
 - $plan: $ExecutionPlan
-- $results: ($SkillRef, $String)[] = []
-- $currentSkill: $SkillRef
+- $results: $SkillResult[] = []
 
 ## Workflow
 

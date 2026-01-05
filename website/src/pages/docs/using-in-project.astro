@@ -80,13 +80,13 @@ $Result: successful completion or error details
 ## Workflow
 
 1. Validate $task inputs and requirements
-2. WHILE ($attempts &lt; $maxAttempts):
+2. WHILE $attempts &lt; $maxAttempts DO:
    - Execute $task
    - IF execution succeeded THEN:
      - Return success result
-   - ELSE:
-     - Increment $attempts
-     - Log error and retry strategy
+     - ELSE:
+       - Increment $attempts
+       - Log error and retry strategy
 3. Return failure result with collected errors
 
 ## Error Handling
@@ -149,13 +149,13 @@ $Result: successful completion or error details
 
 ## Workflow
 1. Validate $task inputs and requirements
-2. WHILE ($attempts &lt; $maxAttempts):
+2. WHILE $attempts &lt; $maxAttempts DO:
    - Execute $task
    - IF execution succeeded THEN:
      - Return success result
-   - ELSE:
-     - Increment $attempts
-     - Log error and retry strategy
+     - ELSE:
+       - Increment $attempts
+       - Log error and retry strategy
 3. Return failure result with collected errors
 
 ## Error Handling
@@ -221,7 +221,7 @@ uses:
 <span class="zen-heading">## Workflow</span>
 
 1. Analyze <span class="zen-variable">$changes</span> for patterns and potential issues
-2. FOR EACH <span class="zen-variable">$area</span> IN <span class="zen-variable">$focus</span>:
+2. FOR EACH <span class="zen-variable">$area</span> IN <span class="zen-variable">$focus</span> DO:
    - Apply focused review for <span class="zen-variable">$area</span>
    - Add identified issues to <span class="zen-variable">$issues</span>
 3. Generate review summary with prioritized recommendations</code></pre>
@@ -274,7 +274,7 @@ $Issue: identified problem with severity and location
 
 ## Workflow
 1. Analyze $changes for patterns and potential issues
-2. FOR EACH $area IN $focus:
+2. FOR EACH $area IN $focus DO:
    - Apply focused review for $area
    - Document identified issues
 3. Generate review summary with prioritized recommendations
@@ -324,13 +324,13 @@ description: When processing tasks with validation and error handling
 <span class="zen-heading">## Workflow</span>
 
 1. Validate <span class="zen-variable">$task</span> inputs and requirements
-2. WHILE (<span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span>):
+2. WHILE <span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span> DO:
    - Execute <span class="zen-variable">$task</span>
    - IF execution succeeded THEN:
      - Return success result
-   - ELSE:
-     - Increment <span class="zen-variable">$attempts</span>
-     - Log error and retry strategy
+     - ELSE:
+       - Increment <span class="zen-variable">$attempts</span>
+       - Log error and retry strategy
 3. Return failure result with collected errors
 
 <span class="zen-heading">## Error Handling</span>

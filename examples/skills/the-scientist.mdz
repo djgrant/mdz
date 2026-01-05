@@ -3,7 +3,6 @@ name: the-scientist
 description: When orchestrating hypothesis-driven iteration with sub-agents
 uses:
   - work-packages
-  - scientific-method
 ---
 
 ## Types
@@ -11,7 +10,6 @@ uses:
 $Hypothesis: a testable prediction about what will solve the problem
 $Experiment: a concrete action to test a hypothesis
 $Observation: data collected from running an experiment
-$Conclusion: "confirmed" | "refuted" | "inconclusive"
 $ValidationResult: "progress" | "regression" | "plateau"
 $Strategy: "accumulate" | "independent"
 
@@ -27,7 +25,7 @@ $Strategy: "accumulate" | "independent"
 - $experiments: $Experiment[]
 - $observations: $Observation[]
 - $iteration = 0
-- $workPackagePath = $n => `/work package directory//wp-experiment-{$n}.md`
+- $workPackagePath = $n => /work package directory/wp-experiment-$n.md/
 
 ## Workflow
 
@@ -40,7 +38,7 @@ $Strategy: "accumulate" | "independent"
 
 ### 2. Experiment Loop
 
-WHILE NOT diminishing returns AND $iteration < $maxIterations DO:
+WHILE NOT $/diminishing returns/ AND $iteration < $maxIterations DO:
   
 #### 2a. Design Experiment
   
@@ -84,7 +82,7 @@ WHILE NOT diminishing returns AND $iteration < $maxIterations DO:
 ### 3. Conclude
 
 1. Synthesize findings from all experiments
-2. Document final $conclusion in master work package
+2. Document final $/conclusion/ in master work package
 3. Move work packages to completed directory
 4. Report summary with:
    - Original problem

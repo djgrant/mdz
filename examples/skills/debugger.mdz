@@ -1,8 +1,6 @@
 ---
 name: debugger
 description: When you need to trace and debug skill execution
-uses:
-  - work-packages
 ---
 
 ## Types

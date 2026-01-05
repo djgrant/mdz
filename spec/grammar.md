@@ -559,9 +559,12 @@ $Result: outcome of executing a task
 
 ## Context
 
-- $path = $n => `output-{$n}.md`
+- $path = $n => `output-${n}.md`
 - $current: $FilePath = $path(0)
 - $iterations: $Number = 0
+- $prioritized: ($Task, $String)[] = []
+- $complete: $Boolean = false
+- $result: $Result
 
 ## Workflow
 
@@ -570,7 +573,7 @@ $Result: outcome of executing a task
 2. PARALLEL FOR EACH $item IN $items:
    - IF $item.invalid THEN:
      - CONTINUE
-   - Process $item with $priority
+   - Process $item
    - IF $item.triggers_stop THEN:
      - BREAK
 
@@ -580,7 +583,7 @@ $Result: outcome of executing a task
    - ELSE:
      - Queue for later
 
-4. WHILE NOT complete AND $iterations < 5 DO:
+4. WHILE NOT $complete AND $iterations < 5 DO:
    - Execute [[#process-step]]
    - Validate with [[item-validator]]
 

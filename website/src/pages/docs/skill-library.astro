@@ -77,16 +77,27 @@ description: A friendly greeting skill
 
    <pre><code class="language-mdz">---
 name: complex-task
-description: A multi-step task
+description: A multi-step task that composes other skills
+uses:
+  - basic-skill
+  - another-skill
 ---
 
 # Complex Task
 
-Use basic-skill to start.
+## Input
 
-Then, process the output.
+$data: The data to process
 
-Finally, apply another-skill.</code></pre>
+## Output
+
+First, use [[basic-skill]] to start:
+
+/result from basic-skill/
+
+Then, process the output with [[another-skill]]:
+
+/final result/</code></pre>
 
    <p>Reference other skills to avoid duplication.</p>
 

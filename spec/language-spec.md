@@ -148,9 +148,9 @@ When a variable's structure changes during workflow execution (e.g., loading and
 
 ```
 ## Input
-- $skillPath: $String = path to the skill
+- $skillPath: $String  <!-- path to the skill -->
 
-## Context  
+## Context
 - $skill: /the loaded and parsed skill AST from $skillPath/
 
 ## Workflow
@@ -168,7 +168,7 @@ This pattern:
 **Anti-pattern** (avoid):
 ```
 ## Input
-- $skill: $String = the skill to debug
+- $skill: $String  <!-- the skill to debug -->
 
 ## Workflow
 FOR EACH $statement IN $skill.statements:  # Where does .statements come from?

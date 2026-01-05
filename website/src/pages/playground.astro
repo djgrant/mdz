@@ -202,7 +202,6 @@ name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 uses:
   - work-packages
-  - scientific-method
 ---
 
 ## Types
@@ -215,18 +214,25 @@ $Result: "confirmed" | "refuted" | "inconclusive"
 - $problem: $String
 - $maxIterations: $Number = 5
 
+## Context
+
+- $hypothesis: $Hypothesis
+- $result: $Result
+- $iteration = 0
+
 ## Workflow
 
-WHILE NOT diminishing returns AND $iteration < $maxIterations DO:
-  - Formulate $currentHypothesis
-  - Design experiment to test it
-  - Execute [[work-packages]] WITH:
-    - $task = "run experiment"
+WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO:
+  - Formulate $hypothesis based on $problem
+  - Design experiment to test $hypothesis
+  - Execute experiment using [[work-packages]]
+  - Evaluate $result from experiment
   - IF $result = "confirmed" THEN:
     - Commit changes
+  - Increment $iteration
 `,
       insight:
-        "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages or scientific-method will be caught if they break this contract.",
+        "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages will be caught if they break this contract.",
     },
 
     "broken-ref": {
@@ -242,7 +248,7 @@ uses:
 
 1. Start by executing [[work-packages]]
 2. Then jump to [[#non-existent-section]]
-3. Reference [[#workflow]] for this section
+3. Finally check [[#missing-step]]
 `,
       insight:
         "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion.",
@@ -253,8 +259,6 @@ uses:
       source: `---
 name: data-processor
 description: Process some data
-uses:
-  - work-packages
 ---
 
 ## Types
@@ -272,7 +276,7 @@ $DataSource: "api" | "file" | "database"
 Process $count items from $source
 `,
       insight:
-        "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
+        "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' and '$DataSorce' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
     },
 
     undeclared: {
@@ -300,7 +304,6 @@ description: Compose multiple skills into workflows
 uses:
   - orchestrate
   - work-packages
-  - scientific-method
   - simplify
 ---
 
@@ -319,7 +322,7 @@ $CompositionMode: "sequential" | "parallel"
 ### 1. Analyze Dependencies
 
 FOR EACH $skill IN $skills:
-  - Load skill source
+  - Load skill source using [[work-packages]]
   - Extract uses from frontmatter
   - Build dependency graph
 
@@ -330,7 +333,11 @@ IF /cycle detected/ THEN:
   - Report error
   - Abort
 
-### 3. Execute
+### 3. Simplify
+
+Apply [[simplify]] to reduce complexity
+
+### 4. Execute
 
 Execute [[orchestrate]] WITH:
   - $skills = $skills

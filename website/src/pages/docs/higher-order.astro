@@ -54,7 +54,7 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
     Loop until a condition is met, refining approach based on observations:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> success <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span>):
+  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> success <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
   - Form hypothesis
   - Run experiment
   - Observe results
@@ -93,7 +93,6 @@ name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 uses:
   - work-packages
-  - scientific-method
 ---</span></code></pre>
 
   <h3>State Persistence with Work Packages</h3>
@@ -108,7 +107,7 @@ uses:
     <li>Results are recorded for later synthesis</li>
   </ul>
   
-  <pre><code><span class="zen-type">$workPackagePath</span> = <span class="zen-variable">$n</span> =&gt; `<span class="zen-semantic">&#123;~~work package directory&#125;</span>/wp-experiment-<span class="zen-variable">$n</span>.md`</code></pre>
+  <pre><code><span class="zen-type">$workPackagePath</span> = <span class="zen-variable">$n</span> =&gt; `<span class="zen-semantic">/work package directory/</span>/wp-experiment-<span class="zen-variable">$n</span>.md`</code></pre>
 
   <h3>The WHILE Loop</h3>
   
@@ -116,7 +115,7 @@ uses:
     The core iteration continues until diminishing returns or max iterations:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span>):
+  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
   
   #### Design Experiment
   Create experiment work package with success criteria

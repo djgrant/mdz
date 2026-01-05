@@ -110,7 +110,7 @@ $var: /description/       # Semantic type annotation
 FOR EACH $item IN $collection:
   - Process $item
 
-WHILE (condition AND $count < 5):
+WHILE condition AND $count < 5 DO:
   - Iterate
 
 IF $result = "success" THEN:

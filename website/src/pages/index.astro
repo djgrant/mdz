@@ -5,24 +5,29 @@ import Header from "../components/Header.astro";
 // Syntax-highlighted code example using CSS classes
 // Note: curly braces must be escaped in Astro using HTML entities
 const codeExample = `<span class="zen-comment">---</span>
-<span class="zen-comment">name: scientific-method</span>
-<span class="zen-comment">description: Hypothesis-driven iteration</span>
+<span class="zen-comment">name: iterative-solver</span>
+<span class="zen-comment">description: Hypothesis-driven problem solving</span>
 <span class="zen-comment">uses:</span>
-<span class="zen-comment">  - work-packages</span>
+<span class="zen-comment">  - experiment</span>
 <span class="zen-comment">---</span>
+
+<span class="zen-heading">## Input</span>
+
+- <span class="zen-variable">$problem</span>: <span class="zen-type">$String</span>
 
 <span class="zen-heading">## Types</span>
 
 <span class="zen-type">$Hypothesis</span>: a testable prediction
-<span class="zen-type">$Result</span>: <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span>
+<span class="zen-type">$Outcome</span>: <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span>
 
 <span class="zen-heading">## Workflow</span>
 
-<span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> diminishing returns):
-  - Formulate <span class="zen-variable">$hypothesis</span>
-  - Delegate to <span class="zen-reference">[[experiment]]</span>
-  - <span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"confirmed"</span> <span class="zen-keyword">THEN</span>:
-    - Update at <span class="zen-semantic">&#123;~~appropriate location&#125;</span>`;
+<span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/problem solved/</span> <span class="zen-keyword">DO</span>:
+  - Formulate <span class="zen-variable">$hypothesis</span>: <span class="zen-type">$Hypothesis</span>
+  - Execute <span class="zen-reference">[[experiment]]</span> <span class="zen-keyword">WITH</span>:
+    - <span class="zen-variable">$hypothesis</span>: <span class="zen-variable">$hypothesis</span>
+  - <span class="zen-keyword">IF</span> <span class="zen-variable">$outcome</span> = <span class="zen-string">"confirmed"</span> <span class="zen-keyword">THEN</span>:
+    - Return <span class="zen-variable">$solution</span>`;
 ---
 
 <Layout title="MDZ - A language for the world's most powerful runtime">
@@ -374,8 +379,8 @@ const codeExample = `<span class="zen-comment">---</span>
             LLM determines from context
           </p>
           <pre
-            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-semantic">&#123;~~appropriate location&#125;</span>
-<span class="zen-semantic">&#123;~~best strategy for $task&#125;</span></code></pre>
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-semantic">/appropriate location/</span>
+<span class="zen-semantic">/best strategy for $task/</span></code></pre>
         </div>
 
         <!-- Control Flow -->
@@ -392,7 +397,7 @@ const codeExample = `<span class="zen-comment">---</span>
           </p>
           <pre
             class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$list</span>:
-<span class="zen-keyword">WHILE</span> (condition):
+<span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">DO</span>:
 <span class="zen-keyword">IF</span> <span class="zen-variable">$x</span> = <span class="zen-string">"y"</span> <span class="zen-keyword">THEN</span>:</code></pre>
         </div>
 

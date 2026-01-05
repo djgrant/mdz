@@ -1,8 +1,6 @@
 ---
 name: pr-reviewer
 description: When reviewing a pull request for code quality, documentation, and tests
-uses:
-  - work-packages
 ---
 
 ## Types
@@ -24,6 +22,7 @@ $Finding: an issue or observation about the code
 - $files: ($String, $String)[] = []  <!-- (filename, diff content) -->
 - $findings: ($Finding, $Severity)[] = []
 - $summary: $String
+- $outcome: $ReviewOutcome
 
 ## Workflow
 
