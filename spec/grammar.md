@@ -133,20 +133,13 @@ block           = type_definition
 
 ```ebnf
 /* Frontmatter fields for skill metadata */
-frontmatter_fields = name_field description_field [ uses_field ] [ imports_field ] ;
-
-imports_field   = "imports:" newline { import_entry } ;
-import_entry    = "- path:" string_literal newline
-                  [ "skills:" skill_list newline ]
-                  [ "alias:" newline { alias_entry } ] ;
-skill_list      = '[' [ ident { ',' ident } ] ']' ;
-alias_entry     = ident ':' ident newline ;
+frontmatter_fields = name_field description_field [ uses_field ] ;
 ```
 
 ### Type Definitions
 
 ```ebnf
-type_definition = type_name assign_op type_expr newline ;
+type_definition = type_name colon type_expr newline ;
 
 type_name       = dollar upper_ident ;
 
@@ -176,16 +169,25 @@ type_reference  = dollar upper_ident ;
 ### Variable Declarations
 
 ```ebnf
-variable_declaration = [ list_marker ] var_decl newline ;
+variable_declaration = [ list_marker ] var_decl [ line_comment ] newline ;
 
-var_decl        = var_name [ type_annotation ] [ assign_op expression ] ;
+var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
 
 var_name        = dollar ident ;
 
 type_annotation = colon type_reference ;
 
+/* Default values must be literal values, not prose descriptions */
+default_value   = literal
+                | var_reference
+                | lambda_expr
+                ;
+
 /* In WITH clauses, typed param without value is required */
-required_param  = var_name type_annotation ;  /* No assign_op or expression */
+required_param  = var_name type_annotation ;  /* No assign_op or default_value */
+
+/* Inline comments for documentation (ignored by parser) */
+line_comment    = '#' { any_char } ;
 
 expression      = lambda_expr
                 | value_expr
@@ -213,6 +215,23 @@ accessor        = dot ident | lparen expression { comma expression } rparen ;
 
 function_call   = var_name lparen [ expression { comma expression } ] rparen ;
 ```
+
+### Input Parameters
+
+In the conventional `## Input` section, parameters follow interface semantics:
+
+```ebnf
+input_param     = list_marker var_name type_annotation [ assign_op literal ] [ line_comment ] ;
+```
+
+Examples:
+```mdz
+- $problem: $String                    # required (no default)
+- $maxIterations: $Number = 5          # optional with default
+- $strategy: $Strategy = "accumulate"  # optional with enum default
+```
+
+Note: The `=` sign is reserved for **literal default values only**. Prose descriptions belong in comments (`#`), not after `=`.
 
 ### References
 
@@ -260,6 +279,7 @@ collection        = var_reference | array_literal ;
 
 while_stmt        = WHILE lparen condition rparen colon newline block_body ;
 
+/* IF uses THEN as delimiter - parentheses are optional (not required) */
 if_then_stmt      = IF condition THEN colon newline block_body [ else_clause ] ;
 else_clause       = ELSE colon newline block_body ;
 
@@ -287,9 +307,9 @@ indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 
 | Construct | Syntax | When Resolved | Who Resolves |
 |-----------|--------|---------------|--------------|
-| Runtime IF | `IF $x THEN:` | Runtime | LLM |
+| Runtime IF | `IF condition THEN:` | Runtime | LLM |
 | Build-time IF | `{{IF (x)}}` | Build time | Tooling |
-| Runtime WHILE | `WHILE (cond):` | Runtime | LLM |
+| Runtime WHILE | `WHILE (condition):` | Runtime | LLM |
 | Runtime FOR EACH | `FOR EACH $x IN $y:` | Runtime | LLM |
 
 **Note:** The `{{macro}}` syntax is specified here for completeness but is not yet implemented in the parser or compiler.
@@ -351,12 +371,12 @@ nested_list       = { whitespace whitespace list_item } ;
 A line starting with `$` followed by an uppercase letter is a **type definition** if:
 - It's at the start of a line (ignoring leading list markers)
 - The identifier starts with uppercase
-- There's an `=` that's not preceded by `:`
+- Followed by `:` and a type expression (not a type reference)
 
 ```
-$Task = description          → Type definition
+$Task: description           → Type definition
 $task = value                → Variable declaration
-- $task: $Task = value       → Variable declaration
+- $task: $Task = value       → Variable declaration (: followed by $Type)
 ```
 
 #### Rule 2: Lambda vs Assignment
@@ -419,6 +439,36 @@ FOR EACH $item IN $items:
 BREAK                       ← Error: outside loop
 ```
 
+#### Rule 7: Parentheses Requirements
+
+Parentheses are required in some contexts and optional in others:
+
+| Context | Required? | Reason |
+|---------|-----------|--------|
+| `WHILE (condition):` | **Yes** | Parser expects `LPAREN` after `WHILE` |
+| `IF condition THEN:` | No | Conditions may be semantic (prose) |
+| `FOR EACH $x IN ...` | No | Single variable pattern |
+| `FOR EACH ($a, $b) IN ...` | **Yes** | Destructuring pattern |
+| `$x => expr` | No | Single lambda parameter |
+| `($a, $b) => expr` | **Yes** | Multiple lambda parameters |
+| `$fn($arg)` | **Yes** | Function call syntax |
+| `($A, $B)` | **Yes** | Compound type definition |
+
+```
+# WHILE requires parens
+WHILE ($x < 5):              ← Valid
+WHILE $x < 5:                ← Parse error: Expected LPAREN
+
+# IF does not require parens
+IF $x = 5 THEN:              ← Valid
+IF ($x = 5) THEN:            ← Also valid
+IF diminishing returns THEN: ← Valid (semantic condition)
+
+# Destructuring requires parens
+FOR EACH ($a, $b) IN $pairs: ← Valid
+FOR EACH $a, $b IN $pairs:   ← Parse error
+```
+
 ## Error Productions
 
 For error recovery, the parser recognizes these malformed constructs:
@@ -478,25 +528,21 @@ name: parallel-processor
 description: When you need to process items concurrently
 uses:
   - validator
-imports:
-  - path: "./helpers/"
-    skills: [item-validator]
-  - path: "@mdz/stdlib"
-    alias:
-      orchestrate-map-reduce: omr
+  - item-validator
+  - omr
 ---
 
 ## Types
 
-$Task = any executable instruction
-$Strategy = "fast" | "thorough"
-$Result = outcome of executing a task
+$Task: any executable instruction
+$Strategy: "fast" | "thorough"
+$Result: outcome of executing a task
 
 ## Input
 
-- $task: $Task
-- $strategy: $Strategy = "fast"
-- $items: $Task[]
+- $task: $Task                       # the task to execute
+- $strategy: $Strategy = "fast"      # execution strategy
+- $items: $Task[]                    # items to process
 
 ## Context
 
@@ -536,8 +582,14 @@ Execute [[omr]] WITH:
 
 ## Version
 
-Grammar version: 0.3
-Aligned with: language-spec.md v0.3
+Grammar version: 0.4
+Aligned with: language-spec.md v0.4
+
+### Changes from v0.3
+
+- Changed type definition syntax from `$Type = expr` to `$Type: expr`
+- Uses `:` for type definitions (like TypeScript interfaces)
+- Avoids confusion with assignment (`=`)
 
 ### Changes from v0.2
 
@@ -552,6 +604,5 @@ Aligned with: language-spec.md v0.3
 - Added `PARALLEL` keyword and `parallel_for_each_stmt`
 - Added `BREAK` and `CONTINUE` statements
 - Added `break_stmt` and `continue_stmt` productions
-- Extended frontmatter with `imports_field`
 - Extended `with_param` to support required parameters
 - Added error productions for BREAK/CONTINUE outside loops

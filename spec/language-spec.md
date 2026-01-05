@@ -38,12 +38,6 @@ description: When...          # Required: trigger description
 uses:                         # Optional: skill dependencies
   - skill-a
   - skill-b
-imports:                      # v0.2: Optional: explicit imports
-  - path: "./skills/"
-    skills: [simplify, work-packages]
-  - path: "@zen/stdlib"
-    alias:
-      orchestrate-map-reduce: omr
 ---
 ```
 
@@ -52,24 +46,6 @@ The `description` field follows the pattern:
 - **Does**: what the skill accomplishes
 - **Uses**: other skills it depends on (implicit in uses array)
 
-### Import System (v0.2)
-
-The `imports` field allows explicit control over skill resolution:
-
-```yaml
-imports:
-  - path: "./local/"          # Local path or package
-    skills: [skill-a, skill-b]  # Skills to import
-  - path: "@zen/stdlib"       # Package reference
-    alias:                    # Optional: aliases for long names
-      orchestrate-map-reduce: omr
-```
-
-Import resolution:
-1. Relative paths are resolved from the skill file location
-2. Package references (starting with `@`) are resolved from the skill registry
-3. Aliases allow shorter names in the document body
-
 ## Types
 
 ### Type Definitions
@@ -77,22 +53,22 @@ Import resolution:
 Types provide semantic hints about values. They are defined at the top of a skill, typically in a `## Types` section:
 
 ```
-$TypeName = natural language description of what this type represents
+$TypeName: natural language description of what this type represents
 ```
 
 Examples:
 ```
-$Task = any task that an agent can execute
-$Strategy = "accumulate" | "independent"
-$ValidationResult = "progress" | "regression" | "plateau"
+$Task: any task that an agent can execute
+$Strategy: "accumulate" | "independent"
+$ValidationResult: "progress" | "regression" | "plateau"
 ```
 
 ### Type Syntax
 
 Types can be:
 
-- **Semantic**: `$Task = any task that an agent can execute`
-- **Enum**: `$Strategy = "accumulate" | "independent"`
+- **Semantic**: `$Task: any task that an agent can execute`
+- **Enum**: `$Strategy: "accumulate" | "independent"`
 - **Compound**: `($Task, $Strategy)` - a tuple
 - **Array**: `$Task[]` or `($Task, $Strategy)[]`
 - **Function**: `$Fn = $x => expression`
@@ -165,6 +141,38 @@ Variables are scoped to:
 1. The document (file-level)
 2. A section (section-level, when declared within a section)
 3. A control flow block (block-level)
+
+### Semantic Variable Transformation
+
+When a variable's structure changes during workflow execution (e.g., loading and parsing a file path into an AST), use distinct variable names to clarify the transformation:
+
+```
+## Input
+- $skillPath: $String = path to the skill
+
+## Context  
+- $skill: {~~the loaded and parsed skill AST from $skillPath}
+
+## Workflow
+1. Load skill source from $skillPath
+2. Parse into $skill AST
+3. FOR EACH $statement IN $skill.statements:
+```
+
+This pattern:
+- Uses `$skillPath` for the input (a string)
+- Uses `$skill` for the transformed result (an AST with `.statements`)
+- Makes the semantic transformation explicit in Context
+- Avoids confusion about where properties like `.statements` come from
+
+**Anti-pattern** (avoid):
+```
+## Input
+- $skill: $String = the skill to debug
+
+## Workflow
+FOR EACH $statement IN $skill.statements:  # Where does .statements come from?
+```
 
 ### Lambda Expressions
 
@@ -329,16 +337,16 @@ Conditions can include:
 
 ### IF THEN ELSE
 
-Conditional branching:
+Conditional branching. The `THEN` keyword acts as the condition delimiter, so parentheses are **not required** (unlike WHILE):
 
 ```
-IF ($condition) THEN:
+IF $condition THEN:
   - Do this
 ELSE:
   - Do that
 ```
 
-Multi-line form:
+With comparisons:
 ```
 IF $strategy = "accumulate" THEN:
   - Validate incrementally
@@ -347,6 +355,14 @@ ELSE:
   - Collect all candidates
   - Validate at end
 ```
+
+With semantic conditions:
+```
+IF {~~any critical findings} THEN:
+  - Request changes
+```
+
+**Note:** Parentheses are optional for grouping complex conditions but not required by syntax. Compare with WHILE which requires parentheses because it has no THEN delimiter.
 
 ### BREAK and CONTINUE (v0.2)
 
@@ -459,6 +475,37 @@ Main execution steps
 Reusable prompts/sub-sections
 ```
 
+### Input Section Semantics
+
+The Input section declares skill interface parameters. Parameters use `=` ONLY for literal default values:
+
+```mdz
+## Input
+
+- $problem: $String                    # required parameter (no default)
+- $maxIterations: $Number = 5          # optional with default
+- $strategy: $Strategy = "accumulate"  # optional with enum default
+- $items: $Task[] = []                 # optional with empty array default
+```
+
+Parameter rules:
+- **Required**: `$name: $Type` (no `=`)
+- **Optional**: `$name: $Type = literal_value`
+- **Descriptions**: Use `#` comments for documentation
+
+The `=` sign indicates a **literal default value**, not a description. Use comments for descriptions to avoid confusion with assignment semantics.
+
+Valid default values:
+- String literals: `"value"`
+- Number literals: `5`, `3.14`
+- Boolean literals: `true`, `false`
+- Array literals: `[]`, `["a", "b"]`
+- Enum values: `"accumulate"` (when type is enum)
+
+Invalid as defaults (use comments instead):
+- Prose descriptions: ~~`= the problem to solve`~~
+- Semantic markers: ~~`= {~~appropriate value}`~~
+
 ### Workflow Structure
 
 Workflows typically follow:
@@ -481,7 +528,7 @@ MDZ tooling validates source documents without transforming them. The compiler:
 ### What Tooling Checks
 
 1. **Type references** - Warns when a type annotation references an undefined type
-2. **Skill references** - Warns when `[[skill]]` isn't declared in `uses:` or `imports:`
+2. **Skill references** - Warns when `[[skill]]` isn't declared in `uses:`
 3. **Section references** - Errors when `[[#section]]` references a non-existent section
 4. **Syntax errors** - Errors for malformed control flow, unterminated constructs, etc.
 5. **Scope** - Tracks variable definitions (informational)
@@ -495,13 +542,13 @@ MDZ tooling validates source documents without transforming them. The compiler:
 | E008 | Warning | Type not defined in document |
 | E009 | Error | Skill not found in registry |
 | E010 | Error | Section reference broken |
-| W001 | Warning | Skill not declared in uses/imports |
+| W001 | Warning | Skill not declared in uses |
 
 ### Dependency Graph
 
 The compiler extracts a dependency graph showing:
 - **Nodes**: Skills this document depends on
-- **Edges**: Relationship type (uses, imports, reference)
+- **Edges**: Relationship type (uses, reference)
 - **Cycles**: Circular dependency chains (if any)
 
 This enables build tools to:
@@ -540,12 +587,12 @@ v0.3 does not define exception mechanisms.
 ### Parser Requirements
 
 A compliant parser must extract:
-- Frontmatter fields (including imports in v0.2)
+- Frontmatter fields (name, description, uses)
 - Type definitions
 - Variable declarations
 - Skill and section references
 - Semantic markers
-- Control flow constructs (including PARALLEL, BREAK, CONTINUE in v0.2)
+- Control flow constructs (including PARALLEL, BREAK, CONTINUE)
 
 ### Validator Requirements
 
@@ -575,6 +622,163 @@ Syntax highlighting should distinguish:
 - Semantic markers (`{~~...}`)
 - Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`)
 
+## Grouping and Braces
+
+MDZ uses three types of brackets, each with specific purposes. This section documents when each is required vs optional.
+
+### Parentheses `()`
+
+Parentheses serve four distinct purposes in MDZ:
+
+#### 1. WHILE conditions — REQUIRED
+
+The parser **requires** parentheses around WHILE conditions:
+
+```
+WHILE ($iterations < 5):              # Valid
+WHILE (condition AND $x > 0):         # Valid
+WHILE $iterations < 5:                # INVALID - parser error
+```
+
+This is enforced in the parser at `parseWhile()` which calls `expect('LPAREN')`.
+
+#### 2. Tuple/compound types and destructuring patterns — REQUIRED for multiple elements
+
+```
+# Type definitions
+$Pair: ($Task, $Strategy)             # Required for compound types
+$Task[]                               # No parens for single type
+
+# FOR EACH destructuring  
+FOR EACH ($item, $priority) IN $pairs:  # Required for destructuring
+FOR EACH $item IN $items:               # No parens for single variable
+```
+
+#### 3. Lambda parameters — REQUIRED for multiple parameters
+
+```
+$fn = $x => expression                # Single param: no parens needed
+$fn = ($a, $b) => expression          # Multiple params: parens required
+```
+
+#### 4. Expression grouping — OPTIONAL but recommended for clarity
+
+Parentheses can group sub-expressions to control precedence or improve readability:
+
+```
+IF ($a = 1) AND ($b = 2) THEN:        # Optional but clear
+IF $a = 1 AND $b = 2 THEN:            # Also valid, uses precedence
+IF (($a AND $b) OR $c) THEN:          # Grouping overrides precedence
+```
+
+#### 5. IF conditions — OPTIONAL
+
+Unlike WHILE, the IF statement does **not** require parentheses around conditions:
+
+```
+IF $result = "progress" THEN:         # Valid - no parens
+IF ($result = "progress") THEN:       # Valid - with parens
+IF condition AND other THEN:          # Valid - semantic condition
+```
+
+This asymmetry exists because IF conditions may be semantic (natural language), where parentheses would feel unnatural.
+
+#### 6. Function calls — REQUIRED
+
+```
+$path(0)                              # Required
+$fn($a, $b)                           # Required
+```
+
+### Square Brackets `[]`
+
+Square brackets have two uses:
+
+#### 1. Array types and literals
+
+```
+# Array type suffix
+$Task[]                               # Array of Task
+($Task, $Strategy)[]                  # Array of tuples
+
+# Array literals  
+$items = [1, 2, 3]
+$transforms = [("task1", "strategy1"), ("task2", "strategy2")]
+```
+
+#### 2. Double brackets for references
+
+```
+[[skill-name]]                        # Skill reference
+[[#section-name]]                     # Section in current document
+[[skill#section]]                     # Section in another skill
+```
+
+The double bracket `[[...]]` syntax is distinct and unambiguous.
+
+### Curly Braces `{}`
+
+Curly braces are used only for semantic constructs:
+
+#### 1. Semantic markers
+
+```
+{~~appropriate location}              # LLM interprets this
+{~~the path for candidate $n}         # With variable interpolation
+```
+
+The `{~~` opening is unique and cannot be confused with other syntax.
+
+#### 2. Template interpolation (inside backticks only)
+
+```
+$path = $n => `output-${n}.md`        # ${} inside template literal
+```
+
+Note: MDZ does **not** use `{}` for code blocks (Python-style indentation is used instead).
+
+### Operator Precedence
+
+From highest to lowest:
+
+1. **Grouping**: `( )` — parenthesized expressions
+2. **Member access**: `.` — property access like `$item.property`
+3. **Function call**: `()` — invocation like `$fn($x)`
+4. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=`
+5. **Logical NOT**: `NOT` — unary negation
+6. **Logical AND**: `AND` — conjunction
+7. **Logical OR**: `OR` — disjunction
+8. **Lambda arrow**: `=>` — binds loosest
+
+#### Precedence Examples
+
+```
+# These are equivalent:
+IF $a AND $b OR $c THEN:
+IF ($a AND $b) OR $c THEN:            # AND binds tighter than OR
+
+# This is different:
+IF $a AND ($b OR $c) THEN:            # Parens override precedence
+
+# Comparison binds tighter than logical:
+IF $x = 1 AND $y = 2 THEN:
+IF ($x = 1) AND ($y = 2) THEN:        # Same meaning
+```
+
+### Quick Reference
+
+| Construct | Parens Required? | Example |
+|-----------|-----------------|---------|
+| WHILE condition | **Yes** | `WHILE ($x < 5):` |
+| IF condition | No | `IF $x = 1 THEN:` |
+| FOR EACH single var | No | `FOR EACH $item IN $list:` |
+| FOR EACH destructure | **Yes** | `FOR EACH ($a, $b) IN $pairs:` |
+| Lambda single param | No | `$x => expr` |
+| Lambda multi params | **Yes** | `($a, $b) => expr` |
+| Function call | **Yes** | `$fn($x)` |
+| Compound type | **Yes** | `($A, $B)` |
+| Expression grouping | No | `($a AND $b) OR $c` |
+
 ## Grammar Summary
 
 ### Tokens
@@ -590,7 +794,7 @@ SEMANTIC        = '{~~' /[^}]+/ '}'
 FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
 PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  # v0.2
 WHILE           = 'WHILE' '(' CONDITION '):'
-IF_THEN         = 'IF' '(' CONDITION ')' 'THEN:'
+IF_THEN         = 'IF' CONDITION 'THEN:'       # parens optional (THEN delimits)
 ELSE            = 'ELSE:'
 BREAK           = 'BREAK'                                     # v0.2
 CONTINUE        = 'CONTINUE'                                  # v0.2
@@ -656,8 +860,93 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 - Clear control flow intent
 - Reduces nesting depth
 
+## Terminology
+
+This glossary provides canonical names for MDZ syntax elements. Use these terms consistently in documentation, error messages, and discussion.
+
+### Sigils
+
+- **Dollar sigil** (`$`) — Prefix marking variables and types. `$name` for variables, `$Name` for types.
+
+### Delimiters
+
+- **Frontmatter fence** (`---`) — YAML frontmatter delimiter (opening and closing).
+- **Skill link** (`[[name]]`) — Reference to another skill. Wiki-link style.
+- **Section link** (`[[#name]]` or `[[skill#name]]`) — Reference to a section, optionally in another skill.
+- **Semantic marker** (`{~~content}`) — Content for LLM interpretation. The `~~` suggests "approximately."
+- **Tuple** (`(a, b)`) — Grouping of multiple values. Used in types and destructuring.
+- **Array literal** (`[a, b]`) — Collection of values.
+- **Array suffix** (`$Type[]`) — Type modifier indicating a collection.
+
+### Keywords
+
+- **For-each loop** (`FOR EACH $x IN $y:`) — Iteration over a collection.
+- **Parallel loop** (`PARALLEL FOR EACH $x IN $y:`) — Concurrent iteration.
+- **While loop** (`WHILE (cond):`) — Conditional loop.
+- **Conditional** (`IF cond THEN:`) — Conditional branching.
+- **Else clause** (`ELSE:`) — Alternative branch of a conditional.
+- **With clause** (`WITH:`) — Parameter block for skill delegation.
+- **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.
+- **Loop control** (`BREAK`, `CONTINUE`) — Early exit or skip within loops.
+- **Collection operator** (`IN`) — Specifies the collection in a loop.
+
+### Operators
+
+- **Assignment** (`=`) — Assigns a value to a variable or defines a type.
+- **Type annotation** (`:`) — Separates a variable from its type. `$x: $Type`
+- **Arrow** (`=>`) — Defines a lambda expression. `$x => expr`
+- **Union** (`|`) — Separates enum variants in types. `"a" | "b"`
+- **Member access** (`.`) — Accesses a property. `$item.name`
+
+### Comparison Operators
+
+- **Equality** (`=`) — Tests if values are equal (in conditions).
+- **Inequality** (`!=`) — Tests if values are not equal.
+- **Less than** (`<`) — Numeric comparison.
+- **Greater than** (`>`) — Numeric comparison.
+- **Less or equal** (`<=`) — Numeric comparison.
+- **Greater or equal** (`>=`) — Numeric comparison.
+
+### Document Structure
+
+- **Frontmatter** — Skill metadata in YAML between `---` fences: name, description, uses.
+- **Section heading** (`##`) — Markdown heading that defines a referenceable section.
+- **List item** (`-`) — Markdown list marker for steps and declarations.
+- **Code block** (` ``` `) — Fenced code block (standard markdown).
+
+### Type Forms
+
+- **Semantic type** (`$Task: any executable instruction`) — Natural language type description.
+- **Enum type** (`$Status: "active" | "done"`) — Fixed set of string values.
+- **Tuple type** (`($Task, $Priority)`) — Compound type of ordered values.
+- **Array type** (`$Task[]`) — Collection of a single type.
+- **Function type** (`$fn = $x => expr`) — Lambda/callable type.
+- **Type reference** (`$Task`) — Reference to a defined type.
+
+### Variable Forms
+
+- **Variable declaration** (`$name = value`) — Creates a variable with a value.
+- **Typed declaration** (`$name: $Type = value`) — Declaration with type annotation.
+- **Required parameter** (`$name: $Type`) — In WITH clause, parameter without default (required).
+- **Variable reference** (`$name`) — Use of a defined variable.
+- **Lambda expression** (`$fn = $x => expr`) — Anonymous function definition.
+
+### Control Flow
+
+- **Block** — Indented content after `:` belonging to a control flow statement.
+- **Condition** — Boolean expression in `WHILE`/`IF` (deterministic or semantic).
+- **Semantic condition** (`NOT diminishing returns`) — Natural language condition interpreted by LLM.
+- **Deterministic condition** (`$x < 5`) — Computable boolean expression.
+- **Destructuring** (`($a, $b) IN $tuples`) — Unpacking tuple elements in iteration.
+
+### Composition
+
+- **Delegation** (`Execute [[skill]] WITH:`) — Invoking another skill with parameters.
+- **Dependency** (`uses:` in frontmatter) — Declared skill dependency.
+
 ## Version History
 
+- **v0.4** (2026-01-05): Changed type definition syntax from `=` to `:` for clarity
 - **v0.3** (2026-01-03): Validator-first architecture - source = output, validation focus
-- **v0.2** (2026-01-03): Added PARALLEL FOR EACH, imports, typed parameters, BREAK/CONTINUE
+- **v0.2** (2026-01-03): Added PARALLEL FOR EACH, typed parameters, BREAK/CONTINUE
 - **v0.1** (2026-01-03): Initial specification based on Phase 1-2 validation
