@@ -14,14 +14,14 @@ $Finding: an issue or observation about the code
 
 ## Input
 
-- $prUrl: $String                      # URL of the pull request to review
+- $prUrl: $String                      <!-- URL of the pull request to review -->
 - $focusAreas: $String[] = ["correctness", "readability", "tests"]
 - $strictness: $String = "balanced"
 
 ## Context
 
 - $prType: $PRType
-- $files: ($String, $String)[] = []  # (filename, diff content)
+- $files: ($String, $String)[] = []  <!-- (filename, diff content) -->
 - $findings: ($Finding, $Severity)[] = []
 - $summary: $String
 

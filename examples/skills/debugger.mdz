@@ -14,7 +14,7 @@ $StackFrame: current execution context with variables
 
 ## Input
 
-- $skillPath: $String  # path to the skill to debug
+- $skillPath: $String  <!-- path to the skill to debug -->
 - $traceLevel: $TraceLevel = "verbose"
 - $breakpoints: $String[] = []
 

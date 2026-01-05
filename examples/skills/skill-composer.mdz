@@ -16,9 +16,9 @@ $ExecutionPlan: ordered list of skill executions
 
 ## Input
 
-- $skills: $SkillRef[]                 # skills to compose
+- $skills: $SkillRef[]                 <!-- skills to compose -->
 - $mode: $CompositionMode = "sequential"
-- $entryPoint: $SkillRef               # first skill to execute
+- $entryPoint: $SkillRef               <!-- first skill to execute -->
 
 ## Context
 

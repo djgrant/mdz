@@ -10,12 +10,13 @@
   "scripts": {
     "build": "tsc",
     "build:packages": "pnpm -r --filter '@zenmarkdown/*' build",
-    "test": "pnpm build && node dist/tests/parser.test.js && node dist/tests/compiler.test.js && node dist/tests/integration.test.js && node dist/tests/edge-cases.test.js && node dist/tests/v02-features.test.js",
+    "test": "pnpm build && node dist/tests/parser.test.js && node dist/tests/compiler.test.js && node dist/tests/integration.test.js && node dist/tests/edge-cases.test.js && node dist/tests/v02-features.test.js && node dist/tests/examples.test.js",
     "test:parser": "pnpm build && node dist/tests/parser.test.js",
     "test:compiler": "pnpm build && node dist/tests/compiler.test.js",
     "test:integration": "pnpm build && node dist/tests/integration.test.js",
     "test:edge-cases": "pnpm build && node dist/tests/edge-cases.test.js",
     "test:v02": "pnpm build && node dist/tests/v02-features.test.js",
+    "test:examples": "pnpm build && node dist/tests/examples.test.js",
     "cli": "pnpm build && node dist/src/cli/index.js",
     "web": "pnpm -F zen-website --",
     "deploy": "pnpm -F zen-website push"
