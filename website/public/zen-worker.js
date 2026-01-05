@@ -161,6 +161,11 @@
             this.scanSemanticContent();
             return;
           }
+          if (char === "/") {
+            const result = this.tryScanSemanticMarker();
+            if (result)
+              return;
+          }
           if (this.lookAhead("[[")) {
             this.consumeChars(2);
             this.addToken("DOUBLE_LBRACKET", "[[");
@@ -353,8 +358,76 @@
             this.addToken("SEMANTIC_CLOSE", "}");
           }
         }
+        /**
+         * Peeks ahead to check if current position starts a semantic marker.
+         * Assumes current position is at '/'.
+         *
+         * Disambiguation heuristic:
+         * - If content between slashes contains a space, it's a semantic marker
+         * - Otherwise it's likely a path (e.g., /path/to/file) and we don't tokenize it
+         *
+         * @param stopChar - Additional character to stop lookahead at (for templates, use '`')
+         */
+        tryPeekSemanticMarker(stopChar) {
+          let lookahead = 1;
+          let hasSpace = false;
+          while (this.pos + lookahead < this.source.length) {
+            const c = this.source[this.pos + lookahead];
+            if (c === "/") {
+              return hasSpace;
+            }
+            if (c === "\n" || stopChar && c === stopChar) {
+              return false;
+            }
+            if (c === " ") {
+              hasSpace = true;
+            }
+            lookahead++;
+          }
+          return false;
+        }
+        /**
+         * Scans and tokenizes a semantic marker: /content with spaces/
+         * Assumes current position is at '/' and that tryPeekSemanticMarker returned true.
+         */
+        scanSemanticMarkerContent() {
+          this.advance();
+          let content = "";
+          while (!this.isAtEnd() && this.peek() !== "/") {
+            content += this.advance();
+          }
+          if (this.peek() === "/") {
+            this.advance();
+          }
+          this.addToken("SEMANTIC_MARKER", "/" + content + "/");
+        }
+        /**
+         * Tries to scan a semantic marker: /content with spaces/
+         * Returns true if a semantic marker was found and tokenized.
+         */
+        tryScanSemanticMarker() {
+          if (this.tryPeekSemanticMarker()) {
+            this.scanSemanticMarkerContent();
+            return true;
+          }
+          return false;
+        }
         scanDollarIdent() {
           this.advance();
+          if (this.peek() === "/") {
+            this.advance();
+            let content = "";
+            while (!this.isAtEnd() && this.peek() !== "/" && this.peek() !== "\n") {
+              content += this.advance();
+            }
+            if (this.peek() === "/") {
+              this.advance();
+              this.addToken("INFERRED_VAR", "$/" + content + "/");
+              return;
+            }
+            this.addToken("ERROR", "$/" + content);
+            return;
+          }
           let ident = "";
           while (this.isAlphaNumeric(this.peek()) || this.peek() === "-") {
             ident += this.advance();
@@ -432,6 +505,23 @@
               if (this.peek() === "}")
                 this.advance();
               this.addToken("DOLLAR_IDENT", expr);
+            } else if (this.lookAhead("$/")) {
+              if (part) {
+                this.addToken("TEMPLATE_PART", part);
+                part = "";
+              }
+              this.advance();
+              this.advance();
+              let content = "";
+              while (!this.isAtEnd() && this.peek() !== "/" && this.peek() !== "\n" && this.peek() !== "`") {
+                content += this.advance();
+              }
+              if (this.peek() === "/") {
+                this.advance();
+                this.addToken("INFERRED_VAR", "$/" + content + "/");
+              } else {
+                this.addToken("ERROR", "$/" + content);
+              }
             } else if (this.lookAhead("{~~")) {
               if (part) {
                 this.addToken("TEMPLATE_PART", part);
@@ -440,6 +530,12 @@
               this.consumeChars(3);
               this.addToken("SEMANTIC_OPEN", "{~~");
               this.scanSemanticContent();
+            } else if (this.peek() === "/" && this.tryPeekSemanticMarker("`")) {
+              if (part) {
+                this.addToken("TEMPLATE_PART", part);
+                part = "";
+              }
+              this.scanSemanticMarkerContent();
             } else {
               part += this.advance();
             }
@@ -474,6 +570,7 @@
             "EACH": "EACH",
             "IN": "IN",
             "WHILE": "WHILE",
+            "DO": "DO",
             "IF": "IF",
             "THEN": "THEN",
             "ELSE": "ELSE",
@@ -993,6 +1090,14 @@
                 name: typeToken.value.slice(1),
                 span: typeToken.span
               };
+            } else if (this.check("SEMANTIC_MARKER")) {
+              const semanticToken = this.advance();
+              const description = semanticToken.value.slice(1, -1);
+              typeAnnotation = {
+                kind: "SemanticType",
+                description,
+                span: semanticToken.span
+              };
             }
           }
           let value = null;
@@ -1184,8 +1289,11 @@
           if (this.check("DOUBLE_LBRACKET")) {
             return this.parseReference();
           }
-          if (this.check("SEMANTIC_OPEN")) {
+          if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
             return this.parseSemanticMarker();
+          }
+          if (this.check("INFERRED_VAR")) {
+            return this.parseInferredVariable();
           }
           if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
             return this.parseVariableReference();
@@ -1255,8 +1363,10 @@
                 name: varToken.value.slice(1),
                 span: varToken.span
               });
-            } else if (this.check("SEMANTIC_OPEN")) {
+            } else if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
               parts.push(this.parseSemanticMarker());
+            } else if (this.check("INFERRED_VAR")) {
+              parts.push(this.parseInferredVariable());
             } else {
               this.advance();
             }
@@ -1294,6 +1404,26 @@
           return { kind: "SkillReference", skill: skill || "", span };
         }
         parseSemanticMarker() {
+          if (this.check("SEMANTIC_MARKER")) {
+            const token = this.advance();
+            const content2 = token.value.slice(1, -1);
+            const interpolations2 = [];
+            const varMatches = content2.matchAll(/\$([a-zA-Z][a-zA-Z0-9_-]*)/g);
+            for (const match of varMatches) {
+              interpolations2.push({
+                kind: "VariableReference",
+                name: match[1],
+                span: token.span
+                // Approximate span
+              });
+            }
+            return {
+              kind: "SemanticMarker",
+              content: content2,
+              interpolations: interpolations2,
+              span: token.span
+            };
+          }
           const start = this.advance();
           let content = "";
           const interpolations = [];
@@ -1318,6 +1448,15 @@
             content,
             interpolations,
             span: AST2.mergeSpans(start.span, end?.span || this.previous().span)
+          };
+        }
+        parseInferredVariable() {
+          const token = this.advance();
+          const name = token.value.slice(2, -1);
+          return {
+            kind: "InferredVariable",
+            name,
+            span: token.span
           };
         }
         parseVariableReference() {
@@ -1362,7 +1501,7 @@
         parseInlineText() {
           let text = "";
           const start = this.current();
-          while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("DOUBLE_LBRACKET") && !this.check("SEMANTIC_OPEN") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
+          while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("DOUBLE_LBRACKET") && !this.check("SEMANTIC_OPEN") && !this.check("SEMANTIC_MARKER") && !this.check("INFERRED_VAR") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
             if (text)
               text += " ";
             text += this.advance().value;
@@ -1420,9 +1559,8 @@
         }
         parseWhile() {
           const start = this.advance();
-          this.expect("LPAREN");
           const condition = this.parseCondition();
-          this.expect("RPAREN");
+          this.expect("DO");
           this.expect("COLON");
           this.skipNewlines();
           this.loopDepth++;
@@ -1580,7 +1718,7 @@
           }
           let text = "";
           const start = this.current();
-          while (!this.isAtEnd() && !this.check("RPAREN") && !this.check("AND") && !this.check("OR") && !this.check("THEN") && !this.check("COLON")) {
+          while (!this.isAtEnd() && !this.check("RPAREN") && !this.check("AND") && !this.check("OR") && !this.check("THEN") && !this.check("DO") && !this.check("COLON")) {
             if (text)
               text += " ";
             text += this.advance().value;
@@ -1620,8 +1758,10 @@
           while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("HEADING")) {
             if (this.check("DOUBLE_LBRACKET")) {
               content.push(this.parseReference());
-            } else if (this.check("SEMANTIC_OPEN")) {
+            } else if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
               content.push(this.parseSemanticMarker());
+            } else if (this.check("INFERRED_VAR")) {
+              content.push(this.parseInferredVariable());
             } else if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
               const varToken = this.advance();
               content.push({
@@ -1962,7 +2102,7 @@
         extractVariableDeclaration(decl) {
           const varInfo = {
             name: decl.name,
-            type: decl.typeAnnotation?.name || null,
+            type: this.getTypeAnnotationName(decl.typeAnnotation),
             hasDefault: decl.value !== null,
             isRequired: decl.isRequired || false,
             span: decl.span
@@ -2006,6 +2146,12 @@
                 type: "semantic",
                 name: content.content
               });
+            } else if (content.kind === "InferredVariable") {
+              this.sourceMap.push({
+                source: content.span,
+                type: "semantic",
+                name: `$/` + content.name + `/`
+              });
             }
           }
         }
@@ -2024,13 +2170,21 @@
             if (block.kind === "VariableDeclaration") {
               this.metadata.parameters.push({
                 name: block.name,
-                type: block.typeAnnotation?.name || null,
+                type: this.getTypeAnnotationName(block.typeAnnotation),
                 hasDefault: block.value !== null,
                 isRequired: !block.value,
                 span: block.span
               });
             }
           }
+        }
+        getTypeAnnotationName(typeAnnotation) {
+          if (!typeAnnotation)
+            return null;
+          if (typeAnnotation.kind === "TypeReference") {
+            return typeAnnotation.name;
+          }
+          return typeAnnotation.description;
         }
         extractFromExpression(expr) {
           switch (expr.kind) {
@@ -2045,6 +2199,13 @@
                 source: expr.span,
                 type: "semantic",
                 name: expr.content
+              });
+              break;
+            case "InferredVariable":
+              this.sourceMap.push({
+                source: expr.span,
+                type: "semantic",
+                name: `$/` + expr.name + `/`
               });
               break;
             case "BinaryExpression":
@@ -2178,6 +2339,12 @@
                   if (!this.definedVariables.has(content.name)) {
                     usedBeforeDefined.add(content.name);
                   }
+                } else if (content.kind === "SemanticMarker") {
+                  for (const interpolation of content.interpolations) {
+                    if (!this.definedVariables.has(interpolation.name)) {
+                      usedBeforeDefined.add(interpolation.name);
+                    }
+                  }
                 }
               }
             }
@@ -2187,6 +2354,13 @@
           if (expr.kind === "VariableReference") {
             if (!this.definedVariables.has(expr.name)) {
               usedBeforeDefined.add(expr.name);
+            }
+          } else if (expr.kind === "InferredVariable") {
+          } else if (expr.kind === "SemanticMarker") {
+            for (const interpolation of expr.interpolations) {
+              if (!this.definedVariables.has(interpolation.name)) {
+                usedBeforeDefined.add(interpolation.name);
+              }
             }
           } else if (expr.kind === "BinaryExpression") {
             this.checkExpressionScope(expr.left, usedBeforeDefined);
