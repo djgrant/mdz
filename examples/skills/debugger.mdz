@@ -6,9 +6,9 @@ description: When you need to trace and debug skill execution
 ## Types
 
 $TraceLevel: "minimal" | "verbose" | "debug"
-$TraceEvent: a record of something that happened during execution
-$Breakpoint: a condition that pauses execution for inspection
-$StackFrame: current execution context with variables
+$TraceEvent: /a record of something that happened during execution/
+$Breakpoint: /a condition that pauses execution for inspection/
+$StackFrame: /current execution context with variables/
 
 ## Input
 

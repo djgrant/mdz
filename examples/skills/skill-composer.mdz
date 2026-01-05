@@ -7,11 +7,11 @@ uses:
 
 ## Types
 
-$SkillRef: reference to another skill
+$SkillRef: /reference to another skill/
 $CompositionMode: "sequential" | "parallel" | "conditional"
-$DependencyGraph: directed graph of skill dependencies
-$ExecutionPlan: ordered list of skill executions
-$SkillResult: tuple of skill reference and its output string
+$DependencyGraph: /directed graph of skill dependencies/
+$ExecutionPlan: /ordered list of skill executions/
+$SkillResult: /tuple of skill reference and its output string/
 
 ## Input
 
@@ -54,9 +54,9 @@ FOR EACH $skill IN $plan:
 ### 3. Execute Composition
 
 Execute [[orchestrate]] WITH:
-- $plan = $plan
-- $mode = $mode
-- $results = $results
+- $plan
+- $mode
+- $results
 
 ### 4. Synthesize Results
 

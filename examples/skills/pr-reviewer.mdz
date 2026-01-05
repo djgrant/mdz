@@ -8,7 +8,7 @@ description: When reviewing a pull request for code quality, documentation, and 
 $PRType: "feature" | "bugfix" | "refactor" | "docs" | "chore"
 $ReviewOutcome: "approve" | "request-changes" | "comment"
 $Severity: "critical" | "major" | "minor" | "nitpick"
-$Finding: an issue or observation about the code
+$Finding: /an issue or observation about the code/
 
 ## Input
 

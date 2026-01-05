@@ -7,9 +7,9 @@ uses:
 
 ## Types
 
-$Hypothesis: a testable prediction about what will solve the problem
-$Experiment: a concrete action to test a hypothesis
-$Observation: data collected from running an experiment
+$Hypothesis: /a testable prediction about what will solve the problem/
+$Experiment: /a concrete action to test a hypothesis/
+$Observation: /data collected from running an experiment/
 $ValidationResult: "progress" | "regression" | "plateau"
 $Strategy: "accumulate" | "independent"
 
