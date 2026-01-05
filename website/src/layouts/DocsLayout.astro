@@ -267,11 +267,11 @@ const currentPageLabel = sections
     opacity: 0;
     visibility: hidden;
     background: var(--color-bg);
-    border: 1px solid var(--color-accent);
+    border: 1px solid transparent;
     border-top: none;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
-    transition: grid-template-rows 0.25s ease, opacity 0.2s ease, visibility 0.2s ease;
+    transition: grid-template-rows 0.25s ease, opacity 0.2s ease, visibility 0.2s ease, border-color 0.2s ease;
     overflow: hidden;
   }
   
@@ -279,6 +279,7 @@ const currentPageLabel = sections
     grid-template-rows: 1fr;
     opacity: 1;
     visibility: visible;
+    border-color: var(--color-accent);
   }
   
   @media (prefers-color-scheme: dark) {
