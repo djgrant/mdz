@@ -275,7 +275,7 @@ describe('Large Document Handling', () => {
   test('Handles 100+ types', () => {
     let types = '';
     for (let i = 0; i < 100; i++) {
-      types += `$Type${i} = description for type ${i}\n`;
+      types += `$Type${i}: description for type ${i}\n`;
     }
     const doc = parse(`---
 name: many-types
@@ -452,7 +452,7 @@ name: test
 description: test
 ---
 
-$Tuple = ($Task, $Strategy, $Priority)[]
+$Tuple: ($Task, $Strategy, $Priority)[]
 `);
     const types = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.TypeDefinition => b.kind === 'TypeDefinition')
@@ -507,7 +507,7 @@ name: test
 description: test
 ---
 
-$Task = a task
+$Task: a task
 - $t: $Task = "test"
 Execute [[skill]]
 Write to {~~location}
@@ -525,7 +525,7 @@ name: test
 description: test
 ---
 
-$Task = a task
+$Task: a task
 - $t: $Task = "test"
 Execute [[skill]]
 {~~determine this}

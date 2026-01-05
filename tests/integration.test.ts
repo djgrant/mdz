@@ -63,8 +63,8 @@ uses:
 
 ## Types
 
-$Task = any task that an agent can execute
-$Status = "pending" | "done"
+$Task: any task that an agent can execute
+$Status: "pending" | "done"
 
 ## Input
 
@@ -88,7 +88,7 @@ description: Tests control flow constructs
 
 ## Types
 
-$Item = an item to process
+$Item: an item to process
 
 ## Workflow
 
@@ -157,7 +157,7 @@ describe('Simple Skill Parsing', () => {
     // Source should be preserved exactly
     assertEqual(result.output, simpleSkill);
     // Type definitions still present as authored
-    assert(result.output.includes('$Task = any task'), 'Type def preserved');
+    assert(result.output.includes('$Task: any task'), 'Type def preserved');
     // No expansion text
     assert(!result.output.includes('Task (any task'), 'No expansion');
   });

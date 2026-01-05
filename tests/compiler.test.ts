@@ -77,12 +77,12 @@ name: test
 description: test
 ---
 
-$Task = any executable instruction
+$Task: any executable instruction
 
 - $current: $Task = do something
 `;
     const result = compile(source, { includeHeader: false });
-    assertIncludes(result.output, '$Task = any executable instruction');
+    assertIncludes(result.output, '$Task: any executable instruction');
     assertIncludes(result.output, '$current: $Task');
     assert(!result.output.includes('Task (any executable instruction)'), 
       'Types should NOT be expanded');
@@ -144,8 +144,8 @@ name: test
 description: test
 ---
 
-$Task = any executable instruction
-$Strategy = "fast" | "slow"
+$Task: any executable instruction
+$Strategy: "fast" | "slow"
 `);
     assertEqual(result.metadata.types.length, 2);
     assertEqual(result.metadata.types[0].name, 'Task');
@@ -297,7 +297,7 @@ name: test
 description: test
 ---
 
-$Task = any task
+$Task: any task
 
 - $x: $Task = value
 `, { validateTypes: true });
@@ -439,7 +439,7 @@ name: test
 description: test
 ---
 
-$Task = any task
+$Task: any task
 `, { generateSourceMap: true });
     
     const typeEntries = result.sourceMap.filter(e => e.type === 'type-def');
@@ -634,8 +634,8 @@ uses:
 
 ## Types
 
-$Task = any task that an agent can execute
-$Strategy = "accumulate" | "independent"
+$Task: any task that an agent can execute
+$Strategy: "accumulate" | "independent"
 
 ## Input
 
@@ -662,7 +662,7 @@ Handle a single iteration.
 `);
 
     // Source unchanged
-    assertIncludes(result.output, '$Task = any task');
+    assertIncludes(result.output, '$Task: any task');
     assertIncludes(result.output, '{~~appropriate location}');
     assertIncludes(result.output, '[[#iteration-manager]]');
     
