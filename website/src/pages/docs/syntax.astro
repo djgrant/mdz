@@ -13,7 +13,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>An MDZ document is a valid markdown file with these extensions:</p>
   
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 frontmatter (YAML)
 ---</span>
 
@@ -25,7 +25,7 @@ Body content with MDZ constructs</code></pre>
   
   <p>Required and optional fields in YAML frontmatter:</p>
   
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: skill-name              # Required: identifier (kebab-case)
 description: When...          # Required: trigger description
 uses:                         # Optional: skill dependencies
@@ -39,20 +39,20 @@ uses:                         # Optional: skill dependencies
   
   <p>Types provide semantic hints about values:</p>
   
-  <pre><code><span class="zen-type">$TypeName</span>: natural language description
+  <pre><code class="mdz"><span class="zen-type">$TypeName</span>: <span class="zen-semantic">/natural language description/</span>
 
-<span class="zen-type">$Task</span>: any task that an agent can execute
+<span class="zen-type">$Task</span>: <span class="zen-semantic">/any task that an agent can execute/</span>
 <span class="zen-type">$Strategy</span>: <span class="zen-string">"accumulate"</span> | <span class="zen-string">"independent"</span>
 <span class="zen-type">$Result</span>: <span class="zen-string">"success"</span> | <span class="zen-string">"failure"</span> | <span class="zen-string">"pending"</span></code></pre>
 
   <h3>Type Forms</h3>
   
   <ul>
-    <li><strong>Semantic type</strong>: <code>$Task: any executable instruction</code></li>
+    <li><strong>Semantic type</strong>: <code>$Task: /any executable instruction/</code></li>
     <li><strong>Enum type</strong>: <code>$Strategy: "fast" | "thorough"</code> (variants separated by <strong>union</strong> operator <code>|</code>)</li>
     <li><strong>Tuple type</strong>: <code>($Task, $Strategy)</code></li>
     <li><strong>Array type</strong>: <code>$Task[]</code> (uses <strong>array suffix</strong>)</li>
-    <li><strong>Function type</strong>: <code>$Fn: $x =&gt; expression</code> (uses <strong>arrow</strong> operator)</li>
+    <li><strong>Function type</strong>: <code>$fn = $x =&gt; expression</code> (uses <strong>arrow</strong> operator)</li>
   </ul>
 
   <h2>Variables</h2>
@@ -61,7 +61,7 @@ uses:                         # Optional: skill dependencies
   
   <h3>Variable Declaration</h3>
   
-  <pre><code><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value   <span class="zen-comment">&lt;!-- typed declaration --&gt;</span>
+  <pre><code class="mdz"><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value   <span class="zen-comment">&lt;!-- typed declaration --&gt;</span>
 <span class="zen-variable">$name</span> = value              <span class="zen-comment">&lt;!-- simple declaration --&gt;</span></code></pre>
 
   <h3>Examples</h3>
@@ -74,16 +74,16 @@ uses:                         # Optional: skill dependencies
   
   <p>Functions use the <strong>arrow</strong> operator (<code>=&gt;</code>):</p>
   
-  <pre><code><span class="zen-type">$FunctionName</span> = <span class="zen-variable">$param</span> =&gt; expression
-<span class="zen-type">$FunctionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression   <span class="zen-comment">&lt;!-- tuple for multiple params --&gt;</span>
+  <pre><code class="mdz"><span class="zen-variable">$functionName</span> = <span class="zen-variable">$param</span> =&gt; expression
+<span class="zen-variable">$functionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression   <span class="zen-comment">&lt;!-- multiple params --&gt;</span>
 
-<span class="zen-type">$SolutionPath</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.md`</code></pre>
+<span class="zen-variable">$solutionPath</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.md`</code></pre>
 
   <h3>Semantic Type Annotations</h3>
   
   <p>When a variable needs a semantic description rather than a named type, use the <strong>semantic type</strong> syntax:</p>
   
-  <pre><code><span class="zen-heading">## Input</span>
+  <pre><code class="mdz"><span class="zen-heading">## Input</span>
 - <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment">&lt;!-- path to the skill --&gt;</span>
 
 <span class="zen-heading">## Context</span>
@@ -102,13 +102,13 @@ uses:                         # Optional: skill dependencies
   
   <p>Reference another skill using wiki-link syntax:</p>
   
-  <pre><code><span class="zen-reference">[[skill-name]]</span></code></pre>
+  <pre><code class="mdz"><span class="zen-reference">[[skill-name]]</span></code></pre>
 
   <h3>Section Links</h3>
   
   <p>Reference a section within a skill:</p>
   
-  <pre><code><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment">&lt;!-- Section in another skill --&gt;</span>
+  <pre><code class="mdz"><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment">&lt;!-- Section in another skill --&gt;</span>
 [[#section-name]]             <span class="zen-comment">&lt;!-- Section in current skill --&gt;</span></code></pre>
 
   <h2>Semantic Markers</h2>
@@ -119,19 +119,19 @@ uses:                         # Optional: skill dependencies
   
   <p>Mark inline content that the LLM should interpret contextually:</p>
   
-  <pre><code><span class="zen-semantic">/appropriate location for this output/</span>
+  <pre><code class="mdz"><span class="zen-semantic">/appropriate location for this output/</span>
 <span class="zen-semantic">/determine best strategy for <span class="zen-variable">$task</span>/</span></code></pre>
 
   <p>Variables are expanded before interpretation:</p>
   
-  <pre><code><span class="zen-semantic">/the path for candidate <span class="zen-variable">$n</span>/</span>
+  <pre><code class="mdz"><span class="zen-semantic">/the path for candidate <span class="zen-variable">$n</span>/</span>
 <span class="zen-comment">&lt;!-- First $n is resolved, then LLM interprets --&gt;</span></code></pre>
 
   <h3>Inferred Variables</h3>
   
   <p>Use <code>$/name/</code> for variables the LLM infers and tracks without explicit declaration:</p>
   
-  <pre><code><span class="zen-semantic">$/current-hypothesis/</span>
+  <pre><code class="mdz"><span class="zen-semantic">$/current-hypothesis/</span>
 <span class="zen-semantic">$/best-candidate/</span></code></pre>
 
   <p>The LLM maintains these values implicitly based on context.</p>
@@ -149,20 +149,20 @@ uses:                         # Optional: skill dependencies
   
   <p>Iterate over a collection using the <strong>collection operator</strong> (<code>IN</code>):</p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
   - Process <span class="zen-variable">$item</span>
   - Next step</code></pre>
 
   <p>With <strong>destructuring</strong>:</p>
 
-  <pre><code><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>:
   - Execute <span class="zen-variable">$task</span> with <span class="zen-variable">$strategy</span></code></pre>
 
   <h3>While Loop</h3>
   
   <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition:</p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
   - Perform iteration
   - Update state</code></pre>
 
@@ -170,7 +170,7 @@ uses:                         # Optional: skill dependencies
   
   <p>Branch with <code>IF</code>/<code>THEN</code> and optional <strong>else clause</strong>:</p>
   
-  <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
   - Do this
 <span class="zen-keyword">ELSE</span>:
   - Do that
@@ -203,7 +203,7 @@ uses:                         # Optional: skill dependencies
   
   <p>While not required, these sections are conventional:</p>
   
-  <pre><code><span class="zen-heading">## Types</span>
+  <pre><code class="mdz"><span class="zen-heading">## Types</span>
 Type definitions
 
 <span class="zen-heading">## Input</span>

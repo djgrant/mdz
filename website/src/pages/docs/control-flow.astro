@@ -14,7 +14,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Iterate over a collection using the <strong>collection operator</strong> (<code>IN</code>):</p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
   - Process <span class="zen-variable">$item</span>
   - Next step</code></pre>
 
@@ -22,7 +22,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Unpack <strong>tuples</strong> during iteration using <strong>destructuring</strong>:</p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$priority</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$priority</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
   - Execute <span class="zen-variable">$task</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$priority</span> = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>:
     - Expedite processing</code></pre>
@@ -31,7 +31,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Iterate with concurrent execution using <code>PARALLEL FOR EACH</code>:</p>
   
-  <pre><code><span class="zen-keyword">PARALLEL FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  <pre><code class="mdz"><span class="zen-keyword">PARALLEL FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
   - Process <span class="zen-variable">$item</span> independently
   - Results collected when all complete</code></pre>
 
@@ -47,7 +47,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition (like <code>THEN</code> for <code>IF</code>):</p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
   - Perform iteration
   - Update state</code></pre>
 
@@ -65,14 +65,14 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Branch with <code>IF</code>/<code>THEN</code> and optional <strong>else clause</strong>:</p>
   
-  <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
   - Do this
 <span class="zen-keyword">ELSE</span>:
   - Do that</code></pre>
 
   <h3>Multi-line Branches</h3>
   
-  <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$strategy</span> = <span class="zen-string">"accumulate"</span> <span class="zen-keyword">THEN</span>:
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$strategy</span> = <span class="zen-string">"accumulate"</span> <span class="zen-keyword">THEN</span>:
   - Validate incrementally
   - Update on success
   - Log progress
@@ -104,7 +104,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Control flow can be nested. Indentation defines the <strong>block</strong>:</p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$task</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$tasks</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$task</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$tasks</span>:
   - Process <span class="zen-variable">$task</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$task</span>.priority = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>:
     - <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> complete <span class="zen-keyword">DO</span>:
@@ -117,7 +117,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Use <code>BREAK</code> and <code>CONTINUE</code> for early exit and skip within loops:</p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$item</span>.invalid <span class="zen-keyword">THEN</span>:
     - <span class="zen-keyword">CONTINUE</span>              <span class="zen-comment"># Skip to next iteration</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$found</span> = true <span class="zen-keyword">THEN</span>:
@@ -141,7 +141,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     interprets. Use them when the condition requires understanding context:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">DO</span>:
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">DO</span>:
   - Continue iterating
 
 <span class="zen-keyword">IF</span> the result looks promising <span class="zen-keyword">THEN</span>:

@@ -444,21 +444,21 @@ const currentPageLabel = sections
   }
   
   .docs-content :global(pre code) {
-    background: none;
-    padding: 0;
-    font-size: inherit;
-    color: inherit;
+    background: none !important;
+    padding: 0 !important;
+    font-size: inherit !important;
+    color: inherit !important;
   }
   
-  /* Syntax highlighting classes in docs */
-  .docs-content :global(.zen-keyword) { color: var(--color-keyword); font-weight: 600; }
-  .docs-content :global(.zen-type) { color: var(--color-type); }
-  .docs-content :global(.zen-variable) { color: var(--color-variable); }
-  .docs-content :global(.zen-string) { color: var(--color-string); }
-  .docs-content :global(.zen-semantic) { color: var(--color-semantic); font-style: italic; }
-  .docs-content :global(.zen-reference) { color: var(--color-reference); }
-  .docs-content :global(.zen-comment) { color: #6A737D; font-style: italic; }
-  .docs-content :global(.zen-heading) { color: #E5E5E5; font-weight: bold; }
+  /* Syntax highlighting classes in docs - use !important to override Prism */
+  .docs-content :global(.zen-keyword) { color: var(--color-keyword) !important; font-weight: 600 !important; }
+  .docs-content :global(.zen-type) { color: var(--color-type) !important; }
+  .docs-content :global(.zen-variable) { color: var(--color-variable) !important; }
+  .docs-content :global(.zen-string) { color: var(--color-string) !important; }
+  .docs-content :global(.zen-semantic) { color: var(--color-semantic) !important; font-style: italic !important; }
+  .docs-content :global(.zen-reference) { color: var(--color-reference) !important; }
+  .docs-content :global(.zen-comment) { color: #6A737D !important; font-style: italic !important; }
+  .docs-content :global(.zen-heading) { color: #E5E5E5 !important; font-weight: bold !important; }
   
   /* Inline code */
   .docs-content :global(code) {
@@ -543,3 +543,5 @@ const currentPageLabel = sections
     }
   }
 </style>
+
+<!-- Prism.js removed - was stripping MDZ syntax highlighting in Firefox -->

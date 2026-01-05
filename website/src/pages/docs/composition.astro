@@ -14,7 +14,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <p>Reference another skill using a <strong>skill link</strong> (wiki-link style):</p>
 
-  <pre><code><span class="zen-reference">[[skill-name]]</span></code></pre>
+  <pre><code class="mdz"><span class="zen-reference">[[skill-name]]</span></code></pre>
 
   <p>In prose:</p>
 
@@ -31,13 +31,13 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <p>Use a <strong>section link</strong> to reference a section in the current document:</p>
 
-  <pre><code><span class="zen-reference">[[#section-name]]</span></code></pre>
+  <pre><code class="mdz"><span class="zen-reference">[[#section-name]]</span></code></pre>
 
   <h3>In Another Skill</h3>
 
   <p>Combine skill and section in a single link:</p>
 
-  <pre><code><span class="zen-reference">[[skill-name#section-name]]</span></code></pre>
+  <pre><code class="mdz"><span class="zen-reference">[[skill-name#section-name]]</span></code></pre>
 
   <h3>Section Names</h3>
 
@@ -49,7 +49,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
     <li>Removing special characters</li>
   </ol>
 
-  <pre><code><span class="zen-heading">## Validate Prompt</span>
+  <pre><code class="mdz"><span class="zen-heading">## Validate Prompt</span>
 → <span class="zen-reference">[[#validate-prompt]]</span>
 
 <span class="zen-heading">## 2. Execute Phase</span>
@@ -59,10 +59,9 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <p>Pass parameters when delegating to a skill using the <strong>with clause</strong>:</p>
 
-  <pre><code>Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
-  - <span class="zen-variable">$transforms</span> = [(<span class="zen-string">"Apply heuristic"</span>, <span class="zen-string">"accumulate"</span>)]
-  - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#validate-essence]]</span>
-  - <span class="zen-variable">$return</span> = <span class="zen-string">"Report findings"</span></code></pre>
+  <pre><code class="mdz">Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
+  - <span class="zen-variable">$task</span> = <span class="zen-string">"Apply heuristic"</span>
+  - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#validate-essence]]</span></code></pre>
 
   <p>
     Tooling validates that required parameters are provided and types match the
@@ -79,7 +78,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <p>Declare skill dependencies in frontmatter:</p>
 
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: my-skill
 description: When orchestrating complex workflows
 uses:
@@ -107,14 +106,14 @@ uses:
 
   <h3>Conditional Delegation</h3>
 
-  <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"failure"</span> <span class="zen-keyword">THEN</span>:
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"failure"</span> <span class="zen-keyword">THEN</span>:
   - Attempt recovery using <span class="zen-reference">[[#recovery-strategy]]</span>
 <span class="zen-keyword">ELSE</span>:
   - Continue with <span class="zen-reference">[[#main-workflow]]</span></code></pre>
 
   <h3>Iterative Composition</h3>
 
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$skill</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skills</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$skill</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skills</span>:
   - Load <span class="zen-variable">$skill</span> source
   - Execute with <span class="zen-reference">[[orchestrate]]</span>
   - Collect results</code></pre>

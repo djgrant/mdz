@@ -38,7 +38,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     Fan out work to multiple agents, collect results, and synthesize a final output:
   </p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
   - Delegate to sub-agent <span class="zen-keyword">WITH</span> <span class="zen-reference">[[process-item]]</span>
   - Collect <span class="zen-variable">$result</span> into <span class="zen-variable">$results</span>
 
@@ -54,7 +54,7 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
     Loop until a condition is met, refining approach based on observations:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> success <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> success <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
   - Form hypothesis
   - Run experiment
   - Observe results
@@ -70,7 +70,7 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
     Sequential skill chaining where output flows from one stage to the next:
   </p>
   
-  <pre><code><span class="zen-variable">$stage1Result</span> = Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$input</span>
+  <pre><code class="mdz"><span class="zen-variable">$stage1Result</span> = Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$input</span>
 <span class="zen-variable">$stage2Result</span> = Execute <span class="zen-reference">[[skill-b]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$stage1Result</span>
 <span class="zen-variable">$final</span> = Execute <span class="zen-reference">[[skill-c]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$stage2Result</span></code></pre>
 
@@ -88,7 +88,7 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
 
   <h3>Structure</h3>
   
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 uses:
@@ -107,7 +107,7 @@ uses:
     <li>Results are recorded for later synthesis</li>
   </ul>
   
-  <pre><code><span class="zen-type">$workPackagePath</span> = <span class="zen-variable">$n</span> =&gt; `<span class="zen-semantic">/work package directory/</span>/wp-experiment-<span class="zen-variable">$n</span>.md`</code></pre>
+  <pre><code class="mdz"><span class="zen-variable">$workPackagePath</span> = <span class="zen-variable">$n</span> =&gt; `<span class="zen-semantic">/work package directory/</span>/wp-experiment-<span class="zen-variable">$n</span>.md`</code></pre>
 
   <h3>The WHILE Loop</h3>
   
@@ -115,7 +115,7 @@ uses:
     The core iteration continues until diminishing returns or max iterations:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
   
   #### Design Experiment
   Create experiment work package with success criteria
@@ -153,7 +153,7 @@ uses:
     A typical higher-order skill follows this structure:
   </p>
   
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: orchestrator-skill
 description: When coordinating multiple skills
 uses:
@@ -164,8 +164,8 @@ uses:
 
 <span class="zen-heading">## Types</span>
 
-<span class="zen-type">$State</span>: context maintained across iterations
-<span class="zen-type">$Result</span>: output from delegated work
+<span class="zen-type">$State</span>: <span class="zen-semantic">/context maintained across iterations/</span>
+<span class="zen-type">$Result</span>: <span class="zen-semantic">/output from delegated work/</span>
 
 <span class="zen-heading">## Input</span>
 

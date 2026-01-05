@@ -76,13 +76,14 @@ pre {
 }
 
 /* Zen syntax highlighting in code blocks */
-.zen-keyword { color: var(--color-keyword); font-weight: 600; }
-.zen-type { color: var(--color-type); }
-.zen-variable { color: var(--color-variable); }
-.zen-string { color: var(--color-string); }
-.zen-semantic { color: var(--color-semantic); font-style: italic; }
-.zen-reference { color: var(--color-reference); }
-.zen-comment { color: #6A737D; font-style: italic; }
+.zen-keyword { color: var(--color-keyword, #8B5CF6) !important; font-weight: 600 !important; }
+.zen-type { color: var(--color-type, #06B6D4) !important; }
+.zen-variable { color: var(--color-variable, #F59E0B) !important; }
+.zen-string { color: var(--color-string, #22C55E) !important; }
+.zen-semantic { color: var(--color-semantic, #EC4899) !important; font-style: italic !important; }
+.zen-reference { color: var(--color-reference, #3B82F6) !important; }
+.zen-comment { color: #6A737D !important; font-style: italic !important; }
+.zen-heading { color: #E5E5E5 !important; font-weight: bold !important; }
 
 /* Focus states */
 :focus-visible {
@@ -96,8 +97,8 @@ pre {
   color: white;
 }
 
-/* Smooth dark mode transitions */
-* {
+/* Smooth dark mode transitions - exclude code blocks to prevent Firefox rendering issues */
+*:not(pre):not(code):not(pre *) {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 

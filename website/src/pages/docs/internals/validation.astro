@@ -46,7 +46,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     For malformed frontmatter like:
   </p>
 
-  <pre><code class="language-mdz">---
+  <pre><code class="mdz">---
 name: example
 description: missing closing dashes
 ---
@@ -80,7 +80,7 @@ description: missing closing dashes
     For undefined type reference:
   </p>
 
-  <pre><code class="language-mdz">$user: UnknownType = "john"</code></pre>
+  <pre><code class="mdz">$user: UnknownType = "john"</code></pre>
 
   <p>
     Produces warning:
@@ -107,7 +107,7 @@ description: missing closing dashes
 
   <h3>Example Scope Error</h3>
 
-  <pre><code class="language-mdz">FOR EACH $item IN $items:
+  <pre><code class="mdz">FOR EACH $item IN $items:
   - $result = $undefined_var + 1</code></pre>
 
   <p>
@@ -134,7 +134,7 @@ description: missing closing dashes
 
   <h3>Example Reference Error</h3>
 
-  <pre><code class="language-mdz">uses:
+  <pre><code class="mdz">uses:
   - math
 
 ## Workflow

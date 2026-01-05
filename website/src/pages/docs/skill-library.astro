@@ -75,29 +75,23 @@ description: A friendly greeting skill
 
    <p>Build complex skills by composing simpler ones:</p>
 
-   <pre><code class="language-mdz">---
+   <pre><code class="mdz"><span class="zen-comment">---
 name: complex-task
 description: A multi-step task that composes other skills
 uses:
   - basic-skill
   - another-skill
----
+---</span>
 
-# Complex Task
+<span class="zen-heading">## Input</span>
 
-## Input
+- <span class="zen-variable">$data</span>: <span class="zen-type">$String</span>
 
-$data: The data to process
+<span class="zen-heading">## Workflow</span>
 
-## Output
-
-First, use [[basic-skill]] to start:
-
-/result from basic-skill/
-
-Then, process the output with [[another-skill]]:
-
-/final result/</code></pre>
+1. Use <span class="zen-reference">[[basic-skill]]</span> to process <span class="zen-variable">$data</span>
+2. Then apply <span class="zen-reference">[[another-skill]]</span> to <span class="zen-semantic">/result from step 1/</span>
+3. Return final result</code></pre>
 
    <p>Reference other skills to avoid duplication.</p>
 

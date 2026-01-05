@@ -28,13 +28,13 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     Here's how the lexer tokenizes a simple MDZ snippet:
   </p>
 
-  <pre><code class="language-mdz">---
+  <pre><code class="mdz">---
 name: example
 ---
 
 ## Types
 
-$User: person with name and email</code></pre>
+$User: /person with name and email/</code></pre>
 
   <p>
     This produces the following token stream (simplified):
@@ -152,7 +152,7 @@ Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</
     For this MDZ input:
   </p>
 
-  <pre><code class="language-mdz">---
+  <pre><code class="mdz">---
 name: calculator
 ---
 

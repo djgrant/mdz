@@ -58,15 +58,15 @@ mkdir skills</code></pre>
      Create <code>skills/task-processor.mdz</code> with this content (see <a href="/docs/syntax">syntax reference</a> for details):
    </p>
 
-   <pre><code class="language-mdz">---
+   <pre><code class="mdz">---
 name: task-processor
 description: When processing tasks with validation and error handling
 ---
 
 ## Types
 
-$Task: a unit of work with inputs and expected outputs
-$Result: successful completion or error details
+$Task: /a unit of work with inputs and expected outputs/
+$Result: /successful completion or error details/
 
 ## Input
 
@@ -134,11 +134,11 @@ Handle common failure modes:
      Copy the workflow section and use it in your LLM prompts. For example, in Claude Desktop:
    </p>
 
-   <pre><code class="language-mdz">You are a task processor. Follow this process:
+   <pre><code class="mdz">You are a task processor. Follow this process:
 
 ## Types
-$Task: a unit of work with inputs and expected outputs
-$Result: successful completion or error details
+$Task: /a unit of work with inputs and expected outputs/
+$Result: /successful completion or error details/
 
 ## Input
 - $task: $Task
@@ -196,7 +196,7 @@ Task to process: [PASTE YOUR TASK HERE]</code></pre>
     Create skills for common patterns in your project:
   </p>
 
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: code-review
 description: When reviewing code changes for quality and correctness
 uses:
@@ -205,9 +205,9 @@ uses:
 
 <span class="zen-heading">## Types</span>
 
-<span class="zen-type">$CodeChange</span>: a set of file modifications with context
-<span class="zen-type">$ReviewFocus</span> = "security" | "performance" | "maintainability" | "correctness"
-<span class="zen-type">$Issue</span>: identified problem with severity and location
+<span class="zen-type">$CodeChange</span>: <span class="zen-semantic">/a set of file modifications with context/</span>
+<span class="zen-type">$ReviewFocus</span>: <span class="zen-string">"security"</span> | <span class="zen-string">"performance"</span> | <span class="zen-string">"maintainability"</span> | <span class="zen-string">"correctness"</span>
+<span class="zen-type">$Issue</span>: <span class="zen-semantic">/identified problem with severity and location/</span>
 
 <span class="zen-heading">## Input</span>
 
@@ -221,7 +221,7 @@ uses:
 <span class="zen-heading">## Workflow</span>
 
 1. Analyze <span class="zen-variable">$changes</span> for patterns and potential issues
-2. FOR EACH <span class="zen-variable">$area</span> IN <span class="zen-variable">$focus</span> DO:
+2. <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$area</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$focus</span>:
    - Apply focused review for <span class="zen-variable">$area</span>
    - Add identified issues to <span class="zen-variable">$issues</span>
 3. Generate review summary with prioritized recommendations</code></pre>
@@ -261,12 +261,12 @@ mdz compile code-review.mdz --metadata  # Generate metadata JSON</code></pre>
     Use MDZ skills by copying their workflow sections into Claude prompts:
   </p>
 
-  <pre><code class="language-mdz">You are a senior developer conducting a code review. Follow this process:
+  <pre><code class="mdz">You are a senior developer conducting a code review. Follow this process:
 
 ## Types
-$CodeChange: a set of file modifications with context
+$CodeChange: /a set of file modifications with context/
 $ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
-$Issue: identified problem with severity and location
+$Issue: /identified problem with severity and location/
 
 ## Input
 - $changes: $CodeChange (provided below)
@@ -274,7 +274,7 @@ $Issue: identified problem with severity and location
 
 ## Workflow
 1. Analyze $changes for patterns and potential issues
-2. FOR EACH $area IN $focus DO:
+2. FOR EACH $area IN $focus:
    - Apply focused review for $area
    - Document identified issues
 3. Generate review summary with prioritized recommendations
@@ -302,15 +302,15 @@ Code changes to review:
     Use this template to create your first project skill:
   </p>
 
-  <pre><code><span class="zen-comment">---
+  <pre><code class="mdz"><span class="zen-comment">---
 name: task-processor
 description: When processing tasks with validation and error handling
 ---</span>
 
 <span class="zen-heading">## Types</span>
 
-<span class="zen-type">$Task</span>: a unit of work with inputs and expected outputs
-<span class="zen-type">$Result</span>: successful completion or error details
+<span class="zen-type">$Task</span>: <span class="zen-semantic">/a unit of work with inputs and expected outputs/</span>
+<span class="zen-type">$Result</span>: <span class="zen-semantic">/successful completion or error details/</span>
 
 <span class="zen-heading">## Input</span>
 
