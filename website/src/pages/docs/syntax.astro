@@ -61,8 +61,8 @@ uses:                         # Optional: skill dependencies
   
   <h3>Variable Declaration</h3>
   
-  <pre><code><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value   <span class="zen-comment"># typed declaration</span>
-<span class="zen-variable">$name</span> = value              <span class="zen-comment"># simple declaration</span></code></pre>
+  <pre><code><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value   <span class="zen-comment">&lt;!-- typed declaration --&gt;</span>
+<span class="zen-variable">$name</span> = value              <span class="zen-comment">&lt;!-- simple declaration --&gt;</span></code></pre>
 
   <h3>Examples</h3>
   
@@ -75,7 +75,7 @@ uses:                         # Optional: skill dependencies
   <p>Functions use the <strong>arrow</strong> operator (<code>=&gt;</code>):</p>
   
   <pre><code><span class="zen-type">$FunctionName</span> = <span class="zen-variable">$param</span> =&gt; expression
-<span class="zen-type">$FunctionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression   <span class="zen-comment"># tuple for multiple params</span>
+<span class="zen-type">$FunctionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression   <span class="zen-comment">&lt;!-- tuple for multiple params --&gt;</span>
 
 <span class="zen-type">$SolutionPath</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.md`</code></pre>
 
@@ -84,7 +84,7 @@ uses:                         # Optional: skill dependencies
   <p>When a variable's structure changes during workflow execution (e.g., loading and parsing a file), use distinct variable names:</p>
   
   <pre><code><span class="zen-heading">## Input</span>
-- <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment"># path to the skill</span>
+- <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment">&lt;!-- path to the skill --&gt;</span>
 
 <span class="zen-heading">## Context</span>
 - <span class="zen-variable">$skill</span>: <span class="zen-semantic">&#123;~~the loaded and parsed skill AST from $skillPath&#125;</span>
@@ -108,8 +108,8 @@ uses:                         # Optional: skill dependencies
   
   <p>Reference a section within a skill:</p>
   
-  <pre><code><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment"># Section in another skill</span>
-[[#section-name]]             <span class="zen-comment"># Section in current skill</span></code></pre>
+  <pre><code><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment">&lt;!-- Section in another skill --&gt;</span>
+[[#section-name]]             <span class="zen-comment">&lt;!-- Section in current skill --&gt;</span></code></pre>
 
   <h2>Semantic Markers</h2>
   
@@ -121,7 +121,7 @@ uses:                         # Optional: skill dependencies
   <p>Variables are expanded before interpretation:</p>
   
   <pre><code><span class="zen-semantic">&#123;~~the path for candidate <span class="zen-variable">$n</span>&#125;</span>
-<span class="zen-comment"># First $n is resolved, then LLM interprets</span></code></pre>
+<span class="zen-comment">&lt;!-- First $n is resolved, then LLM interprets --&gt;</span></code></pre>
 
   <h2>Control Flow</h2>
   
@@ -140,9 +140,9 @@ uses:                         # Optional: skill dependencies
 
   <h3>While Loop</h3>
   
-  <p>Loop with a <strong>condition</strong> (parentheses required):</p>
+  <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition:</p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> (condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5):
+  <pre><code><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
   - Perform iteration
   - Update state</code></pre>
 

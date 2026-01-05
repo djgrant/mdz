@@ -15,7 +15,7 @@ export type TokenType =
   | 'FRONTMATTER_START' | 'FRONTMATTER_END' | 'HEADING' | 'LIST_MARKER'
   | 'HORIZONTAL_RULE' | 'NEWLINE' | 'INDENT' | 'DEDENT' | 'EOF'
   // Control flow keywords
-  | 'FOR' | 'EACH' | 'IN' | 'WHILE' | 'IF' | 'THEN' | 'ELSE'
+  | 'FOR' | 'EACH' | 'IN' | 'WHILE' | 'DO' | 'IF' | 'THEN' | 'ELSE'
   | 'AND' | 'OR' | 'NOT' | 'WITH'
   | 'PARALLEL'  // v0.2
   | 'BREAK'     // v0.2
@@ -471,8 +471,10 @@ export class Lexer {
     }
 
     // v0.2: Added PARALLEL, BREAK, CONTINUE
+    // v0.3: Added DO for WHILE...DO syntax
     const keywords: Record<string, TokenType> = {
       'FOR': 'FOR', 'EACH': 'EACH', 'IN': 'IN', 'WHILE': 'WHILE',
+      'DO': 'DO',
       'IF': 'IF', 'THEN': 'THEN', 'ELSE': 'ELSE',
       'AND': 'AND', 'OR': 'OR', 'NOT': 'NOT', 'WITH': 'WITH',
       'PARALLEL': 'PARALLEL',

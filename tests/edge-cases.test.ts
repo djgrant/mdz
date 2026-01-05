@@ -63,7 +63,7 @@ description: Test nested control flow
 ## Workflow
 
 IF $ready = true THEN:
-  - WHILE ($count < 3):
+  - WHILE $count < 3 DO:
     - FOR EACH $item IN $items:
       - Process $item at level $count
 `);
@@ -112,7 +112,7 @@ name: mixed-conditions
 description: Mixed conditions
 ---
 
-WHILE (not complete AND $iterations < 10 OR should retry):
+WHILE NOT complete AND $iterations < 10 OR should retry DO:
   - Continue processing
 `);
     const whiles = doc.sections.flatMap(s => 

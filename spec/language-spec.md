@@ -322,22 +322,22 @@ Use PARALLEL FOR EACH when:
 
 ### WHILE
 
-Loop with condition:
+Loop with condition. The `DO` keyword acts as the condition delimiter (like `THEN` for `IF`):
 
 ```
-WHILE (condition AND $iterations < 5):
+WHILE condition AND $iterations < 5 DO:
   - Perform iteration
   - Update state
 ```
 
 Conditions can include:
 - Variable comparisons: `$x < 5`
-- Semantic conditions: `not diminishing returns` (LLM-interpreted)
+- Semantic conditions: `NOT diminishing returns` (LLM-interpreted)
 - Logical operators: `AND`, `OR`, `NOT`
 
 ### IF THEN ELSE
 
-Conditional branching. The `THEN` keyword acts as the condition delimiter, so parentheses are **not required** (unlike WHILE):
+Conditional branching. The `THEN` keyword acts as the condition delimiter:
 
 ```
 IF $condition THEN:
@@ -362,7 +362,7 @@ IF {~~any critical findings} THEN:
   - Request changes
 ```
 
-**Note:** Parentheses are optional for grouping complex conditions but not required by syntax. Compare with WHILE which requires parentheses because it has no THEN delimiter.
+**Note:** Parentheses are optional for grouping complex conditions but not required by syntax.
 
 ### BREAK and CONTINUE (v0.2)
 
@@ -482,16 +482,16 @@ The Input section declares skill interface parameters. Parameters use `=` ONLY f
 ```mdz
 ## Input
 
-- $problem: $String                    # required parameter (no default)
-- $maxIterations: $Number = 5          # optional with default
-- $strategy: $Strategy = "accumulate"  # optional with enum default
-- $items: $Task[] = []                 # optional with empty array default
+- $problem: $String                    <!-- required parameter (no default) -->
+- $maxIterations: $Number = 5          <!-- optional with default -->
+- $strategy: $Strategy = "accumulate"  <!-- optional with enum default -->
+- $items: $Task[] = []                 <!-- optional with empty array default -->
 ```
 
 Parameter rules:
 - **Required**: `$name: $Type` (no `=`)
 - **Optional**: `$name: $Type = literal_value`
-- **Descriptions**: Use `#` comments for documentation
+- **Descriptions**: Use `<!-- -->` comments for documentation
 
 The `=` sign indicates a **literal default value**, not a description. Use comments for descriptions to avoid confusion with assignment semantics.
 
@@ -620,7 +620,7 @@ Syntax highlighting should distinguish:
 - Variables (`$varName`)
 - References (`[[...]]`)
 - Semantic markers (`{~~...}`)
-- Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`)
+- Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`)
 
 ## Grouping and Braces
 
@@ -630,17 +630,17 @@ MDZ uses three types of brackets, each with specific purposes. This section docu
 
 Parentheses serve four distinct purposes in MDZ:
 
-#### 1. WHILE conditions — REQUIRED
+#### 1. WHILE conditions — NO PARENS REQUIRED
 
-The parser **requires** parentheses around WHILE conditions:
+The `DO` keyword delimits WHILE conditions (like `THEN` for `IF`):
 
 ```
-WHILE ($iterations < 5):              # Valid
-WHILE (condition AND $x > 0):         # Valid
-WHILE $iterations < 5:                # INVALID - parser error
+WHILE $iterations < 5 DO:             # Valid
+WHILE condition AND $x > 0 DO:        # Valid
+WHILE NOT diminishing returns DO:     # Valid (semantic condition)
 ```
 
-This is enforced in the parser at `parseWhile()` which calls `expect('LPAREN')`.
+Parentheses are optional for grouping complex conditions.
 
 #### 2. Tuple/compound types and destructuring patterns — REQUIRED for multiple elements
 
@@ -673,7 +673,7 @@ IF (($a AND $b) OR $c) THEN:          # Grouping overrides precedence
 
 #### 5. IF conditions — OPTIONAL
 
-Unlike WHILE, the IF statement does **not** require parentheses around conditions:
+The IF statement does **not** require parentheses around conditions:
 
 ```
 IF $result = "progress" THEN:         # Valid - no parens
@@ -681,7 +681,7 @@ IF ($result = "progress") THEN:       # Valid - with parens
 IF condition AND other THEN:          # Valid - semantic condition
 ```
 
-This asymmetry exists because IF conditions may be semantic (natural language), where parentheses would feel unnatural.
+Both IF and WHILE use keyword delimiters (`THEN` and `DO` respectively), so parentheses are optional for both.
 
 #### 6. Function calls — REQUIRED
 
@@ -769,7 +769,7 @@ IF ($x = 1) AND ($y = 2) THEN:        # Same meaning
 
 | Construct | Parens Required? | Example |
 |-----------|-----------------|---------|
-| WHILE condition | **Yes** | `WHILE ($x < 5):` |
+| WHILE condition | No | `WHILE $x < 5 DO:` |
 | IF condition | No | `IF $x = 1 THEN:` |
 | FOR EACH single var | No | `FOR EACH $item IN $list:` |
 | FOR EACH destructure | **Yes** | `FOR EACH ($a, $b) IN $pairs:` |
@@ -792,12 +792,12 @@ SKILL_REF       = '[[' IDENT ']]'
 SECTION_REF     = '[[' IDENT? '#' IDENT ']]'
 SEMANTIC        = '{~~' /[^}]+/ '}'
 FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
-PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  # v0.2
-WHILE           = 'WHILE' '(' CONDITION '):'
-IF_THEN         = 'IF' CONDITION 'THEN:'       # parens optional (THEN delimits)
+PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  <!-- v0.2 -->
+WHILE           = 'WHILE' CONDITION 'DO:'       <!-- DO delimits, like THEN for IF -->
+IF_THEN         = 'IF' CONDITION 'THEN:'       <!-- THEN delimits -->
 ELSE            = 'ELSE:'
-BREAK           = 'BREAK'                                     # v0.2
-CONTINUE        = 'CONTINUE'                                  # v0.2
+BREAK           = 'BREAK'                                     <!-- v0.2 -->
+CONTINUE        = 'CONTINUE'                                  <!-- v0.2 -->
 LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
 ```
 
@@ -882,7 +882,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 - **For-each loop** (`FOR EACH $x IN $y:`) — Iteration over a collection.
 - **Parallel loop** (`PARALLEL FOR EACH $x IN $y:`) — Concurrent iteration.
-- **While loop** (`WHILE (cond):`) — Conditional loop.
+- **While loop** (`WHILE cond DO:`) — Conditional loop.
 - **Conditional** (`IF cond THEN:`) — Conditional branching.
 - **Else clause** (`ELSE:`) — Alternative branch of a conditional.
 - **With clause** (`WITH:`) — Parameter block for skill delegation.

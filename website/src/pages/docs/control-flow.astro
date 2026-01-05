@@ -45,9 +45,9 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h2>While Loop</h2>
   
-  <p>Loop with a <strong>condition</strong> (parentheses required):</p>
+  <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition (like <code>THEN</code> for <code>IF</code>):</p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> (condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5):
+  <pre><code><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
   - Perform iteration
   - Update state</code></pre>
 
@@ -107,11 +107,11 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$task</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$tasks</span>:
   - Process <span class="zen-variable">$task</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$task</span>.priority = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>:
-    - <span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> complete):
+    - <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> complete <span class="zen-keyword">DO</span>:
       - Execute step
       - Check progress
     - Log completion
-  - Move to next task</code></pre>
+  - Move to next task</code></pre></invoke>
 
   <h2>Break and Continue</h2>
   
@@ -141,7 +141,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     interprets. Use them when the condition requires understanding context:
   </p>
   
-  <pre><code><span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> diminishing returns):
+  <pre><code><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">DO</span>:
   - Continue iterating
 
 <span class="zen-keyword">IF</span> the result looks promising <span class="zen-keyword">THEN</span>:

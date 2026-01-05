@@ -217,7 +217,7 @@ $Result: "confirmed" | "refuted" | "inconclusive"
 
 ## Workflow
 
-WHILE (NOT diminishing returns AND $iteration < $maxIterations):
+WHILE NOT diminishing returns AND $iteration < $maxIterations DO:
   - Formulate $currentHypothesis
   - Design experiment to test it
   - Execute [[work-packages]] WITH:
@@ -678,7 +678,7 @@ Execute [[orchestrate]] WITH:
           [/^---$/, "meta.frontmatter"],
           [/^#+\s+.*$/, "markup.heading"],
           [
-            /\b(PARALLEL FOR EACH|FOR EACH|WHILE|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/,
+            /\b(PARALLEL FOR EACH|FOR EACH|WHILE|DO|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/,
             "keyword",
           ],
           [/\{~~/, { token: "delimiter.semantic", next: "@semantic" }],

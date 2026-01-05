@@ -2857,6 +2857,7 @@
         "EACH": "EACH",
         "IN": "IN",
         "WHILE": "WHILE",
+        "DO": "DO",
         "IF": "IF",
         "THEN": "THEN",
         "ELSE": "ELSE",
@@ -3748,9 +3749,8 @@
     }
     parseWhile() {
       const start = this.advance();
-      this.expect("LPAREN");
       const condition = this.parseCondition();
-      this.expect("RPAREN");
+      this.expect("DO");
       this.expect("COLON");
       this.skipNewlines();
       this.loopDepth++;
@@ -3911,7 +3911,7 @@
       }
       let text = "";
       const start = this.current();
-      while (!this.isAtEnd() && !this.check("RPAREN") && !this.check("AND") && !this.check("OR") && !this.check("THEN") && !this.check("COLON")) {
+      while (!this.isAtEnd() && !this.check("RPAREN") && !this.check("AND") && !this.check("OR") && !this.check("THEN") && !this.check("DO") && !this.check("COLON")) {
         if (text) text += " ";
         text += this.advance().value;
       }

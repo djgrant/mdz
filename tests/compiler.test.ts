@@ -649,7 +649,7 @@ $Strategy: "accumulate" | "independent"
 2. FOR EACH ($task, $strategy) IN $transforms:
    - Delegate to [[#iteration-manager]]
    
-3. WHILE (not diminishing returns AND $iterations < 5):
+3. WHILE NOT diminishing returns AND $iterations < 5 DO:
    - Execute iteration
    - IF $result = "progress" THEN:
      - Update $current

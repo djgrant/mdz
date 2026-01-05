@@ -230,7 +230,7 @@ name: test
 description: test
 ---
 
-WHILE ($count < 10):
+WHILE $count < 10 DO:
   - IF $done THEN:
     - BREAK
   - Increment
@@ -285,7 +285,7 @@ name: test
 description: test
 ---
 
-WHILE ($processing):
+WHILE $processing DO:
   - IF $skip THEN:
     - CONTINUE
   - Do work
@@ -506,7 +506,7 @@ FOR EACH $item IN $items:
   - IF $item.priority = "high" THEN:
     - Expedite
 
-WHILE (not complete AND $iterations < 5):
+WHILE NOT complete AND $iterations < 5 DO:
   - Execute [[helper-skill]]
   - Update $iterations
 `;
@@ -606,7 +606,7 @@ description: test
 
 FOR EACH $a IN $as:
   - FOR EACH $b IN $bs:
-    - WHILE ($processing):
+    - WHILE $processing DO:
       - IF $done THEN:
         - BREAK
 `);

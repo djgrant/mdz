@@ -62,6 +62,7 @@ FOR             = "FOR" ;
 EACH            = "EACH" ;
 IN              = "IN" ;
 WHILE           = "WHILE" ;
+DO              = "DO" ;           /* v0.3: WHILE...DO syntax */
 IF              = "IF" ;
 THEN            = "THEN" ;
 ELSE            = "ELSE" ;
@@ -102,7 +103,7 @@ semantic_close  = '}' ;
 ### Comments and Markdown
 
 ```ebnf
-line_comment    = ? markdown blockquote starting with '>' ? ;
+comment         = "<!--" { any_char } "-->" ;  /* Standard HTML/Markdown comment */
 heading         = '#' { '#' } whitespace heading_text newline ;
 heading_text    = { any_char } ;
 list_marker     = ( '-' | digit '.' ) whitespace ;
@@ -169,7 +170,7 @@ type_reference  = dollar upper_ident ;
 ### Variable Declarations
 
 ```ebnf
-variable_declaration = [ list_marker ] var_decl [ line_comment ] newline ;
+variable_declaration = [ list_marker ] var_decl [ comment ] newline ;
 
 var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
 
@@ -187,7 +188,7 @@ default_value   = literal
 required_param  = var_name type_annotation ;  /* No assign_op or default_value */
 
 /* Inline comments for documentation (ignored by parser) */
-line_comment    = '#' { any_char } ;
+comment         = "<!--" { any_char } "-->" ;  /* Standard HTML/Markdown comment */
 
 expression      = lambda_expr
                 | value_expr
@@ -221,17 +222,17 @@ function_call   = var_name lparen [ expression { comma expression } ] rparen ;
 In the conventional `## Input` section, parameters follow interface semantics:
 
 ```ebnf
-input_param     = list_marker var_name type_annotation [ assign_op literal ] [ line_comment ] ;
+input_param     = list_marker var_name type_annotation [ assign_op literal ] [ comment ] ;
 ```
 
 Examples:
 ```mdz
-- $problem: $String                    # required (no default)
-- $maxIterations: $Number = 5          # optional with default
-- $strategy: $Strategy = "accumulate"  # optional with enum default
+- $problem: $String                    <!-- required (no default) -->
+- $maxIterations: $Number = 5          <!-- optional with default -->
+- $strategy: $Strategy = "accumulate"  <!-- optional with enum default -->
 ```
 
-Note: The `=` sign is reserved for **literal default values only**. Prose descriptions belong in comments (`#`), not after `=`.
+Note: The `=` sign is reserved for **literal default values only**. Prose descriptions belong in comments (`<!-- -->`), not after `=`.
 
 ### References
 
@@ -277,7 +278,7 @@ pattern           = var_name
 
 collection        = var_reference | array_literal ;
 
-while_stmt        = WHILE lparen condition rparen colon newline block_body ;
+while_stmt        = WHILE condition DO colon newline block_body ;
 
 /* IF uses THEN as delimiter - parentheses are optional (not required) */
 if_then_stmt      = IF condition THEN colon newline block_body [ else_clause ] ;
@@ -309,7 +310,7 @@ indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 |-----------|--------|---------------|--------------|
 | Runtime IF | `IF condition THEN:` | Runtime | LLM |
 | Build-time IF | `{{IF (x)}}` | Build time | Tooling |
-| Runtime WHILE | `WHILE (condition):` | Runtime | LLM |
+| Runtime WHILE | `WHILE condition DO:` | Runtime | LLM |
 | Runtime FOR EACH | `FOR EACH $x IN $y:` | Runtime | LLM |
 
 **Note:** The `{{macro}}` syntax is specified here for completeness but is not yet implemented in the parser or compiler.
@@ -321,7 +322,7 @@ delegation        = delegate_verb reference [ with_clause ] ;
 delegate_verb     = "Execute" | "Delegate" | "Use" | ? verb phrase ? ;
 
 with_clause       = WITH colon newline { with_param } ;
-with_param        = list_marker ( var_decl | required_param ) newline ;
+with_param        = list_marker ( var_decl | required_param ) [ comment ] newline ;
 ```
 
 ### Prose Content
@@ -445,7 +446,7 @@ Parentheses are required in some contexts and optional in others:
 
 | Context | Required? | Reason |
 |---------|-----------|--------|
-| `WHILE (condition):` | **Yes** | Parser expects `LPAREN` after `WHILE` |
+| `WHILE condition DO:` | No | `DO` keyword delimits condition (like `THEN` for `IF`) |
 | `IF condition THEN:` | No | Conditions may be semantic (prose) |
 | `FOR EACH $x IN ...` | No | Single variable pattern |
 | `FOR EACH ($a, $b) IN ...` | **Yes** | Destructuring pattern |
@@ -455,16 +456,17 @@ Parentheses are required in some contexts and optional in others:
 | `($A, $B)` | **Yes** | Compound type definition |
 
 ```
-# WHILE requires parens
-WHILE ($x < 5):              ← Valid
-WHILE $x < 5:                ← Parse error: Expected LPAREN
+<!-- WHILE uses DO delimiter (like IF uses THEN) -->
+WHILE $x < 5 DO:                 ← Valid
+WHILE NOT complete DO:           ← Valid (semantic condition)
+WHILE $x < 5 AND NOT done DO:    ← Valid (compound condition)
 
-# IF does not require parens
+<!-- IF uses THEN delimiter -->
 IF $x = 5 THEN:              ← Valid
-IF ($x = 5) THEN:            ← Also valid
+IF ($x = 5) THEN:            ← Also valid (optional parens for grouping)
 IF diminishing returns THEN: ← Valid (semantic condition)
 
-# Destructuring requires parens
+<!-- Destructuring requires parens -->
 FOR EACH ($a, $b) IN $pairs: ← Valid
 FOR EACH $a, $b IN $pairs:   ← Parse error
 ```
@@ -540,9 +542,9 @@ $Result: outcome of executing a task
 
 ## Input
 
-- $task: $Task                       # the task to execute
-- $strategy: $Strategy = "fast"      # execution strategy
-- $items: $Task[]                    # items to process
+- $task: $Task                       <!-- the task to execute -->
+- $strategy: $Strategy = "fast"      <!-- execution strategy -->
+- $items: $Task[]                    <!-- items to process -->
 
 ## Context
 
@@ -567,7 +569,7 @@ $Result: outcome of executing a task
    - ELSE:
      - Queue for later
 
-4. WHILE (not complete AND $iterations < 5):
+4. WHILE NOT complete AND $iterations < 5 DO:
    - Execute [[#process-step]]
    - Validate with [[item-validator]]
 
@@ -577,7 +579,7 @@ $Result: outcome of executing a task
 
 Execute [[omr]] WITH:
   - $transforms = [("Apply heuristic", "accumulate")]
-  - $validator: $Task              # Required parameter
+  - $validator: $Task              <!-- Required parameter -->
 ```
 
 ## Version

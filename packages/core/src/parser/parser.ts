@@ -1020,9 +1020,8 @@ export class Parser {
 
   private parseWhile(): AST.WhileStatement {
     const start = this.advance();
-    this.expect('LPAREN');
     const condition = this.parseCondition();
-    this.expect('RPAREN');
+    this.expect('DO');
     this.expect('COLON');
     this.skipNewlines();
 
@@ -1226,6 +1225,7 @@ export class Parser {
       !this.check('AND') &&
       !this.check('OR') &&
       !this.check('THEN') &&
+      !this.check('DO') &&
       !this.check('COLON')
     ) {
       if (text) text += ' ';

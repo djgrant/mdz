@@ -392,7 +392,7 @@ name: test
 description: test
 ---
 
-WHILE ($count < 5):
+WHILE $count < 5 DO:
   - Iterate
 `);
     const whiles = doc.sections.flatMap(s => 
@@ -408,7 +408,7 @@ name: test
 description: test
 ---
 
-WHILE (not diminishing returns):
+WHILE NOT diminishing returns DO:
   - Continue
 `);
     const whiles = doc.sections.flatMap(s => 
@@ -424,7 +424,7 @@ name: test
 description: test
 ---
 
-WHILE (not complete AND $count < 5):
+WHILE NOT complete AND $count < 5 DO:
   - Process
 `);
     const whiles = doc.sections.flatMap(s => 

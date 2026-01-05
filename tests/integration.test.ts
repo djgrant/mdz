@@ -95,7 +95,7 @@ $Item: an item to process
 FOR EACH $item IN $items:
   - Process $item
 
-WHILE ($count < 5):
+WHILE $count < 5 DO:
   - Increment
 
 IF $done = true THEN:
