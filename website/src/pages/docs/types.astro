@@ -48,31 +48,31 @@ Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword"
 
   <p>Natural language descriptions that help LLMs understand values:</p>
 
-  <pre><code><span class="zen-type">$Task</span> = any task that an agent can execute
-<span class="zen-type">$Hypothesis</span> = a testable prediction about what will solve the problem
-<span class="zen-type">$Observation</span> = data collected from running an experiment</code></pre>
+  <pre><code><span class="zen-type">$Task</span>: any task that an agent can execute
+<span class="zen-type">$Hypothesis</span>: a testable prediction about what will solve the problem
+<span class="zen-type">$Observation</span>: data collected from running an experiment</code></pre>
 
   <h3>Enum Types</h3>
 
   <p>Constrained sets of string values using the <strong>union</strong> operator (<code>|</code>):</p>
 
-  <pre><code><span class="zen-type">$Strategy</span> = <span class="zen-string">"fast"</span> | <span class="zen-string">"thorough"</span>
-<span class="zen-type">$Result</span> = <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span> | <span class="zen-string">"inconclusive"</span>
-<span class="zen-type">$Priority</span> = <span class="zen-string">"low"</span> | <span class="zen-string">"medium"</span> | <span class="zen-string">"high"</span> | <span class="zen-string">"critical"</span></code></pre>
+  <pre><code><span class="zen-type">$Strategy</span>: <span class="zen-string">"fast"</span> | <span class="zen-string">"thorough"</span>
+<span class="zen-type">$Result</span>: <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span> | <span class="zen-string">"inconclusive"</span>
+<span class="zen-type">$Priority</span>: <span class="zen-string">"low"</span> | <span class="zen-string">"medium"</span> | <span class="zen-string">"high"</span> | <span class="zen-string">"critical"</span></code></pre>
 
   <h3>Tuple Types</h3>
 
   <p><strong>Tuples</strong> combine multiple types:</p>
 
-  <pre><code><span class="zen-type">$TaskWithPriority</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Priority</span>)
-<span class="zen-type">$Transform</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)</code></pre>
+  <pre><code><span class="zen-type">$TaskWithPriority</span>: (<span class="zen-type">$Task</span>, <span class="zen-type">$Priority</span>)
+<span class="zen-type">$Transform</span>: (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)</code></pre>
 
   <h3>Array Types</h3>
 
   <p>Collections using the <strong>array suffix</strong> (<code>[]</code>):</p>
 
-  <pre><code><span class="zen-type">$Tasks</span> = <span class="zen-type">$Task</span>[]
-<span class="zen-type">$Transforms</span> = (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)[]</code></pre>
+  <pre><code><span class="zen-type">$Tasks</span>: <span class="zen-type">$Task</span>[]
+<span class="zen-type">$Transforms</span>: (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)[]</code></pre>
 
   <h3>Function Types</h3>
 
@@ -88,7 +88,7 @@ Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword"
   <p>Use the <strong>type annotation</strong> (<code>:</code>) to declare variable types:</p>
 
   <pre><code>- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>                           <span class="zen-comment"># required parameter</span>
-- <span class="zen-variable">$result</span>: <span class="zen-type">$Result</span> = <span class="zen-string">"pending"</span>           <span class="zen-comment"># typed declaration with default</span>
+- <span class="zen-variable">$result</span>: <span class="zen-type">$Result</span>: <span class="zen-string">"pending"</span>           <span class="zen-comment"># typed declaration with default</span>
 - <span class="zen-variable">$transforms</span>: (<span class="zen-type">$Task</span>, <span class="zen-type">$Strategy</span>)[]     <span class="zen-comment"># array of tuples</span></code></pre>
 
   <h3>What Tooling Checks</h3>
