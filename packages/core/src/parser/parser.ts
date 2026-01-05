@@ -2,7 +2,7 @@
  * MDZ Parser
  * 
  * Recursive descent parser for MDZ documents.
- * v0.2: Added PARALLEL FOR EACH, BREAK, CONTINUE, typed parameters, imports
+ * v0.2: Added PARALLEL FOR EACH, BREAK, CONTINUE, typed parameters
  */
 
 import { Token, TokenType, tokenize } from './lexer';
@@ -80,7 +80,7 @@ export class Parser {
       name: parsed.name || '',
       description: parsed.description || '',
       uses: parsed.uses || [],
-      imports: this.parseImports(parsed.imports),  // v0.2
+      imports: this.parseImports(parsed.imports),
       raw: parsed,
       span: AST.mergeSpans(start.span, end.span),
     };
@@ -264,11 +264,17 @@ export class Parser {
   }
 
   private parseBlock(): AST.Block | null {
-    // Type definition: $TypeName = ...
+    // Type definition: $TypeName: ...
     if (this.check('TYPE_IDENT')) {
       const lookahead = this.peek(1);
-      if (lookahead?.type === 'ASSIGN') {
-        return this.parseTypeDefinition();
+      if (lookahead?.type === 'COLON') {
+        // Check if it's a type definition (not a variable with type annotation)
+        // Type def: $Type: semantic description OR $Type: "enum" | "values"
+        // Var decl: $Type: $OtherType = ... (colon followed by TYPE_IDENT)
+        const afterColon = this.peek(2);
+        if (afterColon?.type !== 'TYPE_IDENT') {
+          return this.parseTypeDefinition();
+        }
       }
     }
 
@@ -327,7 +333,7 @@ export class Parser {
     // Delegation
     if (this.check('LOWER_IDENT') || this.check('UPPER_IDENT')) {
       const verb = this.current().value.toLowerCase();
-      if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke') {
+      if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke' || verb === 'delegate' || verb === 'use') {
         const lookahead = this.peek(1);
         if (lookahead?.type === 'DOUBLE_LBRACKET') {
           return this.parseDelegation();
@@ -355,7 +361,7 @@ export class Parser {
     const nameToken = this.advance();
     const name = nameToken.value.slice(1);
     
-    this.expect('ASSIGN');
+    this.expect('COLON');
     
     const typeExpr = this.parseTypeExpr();
 
@@ -480,8 +486,12 @@ export class Parser {
   private parseVariableOrType(): AST.VariableDeclaration | AST.TypeDefinition {
     if (this.check('TYPE_IDENT')) {
       const lookahead = this.peek(1);
-      if (lookahead?.type === 'ASSIGN') {
-        return this.parseTypeDefinition();
+      if (lookahead?.type === 'COLON') {
+        // Check if it's a type definition (not a variable with type annotation)
+        const afterColon = this.peek(2);
+        if (afterColon?.type !== 'TYPE_IDENT') {
+          return this.parseTypeDefinition();
+        }
       }
     }
 

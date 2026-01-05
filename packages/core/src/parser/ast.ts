@@ -435,8 +435,7 @@ export type ErrorCode =
   | 'E014' // Missing required field
   | 'E015' // Syntax error
   | 'E016' // BREAK outside loop (v0.2)
-  | 'E017' // CONTINUE outside loop (v0.2)
-  | 'E018'; // Invalid import declaration (v0.2)
+  | 'E017'; // CONTINUE outside loop (v0.2)
 
 // ============================================================================
 // Utilities

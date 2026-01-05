@@ -99,7 +99,7 @@ description: test
 
 ## Types
 
-$Task = any task that an agent can execute
+$Task: any task that an agent can execute
 `);
     const types = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.TypeDefinition => b.kind === 'TypeDefinition')
@@ -115,7 +115,7 @@ name: test
 description: test
 ---
 
-$Strategy = "accumulate" | "independent"
+$Strategy: "accumulate" | "independent"
 `);
     const types = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.TypeDefinition => b.kind === 'TypeDefinition')
@@ -134,9 +134,9 @@ name: test
 description: test
 ---
 
-$Task = any task
-$Strategy = "fast" | "slow"
-$Result = outcome of task
+$Task: any task
+$Strategy: "fast" | "slow"
+$Result: outcome of task
 `);
     const types = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.TypeDefinition => b.kind === 'TypeDefinition')
@@ -598,6 +598,222 @@ FOR EACH $a IN $as:
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
     );
     assertEqual(forEachs.length, 1);
+  });
+});
+
+// ============================================================================
+// Delegation and WITH Clause Tests
+// ============================================================================
+
+describe('Delegation WITH Clause', () => {
+  test('parses delegation without WITH clause', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[other-skill]]
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].verb, 'Execute');
+    assertEqual(delegs[0].parameters.length, 0);
+    assertEqual(delegs[0].target.kind, 'SkillReference');
+  });
+
+  test('parses Call verb', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Call [[helper]]
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].verb, 'Call');
+  });
+
+  test('parses Delegate verb', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Delegate [[sub-task]]
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].verb, 'Delegate');
+  });
+
+  test('parses Use verb', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Use [[utility-skill]]
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].verb, 'Use');
+  });
+
+  test('parses WITH clause with typed required parameter', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process]] WITH:
+- $task: $Task
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters.length, 1);
+    assertEqual(delegs[0].parameters[0].name, 'task');
+    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'Task');
+    assertEqual(delegs[0].parameters[0].isRequired, true);
+    assertEqual(delegs[0].parameters[0].value, null);
+  });
+
+  test('parses WITH clause with default value', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process]] WITH:
+- $mode = "fast"
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters.length, 1);
+    assertEqual(delegs[0].parameters[0].name, 'mode');
+    assertEqual(delegs[0].parameters[0].isRequired, false);
+    assert(delegs[0].parameters[0].value!.kind === 'StringLiteral', 'Should have string value');
+  });
+
+  test('parses WITH clause with typed default value', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process]] WITH:
+- $count: $Number = 10
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters[0].name, 'count');
+    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'Number');
+    assertEqual(delegs[0].parameters[0].isRequired, false);
+    assert(delegs[0].parameters[0].value!.kind === 'NumberLiteral', 'Should have number value');
+  });
+
+  test('parses WITH clause with multiple parameters', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[orchestrate]] WITH:
+- $plan = $plan
+- $mode = $mode
+- $results = $results
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters.length, 3);
+    assertEqual(delegs[0].parameters[0].name, 'plan');
+    assertEqual(delegs[0].parameters[1].name, 'mode');
+    assertEqual(delegs[0].parameters[2].name, 'results');
+  });
+
+  test('parses delegation to section reference', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[#iteration-manager]] WITH:
+- $iteration = 1
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].target.kind, 'SectionReference');
+    assertEqual((delegs[0].target as AST.SectionReference).section, 'iteration-manager');
+  });
+
+  test('parses WITH clause with variable reference value', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process]] WITH:
+- $input = $data
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assert(delegs[0].parameters[0].value!.kind === 'VariableReference', 'Should have variable reference');
+    assertEqual((delegs[0].parameters[0].value as AST.VariableReference).name, 'data');
+  });
+
+  test('parses WITH clause with array literal value', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Execute [[process]] WITH:
+- $items = ["a", "b", "c"]
+`);
+    const delegs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    );
+    assertEqual(delegs.length, 1);
+    assert(delegs[0].parameters[0].value!.kind === 'ArrayLiteral', 'Should have array value');
+  });
+
+  test('delegation inside FOR EACH', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+FOR EACH $task IN $tasks:
+  Execute [[sub-processor]] WITH:
+  - $current = $task
+`);
+    const forEachs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
+    );
+    assertEqual(forEachs.length, 1);
+    const delegs = forEachs[0].body.filter((b): b is AST.Delegation => b.kind === 'Delegation');
+    assertEqual(delegs.length, 1);
+    assertEqual(delegs[0].parameters.length, 1);
   });
 });
 

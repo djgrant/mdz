@@ -1,13 +1,13 @@
 /**
- * v0.2 Feature Tests - Updated for v0.3 Validator-First
+ * v0.2 Feature Tests - Updated for v0.4 (imports removed)
  * 
  * Comprehensive tests for v0.2 language features:
  * - PARALLEL FOR EACH
- * - Extended imports in frontmatter
  * - Typed parameters in WITH clause
  * - BREAK and CONTINUE
  * 
  * Updated: No longer tests transformation (source = output)
+ * v0.4: Removed imports tests (imports: syntax removed from language)
  */
 
 import { parse } from '../packages/core/src/parser/parser';
@@ -369,111 +369,7 @@ FOR EACH $item IN $items:
   });
 });
 
-// ============================================================================
-// Extended Imports Tests
-// ============================================================================
 
-describe('Extended Imports - Parsing', () => {
-  test('parses simple imports array', () => {
-    const doc = parse(`---
-name: test
-description: test
-imports:
-  - path: "./skills/"
-    skills: [simplify, work-packages]
----
-`);
-    assert(doc.frontmatter !== null, 'Should have frontmatter');
-    assert(doc.frontmatter?.imports.length === 1, 'Should have 1 import');
-    assertEqual(doc.frontmatter?.imports[0].path, './skills/');
-    assertEqual(doc.frontmatter?.imports[0].skills, ['simplify', 'work-packages']);
-  });
-
-  test('parses imports with aliases', () => {
-    const doc = parse(`---
-name: test
-description: test
-imports:
-  - path: "@zen/stdlib"
-    alias:
-      orchestrate-map-reduce: omr
----
-`);
-    assert(doc.frontmatter !== null, 'Should have frontmatter');
-    assert(doc.frontmatter?.imports.length === 1, 'Should have 1 import');
-    assertEqual(doc.frontmatter?.imports[0].path, '@zen/stdlib');
-    assert(doc.frontmatter?.imports[0].aliases.get('orchestrate-map-reduce') === 'omr', 'Should have alias');
-  });
-
-  test('parses multiple imports', () => {
-    const doc = parse(`---
-name: test
-description: test
-imports:
-  - path: "./local/"
-    skills: [skill-a, skill-b]
-  - path: "@zen/core"
-    skills: [orchestrate]
----
-`);
-    assert(doc.frontmatter !== null, 'Should have frontmatter');
-    assertEqual(doc.frontmatter?.imports.length, 2);
-  });
-
-  test('parses document without imports', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-`);
-    assert(doc.frontmatter !== null, 'Should have frontmatter');
-    assertEqual(doc.frontmatter?.imports.length, 0);
-  });
-});
-
-describe('Extended Imports - Compilation (Validator-First)', () => {
-  test('preserves imports in output', () => {
-    const source = `---
-name: test
-description: test
-imports:
-  - path: "./skills/"
-    skills: [simplify]
----
-`;
-    const result = compile(source, { includeHeader: false });
-    assertEqual(result.output, source, 'Source preserved');
-    assertIncludes(result.output, 'imports:');
-    assertIncludes(result.output, './skills/');
-  });
-
-  test('extracts imports into metadata', () => {
-    const result = compile(`---
-name: test
-description: test
-imports:
-  - path: "./skills/"
-    skills: [simplify]
----
-`);
-    assertEqual(result.metadata.imports.length, 1);
-    assertEqual(result.metadata.imports[0].path, './skills/');
-  });
-
-  test('preserves aliases in output', () => {
-    const result = compile(`---
-name: test
-description: test
-imports:
-  - path: "@zen/stdlib"
-    alias:
-      orchestrate-map-reduce: omr
----
-`);
-    assertIncludes(result.output, 'alias:');
-    assertIncludes(result.output, 'orchestrate-map-reduce');
-  });
-});
 
 // ============================================================================
 // Typed Parameters in WITH Clause Tests
@@ -522,7 +418,7 @@ name: test
 description: test
 ---
 
-$Task = any task
+$Task: any task
 
 - $param: $Task = "value"
 `;
@@ -536,7 +432,7 @@ name: test
 description: test
 ---
 
-$Task = any task
+$Task: any task
 
 - $param: $Task = "value"
 `);
@@ -556,15 +452,14 @@ describe('v0.2 Integration', () => {
     const source = `---
 name: parallel-processor
 description: Process items in parallel with early exit
-imports:
-  - path: "./helpers/"
-    skills: [validator]
+uses:
+  - validator
 ---
 
 ## Types
 
-$Item = an item to be processed
-$Result = "success" | "failure"
+$Item: an item to be processed
+$Result: "success" | "failure"
 
 ## Input
 
@@ -589,7 +484,6 @@ PARALLEL FOR EACH $item IN $items:
     assertIncludes(result.output, 'PARALLEL FOR EACH');
     assertIncludes(result.output, 'CONTINUE');
     assertIncludes(result.output, 'BREAK');
-    assertIncludes(result.output, 'imports:');
   });
 
   test('backward compatibility with v0.1 skill', () => {
@@ -602,8 +496,8 @@ uses:
 
 ## Types
 
-$Task = any task
-$Strategy = "fast" | "thorough"
+$Task: any task
+$Strategy: "fast" | "thorough"
 
 ## Workflow
 
@@ -702,19 +596,6 @@ FOR EACH $item IN $items:
     - BREAK
 `);
     assertEqual(doc.errors.length, 0);
-  });
-
-  test('imports with empty skills array', () => {
-    const doc = parse(`---
-name: test
-description: test
-imports:
-  - path: "./empty/"
-    skills: []
----
-`);
-    assert(doc.frontmatter?.imports.length === 1, 'Should have import');
-    assertEqual(doc.frontmatter?.imports[0].skills.length, 0);
   });
 
   test('deeply nested control flow with BREAK', () => {

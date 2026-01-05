@@ -535,14 +535,6 @@ export class Compiler {
         nodes.add(use);
         edges.push({ target: use, type: 'uses' });
       }
-
-      // Add imports: dependencies
-      for (const imp of ast.frontmatter.imports) {
-        for (const skill of imp.skills) {
-          nodes.add(skill);
-          edges.push({ target: skill, type: 'imports' });
-        }
-      }
     }
 
     // Add reference dependencies
@@ -656,14 +648,14 @@ export class Compiler {
   }
 
   private validateReferences(): void {
-    // Check that skill references are declared in uses: or imports:
+    // Check that skill references are declared in uses:
     for (const ref of this.metadata.references) {
       if (ref.kind === 'skill' && ref.skill) {
         if (!this.declaredDeps.has(ref.skill)) {
           this.diagnostics.push({
             severity: 'warning',
             code: 'W001',
-            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
             span: ref.span,
           });
         }
@@ -672,7 +664,7 @@ export class Compiler {
           this.diagnostics.push({
             severity: 'warning',
             code: 'W001',
-            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:' or 'imports:'`,
+            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
             span: ref.span,
           });
         }
