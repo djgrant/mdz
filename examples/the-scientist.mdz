@@ -8,16 +8,16 @@ uses:
 
 ## Types
 
-$Hypothesis = a testable prediction about what will solve the problem
-$Experiment = a concrete action to test a hypothesis
-$Observation = data collected from running an experiment
-$Conclusion = "confirmed" | "refuted" | "inconclusive"
-$ValidationResult = "progress" | "regression" | "plateau"
-$Strategy = "accumulate" | "independent"
+$Hypothesis: a testable prediction about what will solve the problem
+$Experiment: a concrete action to test a hypothesis
+$Observation: data collected from running an experiment
+$Conclusion: "confirmed" | "refuted" | "inconclusive"
+$ValidationResult: "progress" | "regression" | "plateau"
+$Strategy: "accumulate" | "independent"
 
 ## Input
 
-- $problem: $String = the problem to solve
+- $problem: $String                    # the problem to solve
 - $maxIterations: $Number = 5
 - $strategy: $Strategy = "accumulate"
 
@@ -50,7 +50,7 @@ WHILE (NOT diminishing returns AND $iteration < $maxIterations):
   
 #### 2b. Run Experiment
   
-  Delegate to sub-agent with [[#experiment-prompt]]:
+  Delegate to sub-agent with experiment-prompt instructions:
     - The experiment work package
     - Access to [[work-packages]] skill
   

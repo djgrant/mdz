@@ -9,16 +9,16 @@ uses:
 
 ## Types
 
-$SkillRef = reference to another skill
-$CompositionMode = "sequential" | "parallel" | "conditional"
-$DependencyGraph = directed graph of skill dependencies
-$ExecutionPlan = ordered list of skill executions
+$SkillRef: reference to another skill
+$CompositionMode: "sequential" | "parallel" | "conditional"
+$DependencyGraph: directed graph of skill dependencies
+$ExecutionPlan: ordered list of skill executions
 
 ## Input
 
-- $skills: $SkillRef[] = skills to compose
+- $skills: $SkillRef[]                 # skills to compose
 - $mode: $CompositionMode = "sequential"
-- $entryPoint: $SkillRef = first skill to execute
+- $entryPoint: $SkillRef               # first skill to execute
 
 ## Context
 
@@ -47,6 +47,9 @@ $ExecutionPlan = ordered list of skill executions
 
 FOR EACH $skill IN $plan:
   - Verify all dependencies are satisfied
+  - IF {~~skill has missing dependencies} THEN:
+    - Log error: missing dependencies
+    - CONTINUE
   - Check for type compatibility between skills
   - IF {~~incompatible interface} THEN:
     - Log warning with suggested adaptations

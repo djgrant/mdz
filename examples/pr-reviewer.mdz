@@ -7,14 +7,14 @@ uses:
 
 ## Types
 
-$PRType = "feature" | "bugfix" | "refactor" | "docs" | "chore"
-$ReviewOutcome = "approve" | "request-changes" | "comment"
-$Severity = "critical" | "major" | "minor" | "nitpick"
-$Finding = an issue or observation about the code
+$PRType: "feature" | "bugfix" | "refactor" | "docs" | "chore"
+$ReviewOutcome: "approve" | "request-changes" | "comment"
+$Severity: "critical" | "major" | "minor" | "nitpick"
+$Finding: an issue or observation about the code
 
 ## Input
 
-- $prUrl: $String = URL of the pull request to review
+- $prUrl: $String                      # URL of the pull request to review
 - $focusAreas: $String[] = ["correctness", "readability", "tests"]
 - $strictness: $String = "balanced"
 
@@ -36,7 +36,7 @@ $Finding = an issue or observation about the code
 
 ### 2. Analyze Changes
 
-FOR EACH ($filename, $diff) IN $files:
+PARALLEL FOR EACH ($filename, $diff) IN $files:
   
   #### Check Code Quality
   
@@ -48,7 +48,7 @@ FOR EACH ($filename, $diff) IN $files:
   
   #### Check Documentation
   
-  IF $filename ends with ".md" OR {~~file has public API changes} THEN:
+  IF {~~$filename ends with ".md"} OR {~~file has public API changes} THEN:
     - Verify documentation is updated
     - Check for clarity and completeness
     - IF {~~documentation missing or outdated} THEN:

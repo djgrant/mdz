@@ -7,19 +7,20 @@ uses:
 
 ## Types
 
-$TraceLevel = "minimal" | "verbose" | "debug"
-$TraceEvent = a record of something that happened during execution
-$Breakpoint = a condition that pauses execution for inspection
-$StackFrame = current execution context with variables
+$TraceLevel: "minimal" | "verbose" | "debug"
+$TraceEvent: a record of something that happened during execution
+$Breakpoint: a condition that pauses execution for inspection
+$StackFrame: current execution context with variables
 
 ## Input
 
-- $skill: $String = the skill to debug
+- $skillPath: $String = path to the skill to debug
 - $traceLevel: $TraceLevel = "verbose"
 - $breakpoints: $String[] = []
 
 ## Context
 
+- $skill: {~~the loaded and parsed skill AST from $skillPath}
 - $trace: $TraceEvent[] = []
 - $stack: $StackFrame[] = []
 - $stepCount = 0
@@ -29,8 +30,8 @@ $StackFrame = current execution context with variables
 
 ### 1. Setup
 
-1. Load $skill source
-2. Parse into AST using [[#parse-step]]
+1. Load skill source from $skillPath
+2. Parse into $skill AST using [[#parse-step]]
 3. Initialize trace log at {~~debug output location}
 4. Set breakpoints from $breakpoints array
 
@@ -55,6 +56,7 @@ FOR EACH $statement IN $skill.statements:
       - Set $paused = true
       - Log "BREAKPOINT HIT: $bp"
       - Yield control to user with [[#inspection-prompt]]
+      - BREAK
   
   #### 2c. Execute
   
