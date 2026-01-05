@@ -207,8 +207,8 @@ uses:
 
 ## Types
 
-$Hypothesis = a testable prediction about what will solve the problem
-$Result = "confirmed" | "refuted" | "inconclusive"
+$Hypothesis: a testable prediction about what will solve the problem
+$Result: "confirmed" | "refuted" | "inconclusive"
 
 ## Input
 
@@ -259,7 +259,7 @@ uses:
 
 ## Types
 
-$DataSource = "api" | "file" | "database"
+$DataSource: "api" | "file" | "database"
 
 ## Input
 
@@ -306,8 +306,8 @@ uses:
 
 ## Types
 
-$SkillRef = reference to another skill
-$CompositionMode = "sequential" | "parallel"
+$SkillRef: reference to another skill
+$CompositionMode: "sequential" | "parallel"
 
 ## Input
 
@@ -433,6 +433,11 @@ Execute [[orchestrate]] WITH:
       countEl.textContent = "0 issues";
       countEl.className =
         "px-1.5 py-0.5 rounded-full text-xs bg-green-500/20 text-green-600 dark:text-green-400";
+
+      // Clear Monaco markers when there are no diagnostics
+      if (editor && monaco) {
+        monaco.editor.setModelMarkers(editor.getModel(), "zen", []);
+      }
       return;
     }
 
@@ -594,15 +599,11 @@ Execute [[orchestrate]] WITH:
       const color =
         edge.type === "uses"
           ? "#8B5CF6"
-          : edge.type === "imports"
-            ? "#3B82F6"
-            : "#6B7280";
+          : "#6B7280";
       const markerEnd =
         edge.type === "uses"
           ? "arrowhead-purple"
-          : edge.type === "imports"
-            ? "arrowhead-blue"
-            : "arrowhead-gray";
+          : "arrowhead-gray";
       const dashArray = edge.type === "reference" ? "4" : "none";
 
       html += `<line
@@ -766,8 +767,8 @@ Execute [[orchestrate]] WITH:
 
         // Check if we're completing after $ (types and variables)
         if (lineUntilPosition.match(/\$[a-zA-Z]*$/)) {
-          // Extract types: $TypeName = ...
-          const typeMatches = fullText.matchAll(/\$([A-Z][a-zA-Z0-9]*)\s*=/g);
+          // Extract types: $TypeName: ...
+          const typeMatches = fullText.matchAll(/\$([A-Z][a-zA-Z0-9]*)\s*:/g);
           for (const match of typeMatches) {
             suggestions.push({
               label: "$" + match[1],

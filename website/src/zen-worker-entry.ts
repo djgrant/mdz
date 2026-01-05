@@ -40,7 +40,7 @@ interface ValidateResult {
   };
   dependencies: {
     nodes: string[];
-    edges: Array<{ target: string; type: 'uses' | 'imports' | 'reference' }>;
+    edges: Array<{ target: string; type: 'uses' | 'reference' }>;
   };
 }
 
