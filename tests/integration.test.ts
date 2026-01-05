@@ -111,8 +111,8 @@ description: Tests semantic markers
 
 ## Workflow
 
-1. Write to {~~appropriate location}
-2. Determine {~~best approach for task}
+1. Write to /appropriate location/
+2. Determine /best approach for task/
 `;
 
 // ============================================================================
@@ -228,9 +228,9 @@ describe('Semantic Skill Parsing', () => {
 
   test('preserves semantic markers (no transformation)', () => {
     const result = compile(semanticSkill, { includeHeader: false });
-    // Semantic markers should be preserved
-    assert(result.output.includes('{~~appropriate location}'), 'Marker preserved');
-    assert(result.output.includes('{~~best approach'), 'Marker preserved');
+    // Semantic markers should be preserved (new /content/ syntax)
+    assert(result.output.includes('/appropriate location/'), 'Marker preserved');
+    assert(result.output.includes('/best approach'), 'Marker preserved');
     // No transformation applied
     assert(!result.output.includes('(determine:'), 'No transformation');
     // Markers tracked in source map

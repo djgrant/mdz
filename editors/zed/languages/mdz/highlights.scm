@@ -16,3 +16,8 @@
 ; MDZ-specific patterns would require custom grammar
 ; For now, we inherit standard markdown patterns
 ; Future: create tree-sitter-mdz grammar for full support
+;
+; Semantic marker syntax (v0.4):
+;   /content/     - inline semantic marker
+;   $/name/       - inferred variable
+;   $var: /desc/  - semantic type annotation

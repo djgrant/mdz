@@ -143,7 +143,7 @@ export interface TypeReference extends BaseNode {
 export interface VariableDeclaration extends BaseNode {
   kind: 'VariableDeclaration';
   name: string;
-  typeAnnotation: TypeReference | null;
+  typeAnnotation: TypeReference | SemanticType | null;  // v0.4: supports /semantic description/ syntax
   value: Expression | null;
   isLambda: boolean;
   isRequired?: boolean;  // v0.2: for WITH clause parameters
@@ -165,6 +165,7 @@ export type Expression =
   | SkillReference
   | SectionReference
   | SemanticMarker
+  | InferredVariable
   | BinaryExpression
   | UnaryExpression
   | MemberAccess
@@ -227,6 +228,11 @@ export interface SemanticMarker extends BaseNode {
   kind: 'SemanticMarker';
   content: string;
   interpolations: VariableReference[];
+}
+
+export interface InferredVariable extends BaseNode {
+  kind: 'InferredVariable';
+  name: string;  // e.g., "index" from $/index/
 }
 
 export interface BinaryExpression extends BaseNode {
@@ -366,6 +372,7 @@ export type InlineContent =
   | SkillReference
   | SectionReference
   | SemanticMarker
+  | InferredVariable
   | Emphasis
   | Strong
   | CodeSpan;

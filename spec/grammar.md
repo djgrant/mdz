@@ -50,8 +50,8 @@ escape_seq      = '\\' ( '"' | '\\' | 'n' | 't' ) ;
 number_literal  = [ '-' ] digit { digit } [ '.' digit { digit } ] ;
 
 template_literal = '`' { template_char | template_expr } '`' ;
-template_char   = ? any char except '`' and '${' and '{~~' ? ;
-template_expr   = '${' expression '}' | '{~~' semantic_content '}' ;
+template_char   = ? any char except '`' and '${' and '/' ? ;
+template_expr   = '${' expression '}' | semantic_marker ;
 ```
 
 ### Keywords
@@ -96,8 +96,7 @@ lbrace          = '{' ;
 rbrace          = '}' ;
 double_lbracket = "[[" ;
 double_rbracket = "]]" ;
-semantic_open   = "{~~" ;
-semantic_close  = '}' ;
+semantic_delim  = '/' ;
 ```
 
 ### Comments and Markdown
@@ -176,7 +175,9 @@ var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
 
 var_name        = dollar ident ;
 
-type_annotation = colon type_reference ;
+type_annotation = colon type_reference
+                | semantic_type_annotation
+                ;
 
 /* Default values must be literal values, not prose descriptions */
 default_value   = literal
@@ -249,9 +250,16 @@ reference         = skill_reference | section_reference ;
 ### Semantic Markers
 
 ```ebnf
-semantic_marker   = semantic_open semantic_content semantic_close ;
+semantic_marker   = semantic_delim semantic_content semantic_delim ;
 semantic_content  = { semantic_char | var_reference } ;
-semantic_char     = ? any char except '}' and '$' ? ;
+semantic_char     = ? any char except '/' and '$' and newline ? ;
+
+/* Inferred variables - value derived by LLM at runtime */
+inferred_var      = dollar semantic_marker ;
+inferred_name     = { letter | digit | whitespace } ;
+
+/* Semantic type annotations - describes what a value should be */
+semantic_type_annotation = colon semantic_marker ;
 ```
 
 ### Control Flow
@@ -393,13 +401,16 @@ $fn = value                  → Assignment
 
 #### Rule 3: Semantic Marker Boundary
 
-`{~~` starts a semantic marker that extends to the next `}`:
+`/` starts a semantic marker that extends to the next `/`:
 - No nesting allowed
 - Variables within are interpolated
+- Cannot contain newlines
 
 ```
-{~~content with $var}        → Semantic marker with var interpolation
-{{~~content}}                → Error: invalid syntax
+/content with $var/          → Semantic marker with var interpolation
+$/inferred name/             → Inferred variable (LLM derives value)
+$var: /description/ = value  → Semantic type annotation
+//content//                  → Error: invalid syntax (empty marker)
 ```
 
 #### Rule 4: Control Flow Blocks
@@ -476,8 +487,8 @@ FOR EACH $a, $b IN $pairs:   ← Parse error
 For error recovery, the parser recognizes these malformed constructs:
 
 ```ebnf
-error_unmatched_bracket  = ( "[[" | "[" | "{~~" ) { any_char } EOF ;
-error_unclosed_semantic  = "{~~" { any_char } ( newline newline | EOF ) ;
+error_unmatched_bracket  = ( "[[" | "[" ) { any_char } EOF ;
+error_unclosed_semantic  = '/' { any_char } ( newline | EOF ) ;
 error_invalid_type_name  = dollar lower_ident assign_op { any_char } newline ;
 error_malformed_control  = ( FOR | WHILE | IF | PARALLEL ) { any_char } ( newline | EOF ) ;
 error_break_outside_loop = BREAK ; /* When not inside a loop */
@@ -517,7 +528,7 @@ The grammar describes validation, not transformation:
 
 - **No type expansion** - `$Task` stays `$Task`
 - **No reference inlining** - `[[skill]]` stays `[[skill]]`
-- **No semantic transformation** - `{~~content}` stays `{~~content}`
+- **No semantic transformation** - `/content/` stays `/content/`
 - **No output compilation** - Source IS the output
 
 ## Examples
@@ -554,7 +565,7 @@ $Result: outcome of executing a task
 
 ## Workflow
 
-1. Setup at {~~appropriate location}
+1. Setup at /appropriate location/
 
 2. PARALLEL FOR EACH $item IN $items:
    - IF $item.invalid THEN:
@@ -584,8 +595,15 @@ Execute [[omr]] WITH:
 
 ## Version
 
-Grammar version: 0.4
-Aligned with: language-spec.md v0.4
+Grammar version: 0.5
+Aligned with: language-spec.md v0.5
+
+### Changes from v0.4
+
+- Changed semantic marker syntax from `{~~content}` to `/content/`
+- Added inferred variable syntax `$/name/`
+- Added semantic type annotation syntax `: /description/`
+- Updated `semantic_delim` operator (replaces `semantic_open` and `semantic_close`)
 
 ### Changes from v0.3
 

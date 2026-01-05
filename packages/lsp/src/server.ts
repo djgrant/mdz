@@ -5,7 +5,7 @@
  * Supports:
  * - Go-to-definition for [[references]] and $variables
  * - Hover information for types
- * - Autocomplete after [[, $, and {~~
+ * - Autocomplete after [[, $, and /
  * - Diagnostics for undefined references
  * - Document symbols
  */
@@ -581,8 +581,8 @@ export class ZenLanguageServer {
       );
     }
 
-    // After {~~
-    if (beforeCursor.endsWith('{~~')) {
+    // After /
+    if (beforeCursor.endsWith('/')) {
       return this.getSemanticCompletions();
     }
 
@@ -650,10 +650,10 @@ export class ZenLanguageServer {
 
   private getSemanticCompletions(): CompletionItem[] {
     return [
-      { label: 'appropriate location', kind: CompletionItemKind.Snippet, insertText: 'appropriate location}' },
-      { label: 'relevant context', kind: CompletionItemKind.Snippet, insertText: 'relevant context}' },
-      { label: 'best approach for', kind: CompletionItemKind.Snippet, insertText: 'best approach for }' },
-      { label: 'determine based on', kind: CompletionItemKind.Snippet, insertText: 'determine based on }' },
+      { label: 'appropriate location', kind: CompletionItemKind.Snippet, insertText: 'appropriate location/' },
+      { label: 'relevant context', kind: CompletionItemKind.Snippet, insertText: 'relevant context/' },
+      { label: 'best approach for', kind: CompletionItemKind.Snippet, insertText: 'best approach for /' },
+      { label: 'determine based on', kind: CompletionItemKind.Snippet, insertText: 'determine based on /' },
     ];
   }
 

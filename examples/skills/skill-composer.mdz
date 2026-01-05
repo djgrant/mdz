@@ -37,7 +37,7 @@ $ExecutionPlan: ordered list of skill executions
    - Add edges to $graph
    
 2. Detect cycles in $graph
-   IF {~~cycle detected} THEN:
+   IF /cycle detected/ THEN:
      - Report circular dependency error
      - Abort composition
    
@@ -47,11 +47,11 @@ $ExecutionPlan: ordered list of skill executions
 
 FOR EACH $skill IN $plan:
   - Verify all dependencies are satisfied
-  - IF {~~skill has missing dependencies} THEN:
+  - IF /skill has missing dependencies/ THEN:
     - Log error: missing dependencies
     - CONTINUE
   - Check for type compatibility between skills
-  - IF {~~incompatible interface} THEN:
+  - IF /incompatible interface/ THEN:
     - Log warning with suggested adaptations
 
 ### 3. Execute Composition
@@ -64,7 +64,7 @@ Execute [[orchestrate]] WITH:
 ### 4. Synthesize Results
 
 1. Collect all outputs from $results
-2. Resolve any conflicts using {~~conflict resolution strategy}
+2. Resolve any conflicts using /conflict resolution strategy/
 3. Generate unified output combining skill contributions
 4. Report composition summary:
    - Skills executed

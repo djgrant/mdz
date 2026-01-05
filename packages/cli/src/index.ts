@@ -260,7 +260,7 @@ function lspCommand(_args: string[]): void {
   console.log('Features:');
   console.log('  - Go-to-definition for [[references]] and $variables');
   console.log('  - Hover information for types');
-  console.log('  - Autocomplete after [[, $, and {~~');
+  console.log('  - Autocomplete after [[, $, and /');
   console.log('  - Document symbols');
   console.log('  - Diagnostics');
   console.log('');

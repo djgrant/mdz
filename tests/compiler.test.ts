@@ -65,7 +65,7 @@ description: A test
 
 ## Section
 
-Some content with $variable and [[skill]] and {~~semantic marker}.
+Some content with $variable and [[skill]] and /semantic marker/.
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Output should equal source exactly');
@@ -88,16 +88,16 @@ $Task: any executable instruction
       'Types should NOT be expanded');
   });
 
-  test('{~~marker} stays as {~~marker} (no transformation)', () => {
+  test('/marker/ stays as /marker/ (no transformation)', () => {
     const source = `---
 name: test
 description: test
 ---
 
-Write to {~~appropriate location}
+Write to /appropriate location/
 `;
     const result = compile(source, { includeHeader: false });
-    assertIncludes(result.output, '{~~appropriate location}');
+    assertIncludes(result.output, '/appropriate location/');
     assert(!result.output.includes('(determine:'), 
       'Semantic markers should NOT be transformed');
   });
@@ -481,12 +481,12 @@ name: test
 description: test
 ---
 
-Write to {~~location}
+Write to /location marker/
 `, { generateSourceMap: true });
     
     const semEntries = result.sourceMap.filter(e => e.type === 'semantic');
     assertEqual(semEntries.length, 1);
-    assertEqual(semEntries[0].name, 'location');
+    assertEqual(semEntries[0].name, 'location marker');
   });
 });
 
@@ -644,7 +644,7 @@ $Strategy: "accumulate" | "independent"
 
 ## Workflow
 
-1. Create master work package at {~~appropriate location}
+1. Create master work package at /appropriate location/
 
 2. FOR EACH ($task, $strategy) IN $transforms:
    - Delegate to [[#iteration-manager]]
@@ -663,7 +663,7 @@ Handle a single iteration.
 
     // Source unchanged
     assertIncludes(result.output, '$Task: any task');
-    assertIncludes(result.output, '{~~appropriate location}');
+    assertIncludes(result.output, '/appropriate location/');
     assertIncludes(result.output, '[[#iteration-manager]]');
     
     // Metadata extracted
@@ -696,6 +696,44 @@ console.log(`Failed: ${ctx.failed}`);
 if (ctx.failed > 0) {
   process.exit(1);
 }
+
+// ============================================================================
+// Inferred Variables and Semantic Markers (v0.4 syntax)
+// ============================================================================
+
+describe('Inferred Variables', () => {
+  test('$/name/ does not trigger undeclared variable warning', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+Process item at $/index/
+`, { validateReferences: true });
+    
+    // Inferred variables should not trigger undeclared warnings
+    const undeclaredWarnings = result.diagnostics.filter(d => 
+      d.code === 'E007' || d.message.includes('undeclared'));
+    assertEqual(undeclaredWarnings.length, 0, 'Inferred variables should not trigger undeclared warnings');
+  });
+
+  test('/content with $declared/ validates embedded reference', () => {
+    const result = compile(`---
+name: test
+description: test
+---
+
+- $item = "test"
+
+Write to /path for $item/
+`, { validateReferences: true });
+    
+    // Should not warn - $item is declared
+    const undeclaredWarnings = result.diagnostics.filter(d => 
+      d.code === 'E007' || d.message.includes('undeclared'));
+    assertEqual(undeclaredWarnings.length, 0);
+  });
+});
 
 // ============================================================================
 // Built-in Primitive Types

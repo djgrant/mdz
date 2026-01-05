@@ -179,7 +179,8 @@ description: test
     );
     assertEqual(vars.length, 1);
     assertEqual(vars[0].name, 'path');
-    assertEqual(vars[0].typeAnnotation?.name, 'FilePath');
+    assert(vars[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((vars[0].typeAnnotation as AST.TypeReference).name, 'FilePath');
     assert(vars[0].value?.kind === 'StringLiteral', 'Value should be string');
   });
 
@@ -255,7 +256,8 @@ Execute [[process-data]] WITH:
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters.length, 2);
     assertEqual(delegs[0].parameters[0].name, 'input');
-    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'String');
+    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'String');
     assertEqual(delegs[0].parameters[0].isRequired, true);
     assertEqual(delegs[0].parameters[1].name, 'format');
     assertEqual(delegs[0].parameters[1].value!.kind, 'StringLiteral');
@@ -306,13 +308,13 @@ See [[other-skill#section]]
 // ============================================================================
 
 describe('Semantic Markers', () => {
-  test('parses semantic marker', () => {
+  test('parses semantic marker with new /content/ syntax', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Write to {~~appropriate location}
+Write to /appropriate location/
 `);
     const paras = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
@@ -330,7 +332,7 @@ name: test
 description: test
 ---
 
-Write to {~~path for $n}
+Write to /path for $n/
 `);
     const paras = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
@@ -340,6 +342,59 @@ Write to {~~path for $n}
     );
     assertEqual(markers.length, 1);
     assert(markers[0].content.includes('$n'), 'Should contain variable');
+  });
+
+  test('parses inferred variable $/name/', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Process item at $/index/
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const inferredVars = paras.flatMap(p => 
+      p.content.filter((c): c is AST.InferredVariable => c.kind === 'InferredVariable')
+    );
+    assertEqual(inferredVars.length, 1);
+    assertEqual(inferredVars[0].name, 'index');
+  });
+
+  test('parses variable with semantic type annotation', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+- $path: /file path for output/ = "output.md"
+`);
+    const vars = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
+    );
+    assertEqual(vars.length, 1);
+    assertEqual(vars[0].name, 'path');
+    assert(vars[0].typeAnnotation?.kind === 'SemanticType', 'Type annotation should be SemanticType');
+    assertEqual((vars[0].typeAnnotation as AST.SemanticType).description, 'file path for output');
+  });
+
+  test('legacy {~~} syntax still parses (backward compatibility)', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Write to {~~appropriate location}
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const markers = paras.flatMap(p => 
+      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
+    );
+    assertEqual(markers.length, 1);
+    assertEqual(markers[0].content, 'appropriate location');
   });
 });
 
@@ -520,7 +575,20 @@ description: test
 // ============================================================================
 
 describe('Error Handling', () => {
-  test('recovers from unclosed semantic marker', () => {
+  test('recovers from unclosed semantic marker (new syntax)', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Write to /unclosed marker
+Next line
+`);
+    // Should still parse, possibly with errors
+    assert(doc.sections.length > 0, 'Should have sections');
+  });
+
+  test('recovers from unclosed semantic marker (legacy syntax)', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -683,7 +751,8 @@ Execute [[process]] WITH:
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters.length, 1);
     assertEqual(delegs[0].parameters[0].name, 'task');
-    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'Task');
+    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'Task');
     assertEqual(delegs[0].parameters[0].isRequired, true);
     assertEqual(delegs[0].parameters[0].value, null);
   });
@@ -721,7 +790,8 @@ Execute [[process]] WITH:
     );
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters[0].name, 'count');
-    assertEqual(delegs[0].parameters[0].typeAnnotation!.name, 'Number');
+    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'Number');
     assertEqual(delegs[0].parameters[0].isRequired, false);
     assert(delegs[0].parameters[0].value!.kind === 'NumberLiteral', 'Should have number value');
   });

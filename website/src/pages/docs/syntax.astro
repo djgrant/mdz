@@ -79,15 +79,15 @@ uses:                         # Optional: skill dependencies
 
 <span class="zen-type">$SolutionPath</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.md`</code></pre>
 
-  <h3>Semantic Variable Transformation</h3>
+  <h3>Semantic Type Annotations</h3>
   
-  <p>When a variable's structure changes during workflow execution (e.g., loading and parsing a file), use distinct variable names:</p>
+  <p>When a variable needs a semantic description rather than a named type, use the <strong>semantic type</strong> syntax:</p>
   
   <pre><code><span class="zen-heading">## Input</span>
 - <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment">&lt;!-- path to the skill --&gt;</span>
 
 <span class="zen-heading">## Context</span>
-- <span class="zen-variable">$skill</span>: <span class="zen-semantic">&#123;~~the loaded and parsed skill AST from $skillPath&#125;</span>
+- <span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST from $skillPath/</span>
 
 <span class="zen-heading">## Workflow</span>
 1. Load skill source from <span class="zen-variable">$skillPath</span>
@@ -113,15 +113,35 @@ uses:                         # Optional: skill dependencies
 
   <h2>Semantic Markers</h2>
   
-  <p>The <code>&#123;~~content&#125;</code> syntax marks content for LLM interpretation (the <code>~~</code> suggests "approximately"):</p>
+  <p>The <code>/content/</code> syntax marks content for LLM interpretation. There are three forms:</p>
   
-  <pre><code><span class="zen-semantic">&#123;~~appropriate location for this output&#125;</span>
-<span class="zen-semantic">&#123;~~determine best strategy for <span class="zen-variable">$task</span>&#125;</span></code></pre>
+  <h3>Inline Semantic Markers</h3>
+  
+  <p>Mark inline content that the LLM should interpret contextually:</p>
+  
+  <pre><code><span class="zen-semantic">/appropriate location for this output/</span>
+<span class="zen-semantic">/determine best strategy for <span class="zen-variable">$task</span>/</span></code></pre>
 
   <p>Variables are expanded before interpretation:</p>
   
-  <pre><code><span class="zen-semantic">&#123;~~the path for candidate <span class="zen-variable">$n</span>&#125;</span>
+  <pre><code><span class="zen-semantic">/the path for candidate <span class="zen-variable">$n</span>/</span>
 <span class="zen-comment">&lt;!-- First $n is resolved, then LLM interprets --&gt;</span></code></pre>
+
+  <h3>Inferred Variables</h3>
+  
+  <p>Use <code>$/name/</code> for variables the LLM infers and tracks without explicit declaration:</p>
+  
+  <pre><code><span class="zen-semantic">$/current-hypothesis/</span>
+<span class="zen-semantic">$/best-candidate/</span></code></pre>
+
+  <p>The LLM maintains these values implicitly based on context.</p>
+
+  <h3>Semantic Type Annotations</h3>
+  
+  <p>Use <code>/description/</code> as a type annotation for variables that need semantic descriptions:</p>
+  
+  <pre><code>- <span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST/</span>
+- <span class="zen-variable">$result</span>: <span class="zen-semantic">/outcome of the validation step/</span></code></pre>
 
   <h2>Control Flow</h2>
   

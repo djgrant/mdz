@@ -326,7 +326,7 @@ FOR EACH $skill IN $skills:
 ### 2. Validate Composition
 
 Detect cycles in the graph
-IF {~~cycle detected} THEN:
+IF /cycle detected/ THEN:
   - Report error
   - Abort
 
@@ -681,7 +681,8 @@ Execute [[orchestrate]] WITH:
             /\b(PARALLEL FOR EACH|FOR EACH|WHILE|DO|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/,
             "keyword",
           ],
-          [/\{~~/, { token: "delimiter.semantic", next: "@semantic" }],
+          [/\/(?=[^\/\n]+\/)/, { token: "delimiter.semantic", next: "@semantic" }],
+          [/\$\/[^\/]+\//, "variable.inferred"],
           [/\[\[/, { token: "delimiter.reference", next: "@reference" }],
           [/\$[A-Z][a-zA-Z0-9]*/, "type"],
           [/\$[a-z][a-zA-Z0-9-]*/, "variable"],
@@ -690,8 +691,8 @@ Execute [[orchestrate]] WITH:
           [/^>.*$/, "comment"],
         ],
         semantic: [
-          [/[^}]+/, "string.semantic"],
-          [/\}/, { token: "delimiter.semantic", next: "@pop" }],
+          [/[^\/]+/, "string.semantic"],
+          [/\//, { token: "delimiter.semantic", next: "@pop" }],
         ],
         reference: [
           [/[^\]]+/, "entity.reference"],
@@ -712,6 +713,7 @@ Execute [[orchestrate]] WITH:
         { token: "variable", foreground: "F59E0B" },
         { token: "string", foreground: "22C55E" },
         { token: "string.semantic", foreground: "EC4899", fontStyle: "italic" },
+        { token: "variable.inferred", foreground: "EC4899" },
         { token: "entity.reference", foreground: "3B82F6" },
         { token: "delimiter.semantic", foreground: "EC4899" },
         { token: "delimiter.reference", foreground: "3B82F6" },
@@ -735,6 +737,7 @@ Execute [[orchestrate]] WITH:
         { token: "variable", foreground: "D97706" },
         { token: "string", foreground: "16A34A" },
         { token: "string.semantic", foreground: "DB2777", fontStyle: "italic" },
+        { token: "variable.inferred", foreground: "DB2777" },
         { token: "entity.reference", foreground: "2563EB" },
         { token: "delimiter.semantic", foreground: "DB2777" },
         { token: "delimiter.reference", foreground: "2563EB" },

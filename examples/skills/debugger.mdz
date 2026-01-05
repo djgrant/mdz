@@ -20,7 +20,7 @@ $StackFrame: current execution context with variables
 
 ## Context
 
-- $skill: {~~the loaded and parsed skill AST from $skillPath}
+- $skill: /the loaded and parsed skill AST from $skillPath/
 - $trace: $TraceEvent[] = []
 - $stack: $StackFrame[] = []
 - $stepCount = 0
@@ -32,7 +32,7 @@ $StackFrame: current execution context with variables
 
 1. Load skill source from $skillPath
 2. Parse into $skill AST using [[#parse-step]]
-3. Initialize trace log at {~~debug output location}
+3. Initialize trace log at /debug output location/
 4. Set breakpoints from $breakpoints array
 
 ### 2. Execute with Tracing
@@ -43,7 +43,7 @@ FOR EACH $statement IN $skill.statements:
   
   1. Increment $stepCount
   2. Push current context to $stack
-  3. Log entry: {~~formatted statement preview}
+  3. Log entry: /formatted statement preview/
   
   IF $traceLevel = "debug" THEN:
     - Log all variable values in scope
@@ -52,7 +52,7 @@ FOR EACH $statement IN $skill.statements:
   #### 2b. Check Breakpoints
   
   FOR EACH $bp IN $breakpoints:
-    - IF {~~current statement matches breakpoint condition} THEN:
+    - IF /current statement matches breakpoint condition/ THEN:
       - Set $paused = true
       - Log "BREAKPOINT HIT: $bp"
       - Yield control to user with [[#inspection-prompt]]
@@ -66,7 +66,7 @@ FOR EACH $statement IN $skill.statements:
   ELSE:
     - IF $statement.kind = "IfStatement" THEN:
       - Log "Evaluating condition: " + $statement.condition
-      - Log "Branch taken: " + {~~which branch}
+      - Log "Branch taken: " + /which branch/
     - Execute statement normally
   
   #### 2d. Post-execution
@@ -85,7 +85,7 @@ FOR EACH $statement IN $skill.statements:
    - Control flow paths taken
    - Variables modified
    - Time spent in each section
-2. Output trace log to {~~appropriate format and location}
+2. Output trace log to /appropriate format and location/
 
 ## Parse Step
 
@@ -97,8 +97,8 @@ Execution paused at breakpoint.
 
 Current state:
 - Step: $stepCount
-- Stack depth: {~~stack size}
-- Variables in scope: {~~formatted variables}
+- Stack depth: /stack size/
+- Variables in scope: /formatted variables/
 
 Commands:
 - `continue` - Resume execution

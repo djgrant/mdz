@@ -93,18 +93,32 @@
       ]
     },
     "semantic-marker": {
-      "begin": "\\{~~",
-      "end": "\\}",
-      "name": "meta.semantic-marker.zen",
-      "beginCaptures": {
-        "0": { "name": "punctuation.definition.semantic.begin.zen" }
-      },
-      "endCaptures": {
-        "0": { "name": "punctuation.definition.semantic.end.zen" }
-      },
-      "contentName": "string.interpolated.semantic.zen",
       "patterns": [
-        { "include": "#variable" }
+        {
+          "comment": "Inferred variable: $/name/",
+          "match": "\\$(/[^/]+/)",
+          "name": "meta.semantic-marker.inferred.zen",
+          "captures": {
+            "0": { "name": "variable.other.inferred.zen" },
+            "1": { "name": "string.interpolated.semantic.zen" }
+          }
+        },
+        {
+          "comment": "Semantic marker: /content/",
+          "begin": "/(?=[^/\\n]+/)",
+          "end": "/",
+          "name": "meta.semantic-marker.zen",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.semantic.begin.zen" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.semantic.end.zen" }
+          },
+          "contentName": "string.interpolated.semantic.zen",
+          "patterns": [
+            { "include": "#variable" }
+          ]
+        }
       ]
     },
     "reference": {

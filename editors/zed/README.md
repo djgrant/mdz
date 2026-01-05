@@ -7,7 +7,7 @@ Syntax support for MDZ (ZenMarkdown) files in [Zed](https://zed.dev).
 - File association for `.mdz` files
 - Markdown-based syntax highlighting
 - Auto-closing brackets: `[]`, `{}`, `()`, `""`, backticks
-- Auto-closing for MDZ constructs: `[[]]`, `{~~ }`
+- Auto-closing for MDZ constructs: `[[]]`, `//`
 - Block quote comment style
 
 ## Installation
@@ -33,7 +33,7 @@ MDZ extends markdown with:
 - **Types**: `$TypeName`
 - **Skill references**: `[[skill-name]]`
 - **Section references**: `[[#section-name]]`
-- **Semantic markers**: `{~~interpret this}`
+- **Semantic markers**: `/interpret this/`, `$/inferred-var/`
 - **Control flow**: `FOR EACH`, `WHILE`, `IF THEN ELSE`
 
 Note: Full MDZ syntax highlighting requires a custom Tree-sitter grammar.

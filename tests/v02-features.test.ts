@@ -389,7 +389,8 @@ description: test
     );
     assertEqual(vars.length, 1);
     assertEqual(vars[0].name, 'param');
-    assertEqual(vars[0].typeAnnotation?.name, 'Task');
+    assert(vars[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((vars[0].typeAnnotation as AST.TypeReference).name, 'Task');
     assert(vars[0].value !== null, 'Should have value');
   });
 
@@ -406,7 +407,8 @@ description: test
     );
     assertEqual(vars.length, 1);
     assertEqual(vars[0].name, 'required');
-    assertEqual(vars[0].typeAnnotation?.name, 'Task');
+    assert(vars[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
+    assertEqual((vars[0].typeAnnotation as AST.TypeReference).name, 'Task');
     assertEqual(vars[0].value, null);
   });
 });

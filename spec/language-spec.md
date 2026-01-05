@@ -151,7 +151,7 @@ When a variable's structure changes during workflow execution (e.g., loading and
 - $skillPath: $String = path to the skill
 
 ## Context  
-- $skill: {~~the loaded and parsed skill AST from $skillPath}
+- $skill: /the loaded and parsed skill AST from $skillPath/
 
 ## Workflow
 1. Load skill source from $skillPath
@@ -185,7 +185,7 @@ $FunctionName = ($a, $b) => expression
 
 Examples:
 ```
-$SolutionPath = $n => `{~~relevant wp path}-candidate-{$n}.md`
+$SolutionPath = $n => `/relevant wp path/-candidate-${n}.md`
 ```
 
 Lambdas can include semantic markers and template literals.
@@ -239,10 +239,10 @@ References are passed to the LLM as-is. The LLM runtime (e.g., Claude's skill lo
 
 ### Basic Semantic Marker
 
-The `{~~content}` syntax marks content for LLM interpretation:
+The `/content/` syntax marks content for LLM interpretation:
 
 ```
-{~~appropriate location for this work package}
+/appropriate location for this work package/
 ```
 
 The LLM should determine the actual value based on context.
@@ -252,10 +252,32 @@ The LLM should determine the actual value based on context.
 Variables are expanded BEFORE semantic interpretation:
 
 ```
-{~~the path for candidate $n}
+/the path for candidate $n/
 ```
 
 First `$n` is resolved (e.g., to `3`), then the LLM interprets "the path for candidate 3".
+
+### Inferred Variables
+
+Use `$/name/` to declare a variable whose value is inferred by the LLM at runtime:
+
+```
+$/the user's primary goal/
+$/current file path based on context/
+```
+
+Inferred variables combine variable declaration with semantic interpretation. The LLM derives the value based on context.
+
+### Semantic Type Annotations
+
+Use `/description/` as a type annotation to describe what a value should be:
+
+```
+- $target: /the file to modify/ = "default.txt"
+- $context: /relevant background information/
+```
+
+This is more flexible than reference types (`$Type`) when you need to describe the expected value semantically rather than reference a defined type.
 
 ### Semantic Markers in Context
 
@@ -263,11 +285,13 @@ Semantic markers are valid in:
 - Prose text
 - Variable assignments
 - Lambda expressions
+- Type annotations
 - Control flow conditions (with caution)
 
 ```
-- $path = {~~the most relevant file path}
-- Write output to {~~appropriate location}
+- $path = /the most relevant file path/
+- $output: /where to write results/ = "output.md"
+- Write output to /appropriate location/
 ```
 
 ### Nested Semantics
@@ -276,7 +300,7 @@ Semantic markers are valid in:
 
 ```
 # Invalid
-{~~{~~inner content}}
+//inner content//
 ```
 
 This is a deliberate constraint to maintain clarity about what is being interpreted.
@@ -358,7 +382,7 @@ ELSE:
 
 With semantic conditions:
 ```
-IF {~~any critical findings} THEN:
+IF /any critical findings/ THEN:
   - Request changes
 ```
 
@@ -504,7 +528,7 @@ Valid default values:
 
 Invalid as defaults (use comments instead):
 - Prose descriptions: ~~`= the problem to solve`~~
-- Semantic markers: ~~`= {~~appropriate value}`~~
+- Semantic markers: ~~`= /appropriate value/`~~
 
 ### Workflow Structure
 
@@ -568,7 +592,7 @@ An MDZ skill executes as:
 
 ### Semantic Interpretation
 
-`{~~content}` is interpreted by the LLM:
+`/content/` is interpreted by the LLM:
 - Consider current context
 - Derive appropriate concrete value
 - The result replaces the marker in execution
@@ -607,7 +631,7 @@ A compliant validator must:
 
 The syntax supports:
 - **Go-to-definition**: For `[[references]]` and `$variables`
-- **Autocomplete**: After `[[`, `$`, and `{~~`
+- **Autocomplete**: After `[[`, `$`, and `/`
 - **Hover**: Show type definitions
 - **Diagnostics**: Undefined references, unused variables, BREAK/CONTINUE outside loops
 
@@ -619,7 +643,8 @@ Syntax highlighting should distinguish:
 - Types (`$TypeName`)
 - Variables (`$varName`)
 - References (`[[...]]`)
-- Semantic markers (`{~~...}`)
+- Semantic markers (`/.../`)
+- Inferred variables (`$/name/`)
 - Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`)
 
 ## Grouping and Braces
@@ -718,24 +743,40 @@ The double bracket `[[...]]` syntax is distinct and unambiguous.
 
 ### Curly Braces `{}`
 
-Curly braces are used only for semantic constructs:
+Curly braces are used only for template interpolation:
 
-#### 1. Semantic markers
-
-```
-{~~appropriate location}              # LLM interprets this
-{~~the path for candidate $n}         # With variable interpolation
-```
-
-The `{~~` opening is unique and cannot be confused with other syntax.
-
-#### 2. Template interpolation (inside backticks only)
+#### Template interpolation (inside backticks only)
 
 ```
 $path = $n => `output-${n}.md`        # ${} inside template literal
 ```
 
 Note: MDZ does **not** use `{}` for code blocks (Python-style indentation is used instead).
+
+### Forward Slashes `/`
+
+Forward slashes delimit semantic content:
+
+#### 1. Semantic markers
+
+```
+/appropriate location/                # LLM interprets this
+/the path for candidate $n/           # With variable interpolation
+```
+
+#### 2. Inferred variables
+
+```
+$/the user's primary intent/          # Variable with LLM-derived value
+$/relevant context from history/      # Value inferred at runtime
+```
+
+#### 3. Semantic type annotations
+
+```
+$target: /file to modify/ = "out.md"  # Describes what the value should be
+$context: /background info/           # Semantic type instead of $Type
+```
 
 ### Operator Precedence
 
@@ -790,7 +831,9 @@ VAR_DECL        = '$' IDENT (':' TYPE)? '=' EXPR
 VAR_REF         = '$' IDENT
 SKILL_REF       = '[[' IDENT ']]'
 SECTION_REF     = '[[' IDENT? '#' IDENT ']]'
-SEMANTIC        = '{~~' /[^}]+/ '}'
+SEMANTIC        = '/' /[^\/\n]+/ '/'
+INFERRED_VAR    = '$/' /[^\/\n]+/ '/'                         <!-- v0.4 -->
+SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'                      <!-- v0.4 -->
 FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
 PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  <!-- v0.2 -->
 WHILE           = 'WHILE' CONDITION 'DO:'       <!-- DO delimits, like THEN for IF -->
@@ -817,12 +860,13 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 - Familiar (SQL, BASIC heritage)
 - Simple regex parsing
 
-### Why {~~} for Semantics?
+### Why /.../ for Semantics?
 
-- Unique syntax not used elsewhere
-- Clear visual boundary
-- `~~` suggests "approximately" or "interpret this"
-- Braces group the content naturally
+- Lightweight and readable inline
+- Clear visual boundary without heavy punctuation
+- Familiar from regex notation (pattern/interpretation)
+- Enables `$/name/` for inferred variables naturally
+- Enables `: /desc/` for semantic type annotations
 
 ### Why $variables?
 
@@ -873,7 +917,9 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **Frontmatter fence** (`---`) — YAML frontmatter delimiter (opening and closing).
 - **Skill link** (`[[name]]`) — Reference to another skill. Wiki-link style.
 - **Section link** (`[[#name]]` or `[[skill#name]]`) — Reference to a section, optionally in another skill.
-- **Semantic marker** (`{~~content}`) — Content for LLM interpretation. The `~~` suggests "approximately."
+- **Semantic marker** (`/content/`) — Content for LLM interpretation. Slashes delimit the semantic content.
+- **Inferred variable** (`$/name/`) — Variable whose value is derived by LLM at runtime.
+- **Semantic type annotation** (`: /description/`) — Type annotation using natural language description.
 - **Tuple** (`(a, b)`) — Grouping of multiple values. Used in types and destructuring.
 - **Array literal** (`[a, b]`) — Collection of values.
 - **Array suffix** (`$Type[]`) — Type modifier indicating a collection.
@@ -946,6 +992,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ## Version History
 
+- **v0.5** (2026-01-05): New semantic marker syntax `/content/`, inferred variables `$/name/`, semantic type annotations `: /description/`
 - **v0.4** (2026-01-05): Changed type definition syntax from `=` to `:` for clarity
 - **v0.3** (2026-01-03): Validator-first architecture - source = output, validation focus
 - **v0.2** (2026-01-03): Added PARALLEL FOR EACH, typed parameters, BREAK/CONTINUE

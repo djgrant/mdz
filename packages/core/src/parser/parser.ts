@@ -502,7 +502,7 @@ export class Parser {
     const nameToken = this.advance();
     const name = nameToken.value.slice(1);
 
-    let typeAnnotation: AST.TypeReference | null = null;
+    let typeAnnotation: AST.TypeReference | AST.SemanticType | null = null;
     let isRequired = false;
 
     if (this.check('COLON')) {
@@ -513,6 +513,15 @@ export class Parser {
           kind: 'TypeReference',
           name: typeToken.value.slice(1),
           span: typeToken.span,
+        };
+      } else if (this.check('SEMANTIC_MARKER')) {
+        // Support $var: /semantic description/ = value syntax
+        const semanticToken = this.advance();
+        const description = semanticToken.value.slice(1, -1); // Remove /slashes/
+        typeAnnotation = {
+          kind: 'SemanticType',
+          description,
+          span: semanticToken.span,
         };
       }
     }
@@ -733,8 +742,12 @@ export class Parser {
       return this.parseReference();
     }
 
-    if (this.check('SEMANTIC_OPEN')) {
+    if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
       return this.parseSemanticMarker();
+    }
+
+    if (this.check('INFERRED_VAR')) {
+      return this.parseInferredVariable();
     }
 
     if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
@@ -819,8 +832,10 @@ export class Parser {
           name: varToken.value.slice(1),
           span: varToken.span,
         });
-      } else if (this.check('SEMANTIC_OPEN')) {
+      } else if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
         parts.push(this.parseSemanticMarker());
+      } else if (this.check('INFERRED_VAR')) {
+        parts.push(this.parseInferredVariable());
       } else {
         this.advance();
       }
@@ -868,6 +883,32 @@ export class Parser {
   }
 
   private parseSemanticMarker(): AST.SemanticMarker {
+    // Handle new /content/ syntax (SEMANTIC_MARKER token)
+    if (this.check('SEMANTIC_MARKER')) {
+      const token = this.advance();
+      // Extract content from /content/ - remove leading and trailing slashes
+      const content = token.value.slice(1, -1);
+      
+      // Extract any embedded $variables from the content
+      const interpolations: AST.VariableReference[] = [];
+      const varMatches = content.matchAll(/\$([a-zA-Z][a-zA-Z0-9_-]*)/g);
+      for (const match of varMatches) {
+        interpolations.push({
+          kind: 'VariableReference',
+          name: match[1],
+          span: token.span, // Approximate span
+        });
+      }
+      
+      return {
+        kind: 'SemanticMarker',
+        content,
+        interpolations,
+        span: token.span,
+      };
+    }
+    
+    // Handle legacy {~~content} syntax (SEMANTIC_OPEN token)
     const start = this.advance();
     let content = '';
     const interpolations: AST.VariableReference[] = [];
@@ -895,6 +936,18 @@ export class Parser {
       content,
       interpolations,
       span: AST.mergeSpans(start.span, end?.span || this.previous().span),
+    };
+  }
+
+  private parseInferredVariable(): AST.InferredVariable {
+    const token = this.advance();
+    // Extract name from $/name/ - remove $/ prefix and / suffix
+    const name = token.value.slice(2, -1);
+    
+    return {
+      kind: 'InferredVariable',
+      name,
+      span: token.span,
     };
   }
 
@@ -951,6 +1004,8 @@ export class Parser {
       !this.check('NEWLINE') &&
       !this.check('DOUBLE_LBRACKET') &&
       !this.check('SEMANTIC_OPEN') &&
+      !this.check('SEMANTIC_MARKER') &&
+      !this.check('INFERRED_VAR') &&
       !this.check('DOLLAR_IDENT') &&
       !this.check('TYPE_IDENT')
     ) {
@@ -1276,8 +1331,10 @@ export class Parser {
     while (!this.isAtEnd() && !this.check('NEWLINE') && !this.check('HEADING')) {
       if (this.check('DOUBLE_LBRACKET')) {
         content.push(this.parseReference());
-      } else if (this.check('SEMANTIC_OPEN')) {
+      } else if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
         content.push(this.parseSemanticMarker());
+      } else if (this.check('INFERRED_VAR')) {
+        content.push(this.parseInferredVariable());
       } else if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
         const varToken = this.advance();
         content.push({

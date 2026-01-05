@@ -366,7 +366,7 @@ export class Compiler {
   private extractVariableDeclaration(decl: AST.VariableDeclaration): void {
     const varInfo: VariableInfo = {
       name: decl.name,
-      type: decl.typeAnnotation?.name || null,
+      type: this.getTypeAnnotationName(decl.typeAnnotation),
       hasDefault: decl.value !== null,
       isRequired: decl.isRequired || false,
       span: decl.span,
@@ -418,6 +418,14 @@ export class Compiler {
           type: 'semantic',
           name: content.content,
         });
+      } else if (content.kind === 'InferredVariable') {
+        // InferredVariable nodes ($/name/) are intentionally unresolved
+        // They don't need extraction - the LLM infers them at runtime
+        this.sourceMap.push({
+          source: content.span,
+          type: 'semantic',
+          name: `$/` + content.name + `/`,
+        });
       }
     }
   }
@@ -439,13 +447,22 @@ export class Compiler {
       if (block.kind === 'VariableDeclaration') {
         this.metadata.parameters.push({
           name: block.name,
-          type: block.typeAnnotation?.name || null,
+          type: this.getTypeAnnotationName(block.typeAnnotation),
           hasDefault: block.value !== null,
           isRequired: !block.value,
           span: block.span,
         });
       }
     }
+  }
+
+  private getTypeAnnotationName(typeAnnotation: AST.TypeReference | AST.SemanticType | null): string | null {
+    if (!typeAnnotation) return null;
+    if (typeAnnotation.kind === 'TypeReference') {
+      return typeAnnotation.name;
+    }
+    // For SemanticType, return the description as the type name
+    return typeAnnotation.description;
   }
 
   private extractFromExpression(expr: AST.Expression): void {
@@ -461,6 +478,15 @@ export class Compiler {
           source: expr.span,
           type: 'semantic',
           name: expr.content,
+        });
+        break;
+      case 'InferredVariable':
+        // InferredVariable ($/name/) nodes are intentionally unresolved
+        // They don't need extraction - the LLM infers them at runtime
+        this.sourceMap.push({
+          source: expr.span,
+          type: 'semantic',
+          name: `$/` + expr.name + `/`,
         });
         break;
       case 'BinaryExpression':
@@ -622,7 +648,16 @@ export class Compiler {
             if (!this.definedVariables.has(content.name)) {
               usedBeforeDefined.add(content.name);
             }
+          } else if (content.kind === 'SemanticMarker') {
+            // Validate $var references inside semantic markers
+            for (const interpolation of content.interpolations) {
+              if (!this.definedVariables.has(interpolation.name)) {
+                usedBeforeDefined.add(interpolation.name);
+              }
+            }
           }
+          // InferredVariable ($/name/) nodes are intentionally unresolved
+          // They don't need scope validation - the LLM infers them at runtime
         }
       }
     }
@@ -634,6 +669,17 @@ export class Compiler {
         // Don't report as error - could be a semantic reference
         // Just track it
         usedBeforeDefined.add(expr.name);
+      }
+    } else if (expr.kind === 'InferredVariable') {
+      // InferredVariable ($/name/) nodes are intentionally unresolved
+      // They don't need scope validation - the LLM infers them at runtime
+      // Do nothing - this is by design
+    } else if (expr.kind === 'SemanticMarker') {
+      // Validate $var references inside semantic markers
+      for (const interpolation of expr.interpolations) {
+        if (!this.definedVariables.has(interpolation.name)) {
+          usedBeforeDefined.add(interpolation.name);
+        }
       }
     } else if (expr.kind === 'BinaryExpression') {
       this.checkExpressionScope(expr.left, usedBeforeDefined);

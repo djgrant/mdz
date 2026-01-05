@@ -58,14 +58,14 @@ $Strategy = "fast" | "thorough"
 
 ## Workflow
 
-1. Analyze $task to determine {~~best approach}
+1. Analyze $task to determine /best approach/
 
 2. FOR EACH $step IN $task.steps:
    - Execute $step
    - IF $step.failed THEN:
      - Retry with [[helper-skill]]
 
-3. Report results at {~~appropriate location}
+3. Report results at /appropriate location/
 ```
 
 ### Key Constructs
@@ -98,8 +98,11 @@ $Enum = "option1" | "option2" | "option3"
 
 **Semantic Markers** - LLM-interpreted content:
 ```markdown
-{~~appropriate location for this output}
-{~~determine best strategy for $task}
+/appropriate location for this output/
+/determine best strategy for $task/
+
+$/inferred-variable/      # LLM-tracked variable
+$var: /description/       # Semantic type annotation
 ```
 
 **Control Flow** - CAPS keywords for visibility:
@@ -203,7 +206,7 @@ Install the MDZ extension for:
 - Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)
 - Variable and type highlighting
 - Skill references ([[links]])
-- Semantic markers ({~~content})
+- Semantic markers (/content/)
 
 The extension is located in `editors/vscode/`. To install locally:
 

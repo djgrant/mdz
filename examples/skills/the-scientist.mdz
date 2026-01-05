@@ -27,15 +27,15 @@ $Strategy: "accumulate" | "independent"
 - $experiments: $Experiment[]
 - $observations: $Observation[]
 - $iteration = 0
-- $workPackagePath = $n => `{~~work package directory}/wp-experiment-{$n}.md`
+- $workPackagePath = $n => `/work package directory//wp-experiment-{$n}.md`
 
 ## Workflow
 
 ### 1. Initialize
 
-1. Create master work package at {~~appropriate location for tracking}
+1. Create master work package at /appropriate location for tracking/
 2. Analyze $problem to identify potential hypotheses
-3. Prioritize hypotheses by {~~likelihood of success and ease of testing}
+3. Prioritize hypotheses by /likelihood of success and ease of testing/
 4. Set $currentHypothesis to the highest priority hypothesis
 
 ### 2. Experiment Loop
@@ -46,7 +46,7 @@ WHILE NOT diminishing returns AND $iteration < $maxIterations DO:
   
   1. Create experiment work package at $workPackagePath($iteration)
   2. Define experiment steps to test $currentHypothesis
-  3. Establish success criteria that are {~~measurable and objective}
+  3. Establish success criteria that are /measurable and objective/
   
 #### 2b. Run Experiment
   

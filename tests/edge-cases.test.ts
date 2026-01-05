@@ -205,7 +205,19 @@ Next line continues
     assert(doc.sections.length > 0, 'Should still parse sections');
   });
 
-  test('Recovers from unclosed {~~semantic', () => {
+  test('Recovers from unclosed /semantic marker', () => {
+    const doc = parse(`---
+name: unclosed-semantic
+description: Test
+---
+
+Write to /unclosed semantic marker
+Next paragraph
+`);
+    assert(doc.sections.length > 0, 'Should still parse');
+  });
+
+  test('Recovers from unclosed {~~semantic (legacy)', () => {
     const doc = parse(`---
 name: unclosed-semantic
 description: Test
@@ -360,8 +372,96 @@ Execute ${refs}
 // Semantic Marker Edge Cases
 // ============================================================================
 
-describe('Semantic Marker Edge Cases', () => {
+describe('Semantic Marker Edge Cases (New /content/ Syntax)', () => {
   test('Semantic marker with variable interpolation', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+/path for candidate $n in $directory/
+`);
+    assert(doc.errors.length === 0, 'Should parse');
+  });
+
+  test('Multiple semantic markers in one line', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Write /first thing/ and then /second thing/
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const markers = paras.flatMap(p => 
+      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
+    );
+    assertEqual(markers.length, 2, 'Should have 2 markers');
+  });
+
+  test('Semantic marker in template literal', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+- $path = \`output-/appropriate suffix/.md\`
+`);
+    assert(doc.errors.length === 0, 'Should parse template with semantic');
+  });
+
+  test('Inferred variable $/name/ parses correctly', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+Process item at $/index/
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const inferredVars = paras.flatMap(p => 
+      p.content.filter((c): c is AST.InferredVariable => c.kind === 'InferredVariable')
+    );
+    assertEqual(inferredVars.length, 1, 'Should have 1 inferred variable');
+    assertEqual(inferredVars[0].name, 'index', 'Name should be extracted');
+  });
+
+  test('Inferred variable in template literal', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+- $path = \`output-$/suffix/.md\`
+`);
+    assert(doc.errors.length === 0, 'Should parse template with inferred var');
+  });
+
+  test('Path-like content does NOT tokenize as semantic marker', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+See /path/to/file for details
+`);
+    // Paths without spaces should NOT be treated as semantic markers
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const markers = paras.flatMap(p => 
+      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
+    );
+    assertEqual(markers.length, 0, 'Path should not be semantic marker');
+  });
+});
+
+describe('Semantic Marker Edge Cases (Legacy {~~} Syntax)', () => {
+  test('Semantic marker with variable interpolation (legacy)', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -372,7 +472,7 @@ description: test
     assert(doc.errors.length === 0, 'Should parse');
   });
 
-  test('Multiple semantic markers in one line', () => {
+  test('Multiple semantic markers in one line (legacy)', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -389,7 +489,7 @@ Write {~~first thing} and then {~~second thing}
     assertEqual(markers.length, 2, 'Should have 2 markers');
   });
 
-  test('Semantic marker with special characters inside', () => {
+  test('Semantic marker with special characters inside (legacy)', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -401,7 +501,7 @@ description: test
     assert(doc.sections.length > 0, 'Should parse');
   });
 
-  test('Semantic marker in template literal', () => {
+  test('Semantic marker in template literal (legacy)', () => {
     const doc = parse(`---
 name: test
 description: test
