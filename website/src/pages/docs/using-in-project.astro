@@ -65,8 +65,8 @@ description: When processing tasks with validation and error handling
 
 ## Types
 
-$Task = a unit of work with inputs and expected outputs
-$Result = successful completion or error details
+$Task: a unit of work with inputs and expected outputs
+$Result: successful completion or error details
 
 ## Input
 
@@ -80,7 +80,7 @@ $Result = successful completion or error details
 ## Workflow
 
 1. Validate $task inputs and requirements
-2. WHILE $attempts &lt; $maxAttempts:
+2. WHILE ($attempts &lt; $maxAttempts):
    - Execute $task
    - IF execution succeeded THEN:
      - Return success result
@@ -137,8 +137,8 @@ Handle common failure modes:
    <pre><code class="language-mdz">You are a task processor. Follow this process:
 
 ## Types
-$Task = a unit of work with inputs and expected outputs
-$Result = successful completion or error details
+$Task: a unit of work with inputs and expected outputs
+$Result: successful completion or error details
 
 ## Input
 - $task: $Task
@@ -149,7 +149,7 @@ $Result = successful completion or error details
 
 ## Workflow
 1. Validate $task inputs and requirements
-2. WHILE $attempts &lt; $maxAttempts:
+2. WHILE ($attempts &lt; $maxAttempts):
    - Execute $task
    - IF execution succeeded THEN:
      - Return success result
@@ -264,9 +264,9 @@ mdz compile code-review.mdz --metadata  # Generate metadata JSON</code></pre>
   <pre><code class="language-mdz">You are a senior developer conducting a code review. Follow this process:
 
 ## Types
-$CodeChange = a set of file modifications with context
-$ReviewFocus = "security" | "performance" | "maintainability" | "correctness"
-$Issue = identified problem with severity and location
+$CodeChange: a set of file modifications with context
+$ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
+$Issue: identified problem with severity and location
 
 ## Input
 - $changes: $CodeChange (provided below)
@@ -324,7 +324,7 @@ description: When processing tasks with validation and error handling
 <span class="zen-heading">## Workflow</span>
 
 1. Validate <span class="zen-variable">$task</span> inputs and requirements
-2. WHILE <span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span>:
+2. WHILE (<span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span>):
    - Execute <span class="zen-variable">$task</span>
    - IF execution succeeded THEN:
      - Return success result

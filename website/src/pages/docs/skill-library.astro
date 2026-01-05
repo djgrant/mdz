@@ -92,12 +92,12 @@ Finally, apply another-skill.</code></pre>
 
    <h2>Dependency Management</h2>
 
-   <p>Skills can import others for reuse:</p>
+   <p>Skills can depend on others for reuse:</p>
 
    <pre><code class="language-yaml">---
 name: dependent-skill
-imports:
-  - base-skill.mdz
+uses:
+  - base-skill
 ---</code></pre>
 
    <p>Check dependency graphs:</p>
@@ -149,11 +149,11 @@ jobs:
    <p>Migrate personal skills to shared:</p>
 
    <ol>
-     <li>Copy skill to shared directory</li>
-     <li>Update frontmatter (add version, description)</li>
-     <li>Commit to shared repo</li>
-     <li>Update import paths in dependent files</li>
-   </ol>
+      <li>Copy skill to shared directory</li>
+      <li>Update frontmatter (add version, description)</li>
+      <li>Commit to shared repo</li>
+      <li>Update <code>uses:</code> in dependent files</li>
+    </ol>
 
    <p>For team to organization-wide, repeat with broader access.</p>
 

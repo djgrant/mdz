@@ -10,9 +10,9 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
     behaviors from simple, validated components.
   </p>
 
-  <h2>Skill References</h2>
+  <h2>Skill Links</h2>
 
-  <p>Reference another skill using wiki-link syntax:</p>
+  <p>Reference another skill using a <strong>skill link</strong> (wiki-link style):</p>
 
   <pre><code><span class="zen-reference">[[skill-name]]</span></code></pre>
 
@@ -25,13 +25,17 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
     dependency at runtime.
   </p>
 
-  <h2>Section References</h2>
+  <h2>Section Links</h2>
 
   <h3>Within Current Skill</h3>
+
+  <p>Use a <strong>section link</strong> to reference a section in the current document:</p>
 
   <pre><code><span class="zen-reference">[[#section-name]]</span></code></pre>
 
   <h3>In Another Skill</h3>
+
+  <p>Combine skill and section in a single link:</p>
 
   <pre><code><span class="zen-reference">[[skill-name#section-name]]</span></code></pre>
 
@@ -53,7 +57,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <h2>Delegation with Parameters</h2>
 
-  <p>Pass parameters when delegating to a skill:</p>
+  <p>Pass parameters when delegating to a skill using the <strong>with clause</strong>:</p>
 
   <pre><code>Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
   - <span class="zen-variable">$transforms</span> = [(<span class="zen-string">"Apply heuristic"</span>, <span class="zen-string">"accumulate"</span>)]

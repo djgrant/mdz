@@ -6,13 +6,13 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Control Flow</h1>
   
   <p class="lead">
-    Zen uses CAPS keywords for control flow to visually distinguish executable 
+    MDZ uses CAPS keywords for control flow to visually distinguish executable 
     structure from prose content.
   </p>
 
-  <h2>FOR EACH</h2>
+  <h2>For-Each Loop</h2>
   
-  <p>Iterate over a collection:</p>
+  <p>Iterate over a collection using the <strong>collection operator</strong> (<code>IN</code>):</p>
   
   <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
   - Process <span class="zen-variable">$item</span>
@@ -20,16 +20,32 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h3>With Destructuring</h3>
   
-  <p>Unpack tuples during iteration:</p>
+  <p>Unpack <strong>tuples</strong> during iteration using <strong>destructuring</strong>:</p>
   
   <pre><code><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$priority</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
   - Execute <span class="zen-variable">$task</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$priority</span> = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>:
     - Expedite processing</code></pre>
 
-  <h2>WHILE</h2>
+  <h2>Parallel For-Each Loop</h2>
   
-  <p>Loop with a condition:</p>
+  <p>Iterate with concurrent execution using <code>PARALLEL FOR EACH</code>:</p>
+  
+  <pre><code><span class="zen-keyword">PARALLEL FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  - Process <span class="zen-variable">$item</span> independently
+  - Results collected when all complete</code></pre>
+
+  <p>Use PARALLEL FOR EACH when:</p>
+  
+  <ul>
+    <li>Iterations are independent</li>
+    <li>Order doesn't matter</li>
+    <li>Maximum throughput is desired</li>
+  </ul>
+
+  <h2>While Loop</h2>
+  
+  <p>Loop with a <strong>condition</strong> (parentheses required):</p>
   
   <pre><code><span class="zen-keyword">WHILE</span> (condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5):
   - Perform iteration
@@ -40,14 +56,14 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <p>Conditions can be:</p>
   
   <ul>
-    <li><strong>Deterministic</strong>: <code>$x &lt; 5</code>, <code>$status = "active"</code></li>
-    <li><strong>Semantic</strong>: <code>NOT diminishing returns</code> (LLM interprets)</li>
-    <li><strong>Combined</strong>: <code>NOT complete AND $count &lt; 10</code></li>
+    <li><strong>Deterministic condition</strong>: <code>$x &lt; 5</code>, <code>$status = "active"</code></li>
+    <li><strong>Semantic condition</strong>: <code>NOT diminishing returns</code> (LLM interprets)</li>
+    <li><strong>Combined</strong>: <code>NOT complete AND $count &lt; 10</code> (using <strong>logical operators</strong>)</li>
   </ul>
 
-  <h2>IF/THEN/ELSE</h2>
+  <h2>Conditional</h2>
   
-  <p>Conditional branching:</p>
+  <p>Branch with <code>IF</code>/<code>THEN</code> and optional <strong>else clause</strong>:</p>
   
   <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
   - Do this
@@ -76,6 +92,8 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h3>Logical Operators</h3>
   
+  <p>Use <strong>logical operators</strong> to combine conditions:</p>
+  
   <ul>
     <li><code>AND</code> — both conditions must be true</li>
     <li><code>OR</code> — either condition can be true</li>
@@ -84,7 +102,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h2>Nesting</h2>
   
-  <p>Control flow can be nested. Indentation indicates the block:</p>
+  <p>Control flow can be nested. Indentation defines the <strong>block</strong>:</p>
   
   <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$task</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$tasks</span>:
   - Process <span class="zen-variable">$task</span>
@@ -95,11 +113,32 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     - Log completion
   - Move to next task</code></pre>
 
+  <h2>Break and Continue</h2>
+  
+  <p>Use <code>BREAK</code> and <code>CONTINUE</code> for early exit and skip within loops:</p>
+  
+  <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  - <span class="zen-keyword">IF</span> <span class="zen-variable">$item</span>.invalid <span class="zen-keyword">THEN</span>:
+    - <span class="zen-keyword">CONTINUE</span>              <span class="zen-comment"># Skip to next iteration</span>
+  - <span class="zen-keyword">IF</span> <span class="zen-variable">$found</span> = true <span class="zen-keyword">THEN</span>:
+    - <span class="zen-keyword">BREAK</span>                 <span class="zen-comment"># Exit the loop</span>
+  - Process normally</code></pre>
+
+  <p>BREAK and CONTINUE are valid in:</p>
+  
+  <ul>
+    <li>FOR EACH loops</li>
+    <li>PARALLEL FOR EACH loops</li>
+    <li>WHILE loops</li>
+  </ul>
+  
+  <p>They are <strong>not</strong> valid outside of loops (parser error).</p>
+
   <h2>Semantic Conditions</h2>
   
   <p>
-    LLMs can interpret natural language conditions. Use them when the 
-    condition requires understanding context:
+    <strong>Semantic conditions</strong> are natural language expressions that the LLM 
+    interprets. Use them when the condition requires understanding context:
   </p>
   
   <pre><code><span class="zen-keyword">WHILE</span> (<span class="zen-keyword">NOT</span> diminishing returns):
@@ -115,5 +154,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     <li><strong>Explicit Termination</strong> — Always include bounds to prevent infinite loops</li>
     <li><strong>Mixed Conditions</strong> — Combine deterministic checks with semantic interpretation</li>
     <li><strong>Clear Indentation</strong> — Structure is visible at a glance</li>
+    <li><strong>PARALLEL</strong> — Enables concurrent execution</li>
+    <li><strong>BREAK/CONTINUE</strong> — Enable early exit from loops</li>
   </ul>
 </DocsLayout>

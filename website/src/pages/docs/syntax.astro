@@ -19,7 +19,7 @@ frontmatter (YAML)
 
 <span class="zen-heading"># Heading</span>
 
-Body content with zen constructs</code></pre>
+Body content with MDZ constructs</code></pre>
 
   <h3>Frontmatter</h3>
   
@@ -39,28 +39,30 @@ uses:                         # Optional: skill dependencies
   
   <p>Types provide semantic hints about values:</p>
   
-  <pre><code><span class="zen-type">$TypeName</span> = natural language description
+  <pre><code><span class="zen-type">$TypeName</span>: natural language description
 
-<span class="zen-type">$Task</span> = any task that an agent can execute
-<span class="zen-type">$Strategy</span> = <span class="zen-string">"accumulate"</span> | <span class="zen-string">"independent"</span>
-<span class="zen-type">$Result</span> = <span class="zen-string">"success"</span> | <span class="zen-string">"failure"</span> | <span class="zen-string">"pending"</span></code></pre>
+<span class="zen-type">$Task</span>: any task that an agent can execute
+<span class="zen-type">$Strategy</span>: <span class="zen-string">"accumulate"</span> | <span class="zen-string">"independent"</span>
+<span class="zen-type">$Result</span>: <span class="zen-string">"success"</span> | <span class="zen-string">"failure"</span> | <span class="zen-string">"pending"</span></code></pre>
 
-  <h3>Type Syntax</h3>
+  <h3>Type Forms</h3>
   
   <ul>
-    <li><strong>Semantic</strong>: <code>$Task = any executable instruction</code></li>
-    <li><strong>Enum</strong>: <code>$Strategy = "fast" | "thorough"</code></li>
-    <li><strong>Compound</strong>: <code>($Task, $Strategy)</code></li>
-    <li><strong>Array</strong>: <code>$Task[]</code></li>
-    <li><strong>Function</strong>: <code>$Fn = $x =&gt; expression</code></li>
+    <li><strong>Semantic type</strong>: <code>$Task: any executable instruction</code></li>
+    <li><strong>Enum type</strong>: <code>$Strategy: "fast" | "thorough"</code> (variants separated by <strong>union</strong> operator <code>|</code>)</li>
+    <li><strong>Tuple type</strong>: <code>($Task, $Strategy)</code></li>
+    <li><strong>Array type</strong>: <code>$Task[]</code> (uses <strong>array suffix</strong>)</li>
+    <li><strong>Function type</strong>: <code>$Fn: $x =&gt; expression</code> (uses <strong>arrow</strong> operator)</li>
   </ul>
 
   <h2>Variables</h2>
   
-  <h3>Declaration</h3>
+  <p>Variables use the <strong>dollar sigil</strong> (<code>$</code>) prefix. The <strong>type annotation</strong> (<code>:</code>) is optional:</p>
   
-  <pre><code><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value
-<span class="zen-variable">$name</span> = value</code></pre>
+  <h3>Variable Declaration</h3>
+  
+  <pre><code><span class="zen-variable">$name</span>: <span class="zen-type">$Type</span> = value   <span class="zen-comment"># typed declaration</span>
+<span class="zen-variable">$name</span> = value              <span class="zen-comment"># simple declaration</span></code></pre>
 
   <h3>Examples</h3>
   
@@ -70,25 +72,48 @@ uses:                         # Optional: skill dependencies
 
   <h3>Lambda Expressions</h3>
   
+  <p>Functions use the <strong>arrow</strong> operator (<code>=&gt;</code>):</p>
+  
   <pre><code><span class="zen-type">$FunctionName</span> = <span class="zen-variable">$param</span> =&gt; expression
-<span class="zen-type">$FunctionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression
+<span class="zen-type">$FunctionName</span> = (<span class="zen-variable">$a</span>, <span class="zen-variable">$b</span>) =&gt; expression   <span class="zen-comment"># tuple for multiple params</span>
 
 <span class="zen-type">$SolutionPath</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.md`</code></pre>
 
+  <h3>Semantic Variable Transformation</h3>
+  
+  <p>When a variable's structure changes during workflow execution (e.g., loading and parsing a file), use distinct variable names:</p>
+  
+  <pre><code><span class="zen-heading">## Input</span>
+- <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment"># path to the skill</span>
+
+<span class="zen-heading">## Context</span>
+- <span class="zen-variable">$skill</span>: <span class="zen-semantic">&#123;~~the loaded and parsed skill AST from $skillPath&#125;</span>
+
+<span class="zen-heading">## Workflow</span>
+1. Load skill source from <span class="zen-variable">$skillPath</span>
+2. Parse into <span class="zen-variable">$skill</span> AST
+3. <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$statement</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skill</span>.statements:</code></pre>
+
+  <p>This pattern makes semantic transformations explicit and avoids confusion about where properties come from.</p>
+
   <h2>References</h2>
   
-  <h3>Skill References</h3>
+  <h3>Skill Links</h3>
+  
+  <p>Reference another skill using wiki-link syntax:</p>
   
   <pre><code><span class="zen-reference">[[skill-name]]</span></code></pre>
 
-  <h3>Section References</h3>
+  <h3>Section Links</h3>
+  
+  <p>Reference a section within a skill:</p>
   
   <pre><code><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment"># Section in another skill</span>
-<span class="zen-reference">[[#section-name]]</span>             <span class="zen-comment"># Section in current skill</span></code></pre>
+[[#section-name]]             <span class="zen-comment"># Section in current skill</span></code></pre>
 
   <h2>Semantic Markers</h2>
   
-  <p>Mark content for LLM interpretation:</p>
+  <p>The <code>&#123;~~content&#125;</code> syntax marks content for LLM interpretation (the <code>~~</code> suggests "approximately"):</p>
   
   <pre><code><span class="zen-semantic">&#123;~~appropriate location for this output&#125;</span>
 <span class="zen-semantic">&#123;~~determine best strategy for <span class="zen-variable">$task</span>&#125;</span></code></pre>
@@ -100,22 +125,30 @@ uses:                         # Optional: skill dependencies
 
   <h2>Control Flow</h2>
   
-  <h3>FOR EACH</h3>
+  <h3>For-Each Loop</h3>
+  
+  <p>Iterate over a collection using the <strong>collection operator</strong> (<code>IN</code>):</p>
   
   <pre><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
   - Process <span class="zen-variable">$item</span>
-  - Next step
+  - Next step</code></pre>
 
-<span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>:
+  <p>With <strong>destructuring</strong>:</p>
+
+  <pre><code><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>:
   - Execute <span class="zen-variable">$task</span> with <span class="zen-variable">$strategy</span></code></pre>
 
-  <h3>WHILE</h3>
+  <h3>While Loop</h3>
+  
+  <p>Loop with a <strong>condition</strong> (parentheses required):</p>
   
   <pre><code><span class="zen-keyword">WHILE</span> (condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5):
   - Perform iteration
   - Update state</code></pre>
 
-  <h3>IF/THEN/ELSE</h3>
+  <h3>Conditional</h3>
+  
+  <p>Branch with <code>IF</code>/<code>THEN</code> and optional <strong>else clause</strong>:</p>
   
   <pre><code><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
   - Do this
@@ -129,7 +162,9 @@ uses:                         # Optional: skill dependencies
 
   <h2>Composition</h2>
   
-  <h3>Skill Delegation</h3>
+  <h3>Delegation</h3>
+  
+  <p>Invoke another skill using a <strong>skill link</strong> and <strong>with clause</strong>:</p>
   
   <pre><code>Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
   - <span class="zen-variable">$transforms</span> = [(<span class="zen-string">"Apply heuristic"</span>, <span class="zen-string">"accumulate"</span>)]
@@ -137,6 +172,8 @@ uses:                         # Optional: skill dependencies
   - <span class="zen-variable">$return</span> = <span class="zen-string">"Report findings"</span></code></pre>
 
   <h3>Parameter Passing</h3>
+  
+  <p>Pass parameters via the <strong>with clause</strong>:</p>
   
   <pre><code>Delegate to <span class="zen-reference">[[skill-name]]</span> <span class="zen-keyword">WITH</span>:
   - <span class="zen-variable">$param1</span> = value1

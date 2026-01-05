@@ -40,7 +40,7 @@ name: example
 
 ## Types
 
-$User = person with name and email</code></pre>
+$User: person with name and email</code></pre>
 
    <p>
      This produces the following token stream (simplified):
@@ -48,7 +48,7 @@ $User = person with name and email</code></pre>
 
    <pre><code class="language-json">[FRONTMATTER_START '---'], [LOWER_IDENT 'name'], [COLON ':' ], 
 [LOWER_IDENT 'example'], [FRONTMATTER_END '---'], [HEADING '## Types'],
-[TYPE_IDENT '$User'], [ASSIGN '='], [TEXT 'person with name and email'], [EOF]</code></pre>
+[TYPE_IDENT '$User'], [COLON ':'], [TEXT 'person with name and email'], [EOF]</code></pre>
 
    <h4>Indentation Stack Algorithm</h4>
 
@@ -147,10 +147,10 @@ Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</
    </p>
 
    <ul>
-     <li><code>frontmatter</code> — Optional metadata (name, description, uses, imports)</li>
-     <li><code>sections</code> — Array of heading-based content sections</li>
-     <li><code>errors</code> — Parse errors encountered during parsing</li>
-   </ul>
+      <li><code>frontmatter</code> — Optional metadata (name, description, uses)</li>
+      <li><code>sections</code> — Array of heading-based content sections</li>
+      <li><code>errors</code> — Parse errors encountered during parsing</li>
+    </ul>
 
    <h4>AST Construction Example</h4>
 
@@ -344,41 +344,41 @@ description: missing closing dashes
    </p>
 
    <ul>
-     <li>Skills referenced with <code>[[skill]]</code> must be declared in <code>uses:</code> or <code>imports:</code></li>
-     <li>Local section references <code>[[#section]]</code> must exist in the current document</li>
-     <li>Cross-skill section references require the skill to be available in the registry</li>
-   </ul>
+      <li>Skills referenced with <code>[[skill]]</code> must be declared in <code>uses:</code></li>
+      <li>Local section references <code>[[#section]]</code> must exist in the current document</li>
+      <li>Cross-skill section references require the skill to be available in the registry</li>
+    </ul>
 
-   <h4>Example Reference Error</h4>
+    <h4>Example Reference Error</h4>
 
-   <pre><code class="language-mdz">uses:
+    <pre><code class="language-mdz">uses:
   - math
 
 ## Workflow
 
 1. Use [[advanced-math#calculate]] function</code></pre>
 
-   <p>
-     If 'advanced-math' is not in uses/imports, produces error:
-   </p>
+    <p>
+      If 'advanced-math' is not in uses, produces error:
+    </p>
 
-   <ul>
-     <li><strong>Diagnostic:</strong> E009 - Undefined skill reference</li>
-     <li><strong>Message:</strong> "Skill 'advanced-math' is not declared in uses or imports"</li>
-     <li><strong>Span:</strong> Position of '[[advanced-math]]'</li>
-   </ul>
+    <ul>
+      <li><strong>Diagnostic:</strong> E009 - Undefined skill reference</li>
+      <li><strong>Message:</strong> "Skill 'advanced-math' is not declared in uses"</li>
+      <li><strong>Span:</strong> Position of '[[advanced-math]]'</li>
+    </ul>
 
-   <h3>Stage 5: Dependency Analysis</h3>
+    <h3>Stage 5: Dependency Analysis</h3>
 
-   <p>
-     The compiler builds a dependency graph using DFS cycle detection:
-   </p>
+    <p>
+      The compiler builds a dependency graph using DFS cycle detection:
+    </p>
 
-   <ul>
-     <li>Extracts dependencies from <code>uses:</code>, <code>imports:</code>, and inline references</li>
-     <li>Detects circular dependencies that could cause infinite loops</li>
-     <li>Generates visualization data for <code>mdz graph</code></li>
-   </ul>
+    <ul>
+      <li>Extracts dependencies from <code>uses:</code> and inline references</li>
+      <li>Detects circular dependencies that could cause infinite loops</li>
+      <li>Generates visualization data for <code>mdz graph</code></li>
+    </ul>
 
    <h4>Cycle Detection Algorithm</h4>
 
@@ -431,15 +431,14 @@ description: missing closing dashes
 
   <h3>Dependency Graph Construction</h3>
 
-  <p>
-    Dependencies are extracted from multiple sources:
-  </p>
+   <p>
+     Dependencies are extracted from multiple sources:
+   </p>
 
-  <ul>
-    <li><strong>uses:</strong> — Explicit skill dependencies</li>
-    <li><strong>imports:</strong> — Imported skills with aliases</li>
-    <li><strong>references:</strong> — Inline <code>[[skill]]</code> and <code>[[skill#section]]</code></li>
-  </ul>
+   <ul>
+     <li><strong>uses:</strong> — Explicit skill dependencies</li>
+     <li><strong>references:</strong> — Inline <code>[[skill]]</code> and <code>[[skill#section]]</code></li>
+   </ul>
 
   <p>
     Cycle detection uses DFS with a recursion stack to identify circular dependencies.

@@ -6,7 +6,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <h1>Core Concepts</h1>
   
   <p class="lead">
-    Understanding the fundamental ideas behind MDZ (Zen Markdown).
+    Understanding the fundamental ideas behind MDZ.
   </p>
 
   <h2>The LLM is the Runtime</h2>
@@ -55,8 +55,8 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     The source is parsed into an Abstract Syntax Tree (AST). The parser recognizes:
   </p>
   <ul>
-    <li>Frontmatter (name, description, uses, imports)</li>
-    <li>Type definitions (<code>$Type = ...</code>)</li>
+    <li>Frontmatter (name, description, uses)</li>
+    <li>Type definitions (<code>$Type: ...</code>)</li>
     <li>Variable declarations (<code>$var: $Type = value</code>)</li>
     <li>Control flow (FOR EACH, WHILE, IF/THEN/ELSE)</li>
     <li>References (<code>[[skill]]</code>, <code>[[#section]]</code>)</li>
@@ -76,7 +76,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 
   <h3>3. Dependency Graph</h3>
   <p>
-    A dependency graph is built from <code>uses:</code>, <code>imports:</code>, and inline 
+    A dependency graph is built from <code>uses:</code> and inline 
     <code>[[references]]</code>. This enables:
   </p>
   <ul>
@@ -122,17 +122,18 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     Control flow uses uppercase keywords for visibility:
   </p>
   
-  <pre><code><span class="zen-keyword">FOR EACH</span>, <span class="zen-keyword">WHILE</span>, <span class="zen-keyword">IF</span>, <span class="zen-keyword">THEN</span>, <span class="zen-keyword">ELSE</span>, <span class="zen-keyword">AND</span>, <span class="zen-keyword">OR</span>, <span class="zen-keyword">NOT</span>, <span class="zen-keyword">WITH</span>, <span class="zen-keyword">IN</span></code></pre>
+  <pre><code><span class="zen-keyword">FOR EACH</span>, <span class="zen-keyword">PARALLEL</span>, <span class="zen-keyword">WHILE</span>, <span class="zen-keyword">IF</span>, <span class="zen-keyword">THEN</span>, <span class="zen-keyword">ELSE</span>, <span class="zen-keyword">AND</span>, <span class="zen-keyword">OR</span>, <span class="zen-keyword">NOT</span>, <span class="zen-keyword">WITH</span>, <span class="zen-keyword">IN</span>, <span class="zen-keyword">BREAK</span>, <span class="zen-keyword">CONTINUE</span></code></pre>
   
   <p>
     This makes structure scannable and avoids conflicts with prose. The LLM interprets 
     and executes these at runtime.
   </p>
 
-  <h2>References</h2>
+  <h2>Skill and Section Links</h2>
   
   <p>
-    Wiki-style <code>[[links]]</code> connect skills and sections:
+    <strong>Skill links</strong> (<code>[[skill]]</code>) and <strong>section links</strong> 
+    (<code>[[#section]]</code>) connect skills and sections using wiki-link style syntax:
   </p>
   
   <ul>
