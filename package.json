@@ -21,7 +21,8 @@
     "test:vitest": "vitest run",
     "cli": "pnpm build && node dist/src/cli/index.js",
     "web": "pnpm -F zen-website --",
-    "deploy": "pnpm -F zen-website push"
+    "deploy": "pnpm -F zen-website push",
+    "benchmark": "tsx benchmark/scripts/run.ts"
   },
   "keywords": [
     "markdown",
