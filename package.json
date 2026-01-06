@@ -17,6 +17,8 @@
     "test:edge-cases": "pnpm build && node dist/tests/edge-cases.test.js",
     "test:v02": "pnpm build && node dist/tests/v02-features.test.js",
     "test:examples": "pnpm build && node dist/tests/examples.test.js",
+    "test:observability": "vitest run tests/observability.test.ts",
+    "test:vitest": "vitest run",
     "cli": "pnpm build && node dist/src/cli/index.js",
     "web": "pnpm -F zen-website --",
     "deploy": "pnpm -F zen-website push"
@@ -31,8 +33,14 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@ai-sdk/provider": "^3.0.2",
+    "@ai-sdk/provider-utils": "^4.0.4",
+    "@types/node": "^20.0.0",
+    "ai": "^4.3.19",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0",
-    "@types/node": "^20.0.0"
+    "vitest": "^4.0.16",
+    "zod": "^3.25.76"
   },
   "engines": {
     "node": ">=20.0.0"

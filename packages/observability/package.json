@@ -1,0 +1,29 @@
+{
+  "name": "@mdz/observability",
+  "version": "0.1.0",
+  "description": "MDZ observability and telemetry for AI SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mdz",
+    "observability",
+    "telemetry",
+    "ai-sdk"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "ai": "^4.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
