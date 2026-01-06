@@ -22,7 +22,8 @@
     "cli": "pnpm build && node dist/src/cli/index.js",
     "web": "pnpm -F zen-website --",
     "deploy": "pnpm -F zen-website push",
-    "benchmark": "tsx benchmark/scripts/run.ts"
+    "benchmark": "cd benchmark && bun run",
+    "benchmark:dev": "cd benchmark && bun dev"
   },
   "keywords": [
     "markdown",

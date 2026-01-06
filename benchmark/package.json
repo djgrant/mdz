@@ -1,0 +1,22 @@
+{
+  "name": "@mdz/benchmark",
+  "version": "0.1.0",
+  "description": "MDZ benchmark runner with web UI",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "run": "bun scripts/run.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^3.0.9",
+    "ai": "^6.0.14",
+    "astro": "^5.16.6",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.5",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,25 +1,30 @@
 # MDZ Benchmark Suite
 
-Benchmark infrastructure for testing MDZ skill execution across different LLMs via Vercel AI Gateway.
+Benchmark runner with web UI for testing MDZ skill execution via Vercel AI Gateway.
 
 ## Setup
 
 ```bash
-# Install dependencies
-pnpm install
+cd benchmark
+bun install
 
 # Set Vercel AI Gateway API key
 export AI_GATEWAY_API_KEY=your-key-here
 ```
 
-## Running Benchmarks
+## Running
+
+### Web UI
 
 ```bash
-# Run a specific test case
-pnpm exec tsx benchmark/scripts/run.ts <case-path> <test-name>
+bun dev
+# Open http://localhost:4321
+```
 
-# Example
-pnpm exec tsx benchmark/scripts/run.ts cases/unit/for-each-basic simple
+### CLI
+
+```bash
+bun run scripts/run.ts cases/unit/for-each-basic simple
 ```
 
 ## Models
@@ -28,12 +33,11 @@ Uses Vercel AI Gateway with format `provider/model-name`:
 - `anthropic/claude-sonnet-4-20250514` (default)
 - `openai/gpt-4o`
 - `google/gemini-2.0-flash`
-- etc.
 
 ## Test Case Structure
 
 ```
-benchmark/cases/unit/<case-name>/
+cases/unit/<case-name>/
 ├── project/              # The "mini codebase" agent operates in
 │   ├── AGENTS.md         # Agent instructions (system prompt)
 │   ├── agent/            # Additional agent context
@@ -59,27 +63,11 @@ benchmark/cases/unit/<case-name>/
 }
 ```
 
-## Expected Format
+## Output
 
-```json
-{
-  "description": "What this test validates",
-  "toolCalls": {
-    "read_file": {
-      "minCount": 3,
-      "expectedArgs": [{ "path": "/src/a.ts" }]
-    }
-  },
-  "success": true
-}
-```
-
-## Results
-
-Traces are saved to `benchmark/results/` as JSONL files with timestamps.
-
-Each trace contains:
-- `session_start` / `session_end` events
-- `tool_call` / `tool_result` events for each tool invocation
-- `llm_request` / `llm_response` events
-- Token usage and timing information
+Results are saved to `results/` as JSON files including:
+- Tool calls with arguments and results
+- Token usage (input, output, total)
+- Cost (if available from gateway)
+- Duration
+- Final response

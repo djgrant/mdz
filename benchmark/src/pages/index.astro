@@ -1,0 +1,183 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { readdirSync, existsSync } from 'fs';
+import { join } from 'path';
+
+// Discover available benchmark cases
+const casesDir = join(process.cwd(), 'cases');
+const cases: { path: string; tests: string[] }[] = [];
+
+function findCases(dir: string, prefix = '') {
+  if (!existsSync(dir)) return;
+  
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const fullPath = join(dir, entry.name);
+      const testsDir = join(fullPath, 'tests');
+      
+      if (existsSync(testsDir)) {
+        // This is a case directory
+        const tests = readdirSync(testsDir, { withFileTypes: true })
+          .filter(t => t.isDirectory())
+          .map(t => t.name);
+        
+        cases.push({
+          path: prefix ? `${prefix}/${entry.name}` : entry.name,
+          tests,
+        });
+      } else {
+        // Recurse into subdirectory
+        findCases(fullPath, prefix ? `${prefix}/${entry.name}` : entry.name);
+      }
+    }
+  }
+}
+
+findCases(casesDir, 'cases');
+---
+
+<Layout title="MDZ Benchmark Runner">
+  <h1>MDZ Benchmark Runner</h1>
+  
+  <div class="grid">
+    <div class="card">
+      <h2>Select Benchmark</h2>
+      <div style="margin-top: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #888;">Case</label>
+        <select id="case-select" style="width: 100%;">
+          {cases.map(c => (
+            <option value={c.path} data-tests={JSON.stringify(c.tests)}>
+              {c.path}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div style="margin-top: 1rem;">
+        <label style="display: block; margin-bottom: 0.5rem; color: #888;">Test</label>
+        <select id="test-select" style="width: 100%;"></select>
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <button id="run-btn" style="width: 100%;">Run Benchmark</button>
+      </div>
+      
+      <div id="progress"></div>
+    </div>
+    
+    <div>
+      <div class="card" id="results" style="display: none;">
+        <h2>Results</h2>
+        
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="stat-status">-</div>
+            <div class="stat-label">Status</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-duration">-</div>
+            <div class="stat-label">Duration</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-tools">-</div>
+            <div class="stat-label">Tool Calls</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-tokens">-</div>
+            <div class="stat-label">Tokens</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-cost">-</div>
+            <div class="stat-label">Cost</div>
+          </div>
+        </div>
+        
+        <h2>Tool Calls</h2>
+        <div id="tool-calls"></div>
+        
+        <h2>Response</h2>
+        <pre><code id="response"></code></pre>
+        
+        <div id="error-section" style="display: none;">
+          <h2 style="color: #ef4444;">Error</h2>
+          <pre style="border-color: #ef4444;"><code id="error-msg"></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const caseSelect = document.getElementById('case-select') as HTMLSelectElement;
+    const testSelect = document.getElementById('test-select') as HTMLSelectElement;
+    const runBtn = document.getElementById('run-btn') as HTMLButtonElement;
+    const progress = document.getElementById('progress')!;
+    const results = document.getElementById('results')!;
+    
+    function updateTests() {
+      const option = caseSelect.selectedOptions[0];
+      const tests = JSON.parse(option.dataset.tests || '[]');
+      testSelect.innerHTML = tests.map((t: string) => 
+        `<option value="${t}">${t}</option>`
+      ).join('');
+    }
+    
+    caseSelect.addEventListener('change', updateTests);
+    updateTests();
+    
+    runBtn.addEventListener('click', async () => {
+      const casePath = caseSelect.value;
+      const testName = testSelect.value;
+      
+      runBtn.disabled = true;
+      progress.textContent = 'Running benchmark...';
+      results.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ casePath, testName }),
+        });
+        
+        const result = await response.json();
+        
+        // Update stats
+        document.getElementById('stat-status')!.textContent = result.success ? '✓' : '✗';
+        document.getElementById('stat-status')!.className = `stat-value ${result.success ? 'success' : 'error'}`;
+        document.getElementById('stat-duration')!.textContent = `${(result.durationMs / 1000).toFixed(2)}s`;
+        document.getElementById('stat-tools')!.textContent = result.toolCalls.length.toString();
+        document.getElementById('stat-tokens')!.textContent = result.tokenUsage.total.toString();
+        document.getElementById('stat-cost')!.textContent = result.cost 
+          ? `$${result.cost.total.toFixed(4)}` 
+          : '-';
+        
+        // Update tool calls
+        const toolCallsDiv = document.getElementById('tool-calls')!;
+        toolCallsDiv.innerHTML = result.toolCalls.map((tc: any) => 
+          `<div class="tool-call">${tc.name}(${JSON.stringify(tc.args)}) → ${JSON.stringify(tc.result).slice(0, 100)}${JSON.stringify(tc.result).length > 100 ? '...' : ''}</div>`
+        ).join('');
+        
+        // Update response
+        document.getElementById('response')!.textContent = result.finalResponse || '(empty)';
+        
+        // Update error
+        const errorSection = document.getElementById('error-section')!;
+        if (result.error) {
+          errorSection.style.display = 'block';
+          document.getElementById('error-msg')!.textContent = result.error;
+        } else {
+          errorSection.style.display = 'none';
+        }
+        
+        results.style.display = 'block';
+        progress.textContent = '';
+        
+      } catch (err) {
+        progress.textContent = `Error: ${err}`;
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+  </script>
+</Layout>
