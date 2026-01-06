@@ -1,0 +1,16 @@
+---
+name: for-each-basic
+description: Test basic FOR EACH iteration over a list of files
+---
+
+## Input
+
+- $files: $String[]  <!-- list of file paths to process -->
+
+## Workflow
+
+### Process Files
+
+FOR EACH $file IN $files:
+  1. Read the contents of $file using the read_file tool
+  2. Log that you processed $file

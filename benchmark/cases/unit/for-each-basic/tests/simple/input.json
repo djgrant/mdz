@@ -1,0 +1,8 @@
+{
+  "prompt": "Execute the for-each-basic skill with $files = [\"/src/a.ts\", \"/src/b.ts\", \"/src/c.ts\"]",
+  "initialFiles": {
+    "/src/a.ts": "export const a = 1;",
+    "/src/b.ts": "export const b = 2;",
+    "/src/c.ts": "export const c = 3;"
+  }
+}
