@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.7",
+    "@ai-sdk/gateway": "^3.0.9",
     "ai": "^6.0.13",
     "zod": "^3.23.0"
   },

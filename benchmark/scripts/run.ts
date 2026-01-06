@@ -1,7 +1,8 @@
 /**
  * Benchmark runner script
  * 
- * Runs a benchmark case against a real LLM and captures the execution trace.
+ * Runs a benchmark case against a real LLM via Vercel AI Gateway
+ * and captures the execution trace.
  * 
  * Usage:
  *   pnpm exec tsx benchmark/scripts/run.ts <case-path> <test-name>
@@ -10,18 +11,18 @@
  *   pnpm exec tsx benchmark/scripts/run.ts cases/unit/for-each-basic simple
  * 
  * Environment:
- *   ANTHROPIC_API_KEY - Required for Claude models
+ *   AI_GATEWAY_API_KEY - Required for Vercel AI Gateway authentication
  */
 
 import { readFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
-import { createAnthropic } from "@ai-sdk/anthropic";
+import { gateway } from "@ai-sdk/gateway";
 import { runSkill, createFileOutput } from "../../packages/observability/src/index.js";
 
 // Configuration
 const BENCHMARK_ROOT = dirname(dirname(new URL(import.meta.url).pathname));
 const RESULTS_DIR = join(BENCHMARK_ROOT, "results");
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514";
 
 interface TestInput {
   prompt: string;
@@ -124,12 +125,11 @@ async function runBenchmark(casePath: string, testName: string) {
     Object.entries(benchmarkCase.input.initialFiles || {})
   );
 
-  // Create model
-  const anthropic = createAnthropic();
+  // Create model via Vercel AI Gateway
   const modelId = benchmarkCase.input.model || DEFAULT_MODEL;
-  const model = anthropic(modelId);
+  const model = gateway(modelId);
   
-  console.log(`Model: ${modelId}`);
+  console.log(`Model: ${modelId} (via Vercel AI Gateway)`);
   console.log(`Trace output: ${tracePath}`);
   console.log();
 

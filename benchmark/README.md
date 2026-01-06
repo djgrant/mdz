@@ -1,6 +1,6 @@
 # MDZ Benchmark Suite
 
-Benchmark infrastructure for testing MDZ skill execution across different LLMs.
+Benchmark infrastructure for testing MDZ skill execution across different LLMs via Vercel AI Gateway.
 
 ## Setup
 
@@ -8,8 +8,8 @@ Benchmark infrastructure for testing MDZ skill execution across different LLMs.
 # Install dependencies
 pnpm install
 
-# Set API key
-export ANTHROPIC_API_KEY=your-key-here
+# Set Vercel AI Gateway API key
+export AI_GATEWAY_API_KEY=your-key-here
 ```
 
 ## Running Benchmarks
@@ -21,6 +21,14 @@ pnpm exec tsx benchmark/scripts/run.ts <case-path> <test-name>
 # Example
 pnpm exec tsx benchmark/scripts/run.ts cases/unit/for-each-basic simple
 ```
+
+## Models
+
+Uses Vercel AI Gateway with format `provider/model-name`:
+- `anthropic/claude-sonnet-4-20250514` (default)
+- `openai/gpt-4o`
+- `google/gemini-2.0-flash`
+- etc.
 
 ## Test Case Structure
 
@@ -46,7 +54,7 @@ benchmark/cases/unit/<case-name>/
   "initialFiles": {
     "/path/to/file.ts": "file contents"
   },
-  "model": "claude-sonnet-4-20250514",
+  "model": "anthropic/claude-sonnet-4-20250514",
   "maxSteps": 15
 }
 ```

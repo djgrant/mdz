@@ -73,6 +73,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: ^3.0.7
         version: 3.0.7(zod@3.25.76)
+      '@ai-sdk/gateway':
+        specifier: ^3.0.9
+        version: 3.0.9(zod@3.25.76)
       ai:
         specifier: ^6.0.13
         version: 6.0.13(zod@3.25.76)
