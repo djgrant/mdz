@@ -5,7 +5,7 @@ description: Test basic FOR EACH iteration over a list of files
 
 ## Input
 
-- $files: $String[]  <!-- list of file paths to process -->
+- $files: $String[]
 
 ## Workflow
 
