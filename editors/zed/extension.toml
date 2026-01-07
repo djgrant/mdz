@@ -8,4 +8,4 @@ repository = "https://github.com/djgrant/mdz"
 
 [grammars.markdown]
 repository = "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
-commit = "01a64d8d3af5a7d7fce2bf3b10541d8aca56510e"
+rev = "be3e08acfd85bd87d85f41fde74fdcec25f76dbe"

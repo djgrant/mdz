@@ -1,0 +1,175 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MDZ",
+  "scopeName": "source.mdz",
+  "fileTypes": ["mdz"],
+  "patterns": [
+    { "include": "#frontmatter" },
+    { "include": "#comment" },
+    { "include": "#code-block" },
+    { "include": "#heading" },
+    { "include": "#keyword" },
+    { "include": "#control-flow" },
+    { "include": "#type-definition" },
+    { "include": "#variable" },
+    { "include": "#type" },
+    { "include": "#reference" },
+    { "include": "#semantic-marker" },
+    { "include": "#string" },
+    { "include": "#template" },
+    { "include": "#number" },
+    { "include": "#operator" },
+    { "include": "#list-marker" }
+  ],
+  "repository": {
+    "frontmatter": {
+      "begin": "^---$",
+      "end": "^---$",
+      "name": "meta.frontmatter.mdz",
+      "contentName": "source.yaml",
+      "patterns": [
+        { "include": "source.yaml" }
+      ]
+    },
+    "heading": {
+      "match": "^(#{1,6})\\s+(.+)$",
+      "captures": {
+        "1": { "name": "punctuation.definition.heading.mdz" },
+        "2": { "name": "entity.name.section.mdz" }
+      },
+      "name": "markup.heading.mdz"
+    },
+    "comment": {
+      "begin": "<!--",
+      "end": "-->",
+      "name": "comment.block.mdz"
+    },
+    "control-flow": {
+      "patterns": [
+        {
+          "match": "\\b(PARALLEL\\s+FOR\\s+EACH|FOR\\s+EACH|WHILE|IF|THEN|ELSE|BREAK|CONTINUE|DO)\\b",
+          "name": "keyword.control.mdz"
+        },
+        {
+          "match": "\\b(IN|AND|OR|NOT|WITH)\\b",
+          "name": "keyword.operator.word.mdz"
+        }
+      ]
+    },
+    "type-definition": {
+      "match": "^(\\s*)(\\$[A-Z][a-zA-Z0-9]*)\\s*(:)",
+      "captures": {
+        "2": { "name": "entity.name.type.definition.mdz" },
+        "3": { "name": "keyword.operator.assignment.mdz" }
+      }
+    },
+    "variable": {
+      "patterns": [
+        {
+          "comment": "Inferred variable: $/name/",
+          "match": "\\$/[^/\\n]+/",
+          "name": "variable.other.inferred.mdz"
+        },
+        {
+          "match": "\\$[a-z][a-zA-Z0-9-]*",
+          "name": "variable.other.mdz"
+        }
+      ]
+    },
+    "type": {
+      "match": "\\$[A-Z][a-zA-Z0-9]*",
+      "name": "entity.name.type.mdz"
+    },
+    "reference": {
+      "patterns": [
+        {
+          "match": "\\[\\[([a-z][a-z0-9-]*)(#[a-z][a-z0-9-]*)?\\]\\]",
+          "name": "meta.reference.skill.mdz",
+          "captures": {
+            "0": { "name": "string.link.mdz" },
+            "1": { "name": "entity.name.type.skill.mdz" },
+            "2": { "name": "entity.name.type.section.mdz" }
+          }
+        },
+        {
+          "match": "\\[\\[(#[a-z][a-z0-9-]*)\\]\\]",
+          "name": "meta.reference.section.mdz",
+          "captures": {
+            "0": { "name": "string.link.mdz" },
+            "1": { "name": "entity.name.type.section.mdz" }
+          }
+        }
+      ]
+    },
+    "semantic-marker": {
+      "patterns": [
+        {
+          "begin": "/(?=[^/\\n]+/)",
+          "end": "/",
+          "name": "string.interpolated.semantic.mdz",
+          "patterns": [
+            { "include": "#variable" }
+          ]
+        }
+      ]
+    },
+    "string": {
+      "match": "\"([^\"]*)\"",
+      "name": "string.quoted.double.mdz"
+    },
+    "template": {
+      "begin": "`",
+      "end": "`",
+      "name": "string.template.mdz",
+      "patterns": [
+        {
+          "match": "\\$\\{[^}]*\\}",
+          "name": "variable.other.interpolated.mdz"
+        },
+        { "include": "#variable" },
+        { "include": "#semantic-marker" }
+      ]
+    },
+    "number": {
+      "match": "-?\\d+(\\.\\d+)?",
+      "name": "constant.numeric.mdz"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "match": "=>",
+          "name": "keyword.operator.arrow.mdz"
+        },
+        {
+          "match": "!=|<=|>=|<|>|=",
+          "name": "keyword.operator.comparison.mdz"
+        },
+        {
+          "match": ":",
+          "name": "keyword.operator.assignment.mdz"
+        },
+        {
+          "match": "\\|",
+          "name": "keyword.operator.type.union.mdz"
+        },
+        {
+          "match": "\\.",
+          "name": "keyword.operator.accessor.mdz"
+        }
+      ]
+    },
+    "code-block": {
+      "begin": "^\\s*```(\\w*)$",
+      "end": "^\\s*```$",
+      "name": "markup.fenced_code.mdz",
+      "beginCaptures": {
+        "1": { "name": "variable.parameter.mdz" }
+      },
+      "contentName": "meta.embedded.block.mdz"
+    },
+    "list-marker": {
+      "match": "^\\s*(-|\\d+\\.)\\s",
+      "name": "punctuation.definition.list_item.mdz"
+    }
+  }
+}

@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-let client: any; // Would be LanguageClient in full impl
-
 export function activate(context: vscode.ExtensionContext) {
   console.log('MDZ language extension is now active');
 
   // Register compile command
-  const compileCommand = vscode.commands.registerCommand('zen.compile', async () => {
+  const compileCommand = vscode.commands.registerCommand('mdz.compile', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showErrorMessage('No active editor');
@@ -15,19 +13,21 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     const document = editor.document;
-    if (!document.fileName.endsWith('.zen.md')) {
-      vscode.window.showErrorMessage('Not a .zen.md file');
+    if (document.languageId !== 'mdz') {
+      vscode.window.showErrorMessage('Not a MDZ file');
       return;
     }
 
+    await document.save();
     vscode.window.showInformationMessage(`Compiling ${path.basename(document.fileName)}...`);
-    
-    // TODO: Call actual compiler via child_process or LSP
-    vscode.window.showInformationMessage('Compilation complete');
+
+    // In a full implementation, this would invoke the @zenmarkdown/core compiler
+    // For now, we validate the file extension and language mode
+    vscode.window.showInformationMessage('Compilation complete (Mock)');
   });
 
   // Register check command
-  const checkCommand = vscode.commands.registerCommand('zen.check', async () => {
+  const checkCommand = vscode.commands.registerCommand('mdz.check', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showErrorMessage('No active editor');
@@ -35,14 +35,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     const document = editor.document;
-    if (!document.fileName.endsWith('.zen.md')) {
-      vscode.window.showErrorMessage('Not a .zen.md file');
+    if (document.languageId !== 'mdz') {
+      vscode.window.showErrorMessage('Not a MDZ file');
       return;
     }
 
     vscode.window.showInformationMessage(`Checking ${path.basename(document.fileName)}...`);
-    
-    // TODO: Call actual parser via child_process or LSP
+    // Mock syntax check
     vscode.window.showInformationMessage('Syntax check passed');
   });
 
@@ -50,8 +49,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(): any | undefined {
-  if (!client) {
-    return undefined;
-  }
   return undefined;
 }

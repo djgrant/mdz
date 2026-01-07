@@ -14,16 +14,18 @@
  *   AI_GATEWAY_API_KEY - Required for Vercel AI Gateway authentication
  */
 
-import { readFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
-import { gateway } from "@ai-sdk/gateway";
-import { generateText, tool } from "ai";
-import { z } from "zod";
+import { fileURLToPath } from "url";
+import OpenAI from "openai";
+import type { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
 
-// Configuration
-const BENCHMARK_ROOT = dirname(dirname(Bun.main));
+// Configuration - use import.meta.url which works in both Node and Bun
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const BENCHMARK_ROOT = dirname(__dirname);
 const RESULTS_DIR = join(BENCHMARK_ROOT, "results");
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "openai/gpt-4o-mini";
 
 interface TestInput {
   prompt: string;
@@ -116,98 +118,127 @@ function buildSystemPrompt(agentsContent: string, skillContent: string): string 
 ${skillContent}`;
 }
 
-function createSandboxTools(
+// Define tools for the OpenAI API
+const toolDefinitions: ChatCompletionTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "read_file",
+      description: "Read the contents of a file",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "The path to the file to read" }
+        },
+        required: ["path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "write_file",
+      description: "Write content to a file",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "The path to the file to write" },
+          content: { type: "string", description: "The content to write" }
+        },
+        required: ["path", "content"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_directory",
+      description: "List the contents of a directory",
+      parameters: {
+        type: "object",
+        properties: {
+          path: { type: "string", description: "The path to the directory" }
+        },
+        required: ["path"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "skill",
+      description: "Load a skill by name",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The name of the skill to load" }
+        },
+        required: ["name"]
+      }
+    }
+  }
+];
+
+function executeToolCall(
+  toolName: string,
+  args: Record<string, unknown>,
   files: Map<string, string>,
   skills: Map<string, string>,
   toolCalls: ToolCallRecord[]
-) {
-  return {
-    read_file: tool({
-      description: "Read the contents of a file",
-      parameters: z.object({
-        path: z.string().describe("The path to the file to read"),
-      }),
-      execute: async ({ path }) => {
-        const start = performance.now();
-        const content = files.get(path);
-        const result = content !== undefined 
-          ? { content } 
-          : { error: `File not found: ${path}` };
-        toolCalls.push({
-          name: "read_file",
-          args: { path },
-          result,
-          durationMs: performance.now() - start,
-        });
-        return result;
-      },
-    }),
-    write_file: tool({
-      description: "Write content to a file",
-      parameters: z.object({
-        path: z.string().describe("The path to the file to write"),
-        content: z.string().describe("The content to write"),
-      }),
-      execute: async ({ path, content }) => {
-        const start = performance.now();
-        files.set(path, content);
-        const result = { success: true };
-        toolCalls.push({
-          name: "write_file",
-          args: { path, content },
-          result,
-          durationMs: performance.now() - start,
-        });
-        return result;
-      },
-    }),
-    list_directory: tool({
-      description: "List the contents of a directory",
-      parameters: z.object({
-        path: z.string().describe("The path to the directory"),
-      }),
-      execute: async ({ path }) => {
-        const start = performance.now();
-        const normalizedPath = path.endsWith("/") ? path : `${path}/`;
-        const entries = new Set<string>();
-        for (const filePath of files.keys()) {
-          if (filePath.startsWith(normalizedPath)) {
-            const relative = filePath.slice(normalizedPath.length);
-            const first = relative.split("/")[0];
-            if (first) entries.add(first);
-          }
+): unknown {
+  const start = performance.now();
+  let result: unknown;
+
+  switch (toolName) {
+    case "read_file": {
+      const path = args.path as string;
+      const content = files.get(path);
+      result = content !== undefined 
+        ? { content } 
+        : { error: `File not found: ${path}` };
+      break;
+    }
+    case "write_file": {
+      const path = args.path as string;
+      const content = args.content as string;
+      files.set(path, content);
+      result = { success: true };
+      break;
+    }
+    case "list_directory": {
+      const path = args.path as string;
+      const normalizedPath = path.endsWith("/") ? path : `${path}/`;
+      const entries = new Set<string>();
+      for (const filePath of files.keys()) {
+        if (filePath.startsWith(normalizedPath)) {
+          const relative = filePath.slice(normalizedPath.length);
+          const first = relative.split("/")[0];
+          if (first) entries.add(first);
         }
-        const result = { entries: [...entries].sort() };
-        toolCalls.push({
-          name: "list_directory",
-          args: { path },
-          result,
-          durationMs: performance.now() - start,
-        });
-        return result;
-      },
-    }),
-    skill: tool({
-      description: "Load a skill by name",
-      parameters: z.object({
-        name: z.string().describe("The name of the skill to load"),
-      }),
-      execute: async ({ name }) => {
-        const start = performance.now();
-        const content = skills.get(name);
-        const result = content !== undefined
-          ? { content }
-          : { error: `Skill not found: ${name}` };
-        toolCalls.push({
-          name: "skill",
-          args: { name },
-          result,
-          durationMs: performance.now() - start,
-        });
-        return result;
-      },
-    }),
-  };
+      }
+      result = { entries: [...entries].sort() };
+      break;
+    }
+    case "skill": {
+      const name = args.name as string;
+      const content = skills.get(name);
+      result = content !== undefined
+        ? { content }
+        : { error: `Skill not found: ${name}` };
+      break;
+    }
+    default:
+      result = { error: `Unknown tool: ${toolName}` };
+  }
+
+  toolCalls.push({
+    name: toolName,
+    args,
+    result,
+    durationMs: performance.now() - start,
+  });
+
+  return result;
 }
 
 export async function runBenchmark(
@@ -235,42 +266,113 @@ export async function runBenchmark(
     Object.entries(benchmarkCase.input.initialSkills || {})
   );
   const toolCalls: ToolCallRecord[] = [];
-  const tools = createSandboxTools(files, skills, toolCalls);
 
   const modelId = benchmarkCase.input.model || DEFAULT_MODEL;
   log(`Model: ${modelId} (via Vercel AI Gateway)`);
 
+  // Initialize OpenAI client with Vercel AI Gateway
+  const client = new OpenAI({
+    apiKey: process.env.AI_GATEWAY_API_KEY,
+    baseURL: "https://ai-gateway.vercel.sh/v1",
+  });
+
+  const messages: ChatCompletionMessageParam[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: benchmarkCase.input.prompt },
+  ];
+
+  const maxSteps = benchmarkCase.input.maxSteps ?? 15;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalCost = 0;
+  let finalResponse = "";
+
   try {
     log("Running...");
     
-    const result = await generateText({
-      model: gateway(modelId),
-      system: systemPrompt,
-      prompt: benchmarkCase.input.prompt,
-      tools,
-      maxSteps: benchmarkCase.input.maxSteps ?? 15,
-    });
+    for (let step = 0; step < maxSteps; step++) {
+      const response = await client.chat.completions.create({
+        model: modelId,
+        messages,
+        tools: toolDefinitions,
+      });
+
+      const choice = response.choices[0];
+      const message = choice.message;
+
+      // Track usage
+      if (response.usage) {
+        totalInputTokens += response.usage.prompt_tokens;
+        totalOutputTokens += response.usage.completion_tokens;
+      }
+
+      // Extract cost from provider metadata if available
+      const providerMeta = (message as any).provider_metadata;
+      if (providerMeta?.gateway?.cost) {
+        totalCost += parseFloat(providerMeta.gateway.cost);
+      }
+
+      // Add assistant message to history
+      messages.push(message);
+
+      // Check if there are tool calls
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        // Execute each tool call
+        for (const toolCall of message.tool_calls) {
+          if (toolCall.type !== "function") continue;
+          const args = JSON.parse(toolCall.function.arguments);
+          const result = executeToolCall(
+            toolCall.function.name,
+            args,
+            files,
+            skills,
+            toolCalls
+          );
+
+          // Add tool result to messages
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(result),
+          });
+        }
+      } else {
+        // No tool calls, conversation is done
+        finalResponse = message.content || "";
+        break;
+      }
+
+      // If this was the last step and we still have tool calls, get final response
+      if (step === maxSteps - 1) {
+        const finalResp = await client.chat.completions.create({
+          model: modelId,
+          messages,
+        });
+        finalResponse = finalResp.choices[0].message.content || "";
+        if (finalResp.usage) {
+          totalInputTokens += finalResp.usage.prompt_tokens;
+          totalOutputTokens += finalResp.usage.completion_tokens;
+        }
+      }
+    }
 
     const durationMs = performance.now() - startTime;
-
-    // Extract usage
-    const usage = result.usage || { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
-    
-    // Extract cost from providerMetadata if available
-    const providerMeta = result.providerMetadata as Record<string, unknown> | undefined;
-    const gatewayCost = providerMeta?.gateway as { cost?: { input: number; output: number; total: number } } | undefined;
 
     return {
       sessionId,
       success: true,
-      finalResponse: result.text,
+      finalResponse,
       toolCalls,
       tokenUsage: {
-        input: usage.promptTokens,
-        output: usage.completionTokens,
-        total: usage.totalTokens,
+        input: totalInputTokens,
+        output: totalOutputTokens,
+        total: totalInputTokens + totalOutputTokens,
       },
-      cost: gatewayCost?.cost,
+      cost: totalCost > 0 ? {
+        input: 0, // Gateway doesn't break down cost
+        output: 0,
+        total: totalCost,
+      } : undefined,
       durationMs,
     };
   } catch (error) {
@@ -280,15 +382,20 @@ export async function runBenchmark(
       success: false,
       finalResponse: "",
       toolCalls,
-      tokenUsage: { input: 0, output: 0, total: 0 },
+      tokenUsage: { input: totalInputTokens, output: totalOutputTokens, total: totalInputTokens + totalOutputTokens },
       durationMs,
       error: error instanceof Error ? error.message : String(error),
     };
   }
 }
 
-// CLI entry point
-if (import.meta.main) {
+// CLI entry point - check if running as main module
+const isMain = process.argv[1] && (
+  process.argv[1] === __filename ||
+  process.argv[1].endsWith('/run.ts')
+);
+
+if (isMain) {
   const args = process.argv.slice(2);
   if (args.length < 2) {
     console.error("Usage: bun benchmark/scripts/run.ts <case-path> <test-name>");
@@ -323,8 +430,6 @@ if (import.meta.main) {
   if (result.cost) {
     console.log();
     console.log("Cost:");
-    console.log(`  Input:        $${result.cost.input.toFixed(6)}`);
-    console.log(`  Output:       $${result.cost.output.toFixed(6)}`);
     console.log(`  Total:        $${result.cost.total.toFixed(6)}`);
   }
   
@@ -350,12 +455,12 @@ if (import.meta.main) {
   console.log(result.finalResponse || "(empty)");
   console.log();
 
-  // Save result
+  // Save result using Node.js fs
   if (!existsSync(RESULTS_DIR)) {
     mkdirSync(RESULTS_DIR, { recursive: true });
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const resultPath = join(RESULTS_DIR, `${casePath.replace(/\//g, "_")}_${testName}_${timestamp}.json`);
-  Bun.write(resultPath, JSON.stringify(result, null, 2));
+  writeFileSync(resultPath, JSON.stringify(result, null, 2));
   console.log(`Result saved to: ${resultPath}`);
 }

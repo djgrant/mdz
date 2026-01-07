@@ -1,63 +1,71 @@
 {
-  "name": "zen-lang",
-  "displayName": "Zen Language",
-  "description": "Language support for Zen (.zen.md) - a markdown extension for multi-agent systems",
-  "version": "0.1.0",
+  "name": "mdz-vscode",
+  "displayName": "MDZ (Zen Markdown)",
+  "description": "Language support for MDZ (.mdz) - A markdown extension language for multi-agent systems",
+  "version": "0.3.0",
   "publisher": "djgrant",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/djgrant/mdz"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=20.0.0"
   },
   "categories": [
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:zen"
+    "onLanguage:mdz"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
-        "id": "zen",
-        "aliases": ["Zen", "zen"],
-        "extensions": [".zen.md"],
+        "id": "mdz",
+        "aliases": [
+          "MDZ",
+          "Zen Markdown",
+          "mdz"
+        ],
+        "extensions": [
+          ".mdz"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "zen",
-        "scopeName": "source.zen.md",
-        "path": "./syntaxes/zen.tmLanguage.json"
+        "language": "mdz",
+        "scopeName": "source.mdz",
+        "path": "./syntaxes/mdz.tmLanguage.json"
       }
     ],
     "commands": [
       {
-        "command": "zen.compile",
-        "title": "Zen: Compile Current File"
+        "command": "mdz.compile",
+        "title": "MDZ: Compile Current File"
       },
       {
-        "command": "zen.check",
-        "title": "Zen: Check Syntax"
+        "command": "mdz.check",
+        "title": "MDZ: Check Syntax"
       }
     ],
     "configuration": {
-      "title": "Zen",
+      "title": "MDZ",
       "properties": {
-        "zen.expandTypes": {
+        "mdz.expandTypes": {
           "type": "boolean",
           "default": true,
           "description": "Expand type references during compilation"
         },
-        "zen.resolveReferences": {
+        "mdz.resolveReferences": {
           "type": "boolean",
           "default": true,
           "description": "Resolve skill references during compilation"
         },
-        "zen.transformSemantics": {
+        "mdz.transformSemantics": {
           "type": "boolean",
           "default": true,
           "description": "Transform semantic markers during compilation"
@@ -66,16 +74,20 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "build": "tsc -p ./",
+    "clean": "rm -rf out",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "pnpm run build",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "@zenmarkdown/core": "workspace:*",
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
   }
 }
