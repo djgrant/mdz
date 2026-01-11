@@ -1,4 +1,4 @@
-# MDZ (ZenMarkdown)
+# MDZ (Zen Markdown)
 
 > A language for the world's most powerful runtime
 

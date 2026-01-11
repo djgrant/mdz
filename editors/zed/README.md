@@ -1,6 +1,6 @@
 # MDZ for Zed
 
-Syntax support for MDZ (ZenMarkdown) files in [Zed](https://zed.dev).
+Syntax support for MDZ (Zen Markdown) files in [Zed](https://zed.dev).
 
 ## Features
 

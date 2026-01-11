@@ -1,6 +1,6 @@
 id = "mdz"
 name = "MDZ"
-description = "MDZ (ZenMarkdown) syntax support - a markdown extension for multi-agent systems."
+description = "MDZ (Zen Markdown) syntax support - a markdown extension for multi-agent systems."
 version = "0.1.0"
 schema_version = 1
 authors = ["djgrant <djgrant@users.noreply.github.com>"]

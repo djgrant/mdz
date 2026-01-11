@@ -1,4 +1,4 @@
-# MDZ (ZenMarkdown)
+# MDZ (Zen Markdown)
 
 MDZ is a component-based architecture for multi-agent systems. It provides a markdown-based language for authoring LLM skills with static validation.
 

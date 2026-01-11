@@ -1,6 +1,6 @@
 # MDZ Language Extension for VS Code
 
-Syntax highlighting and language support for MDZ (ZenMarkdown) files.
+Syntax highlighting and language support for MDZ (Zen Markdown) files.
 
 ## Features
 

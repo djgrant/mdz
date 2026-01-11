@@ -37,7 +37,7 @@ Spec files:
 - `spec/grammar.md` - "Zen Grammar Specification" → "MDZ Grammar Specification"
 
 Source files:
-- `src/index.ts` - "Zen Language" → "MDZ (ZenMarkdown)", 'zen-lang' → 'zenmarkdown'
+- `src/index.ts` - "Zen Language" → "MDZ (Zen Markdown)", 'zen-lang' → 'zenmarkdown'
 - `src/parser/parser.ts` - "Zen Parser" → "MDZ Parser"
 - `src/parser/lexer.ts` - "Zen Lexer" → "MDZ Lexer"
 - `src/parser/ast.ts` - "Zen AST" → "MDZ AST"

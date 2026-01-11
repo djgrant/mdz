@@ -162,7 +162,7 @@ This is the gap. The examples are all meta (orchestration, scientific method). N
 **Proposed new opening:**
 
 ```markdown
-# MDZ (ZenMarkdown)
+# MDZ (Zen Markdown)
 
 > Markdown syntax for building LLM agents - with static analysis to catch errors before runtime
 
