@@ -67,105 +67,99 @@ function findMdzFiles(dir: string): string[] {
 }
 
 // ============================================================================
+// Configuration
+// ============================================================================
+
+// Handle both compiled (dist/tests/) and direct tsx execution
+const projectRoot = fs.existsSync(path.join(__dirname, '..', '..', 'examples'))
+  ? path.join(__dirname, '..', '..')
+  : path.join(__dirname, '..');
+
+const examplesDir = path.join(projectRoot, 'examples');
+
+// Files that are intentionally broken (for testing error handling)
+const excludedFiles = new Set([
+  'broken-reference.mdz',
+  'missing-type.mdz',
+  'undeclared-skill.mdz',
+]);
+
+// ============================================================================
 // Example Validation Tests
 // ============================================================================
 
-// __dirname is dist/tests after compilation, so go up two levels to project root
-const projectRoot = path.join(__dirname, '..', '..');
-const examplesDir = path.join(projectRoot, 'examples');
+console.log('\n=== MDZ Examples Tests ===\n');
 
-describe('Example Skills (examples/skills/)', () => {
-  const skillsDir = path.join(examplesDir, 'skills');
-  
-  if (!fs.existsSync(skillsDir)) {
-    console.log('  (skills directory not found, skipping)');
-    return;
-  }
-  
-  const skillFiles = findMdzFiles(skillsDir);
-  
-  if (skillFiles.length === 0) {
-    console.log('  (no .mdz files found)');
-    return;
-  }
-  
-  for (const file of skillFiles) {
-    const relativePath = path.relative(examplesDir, file);
-    
-    test(`${relativePath} compiles without errors`, () => {
-      const source = fs.readFileSync(file, 'utf-8');
-      const result = compile(source, { 
-        validateTypes: true,
-        validateReferences: true 
-      });
-      
-      const errors = result.diagnostics.filter(d => d.severity === 'error');
-      
-      if (errors.length > 0) {
-        const errorMessages = errors.map(e => 
-          `  Line ${e.span?.start?.line || '?'}: ${e.message}`
-        ).join('\n');
-        throw new Error(`Compilation errors:\n${errorMessages}`);
-      }
-    });
-  }
-});
+// Find all .mdz files and group by parent directory
+const allFiles = findMdzFiles(examplesDir);
+const filesByDir = new Map<string, string[]>();
 
-describe('Example Snippets (examples/snippets/)', () => {
-  const snippetsDir = path.join(examplesDir, 'snippets');
+for (const file of allFiles) {
+  const relativePath = path.relative(examplesDir, file);
+  const parentDir = path.dirname(relativePath);
+  const dirKey = parentDir === '.' ? 'examples/' : `examples/${parentDir}/`;
   
-  if (!fs.existsSync(snippetsDir)) {
-    console.log('  (snippets directory not found, skipping)');
-    return;
+  if (!filesByDir.has(dirKey)) {
+    filesByDir.set(dirKey, []);
   }
+  filesByDir.get(dirKey)!.push(file);
+}
+
+// Sort directories for consistent output
+const sortedDirs = Array.from(filesByDir.keys()).sort();
+
+// Run tests for each directory
+for (const dirKey of sortedDirs) {
+  const files = filesByDir.get(dirKey)!;
   
-  const snippetFiles = findMdzFiles(snippetsDir);
-  
-  if (snippetFiles.length === 0) {
-    console.log('  (no .mdz files found)');
-    return;
-  }
-  
-  for (const file of snippetFiles) {
-    const relativePath = path.relative(examplesDir, file);
-    
-    test(`${relativePath} compiles without errors`, () => {
-      const source = fs.readFileSync(file, 'utf-8');
-      const result = compile(source, { 
-        validateTypes: true,
-        validateReferences: true 
-      });
+  describe(dirKey, () => {
+    for (const file of files) {
+      const fileName = path.basename(file);
       
-      const errors = result.diagnostics.filter(d => d.severity === 'error');
-      
-      if (errors.length > 0) {
-        const errorMessages = errors.map(e => 
-          `  Line ${e.span?.start?.line || '?'}: ${e.message}`
-        ).join('\n');
-        throw new Error(`Compilation errors:\n${errorMessages}`);
+      // Skip excluded files
+      if (excludedFiles.has(fileName)) {
+        console.log(`  - ${fileName} (skipped - intentionally broken)`);
+        continue;
       }
-    });
-  }
-});
+      
+      const relativePath = path.relative(examplesDir, file);
+      
+      test(`${relativePath} compiles without errors`, () => {
+        const source = fs.readFileSync(file, 'utf-8');
+        const result = compile(source, { 
+          validateTypes: true,
+          validateReferences: true 
+        });
+        
+        const errors = result.diagnostics.filter(d => d.severity === 'error');
+        
+        if (errors.length > 0) {
+          const errorMessages = errors.map(e => 
+            `  Line ${e.span?.start?.line || '?'}: ${e.message}`
+          ).join('\n');
+          throw new Error(`Compilation errors:\n${errorMessages}`);
+        }
+      });
+    }
+  });
+}
 
 // ============================================================================
 // Summary Statistics
 // ============================================================================
 
-describe('Example Coverage', () => {
-  const allFiles = findMdzFiles(examplesDir);
+describe('Summary', () => {
+  const testedCount = allFiles.filter(f => !excludedFiles.has(path.basename(f))).length;
+  const skippedCount = allFiles.filter(f => excludedFiles.has(path.basename(f))).length;
   
-  test(`found ${allFiles.length} example files`, () => {
-    // Just report the count - no assertion needed
+  test(`found ${allFiles.length} example files (${testedCount} tested, ${skippedCount} skipped)`, () => {
     assert(allFiles.length > 0, 'Should have at least one example file');
   });
 });
 
 // ============================================================================
-// Run Tests
+// Results
 // ============================================================================
-
-console.log('\n=== MDZ Examples Tests ===\n');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

@@ -339,7 +339,7 @@ export class Lexer {
       lang += this.advance();
     }
     this.addToken('CODE_BLOCK_START', '```' + lang);
-    if (!this.isAtEnd()) this.consumeNewline();
+    if (!this.isAtEnd()) this.consumeNewlineRaw();
 
     let content = '';
     while (!this.isAtEnd()) {
@@ -347,7 +347,7 @@ export class Lexer {
         if (content) this.addToken('CODE_BLOCK_CONTENT', content);
         this.consumeChars(3);
         this.addToken('CODE_BLOCK_END', '```');
-        if (!this.isAtEnd() && this.peek() === '\n') this.consumeNewline();
+        if (!this.isAtEnd() && this.peek() === '\n') this.consumeNewlineRaw();
         return;
       }
       if (this.peek() === '\n') {

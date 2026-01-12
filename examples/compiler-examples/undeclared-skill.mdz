@@ -1,0 +1,10 @@
+---
+name: quick-skill
+description: A skill that uses undeclared dependencies
+---
+
+## Workflow
+
+1. First run [[orchestrate]]
+2. Then use [[work-packages]]
+3. Finally apply [[simplify]]

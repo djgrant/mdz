@@ -549,6 +549,41 @@ FOR EACH $a IN $as:
 `);
     assertEqual(doc.errors.length, 0, 'BREAK in nested loop should be valid');
   });
+
+  test('BREAK inside WHILE > IF with delegation (issue: loop depth tracking)', () => {
+    // This tests the fix for BREAK inside IF blocks nested in WHILE loops
+    // when a Delegation with WITH clause precedes the IF
+    const doc = parse(`---
+name: test
+description: test
+---
+
+WHILE $round < $maxRounds DO:
+
+  Delegate to [[#task]] WITH:
+    - $param = $value
+
+  IF /condition/ THEN:
+    BREAK
+
+  $round = $round + 1
+`);
+    assertEqual(doc.errors.length, 0, `BREAK should be valid inside WHILE > IF. Errors: ${doc.errors.map(e => e.message)}`);
+    
+    // Verify the AST structure is correct
+    const whiles = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.WhileStatement => b.kind === 'WhileStatement')
+    );
+    assertEqual(whiles.length, 1, 'Should have one WHILE');
+    
+    // The IF with BREAK should be inside the WHILE body
+    const ifStmts = whiles[0].body.filter((b): b is AST.IfStatement => b.kind === 'IfStatement');
+    assert(ifStmts.length >= 1, 'IF should be inside WHILE body');
+    
+    // Check that BREAK is in the IF body
+    const breaks = ifStmts[0].thenBody.filter((b): b is AST.BreakStatement => b.kind === 'BreakStatement');
+    assertEqual(breaks.length, 1, 'BREAK should be inside IF body');
+  });
 });
 
 // ============================================================================

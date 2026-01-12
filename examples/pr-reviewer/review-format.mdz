@@ -1,0 +1,60 @@
+---
+name: review-format
+description: Format aggregated findings into a structured PR review.
+---
+
+Generate a formatted review from collected findings.
+
+## Types
+
+$Severity: "critical" | "major" | "minor" | "trivial"
+$Outcome: "approve" | "comment" | "request-changes"
+
+## Input
+
+- $findings: ($String, $Severity, $String, $String)[] = []
+- $positives: $String[] = []
+
+## Workflow
+
+### 1. Determine Outcome
+
+IF /any critical findings/ THEN:
+  $outcome = "request-changes"
+ELSE IF /major findings > 3/ THEN:
+  $outcome = "request-changes"
+ELSE IF /any findings/ THEN:
+  $outcome = "comment"
+ELSE:
+  $outcome = "approve"
+
+### 2. Format Review
+
+Structure:
+
+```mdz
+## Summary
+/1-2 sentence overview/
+
+## What's Good
+/list $positives/
+
+## Findings
+/grouped by severity, highest first/
+
+### Critical
+/list critical findings with file:line/
+
+### Major
+/list major findings/
+
+### Minor & Suggestions
+/list minor/trivial as optional improvements/
+
+## Verdict
+/$outcome with brief rationale/
+```
+
+## Output
+
+Return formatted review text.

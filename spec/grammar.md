@@ -289,7 +289,8 @@ collection        = var_reference | array_literal ;
 while_stmt        = WHILE condition DO colon newline block_body ;
 
 /* IF uses THEN as delimiter - parentheses are optional (not required) */
-if_then_stmt      = IF condition THEN colon newline block_body [ else_clause ] ;
+if_then_stmt      = IF condition THEN colon newline block_body { else_if_clause } [ else_clause ] ;
+else_if_clause    = ELSE IF condition THEN colon newline block_body ;
 else_clause       = ELSE colon newline block_body ;
 
 break_stmt        = [ list_marker ] BREAK newline ;
@@ -317,6 +318,7 @@ indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 | Construct | Syntax | When Resolved | Who Resolves |
 |-----------|--------|---------------|--------------|
 | Runtime IF | `IF condition THEN:` | Runtime | LLM |
+| Runtime ELSE IF | `ELSE IF condition THEN:` | Runtime | LLM |
 | Build-time IF | `{{IF (x)}}` | Build time | Tooling |
 | Runtime WHILE | `WHILE condition DO:` | Runtime | LLM |
 | Runtime FOR EACH | `FOR EACH $x IN $y:` | Runtime | LLM |

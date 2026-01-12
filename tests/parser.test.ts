@@ -522,6 +522,95 @@ ELSE:
     assertEqual(ifs.length, 1);
     assert(ifs[0].elseBody !== null, 'Should have else');
   });
+
+  test('parses simple ELSE IF', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+IF $x = 1 THEN:
+  - First
+ELSE IF $x = 2 THEN:
+  - Second
+ELSE:
+  - Default
+`);
+    const ifs = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
+    );
+    assertEqual(ifs.length, 1);
+    assertEqual(ifs[0].elseIf.length, 1);
+    assert(ifs[0].elseIf[0].condition.kind === 'DeterministicCondition', 'ELSE IF should have deterministic condition');
+    assert(ifs[0].elseBody !== null, 'Should have final ELSE');
+  });
+
+  test('parses multiple ELSE IF clauses', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+IF $x = 1 THEN:
+  - One
+ELSE IF $x = 2 THEN:
+  - Two
+ELSE IF $x = 3 THEN:
+  - Three
+ELSE:
+  - Default
+`);
+    const ifs = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
+    );
+    assertEqual(ifs.length, 1);
+    assertEqual(ifs[0].elseIf.length, 2);
+    assert(ifs[0].elseBody !== null, 'Should have final ELSE');
+  });
+
+  test('parses ELSE IF without final ELSE', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+IF $x = 1 THEN:
+  - One
+ELSE IF $x = 2 THEN:
+  - Two
+`);
+    const ifs = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
+    );
+    assertEqual(ifs.length, 1);
+    assertEqual(ifs[0].elseIf.length, 1);
+    assertEqual(ifs[0].elseBody, null);
+  });
+
+  test('parses ELSE IF with semantic conditions', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+IF /any critical findings/ THEN:
+  $outcome = "request-changes"
+ELSE IF /major findings > 3/ THEN:
+  $outcome = "request-changes"
+ELSE IF /any findings/ THEN:
+  $outcome = "comment"
+ELSE:
+  $outcome = "approve"
+`);
+    const ifs = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
+    );
+    assertEqual(ifs.length, 1);
+    assertEqual(ifs[0].elseIf.length, 2);
+    assert(ifs[0].condition.kind === 'SemanticCondition', 'IF should have semantic condition');
+    assert(ifs[0].elseIf[0].condition.kind === 'SemanticCondition', 'ELSE IF 1 should have semantic condition');
+    assert(ifs[0].elseIf[1].condition.kind === 'SemanticCondition', 'ELSE IF 2 should have semantic condition');
+  });
 });
 
 // ============================================================================

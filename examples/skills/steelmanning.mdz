@@ -1,0 +1,62 @@
+---
+name: steelmanning
+description: Strengthen an argument before critiquing it
+---
+
+## Types
+
+$Argument: /a position with supporting reasoning/
+$StrongVersion: /the most defensible form—evidence added, weak points removed/
+$Critique: /a challenge that applies to the strong version, not the original/
+$Verdict: "withstands" | "weakened" | "falls"
+
+## Input
+
+- $argument: $Argument
+- $context: $String
+
+## Context
+
+- $currentSteelman: $StrongVersion
+- $critiques: $Critique[] = []
+- $outputPath = ".steelman/analysis.md"
+
+## Workflow
+
+### 1. Understand
+
+Identify the core claim, evidence, and assumptions.
+
+### 2. Advocate
+
+$currentSteelman = /strongest version a proponent would make/:
+- Add evidence the author omitted
+- Address obvious objections preemptively
+- Remove weak points that undermine the core
+
+### Gate
+
+IF /just the original restated/ THEN:
+  $currentSteelman = /genuinely strengthened version/
+  Return to gate until satisfied.
+
+### 3. Critique
+
+Challenge $currentSteelman:
+- What assumptions remain questionable?
+- What evidence is still weak?
+- What counterarguments survive?
+
+Collect into $critiques.
+
+### 4. Judge
+
+$verdict: $Verdict
+
+### 5. Report
+
+Write to $outputPath:
+- Original argument
+- Steelmanned version  
+- Key critiques
+- Verdict

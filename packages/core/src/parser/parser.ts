@@ -334,8 +334,11 @@ export class Parser {
     if (this.check('LOWER_IDENT') || this.check('UPPER_IDENT')) {
       const verb = this.current().value.toLowerCase();
       if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke' || verb === 'delegate' || verb === 'use') {
-        const lookahead = this.peek(1);
-        if (lookahead?.type === 'DOUBLE_LBRACKET') {
+        // Check for "verb [[ref]]" or "verb to [[ref]]" patterns
+        const lookahead1 = this.peek(1);
+        const lookahead2 = this.peek(2);
+        if (lookahead1?.type === 'DOUBLE_LBRACKET' ||
+            (lookahead1?.type === 'LOWER_IDENT' && lookahead1.value === 'to' && lookahead2?.type === 'DOUBLE_LBRACKET')) {
           return this.parseDelegation();
         }
       }
@@ -1101,25 +1104,57 @@ export class Parser {
 
     const thenBody = this.parseIndentedBlocks();
 
+    const elseIf: AST.ElseIfClause[] = [];
     let elseBody: AST.Block[] | null = null;
-    if (this.check('ELSE')) {
-      this.advance();
-      this.expect('COLON');
-      this.skipNewlines();
-      elseBody = this.parseIndentedBlocks();
+
+    // Parse ELSE IF chains and final ELSE
+    while (this.check('ELSE')) {
+      const elseStart = this.current();
+      this.advance();  // consume ELSE
+
+      if (this.check('IF')) {
+        // ELSE IF clause
+        this.advance();  // consume IF
+        const elseIfCondition = this.parseCondition();
+        this.expect('THEN');
+        this.expect('COLON');
+        this.skipNewlines();
+        const elseIfBody = this.parseIndentedBlocks();
+
+        elseIf.push({
+          condition: elseIfCondition,
+          body: elseIfBody,
+          span: AST.mergeSpans(
+            elseStart.span,
+            elseIfBody.length > 0 ? elseIfBody[elseIfBody.length - 1].span : elseIfCondition.span
+          ),
+        });
+      } else {
+        // Plain ELSE clause (terminates the chain)
+        this.expect('COLON');
+        this.skipNewlines();
+        elseBody = this.parseIndentedBlocks();
+        break;  // ELSE must be last
+      }
+    }
+
+    // Determine the end span
+    let endSpan = condition.span;
+    if (elseBody?.length) {
+      endSpan = elseBody[elseBody.length - 1].span;
+    } else if (elseIf.length > 0) {
+      endSpan = elseIf[elseIf.length - 1].span;
+    } else if (thenBody.length) {
+      endSpan = thenBody[thenBody.length - 1].span;
     }
 
     return {
       kind: 'IfStatement',
       condition,
       thenBody,
+      elseIf,
       elseBody,
-      span: AST.mergeSpans(
-        start.span, 
-        elseBody?.length ? elseBody[elseBody.length - 1].span : 
-        thenBody.length ? thenBody[thenBody.length - 1].span : 
-        condition.span
-      ),
+      span: AST.mergeSpans(start.span, endSpan),
     };
   }
 
@@ -1390,6 +1425,11 @@ export class Parser {
     const verbToken = this.advance();
     const verb = verbToken.value;
 
+    // Skip optional "to" before the reference
+    if (this.check('LOWER_IDENT') && this.current().value === 'to') {
+      this.advance();
+    }
+
     const target = this.parseReference();
 
     const parameters: AST.VariableDeclaration[] = [];
@@ -1400,6 +1440,12 @@ export class Parser {
       this.expect('COLON'); // WITH:
 
       this.skipNewlines();
+
+      // Consume INDENT if present (WITH clause may be indented)
+      const hasIndent = this.check('INDENT');
+      if (hasIndent) {
+        this.advance();
+      }
 
       // Parse WITH parameters as list items (like Input sections)
       while (this.check('LIST_MARKER') && !this.isAtEnd()) {
@@ -1413,6 +1459,11 @@ export class Parser {
         if (!this.check('LIST_MARKER') || this.check('HEADING')) {
           break;
         }
+      }
+
+      // Consume matching DEDENT if we consumed an INDENT
+      if (hasIndent && this.check('DEDENT')) {
+        this.advance();
       }
     }
 

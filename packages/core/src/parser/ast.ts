@@ -295,10 +295,17 @@ export interface WhileStatement extends BaseNode {
   body: Block[];
 }
 
+export interface ElseIfClause {
+  condition: Condition;
+  body: Block[];
+  span: Span;
+}
+
 export interface IfStatement extends BaseNode {
   kind: 'IfStatement';
   condition: Condition;
   thenBody: Block[];
+  elseIf: ElseIfClause[];  // ELSE IF chains
   elseBody: Block[] | null;
 }
 

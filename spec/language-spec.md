@@ -388,6 +388,26 @@ IF /any critical findings/ THEN:
 
 **Note:** Parentheses are optional for grouping complex conditions but not required by syntax.
 
+### IF THEN ELSE IF
+
+For multiple conditions, use ELSE IF chains:
+
+```
+IF $severity = "critical" THEN:
+  - Request changes immediately
+ELSE IF $severity = "major" THEN:
+  - Add to findings list
+ELSE IF /minor concern/ THEN:
+  - Note as suggestion
+ELSE:
+  - Approve
+```
+
+ELSE IF chains can:
+- Mix deterministic and semantic conditions
+- Have any number of ELSE IF branches
+- Have an optional final ELSE branch
+
 ### BREAK and CONTINUE (v0.2)
 
 Early exit and skip in loops:
@@ -838,6 +858,7 @@ FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
 PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  <!-- v0.2 -->
 WHILE           = 'WHILE' CONDITION 'DO:'       <!-- DO delimits, like THEN for IF -->
 IF_THEN         = 'IF' CONDITION 'THEN:'       <!-- THEN delimits -->
+ELSE_IF         = 'ELSE IF' CONDITION 'THEN:' <!-- v0.6: ELSE IF chains -->
 ELSE            = 'ELSE:'
 BREAK           = 'BREAK'                                     <!-- v0.2 -->
 CONTINUE        = 'CONTINUE'                                  <!-- v0.2 -->
@@ -930,6 +951,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **Parallel loop** (`PARALLEL FOR EACH $x IN $y:`) — Concurrent iteration.
 - **While loop** (`WHILE cond DO:`) — Conditional loop.
 - **Conditional** (`IF cond THEN:`) — Conditional branching.
+- **Else if clause** (`ELSE IF cond THEN:`) — Chained conditional branch.
 - **Else clause** (`ELSE:`) — Alternative branch of a conditional.
 - **With clause** (`WITH:`) — Parameter block for skill delegation.
 - **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.

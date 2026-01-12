@@ -1,0 +1,57 @@
+---
+name: multi-file-analyzer
+description: When analyzing multiple files, use this skill to delegate analysis and aggregate findings.
+---
+
+## Types
+
+$Analysis: /structured findings for a single file/
+$Finding: /an observation with severity and location/
+$Severity: "critical" | "warning" | "info"
+
+## Input
+
+- $files: $FilePath[]
+- $concern: $String
+
+## Context
+
+- $analyses: $Analysis[] = []
+- $reportPath = ".opencode/analysis/${$concern.slug}.md"
+
+## Workflow
+
+### 1. Analyze Files
+
+FOR EACH $file IN $files:
+  
+  IF /file not accessible/ THEN:
+    - Record error
+    - CONTINUE
+  
+  $analysis: $Analysis = /findings for this file/
+  
+  Add $analysis to $analyses
+
+### 2. Aggregate
+
+Cross-reference $analyses:
+- Group findings by $Severity
+- Identify patterns appearing across files
+- Find files needing most attention
+
+### 3. Report
+
+Write to $reportPath:
+
+#### Critical Findings
+
+List findings where severity = "critical"
+
+#### Patterns
+
+Cross-file patterns discovered
+
+#### Recommendations
+
+Prioritized next steps based on findings
