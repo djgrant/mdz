@@ -48,23 +48,21 @@ import Header from "../components/Header.astro";
   <div class="h-[calc(100vh-4rem)] flex flex-col">
     <!-- Top Bar -->
     <div
-      class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
+      class="flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
     >
       <div class="flex items-center gap-4">
+        <!-- Mobile project selector -->
         <select
-          id="scenario"
-          class="text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-3 py-1.5 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+          id="scenario-mobile"
+          class="lg:hidden text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-2 py-1 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
         >
-          <option value="valid">✅ Valid Skill</option>
-          <option value="broken-ref">🔴 Broken Reference</option>
-          <option value="missing-type">🔴 Missing Type</option>
-          <option value="undeclared">⚠️ Undeclared Skill</option>
-          <option value="complex">📊 Complex System</option>
+          <option value="project:compiler-examples">Compiler Examples</option>
+          <option value="project:the-scientist">The Scientist</option>
         </select>
         <span
           class="hidden md:inline text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
         >
-          Select a scenario or edit the code to see zen's validation in action
+          Edit code to see zen's validation in action
         </span>
       </div>
       <div class="flex items-center gap-2">
@@ -75,12 +73,32 @@ import Header from "../components/Header.astro";
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-      <!-- Left: Editor -->
+    <!-- Main Content with Sidebar -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Sidebar - hidden on mobile -->
       <div
-        class="flex-1 lg:flex-[3] flex flex-col border-b lg:border-b-0 lg:border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] min-h-[300px] lg:min-h-0"
+        id="sidebar"
+        class="hidden lg:flex flex-col w-52 border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
       >
+        <!-- Projects Section -->
+        <div class="p-2">
+          <div class="text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide px-2 py-1">Projects</div>
+          <div id="project-list" class="flex flex-col"></div>
+        </div>
+
+        <!-- Files Section (when project selected) -->
+        <div id="file-tree-container" class="hidden flex-1 overflow-auto border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+          <div class="text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide px-3 py-2">Files</div>
+          <div id="file-tree" class="flex flex-col px-1 pb-3"></div>
+        </div>
+      </div>
+
+      <!-- Editor and Insights Area -->
+      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <!-- Left: Editor -->
+        <div
+          class="flex-1 lg:flex-[3] flex flex-col border-b lg:border-b-0 lg:border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] min-h-[300px] lg:min-h-0"
+        >
         <div
           class="px-4 py-2 text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] flex items-center justify-between"
         >
@@ -156,6 +174,7 @@ import Header from "../components/Header.astro";
           </p>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- Status Bar -->
@@ -185,6 +204,114 @@ import Header from "../components/Header.astro";
   .diagnostic-item:hover {
     background-color: rgba(99, 102, 241, 0.1);
   }
+
+  /* Project list */
+  .project-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    margin: 0.125rem 0;
+    font-size: 0.8125rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-muted);
+  }
+  .project-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-text);
+  }
+  .project-item.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--color-accent);
+  }
+  :global(.dark) .project-item {
+    color: var(--color-muted-dark);
+  }
+  :global(.dark) .project-item:hover {
+    color: var(--color-text-dark);
+  }
+  :global(.dark) .project-item.active {
+    color: var(--color-accent);
+  }
+  .project-item svg {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    opacity: 0.7;
+  }
+  .project-item.active svg {
+    opacity: 1;
+  }
+
+  /* File tree */
+  .file-tree-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    margin: 0.125rem 0;
+    font-size: 0.75rem;
+    font-family: monospace;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-muted);
+  }
+  .file-tree-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-text);
+  }
+  .file-tree-item.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+  :global(.dark) .file-tree-item {
+    width: 100%;
+    color: var(--color-muted-dark);
+  }
+  :global(.dark) .file-tree-item:hover {
+    color: var(--color-text-dark);
+  }
+  :global(.dark) .file-tree-item.active {
+    background: rgba(99, 102, 241, 0.25);
+    color: var(--color-accent);
+  }
+  .file-tree-item svg {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    min-width: 1rem;
+    min-height: 1rem;
+    max-width: 1rem;
+    max-height: 1rem;
+    opacity: 0.7;
+  }
+  .file-tree-item.active svg {
+    opacity: 1;
+  }
+
+  /* Graph node clickable - ensure SVG elements get cursor */
+  .graph-node {
+    cursor: pointer !important;
+  }
+  .graph-node rect,
+  .graph-node text {
+    cursor: pointer !important;
+  }
+  .graph-node:hover {
+    opacity: 0.8;
+  }
 </style>
 
 <script
@@ -193,11 +320,28 @@ import Header from "../components/Header.astro";
 ></script>
 
 <script type="module">
-  // Scenario sources
-  const scenarios = {
-    valid: {
-      name: "scientific-method.mdz",
-      source: `---
+  // Project descriptions for insights
+  const projectDescriptions = {
+    "compiler-examples": {
+      name: "Compiler Examples",
+      description: "Demonstrates validation capabilities",
+      fileInsights: {
+        "valid-skill.mdz": "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages will be caught if they break this contract.",
+        "broken-reference.mdz": "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion.",
+        "missing-type.mdz": "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' and '$DataSorce' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
+        "undeclared-skill.mdz": "⚠️ <strong>Undeclared dependencies:</strong> These skills are referenced but not declared in 'uses:'. While zen allows this as a warning, explicit declarations make dependencies clear.",
+        "complex-system.mdz": "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together.",
+      }
+    }
+  };
+
+  // Multi-file projects
+  const projects = {
+    "compiler-examples": {
+      name: "Compiler Examples",
+      description: "Demonstrates validation capabilities",
+      files: {
+        "valid-skill.mdz": `---
 name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 uses:
@@ -231,13 +375,7 @@ WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO:
     - Commit changes
   - Increment $iteration
 `,
-      insight:
-        "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages will be caught if they break this contract.",
-    },
-
-    "broken-ref": {
-      name: "my-workflow.mdz",
-      source: `---
+        "broken-reference.mdz": `---
 name: my-workflow
 description: A workflow with a broken section reference
 uses:
@@ -250,13 +388,7 @@ uses:
 2. Then jump to [[#non-existent-section]]
 3. Finally check [[#missing-step]]
 `,
-      insight:
-        "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion.",
-    },
-
-    "missing-type": {
-      name: "data-processor.mdz",
-      source: `---
+        "missing-type.mdz": `---
 name: data-processor
 description: Process some data
 ---
@@ -275,13 +407,7 @@ $DataSource: "api" | "file" | "database"
 
 Process $count items from $source
 `,
-      insight:
-        "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' and '$DataSorce' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
-    },
-
-    undeclared: {
-      name: "quick-skill.mdz",
-      source: `---
+        "undeclared-skill.mdz": `---
 name: quick-skill
 description: A skill that uses undeclared dependencies
 ---
@@ -292,13 +418,7 @@ description: A skill that uses undeclared dependencies
 2. Then use [[work-packages]]
 3. Finally apply [[simplify]]
 `,
-      insight:
-        "⚠️ <strong>Undeclared dependencies:</strong> These skills are referenced but not declared in 'uses:'. While zen allows this as a warning, explicit declarations make dependencies clear.",
-    },
-
-    complex: {
-      name: "skill-composer.mdz",
-      source: `---
+        "complex-system.mdz": `---
 name: skill-composer
 description: Compose multiple skills into workflows
 uses:
@@ -343,8 +463,457 @@ Execute [[orchestrate]] WITH:
   - $skills
   - $mode
 `,
-      insight:
-        "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together.",
+      },
+    },
+    "the-scientist": {
+      name: "The Scientist",
+      description: "Orchestration and hypothesis-driven workflows",
+      files: {
+        "work-packages.mdz": `---
+name: work-packages
+description: When asked to create a work package (aka WP), or are using a skill that depends on work packages, or are given a work package to complete, use this skill to understand the correct methodology.
+---
+
+## Types
+
+$WorkPackage: /a structured document tracking a discrete unit of work/
+$Lifecycle: "create" | "read" | "move" | "act" | "record" | "report"
+$Directory: "todo" | "in-progress" | "completed" | "backlog"
+
+## Context
+
+- $basePath = ".opencode/work"
+- $wpPath = ($dir, $name) => \`\${$basePath}/\${$dir}/wp-\${$name}.md\`
+
+## Work Package Template
+
+A $WorkPackage contains these sections:
+
+1. **Title** - Descriptive name for the work
+2. **Goal/Problem** - What needs to be solved
+3. **Scope** - Which files/packages this touches
+4. **Approach** - How to do it
+5. **Hypothesis** - Why you think this will work
+6. **Results** - Filled upon completion (can contain multiple iterations)
+7. **Evaluation** - What you learned, was hypothesis correct?
+
+## Lifecycle
+
+Work packages enable large tasks to be handled by multiple agents. The state persists between agent sessions. Each stage does not necessarily need to be handled by a single agent.
+
+### 1. Create
+
+Create the work package at $wpPath("todo", /date-name/)
+
+### 2. Read
+
+Read the document to understand the task fully before acting.
+
+### 3. Move
+
+Move from \`todo/\` to \`in-progress/\` to claim ownership.
+
+### 4. Act
+
+Act on the work package within the scope defined in the package.
+
+### 5. Record
+
+Record results and findings in the Results section.
+
+### 6. Report
+
+Report the status of the work package to the delegator.
+
+## Post-Completion
+
+The delegator may then ask you to:
+
+- Move the work package to \`completed/\`
+- Revise the hypothesis and run another iteration
+- Commit your changes
+
+IF /not sure how to proceed/ THEN:
+  - Yield control back to the delegator
+`,
+        "orchestrate.mdz": `---
+name: orchestrate
+description: When running any orchestration operation, load this skill to understand the core methodology using sub-agents and work packages.
+uses:
+  - work-packages
+---
+
+Orchestration enables you to track and delegate sub-tasks effectively.
+
+## Types
+
+$OrchestrationStrategy: "project" | "map-reduce" | "ad-hoc"
+$WorkPackageStatus: "todo" | "in-progress" | "completed"
+$AgentRole: /a specialized focus area for a sub-agent/
+
+## What You Do
+
+Commission and track work packages, evaluate results, and act executively on findings.
+
+There are a range of sub-agents available, and a range of skills available for them to use. Together, these unlock a wide range of possible approaches to solve problems via orchestration.
+
+## Methodology
+
+Any orchestration strategy requires you to:
+
+1. Understand the requirements
+2. Define measures of success
+3. Choose $strategy: $OrchestrationStrategy if not already specified
+4. Create a master work package using [[work-packages]]
+5. Delegate creation and completion of work packages to sub-agents
+6. Delegate testing of solutions to separate sub-agents
+7. Commission up to five iterations of each work package
+8. Update the master work package after each iteration
+9. Revise your strategy and commission new work packages dynamically when needed
+10. Report the results
+
+## Expectations
+
+- Use a diversity of agents with different $AgentRole values
+- Consider how skills can enhance the process
+- Use [[work-packages]] to define and track tasks
+- Use work packages to persist project progress rather than resuming agent sessions
+- Ensure that sub-agents understand the overarching vision
+- Report failure truthfully
+- Create boundaries between different /types of work/ to improve focus and performance
+
+## Guardrails
+
+- Do NOT review code, write code, test work, edit files
+- Do NOT implement features directly
+- Do NOT start with your own analysis
+- Do NOT go on fishing trips, or introduce your own ideas
+
+## Completion Criteria
+
+The work is finished when all the work packages you commissioned have been moved to the completed directory.
+
+This does not necessarily mean that the project was a success. Just that you have completed the experimentation and reached a final conclusion.
+
+Ensure the working tree is clean at the end of the project.
+
+## Final Summary
+
+Your final summary should include:
+
+- The work packages completed
+- Any key changes made
+- Any significant learnings
+- The number of work packages completed
+- The number of agents spawned
+- The original goal, hypothesis, result and conclusion
+`,
+        "scientific-method.mdz": `---
+name: scientific-method
+description: When a task requires observation and verification, use this skill to extend work packages to deliver hypothesis-driven iteration.
+uses:
+  - work-packages
+---
+
+## Types
+
+$Hypothesis: /a testable theory about what is happening and what will fix it/
+$Prediction: /the expected observable result if the hypothesis is true/
+$Observation: /the actual result observed after taking action/
+$Conclusion: "validated" | "falsified"
+
+## Input
+
+- $goal: $String                        <!-- the desired end state -->
+- $maxIterations: $Number = 10
+
+## Context
+
+- $iteration = 0
+- $currentHypothesis: $Hypothesis
+
+## Workflow
+
+### 1. Evaluate
+
+Observe the current state:
+- Take screenshots if UI-related
+- Read output or check files
+- Document the gap between current and $goal
+
+### 2. Iterate
+
+WHILE NOT $/goal achieved/ AND $iteration < $maxIterations DO:
+
+  1. **Hypothesize**: Form $currentHypothesis about what will reach $goal
+     - State the hypothesis clearly in the work package
+     - For debugging, consider null hypotheses like "The API latency is unrelated to the crash"
+  
+  2. **Predict**: State $prediction for what observable effect you expect
+     - Define measurable success criteria
+  
+  3. **Act**: Implement the proposed solution
+     - Keep changes minimal and reversible
+  
+  4. **Observe**: Record $observation of what actually happened
+     - Compare to $prediction objectively
+  
+  5. **Verify**: Determine $conclusion: $Conclusion
+  
+  IF $conclusion = "validated" THEN:
+    - Record success and learnings
+    - Update hypothesis for next iteration if goal not yet achieved
+  ELSE:
+    - Record what was learned from falsification
+    - Revise hypothesis based on observations
+  
+  6. Increment $iteration
+
+### 3. Finish
+
+Complete when any condition is met:
+- Goal achieved
+- Hypothesis proven wrong with no viable alternative
+- Diminishing returns detected
+
+## Tracking Template
+
+Track iterations in the work package using [[work-packages]].
+
+Include a Hypothesis section with what you think is happening and what you predict will fix it.
+
+Include a Results section with iterations containing:
+- Hypothesis: The theory being tested
+- Action: The specific step taken
+- Prediction: The expected observable result if true
+- Observed: The actual result
+- Conclusion: Validated or falsified, with next step
+
+Update the work package document as you iterate.
+`,
+        "orchestrate-map-reduce.mdz": `---
+name: orchestrate-map-reduce
+description: When you need multiple operations to get one solution, use this orchestration strategy to fan out to multiple agents, validate their solutions and find a winning solution.
+uses:
+  - orchestrate
+  - work-packages
+---
+
+## Types
+
+$Task: /any task that an agent can execute/
+$Strategy: "accumulate" | "independent"
+$FilePath: /a file system path/
+
+## Input
+
+- $transforms: ($Task, $Strategy)[]      <!-- task-strategy pairs to execute -->
+- $validator: $Task                       <!-- validation method for solutions -->
+- $return: $Task                          <!-- final aggregation task -->
+
+## Choosing a Strategy
+
+- **Accumulate**: When the aim is to progressively work toward the best solution
+- **Independent**: When the aim is to review a diverse set of candidates (can be run in parallel)
+
+## Context
+
+- $current: $FilePath                    <!-- current solution path -->
+- $masterWP: $FilePath                   <!-- master work package path -->
+- $SolutionPath = $n => /candidate solution path for iteration $n/
+
+## Workflow
+
+### Initialize
+
+1. Create master work package at /appropriate location/
+2. Delegate to sub-agent: summarize the status quo solution and write to $current
+
+### Map Phase
+
+FOR EACH ($task, $strategy) IN $transforms:
+  - Delegate to sub-agent with [[#iteration-manager]] WITH:
+    - $task = $task
+    - $strategy = $strategy
+    - $validator = $validator
+
+### Reduce Phase
+
+1. Collect findings from each iteration manager
+2. Update master work package with aggregated results
+3. Execute $return task to produce final output
+
+## Iteration Manager
+
+You are responsible for mapping over Task until it passes Validator.
+
+### Reference
+
+- $strategy: $Strategy
+- $task: $Task
+- $validator: $Task
+
+### Iteration Context
+
+- $iteration = 0
+- $current: $FilePath = $SolutionPath(0)
+- $next: $FilePath = $SolutionPath(1)
+
+Each proposed solution should be stored in a markdown document at $next.
+
+### Accumulate Strategy
+
+IF $strategy = "accumulate" THEN:
+  - Execute iterative refinement until validation passes or max iterations reached
+  - For each iteration:
+    - Delegate to sub-agent with [[#build-prompt]]
+    - Delegate to sub-agent with [[#validate-prompt]]
+    - IF /validation passes/ THEN:
+      - Update work package with success
+      - Advance $current and $next paths
+    - Increment $iteration
+
+### Independent Strategy
+
+IF $strategy = "independent" THEN:
+  - Execute parallel candidate generation
+  - For each iteration up to 5:
+    - Delegate to sub-agent with [[#build-prompt]]
+    - Increment $iteration
+  - Delegate to sub-agent with [[#validate-all-prompt]]
+
+### Return Findings
+
+Return findings to parent orchestrator.
+
+## Build Prompt
+
+Execute the following task:
+
+$task
+
+Current solution: $current
+
+Write your proposed solution to: $next
+
+## Validate Prompt
+
+Validation method: $validator
+
+Use the validator on the proposed solution.
+
+Update $next with your validation findings.
+
+## Validate All Prompt
+
+Review all proposed solutions from $SolutionPath(1) through $SolutionPath($iteration).
+
+Select the best candidate based on $validator criteria.
+
+Update the work package with your findings and recommendation.
+`,
+        "simplify.mdz": `---
+name: simplify
+description: When a solution needs to be simplified, use this skill with orchestrate-map-reduce to find its essence.
+uses:
+  - orchestrate-map-reduce
+---
+
+## Types
+
+$Target: /the artifact to simplify (code, architecture, docs, etc.)/
+$Essence: /what must be preserved for the solution to remain viable/
+$Heuristic: "subtractive" | "constraint" | "caveman" | "audit" | "rewrite" | "darlings"
+$Strategy: "accumulate" | "independent"
+$ValidationResult: "progress" | "regression" | "plateau"
+
+## Input
+
+- $target: $Target                       <!-- what to simplify -->
+- $essence: $Essence                     <!-- what must be preserved -->
+- $heuristics: $Heuristic[] = ["subtractive", "audit"]
+- $strategy: $Strategy = "accumulate"
+
+## Context
+
+- $validator: $String                    <!-- function that determines if essence is intact -->
+- $transforms: ($Heuristic, $Strategy)[] <!-- heuristic-strategy pairs -->
+
+## Workflow
+
+### Scope
+
+1. Identify $target precisely
+2. Define $essence--/what breaks if removed/
+3. Define $validator to test if solution remains viable
+4. Select $heuristics based on target type:
+   - Code: "subtractive", "audit", "rewrite"
+   - Architecture: "constraint", "caveman"
+   - Docs: "caveman", "darlings"
+5. Determine $strategy for each heuristic
+
+### Confirm
+
+Present plan to user:
+- Target: $target
+- Essence: $essence
+- Heuristics: $heuristics
+- Strategy: $strategy
+
+IF /user rejects plan/ THEN:
+  - Revise based on feedback
+  - Return to [[#scope]]
+
+### Execute
+
+Execute [[orchestrate-map-reduce]] WITH:
+  - $transforms = $transforms
+  - $validator = $validator
+  - $return = "Present findings to user"
+
+## Heuristics
+
+### Subtractive Iteration
+
+> Remove one element/layer/abstraction. The solution must still satisfy $essence. What single thing can be removed?
+
+### Constraint Forcing
+
+> Reimplement using only {N} {units}. What would you keep? What creative alternatives replace what you removed?
+
+### The Caveman Test
+
+> Explain this to someone with no context. What parts can't be explained simply? Those are candidates for removal.
+
+### Reverse Complexity Audit
+
+> List every abstraction, indirection, and layer. For each, name the catastrophe it prevents. If no catastrophe, mark for removal.
+
+### The Rewrite Bet
+
+> You have 2 hours to rewrite from scratch. What do you keep? What do you abandon? Implement that version.
+
+### Kill Your Darlings
+
+> Identify the clever/elegant/sophisticated parts. These are often unnecessary. Propose a naive alternative for each.
+
+## Validation
+
+After each iteration, determine $result: $ValidationResult:
+
+- **progress**: /simpler AND essence intact/
+- **regression**: /essence broken/
+- **plateau**: /no meaningful change/
+
+IF $result = "regression" THEN:
+  - Revert changes
+  - Try different heuristic
+
+IF $result = "plateau" THEN:
+  - Consider target already minimal
+  - Or try more aggressive heuristic
+`,
+      },
     },
   };
 
@@ -353,7 +922,12 @@ Execute [[orchestrate]] WITH:
   let requestId = 0;
   let pendingRequests = new Map();
   let validateTimeout = null;
-  let currentScenario = "valid";
+  
+  // Project state
+  let currentProject = "compiler-examples";
+  let currentProjectFiles = {};
+  let currentFile = null;
+  let projectValidationResult = null;
 
   // Initialize worker
   function initWorker() {
@@ -413,6 +987,36 @@ Execute [[orchestrate]] WITH:
       renderValidationResult(result);
     } catch (error) {
       console.error("Validation failed:", error);
+      document.getElementById("validation-status").textContent = "Error";
+    }
+  }
+
+  async function validateProject(files) {
+    document.getElementById("validation-status").textContent = "Validating project...";
+
+    try {
+      const result = await sendToWorker("validateProject", { files });
+
+      if (result.error) {
+        console.error("Project validation error:", result.error);
+        document.getElementById("validation-status").textContent = "Error";
+        return;
+      }
+
+      document.getElementById("validation-status").textContent = "";
+      projectValidationResult = result;
+      
+      // Render the current file's diagnostics
+      if (currentFile && result.fileResults[currentFile]) {
+        renderDiagnostics(result.fileResults[currentFile].diagnostics);
+        updateCounts(result.fileResults[currentFile].metadata, result.fileResults[currentFile].dependencies);
+      }
+      
+      // Render unified graph
+      renderProjectGraph(result.unifiedGraph);
+      updateProjectInsight(result);
+    } catch (error) {
+      console.error("Project validation failed:", error);
       document.getElementById("validation-status").textContent = "Error";
     }
   }
@@ -651,10 +1255,13 @@ Execute [[orchestrate]] WITH:
 
   function updateInsight(diagnostics) {
     const insightEl = document.getElementById("insight");
-    const scenario = scenarios[currentScenario];
+    
+    // Get file-specific insight if available
+    const projectInfo = projectDescriptions[currentProject];
+    const fileInsight = projectInfo?.fileInsights?.[currentFile];
 
     if (diagnostics.length === 0) {
-      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${scenario?.insight || "💡 <strong>All checks passed!</strong> Your skill definition is valid."}</p>`;
+      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${fileInsight || "💡 <strong>All checks passed!</strong> Your skill definition is valid."}</p>`;
     } else {
       const errors = diagnostics.filter((d) => d.severity === "error");
       const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -669,6 +1276,258 @@ Execute [[orchestrate]] WITH:
       insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${message}</p>`;
     }
   }
+
+  function updateProjectInsight(result) {
+    const insightEl = document.getElementById("insight");
+    const project = projects[currentProject];
+    
+    // Count total diagnostics across all files
+    let totalErrors = 0;
+    let totalWarnings = 0;
+    for (const fileResult of Object.values(result.fileResults)) {
+      totalErrors += fileResult.diagnostics.filter(d => d.severity === "error").length;
+      totalWarnings += fileResult.diagnostics.filter(d => d.severity === "warning").length;
+    }
+    
+    if (totalErrors === 0 && totalWarnings === 0) {
+      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">📁 <strong>${project?.name || "Project"}:</strong> All ${Object.keys(result.fileResults).length} files validated successfully. Click nodes in the graph to explore dependencies.</p>`;
+    } else {
+      let message = `📁 <strong>${project?.name || "Project"}:</strong> `;
+      if (totalErrors > 0) message += `${totalErrors} error${totalErrors !== 1 ? "s" : ""} `;
+      if (totalWarnings > 0) message += `${totalWarnings} warning${totalWarnings !== 1 ? "s" : ""} `;
+      message += `across ${Object.keys(result.fileResults).length} files.`;
+      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${message}</p>`;
+    }
+  }
+
+  function renderProjectGraph(unifiedGraph) {
+    const svg = document.getElementById("graph-svg");
+    const container = document.getElementById("graph");
+
+    if (!container || container.offsetParent === null) {
+      return;
+    }
+
+    const width = container.clientWidth - 32;
+    const height = container.clientHeight - 32;
+
+    if (unifiedGraph.nodes.length === 0) {
+      svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="currentColor" class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">No skills found</text>`;
+      return;
+    }
+
+    // Position nodes in a hierarchical layout
+    const nodes = unifiedGraph.nodes.map((n, i) => ({
+      ...n,
+      x: 0,
+      y: 0,
+    }));
+
+    // Build adjacency for topological sort
+    const nodeIndex = new Map(nodes.map((n, i) => [n.id, i]));
+    const inDegree = new Array(nodes.length).fill(0);
+    const children = nodes.map(() => []);
+    
+    for (const edge of unifiedGraph.edges) {
+      const sourceIdx = nodeIndex.get(edge.source);
+      const targetIdx = nodeIndex.get(edge.target);
+      if (sourceIdx !== undefined && targetIdx !== undefined) {
+        children[sourceIdx].push(targetIdx);
+        inDegree[targetIdx]++;
+      }
+    }
+
+    // Assign levels (topological order)
+    const levels = new Array(nodes.length).fill(0);
+    const queue = [];
+    for (let i = 0; i < nodes.length; i++) {
+      if (inDegree[i] === 0) queue.push(i);
+    }
+    
+    while (queue.length > 0) {
+      const idx = queue.shift();
+      for (const child of children[idx]) {
+        levels[child] = Math.max(levels[child], levels[idx] + 1);
+        inDegree[child]--;
+        if (inDegree[child] === 0) queue.push(child);
+      }
+    }
+
+    // Group nodes by level
+    const maxLevel = Math.max(...levels);
+    const levelGroups = [];
+    for (let i = 0; i <= maxLevel; i++) {
+      levelGroups.push([]);
+    }
+    nodes.forEach((n, i) => {
+      levelGroups[levels[i]].push(i);
+    });
+
+    // Position nodes
+    const levelHeight = height / (maxLevel + 2);
+    levelGroups.forEach((group, level) => {
+      const levelWidth = width / (group.length + 1);
+      group.forEach((nodeIdx, i) => {
+        nodes[nodeIdx].x = levelWidth * (i + 1);
+        nodes[nodeIdx].y = levelHeight * (level + 1);
+      });
+    });
+
+    // Render
+    let html = `
+      <defs>
+        <marker id="arrowhead-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#8B5CF6"/>
+        </marker>
+        <marker id="arrowhead-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#6B7280"/>
+        </marker>
+      </defs>
+    `;
+
+    // Draw edges
+    for (const edge of unifiedGraph.edges) {
+      const sourceIdx = nodeIndex.get(edge.source);
+      const targetIdx = nodeIndex.get(edge.target);
+      if (sourceIdx === undefined || targetIdx === undefined) continue;
+      
+      const from = nodes[sourceIdx];
+      const to = nodes[targetIdx];
+      const color = edge.type === "uses" ? "#8B5CF6" : "#6B7280";
+      const markerEnd = edge.type === "uses" ? "arrowhead-purple" : "arrowhead-gray";
+      const dashArray = edge.type === "reference" ? "4" : "none";
+
+      html += `<line
+        x1="${from.x}" y1="${from.y + 15}"
+        x2="${to.x}" y2="${to.y - 15}"
+        stroke="${color}"
+        stroke-width="2"
+        stroke-dasharray="${dashArray}"
+        marker-end="url(#${markerEnd})"/>`;
+    }
+
+    // Draw nodes
+    for (const node of nodes) {
+      const isCurrentFile = node.file === currentFile;
+      const isInProject = node.file !== null;
+      const fillColor = isCurrentFile ? "#E0E7FF" : (isInProject ? "#D1FAE5" : "#F3F4F6");
+      const strokeColor = isCurrentFile ? "#6366F1" : (isInProject ? "#10B981" : "#9CA3AF");
+      const textColor = isCurrentFile ? "#4338CA" : (isInProject ? "#047857" : "#374151");
+      const nodeWidth = Math.min(110, Math.max(70, node.id.length * 7 + 20));
+      const clickHandler = node.file ? `onclick="switchToFile('${node.file}')"` : "";
+
+      html += `
+        <g class="graph-node" ${clickHandler}>
+          <rect x="${node.x - nodeWidth / 2}" y="${node.y - 15}" width="${nodeWidth}" height="30" rx="4" fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"/>
+          <text x="${node.x}" y="${node.y + 4}" text-anchor="middle" font-size="11" fill="${textColor}" font-family="monospace">${node.id.length > 14 ? node.id.slice(0, 12) + "..." : node.id}</text>
+        </g>
+      `;
+    }
+
+    svg.innerHTML = html;
+  }
+
+  function renderProjectList() {
+    const listEl = document.getElementById("project-list");
+    const projectIds = Object.keys(projects);
+    
+    listEl.innerHTML = projectIds.map(projectId => {
+      const project = projects[projectId];
+      const isActive = projectId === currentProject;
+      return `<button class="project-item ${isActive ? "active" : ""}" onclick="switchToProject('${projectId}')" title="${project.description}">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+        </svg>
+        <span>${project.name}</span>
+      </button>`;
+    }).join("");
+  }
+
+  function renderFileTree() {
+    const container = document.getElementById("file-tree-container");
+    const treeEl = document.getElementById("file-tree");
+    
+    if (!currentProject || !currentProjectFiles) {
+      container.classList.add("hidden");
+      return;
+    }
+    
+    container.classList.remove("hidden");
+    
+    const fileNames = Object.keys(currentProjectFiles);
+    treeEl.innerHTML = fileNames.map(fileName => {
+      const isActive = fileName === currentFile;
+      // Remove .mdz extension for display
+      const displayName = fileName.replace(/\.mdz$/, "");
+      return `<button class="file-tree-item ${isActive ? "active" : ""}" onclick="switchToFile('${fileName}')" title="${fileName}">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span>${displayName}</span>
+      </button>`;
+    }).join("");
+  }
+
+  function switchToFile(fileName) {
+    if (!currentProjectFiles[fileName]) return;
+    
+    // Save current file content
+    if (currentFile && editor) {
+      currentProjectFiles[currentFile] = editor.getValue();
+    }
+    
+    // Switch to new file
+    currentFile = fileName;
+    editor.setValue(currentProjectFiles[fileName]);
+    document.getElementById("file-indicator").textContent = fileName;
+    
+    // Update file tree
+    renderFileTree();
+    
+    // Update diagnostics display for this file
+    if (projectValidationResult && projectValidationResult.fileResults[fileName]) {
+      const fileResult = projectValidationResult.fileResults[fileName];
+      renderDiagnostics(fileResult.diagnostics);
+      updateCounts(fileResult.metadata, fileResult.dependencies);
+      // Re-render graph to highlight current file
+      renderProjectGraph(projectValidationResult.unifiedGraph);
+    }
+  }
+
+  function switchToProject(projectId) {
+    const project = projects[projectId];
+    if (!project) return;
+    
+    // Save current file content before switching
+    if (currentFile && editor) {
+      currentProjectFiles[currentFile] = editor.getValue();
+    }
+    
+    // Switch to new project
+    currentProject = projectId;
+    currentProjectFiles = { ...project.files };
+    
+    // Load first file
+    const fileNames = Object.keys(currentProjectFiles);
+    currentFile = fileNames[0];
+    editor.setValue(currentProjectFiles[currentFile]);
+    document.getElementById("file-indicator").textContent = currentFile;
+    
+    // Update UI
+    renderProjectList();
+    renderFileTree();
+    
+    // Sync mobile selector
+    const mobileSelect = document.getElementById("scenario-mobile");
+    if (mobileSelect) mobileSelect.value = `project:${projectId}`;
+    
+    // Validate entire project
+    validateProject(currentProjectFiles);
+  }
+
+  // Make switchToFile and switchToProject available globally for onclick handlers
+  window.switchToFile = switchToFile;
+  window.switchToProject = switchToProject;
 
   // Monaco setup
   require.config({
@@ -891,8 +1750,14 @@ Execute [[orchestrate]] WITH:
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
+    // Initialize with default project (compiler-examples)
+    const defaultProject = projects["compiler-examples"];
+    currentProjectFiles = { ...defaultProject.files };
+    const fileNames = Object.keys(currentProjectFiles);
+    currentFile = fileNames[0];
+
     editor = monaco.editor.create(document.getElementById("editor"), {
-      value: scenarios.valid.source,
+      value: currentProjectFiles[currentFile],
       language: "zen",
       theme: isDark ? "zen-dark" : "zen-light",
       fontSize: 14,
@@ -918,30 +1783,33 @@ Execute [[orchestrate]] WITH:
         clearTimeout(validateTimeout);
       }
       validateTimeout = setTimeout(() => {
-        validate(editor.getValue());
+        const source = editor.getValue();
+        
+        // Always in project mode now - update the file and validate whole project
+        if (currentProject && currentFile) {
+          currentProjectFiles[currentFile] = source;
+          validateProject(currentProjectFiles);
+        }
       }, 300);
     });
 
     // Initialize worker and run initial validation
     initWorker();
-    document.getElementById("file-indicator").textContent =
-      scenarios.valid.name;
+    document.getElementById("file-indicator").textContent = currentFile;
+    
+    // Render project list and file tree
+    renderProjectList();
+    renderFileTree();
 
-    // Wait for worker to be ready, then validate
+    // Wait for worker to be ready, then validate project
     setTimeout(() => {
-      validate(editor.getValue());
+      validateProject(currentProjectFiles);
     }, 100);
 
-    // Scenario selector
-    document.getElementById("scenario").addEventListener("change", (e) => {
-      const scenarioId = e.target.value;
-      const scenario = scenarios[scenarioId];
-      if (scenario) {
-        currentScenario = scenarioId;
-        editor.setValue(scenario.source);
-        document.getElementById("file-indicator").textContent = scenario.name;
-        // Validation will trigger automatically via onDidChangeModelContent
-      }
+    // Handle mobile project selection
+    document.getElementById("scenario-mobile").addEventListener("change", (e) => {
+      const projectId = e.target.value.replace("project:", "");
+      switchToProject(projectId);
     });
 
     // Theme changes

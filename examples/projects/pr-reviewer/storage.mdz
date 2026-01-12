@@ -1,0 +1,105 @@
+---
+name: storage
+description: When persisting or retrieving review state, learnings, or configuration.
+---
+
+Persistent storage for PR review data using markdown files in a `.review/` directory.
+
+## Types
+
+$StorageOperation: "read" | "write" | "append" | "delete"
+$StorageScope: "repo" | "org" | "pr"
+$StoragePath: /a file path within the .review directory/
+
+## Context
+
+- $basePath = ".review"
+- $repoPath = `${$basePath}/repo`
+- $prPath = $prNumber => `${$basePath}/prs/pr-${$prNumber}`
+
+## Storage Structure
+
+The `.review/` directory contains:
+
+- `.review/config.md` - Repository review configuration
+- `.review/learnings.md` - Accumulated learnings from feedback
+- `.review/guidelines.md` - Detected code guidelines
+- `.review/prs/pr-{number}/summary.md` - PR review summary
+- `.review/prs/pr-{number}/findings.md` - All findings for this PR
+- `.review/prs/pr-{number}/history.md` - Review iterations and responses
+
+## Operations
+
+### Read
+
+Read content from a storage path.
+
+1. Construct full path from $scope and relative path
+2. IF /file exists/ THEN:
+   - Return file contents
+   ELSE:
+   - Return empty string or default value
+
+### Write
+
+Write content to a storage path, replacing existing content.
+
+1. Construct full path from $scope and relative path
+2. Ensure parent directories exist
+3. Write content to file
+4. Return success confirmation
+
+### Append
+
+Append content to a storage path, preserving existing content.
+
+1. Construct full path from $scope and relative path
+2. IF /file exists/ THEN:
+   - Read existing content
+   - Append new content with separator
+   ELSE:
+   - Create file with new content
+3. Return success confirmation
+
+### Delete
+
+Remove a storage path.
+
+1. Construct full path from $scope and relative path
+2. IF /file exists/ THEN:
+   - Delete file
+3. Return success confirmation
+
+## File Formats
+
+### config.md Format
+
+A markdown file with these sections:
+
+1. **Path Instructions** - glob pattern to instruction pairs
+2. **Blocked Paths** - patterns to skip during review
+3. **Severity Thresholds** - when to block vs comment
+
+### learnings.md Format
+
+A markdown file with dated learning entries containing:
+
+1. **Title** - what the learning is about
+2. **Content** - the preference or rule
+3. **Applies to** - glob pattern for scope
+4. **Source** - where the learning came from
+
+### findings.md Format
+
+A markdown file with findings grouped by severity:
+
+1. **Critical** - blocking issues
+2. **Major** - significant issues
+3. **Minor** - suggestions
+4. **Trivial** - nitpicks
+
+Each finding includes category, file:line, and description.
+
+## Usage
+
+Other skills use storage via delegation with section references like [[storage#read]] or [[storage#write]].

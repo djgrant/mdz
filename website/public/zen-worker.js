@@ -5582,6 +5582,99 @@ ${targetState.ast.frontmatter.description}`;
       });
     }
   }
+  function handleValidateProject(id, files) {
+    try {
+      const fileResults = {};
+      const allNodes = /* @__PURE__ */ new Map();
+      const allEdges = [];
+      const skillToFile = /* @__PURE__ */ new Map();
+      for (const [fileName, source] of Object.entries(files)) {
+        const compileResult = compile(source);
+        if (compileResult.metadata.name) {
+          skillToFile.set(compileResult.metadata.name, fileName);
+        }
+      }
+      for (const [fileName, source] of Object.entries(files)) {
+        const compileResult = compile(source);
+        const skillName = compileResult.metadata.name;
+        fileResults[fileName] = {
+          diagnostics: compileResult.diagnostics.map((d) => ({
+            severity: d.severity,
+            code: d.code,
+            message: d.message,
+            line: d.span.start.line,
+            column: d.span.start.column,
+            endLine: d.span.end.line,
+            endColumn: d.span.end.column
+          })),
+          metadata: {
+            name: compileResult.metadata.name,
+            description: compileResult.metadata.description,
+            uses: compileResult.metadata.uses,
+            types: compileResult.metadata.types.map((t) => ({
+              name: t.name,
+              definition: t.definition
+            })),
+            variables: compileResult.metadata.variables.map((v) => ({
+              name: v.name,
+              type: v.type
+            })),
+            references: compileResult.metadata.references.map((r) => ({
+              kind: r.kind,
+              target: r.target
+            })),
+            sections: compileResult.metadata.sections.map((s) => ({
+              title: s.title,
+              anchor: s.anchor,
+              level: s.level
+            }))
+          },
+          dependencies: {
+            nodes: compileResult.dependencies.nodes,
+            edges: compileResult.dependencies.edges.map((e) => ({
+              target: e.target,
+              type: e.type
+            }))
+          }
+        };
+        if (skillName) {
+          allNodes.set(skillName, fileName);
+        }
+        for (const dep of compileResult.dependencies.nodes) {
+          if (!allNodes.has(dep)) {
+            allNodes.set(dep, skillToFile.get(dep) || null);
+          }
+        }
+        for (const edge of compileResult.dependencies.edges) {
+          if (skillName) {
+            allEdges.push({
+              source: skillName,
+              target: edge.target,
+              type: edge.type
+            });
+          }
+        }
+      }
+      const result = {
+        fileResults,
+        unifiedGraph: {
+          nodes: Array.from(allNodes.entries()).map(([id2, file]) => ({ id: id2, file })),
+          edges: allEdges
+        }
+      };
+      postMessage({
+        type: "validateProject",
+        id,
+        result
+      });
+    } catch (error) {
+      postMessage({
+        type: "error",
+        id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
   self.addEventListener("message", (event) => {
     const message = event.data;
     switch (message.type) {
@@ -5590,6 +5683,9 @@ ${targetState.ast.frontmatter.description}`;
         break;
       case "validate":
         handleValidate(message.id, message.source);
+        break;
+      case "validateProject":
+        handleValidateProject(message.id, message.files);
         break;
       case "completions":
         handleCompletions(message.id, message.uri, message.source, message.position);

@@ -10,7 +10,8 @@
  */
 
 import { parse } from '../../packages/core/src/parser/parser';
-import { compile, CompileResult, Diagnostic as CompilerDiagnostic, DependencyGraph, DocumentMetadata } from '../../packages/core/src/compiler/compiler';
+import { compile } from '../../packages/core/src/compiler/compiler';
+import type { CompileResult, Diagnostic as CompilerDiagnostic, DependencyGraph, DocumentMetadata } from '../../packages/core/src/compiler/compiler';
 import { ZenLanguageServer } from '../../packages/lsp/src/server';
 import type { Document } from '../../packages/core/src/parser/ast';
 import type { Position, CompletionItem, Hover, Diagnostic } from '../../packages/lsp/src/server';
@@ -40,13 +41,24 @@ interface ValidateResult {
   };
   dependencies: {
     nodes: string[];
-    edges: Array<{ target: string; type: 'uses' | 'reference' }>;
+    edges: Array<{ target: string; type: 'uses' | 'reference' | 'imports' }>;
+  };
+}
+
+interface ValidateProjectResult {
+  // Diagnostics per file
+  fileResults: Record<string, ValidateResult>;
+  // Unified dependency graph across all files
+  unifiedGraph: {
+    nodes: Array<{ id: string; file: string | null }>;
+    edges: Array<{ source: string; target: string; type: 'uses' | 'reference' | 'imports' }>;
   };
 }
 
 type WorkerRequest =
   | { type: 'parse'; id: number; source: string }
   | { type: 'validate'; id: number; source: string }
+  | { type: 'validateProject'; id: number; files: Record<string, string> }
   | { type: 'completions'; id: number; uri: string; source: string; position: Position }
   | { type: 'hover'; id: number; uri: string; source: string; position: Position }
   | { type: 'diagnostics'; id: number; uri: string; source: string };
@@ -54,6 +66,7 @@ type WorkerRequest =
 type WorkerResponse =
   | { type: 'parse'; id: number; result: Document }
   | { type: 'validate'; id: number; result: ValidateResult }
+  | { type: 'validateProject'; id: number; result: ValidateProjectResult }
   | { type: 'completions'; id: number; result: CompletionItem[] }
   | { type: 'hover'; id: number; result: Hover | null }
   | { type: 'diagnostics'; id: number; result: Diagnostic[] }
@@ -209,6 +222,114 @@ function handleDiagnostics(id: number, uri: string, source: string): void {
   }
 }
 
+function handleValidateProject(id: number, files: Record<string, string>): void {
+  try {
+    const fileResults: Record<string, ValidateResult> = {};
+    const allNodes = new Map<string, string | null>(); // skill name -> file name (null if external)
+    const allEdges: Array<{ source: string; target: string; type: 'uses' | 'reference' | 'imports' }> = [];
+
+    // Build a map of skill names to file names
+    const skillToFile = new Map<string, string>();
+    for (const [fileName, source] of Object.entries(files)) {
+      const compileResult = compile(source);
+      if (compileResult.metadata.name) {
+        skillToFile.set(compileResult.metadata.name, fileName);
+      }
+    }
+
+    // Validate each file and build unified graph
+    for (const [fileName, source] of Object.entries(files)) {
+      const compileResult = compile(source);
+      const skillName = compileResult.metadata.name;
+
+      // Convert to playground-friendly format
+      fileResults[fileName] = {
+        diagnostics: compileResult.diagnostics.map(d => ({
+          severity: d.severity,
+          code: d.code,
+          message: d.message,
+          line: d.span.start.line,
+          column: d.span.start.column,
+          endLine: d.span.end.line,
+          endColumn: d.span.end.column,
+        })),
+        metadata: {
+          name: compileResult.metadata.name,
+          description: compileResult.metadata.description,
+          uses: compileResult.metadata.uses,
+          types: compileResult.metadata.types.map(t => ({
+            name: t.name,
+            definition: t.definition,
+          })),
+          variables: compileResult.metadata.variables.map(v => ({
+            name: v.name,
+            type: v.type,
+          })),
+          references: compileResult.metadata.references.map(r => ({
+            kind: r.kind,
+            target: r.target,
+          })),
+          sections: compileResult.metadata.sections.map(s => ({
+            title: s.title,
+            anchor: s.anchor,
+            level: s.level,
+          })),
+        },
+        dependencies: {
+          nodes: compileResult.dependencies.nodes,
+          edges: compileResult.dependencies.edges.map(e => ({
+            target: e.target,
+            type: e.type,
+          })),
+        },
+      };
+
+      // Add this skill as a node
+      if (skillName) {
+        allNodes.set(skillName, fileName);
+      }
+
+      // Add dependency nodes and edges
+      for (const dep of compileResult.dependencies.nodes) {
+        if (!allNodes.has(dep)) {
+          // Check if it's in our project or external
+          allNodes.set(dep, skillToFile.get(dep) || null);
+        }
+      }
+
+      for (const edge of compileResult.dependencies.edges) {
+        if (skillName) {
+          allEdges.push({
+            source: skillName,
+            target: edge.target,
+            type: edge.type,
+          });
+        }
+      }
+    }
+
+    const result: ValidateProjectResult = {
+      fileResults,
+      unifiedGraph: {
+        nodes: Array.from(allNodes.entries()).map(([id, file]) => ({ id, file })),
+        edges: allEdges,
+      },
+    };
+
+    postMessage({
+      type: 'validateProject',
+      id,
+      result,
+    } as WorkerResponse);
+  } catch (error) {
+    postMessage({
+      type: 'error',
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    } as WorkerResponse);
+  }
+}
+
 // ============================================================================
 // Main Message Handler
 // ============================================================================
@@ -223,6 +344,10 @@ self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
 
     case 'validate':
       handleValidate(message.id, message.source);
+      break;
+
+    case 'validateProject':
+      handleValidateProject(message.id, message.files);
       break;
 
     case 'completions':
