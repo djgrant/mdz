@@ -45,8 +45,10 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 
   <ul>
     <li><strong>For-each loop</strong> (<code>FOR EACH $x IN $y:</code>) — Iteration over a collection.</li>
-    <li><strong>Parallel loop</strong> (<code>PARALLEL FOR EACH $x IN $y:</code>) — Concurrent iteration.</li>
     <li><strong>While loop</strong> (<code>WHILE (cond):</code>) — Conditional loop.</li>
+    <li><strong>Return statement</strong> (<code>RETURN $value</code>) — Exit and return a value.</li>
+    <li><strong>Async delegate</strong> (<code>ASYNC DELEGATE /task/ TO ~/agent/x</code>) — Non-blocking agent delegation.</li>
+    <li><strong>Await</strong> (<code>AWAIT $handle</code>) — Wait for async operation to complete.</li>
     <li><strong>Conditional</strong> (<code>IF cond THEN:</code>) — Conditional branching.</li>
     <li><strong>Else clause</strong> (<code>ELSE:</code>) — Alternative branch of a conditional.</li>
     <li><strong>Logical operators</strong> (<code>AND</code>, <code>OR</code>, <code>NOT</code>) — Boolean logic in conditions.</li>
@@ -73,6 +75,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     <li><strong>Arrow</strong> (<code>=&gt;</code>) — Defines a lambda expression. <code>$x =&gt; expr</code></li>
     <li><strong>Union</strong> (<code>|</code>) — Separates enum variants in types. <code>"a" | "b"</code></li>
     <li><strong>Member access</strong> (<code>.</code>) — Accesses a property. <code>$item.name</code></li>
+    <li><strong>Push operator</strong> (<code>&gt;&gt;</code>) — Appends a value to a collection. <code>$item &gt;&gt; $list</code></li>
   </ul>
 
   <h2>Comparison Operators</h2>

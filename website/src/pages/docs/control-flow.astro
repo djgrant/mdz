@@ -27,15 +27,14 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$priority</span> = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>:
     - Expedite processing</code></pre>
 
-  <h2>Parallel For-Each Loop</h2>
+  <h3 id="async-delegate">Asynchronous Delegation</h3>
   
-  <p>Iterate with concurrent execution using <code>PARALLEL FOR EACH</code>:</p>
+  <p>For parallel execution, use <code>ASYNC DELEGATE</code> inside a loop:</p>
   
-  <pre><code class="mdz"><span class="zen-keyword">PARALLEL FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
-  - Process <span class="zen-variable">$item</span> independently
-  - Results collected when all complete</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$items</span>:
+  - <span class="zen-keyword">ASYNC DELEGATE</span> <span class="zen-semantic">/process $item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span></code></pre>
 
-  <p>Use PARALLEL FOR EACH when:</p>
+  <p>Use ASYNC DELEGATE when:</p>
   
   <ul>
     <li>Iterations are independent</li>
@@ -128,7 +127,6 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <ul>
     <li>FOR EACH loops</li>
-    <li>PARALLEL FOR EACH loops</li>
     <li>WHILE loops</li>
   </ul>
   
@@ -196,7 +194,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     <li><strong>Explicit Termination</strong> — Always include bounds to prevent infinite loops</li>
     <li><strong>Mixed Conditions</strong> — Combine deterministic checks with semantic interpretation</li>
     <li><strong>Clear Indentation</strong> — Structure is visible at a glance</li>
-    <li><strong>PARALLEL</strong> — Enables concurrent execution</li>
+    <li><strong>ASYNC DELEGATE</strong> — Enables concurrent execution</li>
     <li><strong>BREAK/CONTINUE</strong> — Enable early exit from loops</li>
     <li><strong>USE/EXECUTE/DELEGATE/GOTO</strong> — Composition keywords</li>
   </ul>

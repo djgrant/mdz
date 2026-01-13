@@ -7,16 +7,14 @@ import Header from "../components/Header.astro";
 const codeExample = `<span class="zen-comment">---</span>
 <span class="zen-comment">name: iterative-solver</span>
 <span class="zen-comment">description: Hypothesis-driven problem solving</span>
+<span class="zen-comment"></span>
+<span class="zen-comment">types:</span>
+<span class="zen-comment">  $Hypothesis: /a testable prediction/</span>
+<span class="zen-comment">  $Outcome: "confirmed" | "refuted"</span>
+<span class="zen-comment"></span>
+<span class="zen-comment">input:</span>
+<span class="zen-comment">  $problem: $String</span>
 <span class="zen-comment">---</span>
-
-<span class="zen-heading">## Input</span>
-
-- <span class="zen-variable">$problem</span>: <span class="zen-type">$String</span>
-
-<span class="zen-heading">## Types</span>
-
-<span class="zen-type">$Hypothesis</span>: <span class="zen-semantic">/a testable prediction/</span>
-<span class="zen-type">$Outcome</span>: <span class="zen-string">"confirmed"</span> | <span class="zen-string">"refuted"</span>
 
 <span class="zen-heading">## Workflow</span>
 
@@ -25,7 +23,7 @@ const codeExample = `<span class="zen-comment">---</span>
   - Formulate <span class="zen-variable">$hypothesis</span>: <span class="zen-type">$Hypothesis</span>
   - <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/experiment</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/test hypothesis/</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$outcome</span> = <span class="zen-string">"confirmed"</span> <span class="zen-keyword">THEN</span>:
-    - Return <span class="zen-variable">$solution</span>`;
+    - <span class="zen-keyword">RETURN</span> <span class="zen-variable">$solution</span>`;
 ---
 
 <Layout title="MDZ - A language for LLMs">
