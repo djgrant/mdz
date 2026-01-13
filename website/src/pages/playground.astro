@@ -1251,7 +1251,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
           [/^---$/, "meta.frontmatter"],
           [/^#+\s+.*$/, "markup.heading"],
           [
-            /\b(PARALLEL FOR EACH|FOR EACH|WHILE|DO|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE)\b/,
+            /\b(PARALLEL FOR EACH|FOR EACH|WHILE|DO|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE|DELEGATE|USE|EXECUTE|GOTO|TO)\b/,
             "keyword",
           ],
           [/\/(?=[^\/\n]+\/)/, { token: "delimiter.semantic", next: "@semantic" }],
@@ -1262,6 +1262,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
           [/\$[a-z][a-zA-Z0-9-]*/, "variable"],
           [/"[^"]*"/, "string"],
           [/-?\d+(\.\d+)?/, "number"],
+          [/<!--[\s\S]*?-->/, "comment"],
           [/^>.*$/, "comment"],
         ],
         semantic: [

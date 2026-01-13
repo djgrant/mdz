@@ -1844,19 +1844,26 @@
           };
         }
         // v0.8: DELEGATE statement for agent delegation
-        // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+        // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
+        //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
         parseDelegateStatement() {
           const start = this.advance();
-          const task = this.parseSemanticMarker();
+          let task;
+          if (!this.check("TO")) {
+            task = this.parseSemanticMarker();
+          }
           this.expect("TO");
           const target = this.parseLink();
           let withAnchor;
+          let parameters;
           if (this.check("WITH")) {
             this.advance();
-            withAnchor = this.parseAnchor();
-          }
-          let parameters;
-          if (this.check("COLON")) {
+            if (this.check("COLON")) {
+              parameters = this.parseParameterBlock();
+            } else {
+              withAnchor = this.parseAnchor();
+            }
+          } else if (this.check("COLON")) {
             parameters = this.parseParameterBlock();
           }
           return {
@@ -2472,6 +2479,15 @@
             case "DelegateStatement":
               this.extractFromDelegateStatement(block);
               break;
+            case "UseStatement":
+              this.extractFromUseStatement(block);
+              break;
+            case "ExecuteStatement":
+              this.extractFromExecuteStatement(block);
+              break;
+            case "GotoStatement":
+              this.extractFromGotoStatement(block);
+              break;
           }
         }
         extractTypeDefinition(def) {
@@ -2575,11 +2591,13 @@
         // v0.8: Extract metadata from DELEGATE statement
         extractFromDelegateStatement(deleg) {
           this.extractLinkReference(deleg.target);
-          this.sourceMap.push({
-            source: deleg.task.span,
-            type: "semantic",
-            name: deleg.task.content
-          });
+          if (deleg.task) {
+            this.sourceMap.push({
+              source: deleg.task.span,
+              type: "semantic",
+              name: deleg.task.content
+            });
+          }
           if (deleg.withAnchor) {
             this.extractAnchorReference(deleg.withAnchor);
           }
@@ -2592,6 +2610,48 @@
             source: deleg.span,
             type: "control-flow",
             name: "DelegateStatement"
+          });
+        }
+        // v0.8: Extract metadata from USE statement
+        extractFromUseStatement(stmt) {
+          this.extractLinkReference(stmt.link);
+          this.sourceMap.push({
+            source: stmt.task.span,
+            type: "semantic",
+            name: stmt.task.content
+          });
+          if (stmt.parameters) {
+            for (const param of stmt.parameters.parameters) {
+              this.extractVariableDeclaration(param);
+            }
+          }
+          this.sourceMap.push({
+            source: stmt.span,
+            type: "control-flow",
+            name: "UseStatement"
+          });
+        }
+        // v0.8: Extract metadata from EXECUTE statement
+        extractFromExecuteStatement(stmt) {
+          this.extractLinkReference(stmt.link);
+          this.sourceMap.push({
+            source: stmt.task.span,
+            type: "semantic",
+            name: stmt.task.content
+          });
+          this.sourceMap.push({
+            source: stmt.span,
+            type: "control-flow",
+            name: "ExecuteStatement"
+          });
+        }
+        // v0.8: Extract metadata from GOTO statement
+        extractFromGotoStatement(stmt) {
+          this.extractAnchorReference(stmt.anchor);
+          this.sourceMap.push({
+            source: stmt.span,
+            type: "control-flow",
+            name: "GotoStatement"
           });
         }
         extractParameters(blocks) {
@@ -4810,19 +4870,26 @@
       };
     }
     // v0.8: DELEGATE statement for agent delegation
-    // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+    // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
+    //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
     parseDelegateStatement() {
       const start = this.advance();
-      const task = this.parseSemanticMarker();
+      let task;
+      if (!this.check("TO")) {
+        task = this.parseSemanticMarker();
+      }
       this.expect("TO");
       const target = this.parseLink();
       let withAnchor;
+      let parameters;
       if (this.check("WITH")) {
         this.advance();
-        withAnchor = this.parseAnchor();
-      }
-      let parameters;
-      if (this.check("COLON")) {
+        if (this.check("COLON")) {
+          parameters = this.parseParameterBlock();
+        } else {
+          withAnchor = this.parseAnchor();
+        }
+      } else if (this.check("COLON")) {
         parameters = this.parseParameterBlock();
       }
       return {
@@ -5498,11 +5565,13 @@
     // v0.8: Extract metadata from DELEGATE statement
     extractFromDelegateStatement(deleg) {
       this.extractLinkReference(deleg.target);
-      this.sourceMap.push({
-        source: deleg.task.span,
-        type: "semantic",
-        name: deleg.task.content
-      });
+      if (deleg.task) {
+        this.sourceMap.push({
+          source: deleg.task.span,
+          type: "semantic",
+          name: deleg.task.content
+        });
+      }
       if (deleg.withAnchor) {
         this.extractAnchorReference(deleg.withAnchor);
       }
