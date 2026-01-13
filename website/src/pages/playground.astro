@@ -1364,9 +1364,9 @@ const projectsJson = JSON.stringify(examplesData.projects);
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    // Initialize with first available project
+    // Initialize with first available project that has files
     const projectIds = Object.keys(projects);
-    const defaultProjectId = projectIds[0];
+    const defaultProjectId = projectIds.find(id => Object.keys(projects[id].files).length > 0) || projectIds[0];
     const defaultProject = projects[defaultProjectId];
     currentProject = defaultProjectId;
     currentProjectFiles = { ...defaultProject.files };
