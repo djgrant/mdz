@@ -44,7 +44,8 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   </p>
   
   <ul>
-    <li><strong>References exist</strong> — <code>[[skill]]</code> targets must be defined</li>
+    <li><strong>Links exist</strong> — <code>~/skill/name</code> and <code>~/agent/name</code> targets must exist</li>
+    <li><strong>Anchors exist</strong> — <code>#section</code> targets must be defined</li>
     <li><strong>Types match</strong> — Passing <code>$Number</code> where <code>$Task</code> is expected gets flagged</li>
     <li><strong>No cycles</strong> — Circular dependencies in your dependency graph are detected</li>
     <li><strong>Syntax is valid</strong> — Malformed control flow or markers are caught</li>

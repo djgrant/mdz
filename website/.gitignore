@@ -27,3 +27,12 @@ public/zen-compiler.js
 public/zen-compiler.js.map
 public/zen-compiler.min.js
 public/zen-compiler.min.js.map
+
+# Generated examples manifest (built from examples/ directory)
+src/data/examples.json
+
+# Generated worker bundles (built from source)
+public/zen-worker.js
+public/zen-worker.js.map
+public/zen-worker.min.js
+public/zen-worker.min.js.map

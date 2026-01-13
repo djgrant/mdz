@@ -199,8 +199,6 @@ Task to process: [PASTE YOUR TASK HERE]</code></pre>
   <pre><code class="mdz"><span class="zen-comment">---
 name: code-review
 description: When reviewing code changes for quality and correctness
-uses:
-  - reasoning
 ---</span>
 
 <span class="zen-heading">## Types</span>
@@ -224,7 +222,7 @@ uses:
 2. <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$area</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$focus</span>:
    - Apply focused review for <span class="zen-variable">$area</span>
    - Add identified issues to <span class="zen-variable">$issues</span>
-3. Generate review summary with prioritized recommendations</code></pre>
+3. <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/reasoning</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/generate summary/</span></code></pre>
 
    <p>
      Validate your skills to catch issues early:
@@ -344,7 +342,7 @@ Handle common failure modes:
 
    <ul>
      <li><strong>Validate Early</strong> - Run <code>mdz check</code> in CI/CD pipelines</li>
-     <li><strong>Skill Composition</strong> - Build complex workflows from simpler skills using <code>uses</code> declarations</li>
+     <li><strong>Skill Composition</strong> - Build complex workflows from simpler skills using links</li>
      <li><strong>Type Contracts</strong> - Define clear input/output types for reliability</li>
      <li><strong>Version Control</strong> - Track skill evolution alongside code changes</li>
      <li><strong>Testing</strong> - Test skills with representative inputs and edge cases</li>

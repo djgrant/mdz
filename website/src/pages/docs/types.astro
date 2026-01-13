@@ -34,7 +34,7 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 - <span class="zen-variable">$validator</span>: <span class="zen-type">$Task</span>
 
 <span class="zen-comment">&lt;!-- In skill B (referencing A) --&gt;</span>
-Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span>:
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/a</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/validate/</span>
   - <span class="zen-variable">$validator</span> = 42  ← Error: <span class="zen-type">$Number</span> where <span class="zen-type">$Task</span> expected</code></pre>
 
   <p>

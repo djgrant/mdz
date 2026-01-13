@@ -1,0 +1,45 @@
+---
+name: brainstorm-parallel
+description: When you need diverse ideas for a problem, use this skill to generate perspectives in parallel and synthesize emergent insights.
+---
+
+## Types
+
+$Perspective: a distinct worldview with its own priorities and blind spots
+$Insight: an idea that emerges from collision between perspectives
+
+## Input
+
+- $problem: $String
+- $perspectives: $Perspective[]
+
+## Context
+
+- $outputPath = ".opencode/brainstorm/${$problem.slug}.md"
+- $ideas: $Insight[] = []
+
+## Workflow
+
+### 1. Frame
+
+Restate $problem to ensure shared understanding.
+
+### 2. Explore
+
+PARALLEL FOR EACH $perspective IN $perspectives:
+  DELEGATE /adopt perspective and generate ideas/ TO ~/agent/divergent:
+    - $task = /adopt $perspective fully and generate ideas/
+    - $problem = $problem
+    - $focus = /what does this viewpoint prioritize? what would it try first? what does it see that others miss?/
+  
+  Collect ideas into $ideas.
+
+### 3. Synthesize
+
+After all parallel work completes:
+
+- Find patterns that transcend individual perspectives
+- Discover combinations no single perspective would reach
+- Note tensions that reveal hidden assumptions in $problem
+
+Write synthesis to $outputPath

@@ -1,4 +1,4 @@
-# MDZ Language Specification v0.3
+# MDZ Language Specification v0.8
 
 > A markdown extension language for multi-agent systems
 
@@ -29,22 +29,20 @@ Body content with MDZ constructs
 
 ### Frontmatter Schema
 
-Required and optional fields in the YAML frontmatter:
+Required fields in the YAML frontmatter:
 
 ```yaml
 ---
 name: skill-name              # Required: identifier (kebab-case)
 description: When...          # Required: trigger description
-uses:                         # Optional: skill dependencies
-  - skill-a
-  - skill-b
 ---
 ```
 
 The `description` field follows the pattern:
 - **When**: trigger condition
 - **Does**: what the skill accomplishes
-- **Uses**: other skills it depends on (implicit in uses array)
+
+**v0.8 Change**: Dependencies are no longer declared in frontmatter. They are inferred from link statements (`DELEGATE`, `USE`, `EXECUTE`) in the document body.
 
 ## Types
 
@@ -122,9 +120,9 @@ Examples:
 In WITH clauses, typed parameters without a default value are considered required:
 
 ```
-Execute [[skill]] WITH:
-  - $param: $Type = value     # Optional: has default
-  - $required: $Task          # Required: no default
+USE ~/skill/x TO /task/:
+  - $param: $Type = value     # Optional with default
+  - $required: $Task          # Required (no default)
 ```
 
 ### Variable References
@@ -142,38 +140,6 @@ Variables are scoped to:
 2. A section (section-level, when declared within a section)
 3. A control flow block (block-level)
 
-### Semantic Variable Transformation
-
-When a variable's structure changes during workflow execution (e.g., loading and parsing a file path into an AST), use distinct variable names to clarify the transformation:
-
-```
-## Input
-- $skillPath: $String  <!-- path to the skill -->
-
-## Context
-- $skill: /the loaded and parsed skill AST from $skillPath/
-
-## Workflow
-1. Load skill source from $skillPath
-2. Parse into $skill AST
-3. FOR EACH $statement IN $skill.statements:
-```
-
-This pattern:
-- Uses `$skillPath` for the input (a string)
-- Uses `$skill` for the transformed result (an AST with `.statements`)
-- Makes the semantic transformation explicit in Context
-- Avoids confusion about where properties like `.statements` come from
-
-**Anti-pattern** (avoid):
-```
-## Input
-- $skill: $String  <!-- the skill to debug -->
-
-## Workflow
-FOR EACH $statement IN $skill.statements:  # Where does .statements come from?
-```
-
 ### Lambda Expressions
 
 Functions are defined using lambda syntax:
@@ -190,28 +156,47 @@ $SolutionPath = $n => `/relevant wp path/-candidate-${n}.md`
 
 Lambdas can include semantic markers and template literals.
 
-## References
+## Links and Anchors
 
-### Skill References
+MDZ v0.8 uses link-based references with the `~/` prefix. Links identify external resources (agents, skills, tools) while anchors reference sections in the current document.
 
-Reference another skill using wiki-link syntax:
+### Link Syntax
 
-```
-[[skill-name]]
-```
-
-Example:
-```
-Execute [[orchestrate-map-reduce]] with the following parameters...
-```
-
-### Section References
-
-Reference a section within a skill:
+Links use a path-based syntax with folder conventions:
 
 ```
-[[skill-name#section-name]]   # Section in another skill
-[[#section-name]]             # Section in current skill
+~/agent/name      → Agent link (resolves to ./agent/name.mdz)
+~/skill/name      → Skill link (resolves to ./skill/name.mdz)
+~/tool/name       → Tool link (resolves to external tool or ./tool/name.mdz)
+~/skill/name#sec  → Section in another skill
+```
+
+The `~/` prefix is reminiscent of Unix home directory but represents the skill root.
+
+### Folder Conventions
+
+Links follow folder conventions to distinguish resource types:
+
+| Prefix | Resource Type | Resolution |
+|--------|---------------|------------|
+| `~/agent/` | Agent | `./agent/{name}.mdz` |
+| `~/skill/` | Skill | `./skill/{name}.mdz` |
+| `~/tool/` | Tool | External tool or `./tool/{name}.mdz` |
+
+Examples:
+```
+~/agent/explorer       → The explorer agent
+~/skill/validator      → The validator skill  
+~/tool/browser         → The browser tool
+~/skill/omr#workflow   → The workflow section in the omr skill
+```
+
+### Anchors
+
+Anchors reference sections in the current document:
+
+```
+#section-name
 ```
 
 Section names are derived from headings by:
@@ -221,19 +206,82 @@ Section names are derived from headings by:
 
 Example:
 ```
-Delegate with [[#validate-prompt]]
+GOTO #validate-prompt
 ```
 
 Where `## Validate Prompt` becomes `#validate-prompt`.
 
-### Reference Resolution
+### Link Resolution
 
 At runtime:
-- `[[skill]]` loads the referenced skill content
-- `[[skill#section]]` loads only that section
-- `[[#section]]` refers to a section in the current document
+- `~/skill/name` loads the skill content
+- `~/skill/name#section` loads only that section
+- `#section` refers to a section in the current document
+- `~/agent/name` identifies an agent for delegation
+- `~/tool/name` identifies a tool for execution
 
-References are passed to the LLM as-is. The LLM runtime (e.g., Claude's skill loader) resolves them.
+Links are resolved by the runtime environment. The tooling validates that link paths follow conventions and that anchors reference existing sections.
+
+### Dependency Inference
+
+**v0.8 Change**: Dependencies are inferred from link statements, not declared in frontmatter.
+
+The compiler extracts dependencies by scanning for:
+- `DELEGATE ... TO ~/agent/x` → agent dependency
+- `USE ~/skill/x TO ...` → skill dependency
+- `EXECUTE ~/tool/x TO ...` → tool dependency
+
+This eliminates redundant declaration and ensures dependencies stay in sync with actual usage.
+
+## Agents (v0.8)
+
+Agents are independent subagents that can be spawned to handle delegated tasks. Unlike skills which run in the current context, agents are autonomous entities with their own execution context.
+
+### Referencing Agents
+
+Agents are referenced using link syntax with the `agent/` folder prefix:
+
+```
+~/agent/explorer
+~/agent/analyzer
+~/agent/reviewer
+```
+
+Agents are used with the `DELEGATE` statement:
+
+```
+DELEGATE /find related patterns/ TO ~/agent/explorer
+```
+
+Or with a context template:
+
+```
+DELEGATE /analyze these findings/ TO ~/agent/analyzer WITH #analysis-context
+```
+
+### Agent vs Skill
+
+The distinction between agents and skills is fundamental:
+
+| Aspect | Skill (`USE ~/skill/x`) | Agent (`DELEGATE TO ~/agent/x`) |
+|--------|-------------------------|--------------------------------|
+| Execution | In current context | Independent subagent |
+| Control | Sequential, returns | Fire-and-forget or await |
+| State | Shared with caller | Isolated |
+| Use case | Reusable logic | Parallel work, delegation |
+
+**Use skills** when you want to compose reusable logic that executes as part of the current workflow.
+
+**Use agents** when you want to spawn an independent worker that can operate in parallel or handle a distinct subtask.
+
+### Agent Capabilities
+
+The MDZ specification only defines how to reference agents—the runtime determines what each agent can do.
+
+Common patterns:
+- **Explorer agents**: Search and discovery tasks
+- **Analyzer agents**: Deep analysis of specific areas
+- **Reviewer agents**: Validation and review tasks
 
 ## Semantic Markers
 
@@ -279,32 +327,6 @@ Use `/description/` as a type annotation to describe what a value should be:
 
 This is more flexible than reference types (`$Type`) when you need to describe the expected value semantically rather than reference a defined type.
 
-### Semantic Markers in Context
-
-Semantic markers are valid in:
-- Prose text
-- Variable assignments
-- Lambda expressions
-- Type annotations
-- Control flow conditions (with caution)
-
-```
-- $path = /the most relevant file path/
-- $output: /where to write results/ = "output.md"
-- Write output to /appropriate location/
-```
-
-### Nested Semantics
-
-**Nested semantic markers are NOT supported**:
-
-```
-# Invalid
-//inner content//
-```
-
-This is a deliberate constraint to maintain clarity about what is being interpreted.
-
 ## Control Flow
 
 ### FOR EACH
@@ -339,14 +361,9 @@ Semantics:
 - Results are collected when all iterations complete
 - Each iteration has its own scope
 
-Use PARALLEL FOR EACH when:
-- Iterations are independent
-- Order doesn't matter
-- Maximum throughput is desired
-
 ### WHILE
 
-Loop with condition. The `DO` keyword acts as the condition delimiter (like `THEN` for `IF`):
+Loop with condition. The `DO` keyword acts as the condition delimiter:
 
 ```
 WHILE condition AND $iterations < 5 DO:
@@ -370,43 +387,11 @@ ELSE:
   - Do that
 ```
 
-With comparisons:
-```
-IF $strategy = "accumulate" THEN:
-  - Validate incrementally
-  - Update on success
-ELSE:
-  - Collect all candidates
-  - Validate at end
-```
-
 With semantic conditions:
 ```
 IF /any critical findings/ THEN:
   - Request changes
 ```
-
-**Note:** Parentheses are optional for grouping complex conditions but not required by syntax.
-
-### IF THEN ELSE IF
-
-For multiple conditions, use ELSE IF chains:
-
-```
-IF $severity = "critical" THEN:
-  - Request changes immediately
-ELSE IF $severity = "major" THEN:
-  - Add to findings list
-ELSE IF /minor concern/ THEN:
-  - Note as suggestion
-ELSE:
-  - Approve
-```
-
-ELSE IF chains can:
-- Mix deterministic and semantic conditions
-- Have any number of ELSE IF branches
-- Have an optional final ELSE branch
 
 ### BREAK and CONTINUE (v0.2)
 
@@ -421,80 +406,93 @@ FOR EACH $item IN $items:
   - Process normally
 ```
 
-BREAK and CONTINUE are valid in:
-- FOR EACH loops
-- PARALLEL FOR EACH loops
-- WHILE loops
+## Statements (v0.8)
 
-They are NOT valid outside of loops (parser error).
+MDZ v0.8 introduces four key statement types for working with external resources: `DELEGATE`, `USE`, `EXECUTE`, and `GOTO`.
 
-### Control Flow Philosophy
+### DELEGATE - Spawn Agent
 
-- CAPS keywords are visually distinct
-- Conditions can mix deterministic and semantic
-- Termination should be explicit (avoid infinite loops)
-- PARALLEL enables concurrent execution (v0.2)
-- BREAK/CONTINUE enable early exit (v0.2)
+The `DELEGATE` keyword spawns a subagent to handle a task:
+
+```
+DELEGATE /task description/ TO ~/agent/name
+```
+
+With a context template (passes a section as context):
+
+```
+DELEGATE /explore the codebase/ TO ~/agent/explorer WITH #context-template
+```
+
+### USE - Follow Skill
+
+The `USE` keyword loads and follows a skill's instructions:
+
+```
+USE ~/skill/validator TO /validate the current state/
+```
+
+### EXECUTE - Invoke Tool
+
+The `EXECUTE` keyword invokes an external tool:
+
+```
+EXECUTE ~/tool/browser TO /take a screenshot of the page/
+EXECUTE ~/tool/database TO /query user records/
+```
+
+### GOTO - Control Flow
+
+The `GOTO` keyword jumps to a section in the current document:
+
+```
+GOTO #validation-step
+GOTO #error-handler
+```
+
+### Statement Comparison
+
+| Statement | Purpose | Target | Execution |
+|-----------|---------|--------|-----------|
+| `DELEGATE` | Spawn agent | `~/agent/x` | Independent |
+| `USE` | Follow skill | `~/skill/x` | In context |
+| `EXECUTE` | Invoke tool | `~/tool/x` | External |
+| `GOTO` | Jump to section | `#section` | Current doc |
 
 ## Composition
 
-### Skill Delegation
+This section covers skill composition using `USE` and parameter passing.
 
-Skills compose through delegation:
+### Skill Composition
+
+Skills compose through the `USE` statement:
 
 ```
-Execute [[orchestrate-map-reduce]] WITH:
+USE ~/skill/orchestrate-map-reduce TO /apply transforms/:
   - $transforms = [("Apply heuristic", "accumulate")]
-  - $validator = [[#validate-essence]]
+  - $validator = #validate-essence
   - $return = "Report findings"
 ```
 
 ### Parameter Passing
 
-Parameters are passed using `WITH:` syntax:
+Parameters are passed using the colon-newline syntax:
 
 ```
-Delegate to [[skill-name]] WITH:
+USE ~/skill/name TO /task/:
   - $param1 = value1
   - $param2 = value2
 ```
 
-With typed parameters (v0.2):
-```
-Execute [[skill]] WITH:
-  - $param: $Type = value     # Optional with default
-  - $required: $Task          # Required (no default)
-```
-
-Or inline for simple cases:
-```
-Use [[#section]] passing $current and $next
-```
-
 ### Section Inclusion
 
-Include a section as a prompt or sub-task:
+Pass a section as context using the `WITH` clause:
 
 ```
-Delegate to sub-agent with [[#build-prompt]]
+DELEGATE /task/ TO ~/agent/explorer WITH #context-template
 ```
 
-The section content becomes the sub-agent's instructions.
-
-### Dependency Declaration
-
-Declare dependencies in frontmatter:
-
-```yaml
-uses:
-  - orchestrate
-  - work-packages
-```
-
-This enables:
-- Load order optimization
-- Circular dependency detection
-- Tooling autocomplete
+The section content becomes part of the agent's instructions.
 
 ## Document Sections
 
@@ -572,11 +570,12 @@ MDZ tooling validates source documents without transforming them. The compiler:
 ### What Tooling Checks
 
 1. **Type references** - Warns when a type annotation references an undefined type
-2. **Skill references** - Warns when `[[skill]]` isn't declared in `uses:`
-3. **Section references** - Errors when `[[#section]]` references a non-existent section
+2. **Link resolution** - Errors when link path doesn't resolve to valid resource
+3. **Anchor references** - Errors when `#section` references a non-existent section
 4. **Syntax errors** - Errors for malformed control flow, unterminated constructs, etc.
 5. **Scope** - Tracks variable definitions (informational)
 6. **Dependency cycles** - Detects circular dependencies across skills
+7. **Link conventions** - Warns when link doesn't follow folder conventions (agent/, skill/, tool/)
 
 ### Error Codes
 
@@ -584,9 +583,11 @@ MDZ tooling validates source documents without transforming them. The compiler:
 |------|----------|-------------|
 | E001-E007 | Error | Parse errors (syntax) |
 | E008 | Warning | Type not defined in document |
-| E009 | Error | Skill not found in registry |
-| E010 | Error | Section reference broken |
-| W001 | Warning | Skill not declared in uses |
+| E009 | Error | Link path doesn't resolve |
+| E010 | Error | Anchor reference broken |
+| E011 | Error | BREAK/CONTINUE outside loop |
+| E012 | Error | Dependency cycle detected |
+| W002 | Warning | Link doesn't follow folder conventions |
 
 ### Dependency Graph
 
@@ -624,36 +625,37 @@ Errors in MDZ are handled through:
 2. Semantic resilience: LLMs adapt to unexpected states
 3. Work package logging: State is persisted for debugging
 
-v0.3 does not define exception mechanisms.
+v0.6 does not define exception mechanisms.
 
 ## Tooling Requirements
 
 ### Parser Requirements
 
 A compliant parser must extract:
-- Frontmatter fields (name, description, uses)
+- Frontmatter fields (name, description)
 - Type definitions
 - Variable declarations
-- Skill and section references
+- Links (`~/path/to/resource`) and anchors (`#section`)
 - Semantic markers
-- Control flow constructs (including PARALLEL, BREAK, CONTINUE)
+- Control flow constructs (including PARALLEL, BREAK, CONTINUE, DELEGATE, USE, EXECUTE, GOTO)
 
 ### Validator Requirements
 
 A compliant validator must:
 - Report syntax errors with location
 - Check type reference validity
-- Check section reference validity
-- Build dependency graph
-- Support registry-based skill validation (optional)
+- Check link path resolution
+- Check anchor reference validity
+- Build dependency graph from link statements
+- Detect dependency cycles
 
 ### LSP Features
 
 The syntax supports:
-- **Go-to-definition**: For `[[references]]` and `$variables`
-- **Autocomplete**: After `[[`, `$`, and `/`
-- **Hover**: Show type definitions
-- **Diagnostics**: Undefined references, unused variables, BREAK/CONTINUE outside loops
+- **Go-to-definition**: For `~/links`, `#anchors`, `$variables`
+- **Autocomplete**: After `~/`, `#`, `$`, `/`, `DELEGATE ... TO`, `USE`, `EXECUTE`, `GOTO`
+- **Hover**: Show type definitions, link targets, section content
+- **Diagnostics**: Unresolved links, broken anchors, unused variables, BREAK/CONTINUE outside loops
 
 ### Highlighting
 
@@ -662,10 +664,11 @@ Syntax highlighting should distinguish:
 - Headings (markdown)
 - Types (`$TypeName`)
 - Variables (`$varName`)
-- References (`[[...]]`)
+- Links (`~/path/to/resource`)
+- Anchors (`#section`)
 - Semantic markers (`/.../`)
 - Inferred variables (`$/name/`)
-- Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`)
+- Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`)
 
 ## Grouping and Braces
 
@@ -737,9 +740,9 @@ $fn($a, $b)                           # Required
 
 ### Square Brackets `[]`
 
-Square brackets have two uses:
+Square brackets are used for arrays only:
 
-#### 1. Array types and literals
+#### Array types and literals
 
 ```
 # Array type suffix
@@ -749,17 +752,10 @@ $Task[]                               # Array of Task
 # Array literals  
 $items = [1, 2, 3]
 $transforms = [("task1", "strategy1"), ("task2", "strategy2")]
-```
 
-#### 2. Double brackets for references
-
+# Arrays of references
+$agents = [~/agent/architect, ~/agent/reviewer]
 ```
-[[skill-name]]                        # Skill reference
-[[#section-name]]                     # Section in current document
-[[skill#section]]                     # Section in another skill
-```
-
-The double bracket `[[...]]` syntax is distinct and unambiguous.
 
 ### Curly Braces `{}`
 
@@ -846,22 +842,27 @@ IF ($x = 1) AND ($y = 2) THEN:        # Same meaning
 
 ```
 FRONTMATTER     = '---\n' YAML '\n---'
-TYPE_DEF        = '$' UPPER_IDENT '=' /.+/
+TYPE_DEF        = '$' UPPER_IDENT ':' /.+/
 VAR_DECL        = '$' IDENT (':' TYPE)? '=' EXPR
 VAR_REF         = '$' IDENT
-SKILL_REF       = '[[' IDENT ']]'
-SECTION_REF     = '[[' IDENT? '#' IDENT ']]'
+LINK            = '~/' PATH ('#' IDENT)?                      <!-- v0.8 -->
+ANCHOR          = '#' IDENT                                   <!-- v0.8 -->
+PATH            = IDENT ('/' IDENT)*                          <!-- v0.8 -->
 SEMANTIC        = '/' /[^\/\n]+/ '/'
 INFERRED_VAR    = '$/' /[^\/\n]+/ '/'                         <!-- v0.4 -->
 SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'                      <!-- v0.4 -->
 FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
-PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'  <!-- v0.2 -->
-WHILE           = 'WHILE' CONDITION 'DO:'       <!-- DO delimits, like THEN for IF -->
-IF_THEN         = 'IF' CONDITION 'THEN:'       <!-- THEN delimits -->
-ELSE_IF         = 'ELSE IF' CONDITION 'THEN:' <!-- v0.6: ELSE IF chains -->
+PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'   <!-- v0.2 -->
+WHILE           = 'WHILE' CONDITION 'DO:'                     <!-- DO delimits -->
+IF_THEN         = 'IF' CONDITION 'THEN:'                      <!-- THEN delimits -->
+ELSE_IF         = 'ELSE IF' CONDITION 'THEN:'                 <!-- v0.6 -->
 ELSE            = 'ELSE:'
 BREAK           = 'BREAK'                                     <!-- v0.2 -->
 CONTINUE        = 'CONTINUE'                                  <!-- v0.2 -->
+DELEGATE        = 'DELEGATE' SEMANTIC 'TO' LINK ('WITH' ANCHOR)?  <!-- v0.8 -->
+USE             = 'USE' LINK 'TO' SEMANTIC                    <!-- v0.8 -->
+EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC                <!-- v0.8 -->
+GOTO            = 'GOTO' ANCHOR                               <!-- v0.8 -->
 LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
 ```
 
@@ -870,6 +871,7 @@ LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
 ```
 UPPER_IDENT     = /[A-Z][a-zA-Z0-9]*/
 IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
+PATH            = /[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)*/       <!-- v0.8 -->
 ```
 
 ## Appendix: Design Decisions
@@ -896,12 +898,32 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 - Enables tooling (easy to detect)
 - Natural for interpolation
 
-### Why [[wiki-links]]?
+### Why Link-Based References? (v0.8)
 
-- Familiar (Wikipedia, Obsidian, Notion)
-- Distinct from markdown links
-- Enables internal linking
-- Natural for skill references
+The `~/path/to/resource` syntax was chosen over sigil-based references for:
+
+- **Path familiarity**: `~/` evokes Unix paths, familiar to developers
+- **Folder conventions**: `~/agent/x`, `~/skill/y`, `~/tool/z` make resource type visible in path
+- **Scalability**: Paths can organize resources in hierarchies (`~/skill/auth/validator`)
+- **Resolution clarity**: Paths map directly to file system or registry lookup
+- **Section suffix**: `~/skill/x#section` cleanly combines path and anchor
+
+**Previous syntax (v0.7)**: `(@agent)`, `(~skill)`, `(#section)`, `(!tool)`
+
+The sigil-based syntax required learning four different sigils. The link-based approach uses a single `~/` prefix with folder conventions, reducing cognitive load while maintaining type clarity.
+
+### Why Infer Dependencies? (v0.8)
+
+Dependencies are now extracted from statements rather than declared in frontmatter:
+
+- **DRY principle**: No redundant declarations that can get out of sync
+- **Automatic accuracy**: Dependencies always match actual usage
+- **Simpler frontmatter**: Only name and description required
+- **Better tooling**: Compiler can extract exact dependency graph from code
+
+**Previous approach (v0.7)**: `uses:` field with sigil-prefixed identifiers
+
+The explicit declaration approach required maintaining two sources of truth. Inference from statements ensures consistency.
 
 ### Why Source = Output? (v0.3)
 
@@ -925,19 +947,48 @@ IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
 - Clear control flow intent
 - Reduces nesting depth
 
+### Why DELEGATE? (v0.6)
+
+- Distinct from skill composition (spawning vs calling)
+- Clear syntax for multi-agent orchestration
+- Enables parallel agent work
+- `TO` keyword reads naturally ("delegate to explorer")
+
+### Why USE/EXECUTE/GOTO Keywords? (v0.8)
+
+The new statement keywords clarify intent:
+
+- **USE**: Clearly indicates following skill instructions (not executing code)
+- **EXECUTE**: Explicitly invokes external tool capabilities
+- **GOTO**: Standard control flow keyword for section jumps
+- **DELEGATE**: Unchanged, spawns independent agents
+
+**Previous approach**: `Execute (~skill)` prose pattern
+
+The keyword approach provides clear, parseable syntax with explicit semantics.
+
 ## Terminology
 
 This glossary provides canonical names for MDZ syntax elements. Use these terms consistently in documentation, error messages, and discussion.
 
-### Sigils
+### Prefixes
 
-- **Dollar sigil** (`$`) — Prefix marking variables and types. `$name` for variables, `$Name` for types.
+- **Dollar prefix** (`$`) — Marks variables and types. `$name` for variables, `$Name` for types.
+- **Link prefix** (`~/`) — Marks links to external resources. `~/agent/x`, `~/skill/y`, `~/tool/z`.
+- **Hash prefix** (`#`) — Marks anchors (same-file section references). `#section-name`.
+
+### Links and Anchors
+
+- **Link** (`~/path/to/resource`) — Reference to an external resource (agent, skill, tool).
+- **Agent link** (`~/agent/name`) — Link to an agent for delegation.
+- **Skill link** (`~/skill/name`) — Link to a skill for composition.
+- **Tool link** (`~/tool/name`) — Link to a tool for execution.
+- **Section link** (`~/skill/name#section`) — Link to a section in another skill.
+- **Anchor** (`#section`) — Reference to a section in the current document.
 
 ### Delimiters
 
 - **Frontmatter fence** (`---`) — YAML frontmatter delimiter (opening and closing).
-- **Skill link** (`[[name]]`) — Reference to another skill. Wiki-link style.
-- **Section link** (`[[#name]]` or `[[skill#name]]`) — Reference to a section, optionally in another skill.
 - **Semantic marker** (`/content/`) — Content for LLM interpretation. Slashes delimit the semantic content.
 - **Inferred variable** (`$/name/`) — Variable whose value is derived by LLM at runtime.
 - **Semantic type annotation** (`: /description/`) — Type annotation using natural language description.
@@ -953,10 +1004,15 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **Conditional** (`IF cond THEN:`) — Conditional branching.
 - **Else if clause** (`ELSE IF cond THEN:`) — Chained conditional branch.
 - **Else clause** (`ELSE:`) — Alternative branch of a conditional.
-- **With clause** (`WITH:`) — Parameter block for skill delegation.
+- **With clause** (`WITH #anchor`) — Passes section template to delegate (v0.8).
 - **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.
 - **Loop control** (`BREAK`, `CONTINUE`) — Early exit or skip within loops.
 - **Collection operator** (`IN`) — Specifies the collection in a loop.
+- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawns a subagent with task (v0.8).
+- **Skill usage** (`USE ~/skill/x TO /task/`) — Follows skill instructions (v0.8).
+- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invokes external tool (v0.8).
+- **Section jump** (`GOTO #section`) — Control flow to section (v0.8).
+- **Target specifier** (`TO`) — Specifies target in DELEGATE/USE/EXECUTE statements.
 
 ### Operators
 
@@ -977,7 +1033,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ### Document Structure
 
-- **Frontmatter** — Skill metadata in YAML between `---` fences: name, description, uses.
+- **Frontmatter** — Skill metadata in YAML between `---` fences: name, description.
 - **Section heading** (`##`) — Markdown heading that defines a referenceable section.
 - **List item** (`-`) — Markdown list marker for steps and declarations.
 - **Code block** (` ``` `) — Fenced code block (standard markdown).
@@ -1009,11 +1065,18 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ### Composition
 
-- **Delegation** (`Execute [[skill]] WITH:`) — Invoking another skill with parameters.
-- **Dependency** (`uses:` in frontmatter) — Declared skill dependency.
+- **Skill usage** (`USE ~/skill/x TO /task/`) — Running skill logic in current context (v0.8).
+- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawning independent subagent (v0.8).
+- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invoking external tool (v0.8).
+- **Section jump** (`GOTO #section`) — Control flow to section in current document (v0.8).
+- **Context template** (`WITH #anchor`) — Passing section as context to delegate (v0.8).
+- **Dependency inference** — Dependencies extracted from link statements, not frontmatter (v0.8).
 
 ## Version History
 
+- **v0.8** (2026-01-13): Breaking change: Link-based references `~/path` replacing sigil-based `(reference)` syntax; removed `uses:` frontmatter (dependencies inferred from statements); new keywords `USE`, `EXECUTE`, `GOTO`; `WITH #anchor` for passing context templates; folder conventions (`agent/`, `skill/`, `tool/`)
+- **v0.7** (2026-01-12): Breaking change: Sigil-based reference syntax `(@agent)`, `(~skill)`, `(#section)`, `(!tool)`; unified `uses:` frontmatter field with sigil-prefixed identifiers; removed separate `skills:`/`agents:`/`tools:` fields
+- **v0.6** (2026-01-12): Added DELEGATE keyword for subagent spawning, `skills:`/`agents:`/`tools:` frontmatter fields
 - **v0.5** (2026-01-05): New semantic marker syntax `/content/`, inferred variables `$/name/`, semantic type annotations `: /description/`
 - **v0.4** (2026-01-05): Changed type definition syntax from `=` to `:` for clarity
 - **v0.3** (2026-01-03): Validator-first architecture - source = output, validation focus

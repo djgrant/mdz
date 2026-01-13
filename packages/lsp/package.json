@@ -1,6 +1,6 @@
 {
   "name": "@zenmarkdown/lsp",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "description": "MDZ Language Server Protocol implementation",
   "main": "dist/server.js",
   "types": "dist/server.d.ts",

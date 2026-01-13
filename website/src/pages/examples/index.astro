@@ -1,6 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
+import examplesData from '../../data/examples.json';
+
+const { examples } = examplesData;
 ---
 
 <Layout title="Examples - zen">
@@ -11,137 +14,53 @@ import Header from '../../components/Header.astro';
       Examples
     </h1>
     <p class="text-lg text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-12 max-w-2xl">
-      Real-world zen skills demonstrating different patterns and use cases.
+      Real-world zen skills. Click any example to open it in the playground.
     </p>
     
-     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-       <!-- Debugger -->
-       <a href="/playground?example=debugger" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
-         <div class="flex items-center gap-3 mb-3">
-           <span class="text-2xl">🐛</span>
-           <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-             Debugger
-           </h3>
-         </div>
-         <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-           Trace and debug skill execution. Shows FOR EACH iteration, 
-           nested conditionals, and semantic markers.
-         </p>
-         <div class="flex flex-wrap gap-2">
-           <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-             iteration
-           </span>
-           <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-             nesting
-           </span>
-         </div>
-       </a>
-
-       <!-- PR Reviewer -->
-       <a href="/playground?example=pr-reviewer" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
-         <div class="flex items-center gap-3 mb-3">
-           <span class="text-2xl">👁️</span>
-           <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-             PR Reviewer
-           </h3>
-         </div>
-         <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-           Automate repetitive code review tasks with this workflow that checks for code quality, documentation, and tests.
-         </p>
-         <div class="flex flex-wrap gap-2">
-           <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-             workflow
-           </span>
-           <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-             iteration
-           </span>
-         </div>
-       </a>
-
-       <!-- The Scientist -->
-      <a href="/playground?example=debugger" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="text-2xl">🐛</span>
-          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-            Debugger
-          </h3>
-        </div>
-        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-          Trace and debug skill execution. Shows FOR EACH iteration, 
-          nested conditionals, and semantic markers.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            iteration
-          </span>
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            nesting
-          </span>
-        </div>
-      </a>
-      
-      <!-- Skill Composer -->
-      <a href="/playground?example=composer" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="text-2xl">🎼</span>
-          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-            Skill Composer
-          </h3>
-        </div>
-        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-          Compose multiple skills into coordinated workflows. Demonstrates 
-          dependency management and execution modes.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            composition
-          </span>
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            dependencies
-          </span>
-        </div>
-      </a>
-      
-      <!-- Hello World -->
-      <a href="/playground" class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="text-2xl">👋</span>
-          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-            Hello World
-          </h3>
-        </div>
-        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-          A simple greeting skill. Perfect for understanding the basics: 
-          types, variables, and simple conditionals.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            beginner
-          </span>
-          <span class="px-2 py-0.5 text-xs rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)]">
-            basics
-          </span>
-        </div>
-      </a>
-      
-      <!-- Create Your Own -->
-      <a href="/playground" class="group block p-6 rounded-xl border border-dashed border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="text-2xl">✨</span>
-          <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
-            Create Your Own
-          </h3>
-        </div>
-        <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4">
-          Start from scratch in the playground. Experiment with zen syntax 
-          and see compilation in real-time.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <span class="px-2 py-0.5 text-xs rounded border border-[var(--color-border)] dark:border-[var(--color-border-dark)] text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
-            playground
-          </span>
-        </div>
-      </a>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {examples.map(project => (
+        <a 
+          href={`/playground?project=${project.id}`}
+          class="group block p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors"
+        >
+          <div class="flex items-center gap-3 mb-3">
+            <svg class="w-5 h-5 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            <h3 class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors font-mono">
+              {project.name}
+            </h3>
+            <span class="text-xs text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">
+              {project.fileCount} {project.fileCount === 1 ? 'file' : 'files'}
+            </span>
+          </div>
+          <p class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] line-clamp-2">
+            {project.description}
+          </p>
+        </a>
+      ))}
     </div>
+    
+    <!-- Create Your Own -->
+    <section class="mt-12 pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+      <a 
+        href="/playground" 
+        class="group inline-flex items-center gap-3 p-4 rounded-lg border border-dashed border-[var(--color-border)] dark:border-[var(--color-border-dark)] hover:border-[var(--color-accent)] transition-colors"
+      >
+        <span class="text-xl">✨</span>
+        <span class="font-medium text-[var(--color-text)] dark:text-[var(--color-text-dark)] group-hover:text-[var(--color-accent)] transition-colors">
+          Create your own
+        </span>
+      </a>
+    </section>
   </main>
 </Layout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

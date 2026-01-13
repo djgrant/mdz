@@ -4,14 +4,14 @@
 
 This roadmap outlines areas for exploration, not a fixed sequence. Each area may reveal insights that reshape priorities.
 
-## Current State (v0.3)
+## Current State (v0.7)
 
 **Tooling Refactor: COMPLETE** ✓
 
 The compiler has been refactored to validator-first approach:
 - ✓ Source = Output (no transformations)
 - ✓ Metadata extraction (types, variables, references, sections)
-- ✓ Dependency graph extraction from `uses:` and `[[refs]]`
+- ✓ Dependency graph extraction from `uses:` and `(~refs)`
 - ✓ Cycle detection across skill graphs
 - ✓ Type validation (warns on undefined type references)
 - ✓ Reference validation (warns on undeclared skills, errors on broken local sections)
@@ -55,7 +55,7 @@ Runtime control flow (IF, FOR EACH, WHILE, etc.) is fully implemented. Build-tim
 
 Implemented in v0.3 compiler:
 - ✓ Extract from `uses:` and `imports:` frontmatter
-- ✓ Extract from inline `[[references]]`
+- ✓ Extract from inline `(~references)`
 - ✓ Cycle detection with `buildFullDependencyGraph()`
 - ✓ CLI `graph` command with JSON/Mermaid/DOT output
 - ✓ Basic visualization in playground (SVG-based, typed edges)
@@ -162,8 +162,8 @@ MDZ needs to support skills that persist data across executions. The question is
 
 ```mdz
 # Option A: Explicit backend reference
-PERSIST $tasks TO [[beads]]
-PERSIST $learnings TO [[markdown-store]]
+PERSIST $tasks TO (~beads)
+PERSIST $learnings TO (~markdown-store)
 
 # Option B: Declare persistence, runtime decides
 $tasks: $Task[] (persistent)

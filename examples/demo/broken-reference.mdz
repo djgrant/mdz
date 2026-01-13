@@ -1,0 +1,10 @@
+---
+name: my-workflow
+description: A workflow with a broken section reference
+---
+
+## Workflow
+
+1. Start by using ~/skill/work-packages
+2. Then GOTO #non-existent-section
+3. Finally check #missing-step

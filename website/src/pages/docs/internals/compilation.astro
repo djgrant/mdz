@@ -33,10 +33,11 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   </p>
 
   <ul>
-    <li><strong>Frontmatter</strong> — name, description, uses array</li>
+    <li><strong>Frontmatter</strong> — name, description</li>
     <li><strong>Types</strong> — All type definitions with their expressions</li>
     <li><strong>Variables</strong> — All variable declarations with types and values</li>
-    <li><strong>References</strong> — Skill and section references throughout the document</li>
+    <li><strong>Links</strong> — All links (<code>~/skill/name</code>) throughout the document</li>
+    <li><strong>Anchors</strong> — All anchor references (<code>#section</code>)</li>
     <li><strong>Sections</strong> — Section headings with their anchor IDs</li>
   </ul>
 
@@ -60,13 +61,17 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Dependency Graph Construction</h2>
 
   <p>
-    Dependencies are extracted from multiple sources:
+    Dependencies are extracted automatically from links in the document:
   </p>
 
   <ul>
-    <li><strong>uses:</strong> — Explicit skill dependencies in frontmatter</li>
-    <li><strong>references:</strong> — Inline <code>[[skill]]</code> and <code>[[skill#section]]</code> references</li>
+    <li><strong>Links</strong> — Inline <code>~/skill/name</code>, <code>~/agent/name</code>, <code>~/tool/name</code> references</li>
+    <li><strong>Anchors</strong> — Cross-file anchors like <code>~/skill/name#section</code></li>
   </ul>
+
+  <p>
+    <strong>Note:</strong> Dependencies are now inferred automatically. No <code>uses:</code> frontmatter block is needed.
+  </p>
 
   <p>
     The compiler builds a dependency graph showing:
@@ -174,8 +179,8 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li>Variable declarations from usage sites</li>
     <li>Type definitions from references</li>
-    <li>Skill definitions from <code>[[skill]]</code> references</li>
-    <li>Section anchors from <code>[[#section]]</code> references</li>
+    <li>File definitions from <code>~/path/to/file</code> links</li>
+    <li>Section anchors from <code>#section</code> references</li>
   </ul>
 
   <h3>Hover Information</h3>
@@ -187,8 +192,8 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li>Type definitions and their structure</li>
     <li>Variable types and lambda status</li>
-    <li>Skill descriptions from frontmatter</li>
-    <li>Reference targets</li>
+    <li>File descriptions from frontmatter</li>
+    <li>Link and anchor targets</li>
   </ul>
 
   <h3>Autocompletion</h3>
@@ -198,10 +203,11 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   </p>
 
   <ul>
-    <li><strong>Skills</strong> — After <code>[[</code>, shows available skills</li>
+    <li><strong>Links</strong> — After <code>~/</code>, shows available files by folder</li>
+    <li><strong>Anchors</strong> — After <code>#</code>, shows available sections</li>
     <li><strong>Variables/Types</strong> — After <code>$</code>, shows defined names</li>
     <li><strong>Semantic markers</strong> — After semantic marker syntax, suggests common patterns</li>
-    <li><strong>Keywords</strong> — At line start, suggests control flow constructs</li>
+    <li><strong>Keywords</strong> — At line start, suggests control flow and composition keywords</li>
   </ul>
 
   <h3>Diagnostics</h3>
@@ -212,7 +218,8 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 
   <ul>
     <li>Parse errors from the parser</li>
-    <li>Undefined skill references</li>
+    <li>Undefined link targets</li>
+    <li>Undefined anchors</li>
     <li>Type and scope issues</li>
   </ul>
 
@@ -235,8 +242,8 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   </p>
 
   <ul>
-    <li>Auto-registers skills from open documents</li>
+    <li>Auto-registers files from open documents</li>
     <li>Provides cross-file completions</li>
-    <li>Validates cross-skill references</li>
+    <li>Validates cross-file links</li>
   </ul>
 </DocsLayout>

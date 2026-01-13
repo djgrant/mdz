@@ -75,7 +75,7 @@ pnpm build            # Build root package
 pnpm build:packages   # Build all packages
 ```
 
-## Current State (v0.3)
+## Current State (v0.7)
 
 - ✓ Validator-first compiler
 - ✓ Type, scope, and reference validation

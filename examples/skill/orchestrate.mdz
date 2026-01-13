@@ -1,0 +1,102 @@
+---
+name: orchestrate
+description: When running any orchestration operation, load this skill to understand the core methodology using sub-agents and work packages.
+---
+
+Orchestration enables you to track and delegate sub-tasks effectively.
+
+## Types
+
+$OrchestrationStrategy: "project" | "map-reduce" | "ad-hoc"
+$WorkPackageStatus: "todo" | "in-progress" | "completed"
+$AgentRole: a specialized focus area for a sub-agent
+
+## What You Do
+
+Commission and track work packages, evaluate results, and act executively on findings.
+
+There are a range of sub-agents available, and a range of skills available for them to use. Together, these unlock a wide range of possible approaches to solve problems via orchestration.
+
+## Methodology
+
+Any orchestration strategy requires you to:
+
+1. Understand the requirements
+2. Define measures of success
+3. Choose $strategy: $OrchestrationStrategy if not already specified
+4. Create a master work package using ~/skill/work-packages
+5. Delegate creation and completion of work packages to sub-agents
+6. Delegate testing of solutions to separate sub-agents
+7. Commission up to five iterations of each work package
+8. Update the master work package after each iteration
+9. Revise your strategy and commission new work packages dynamically when needed
+10. Report the results
+
+## Expectations
+
+- Use a diversity of agents with different $AgentRole values
+- Consider how skills can enhance the process
+- Use ~/skill/work-packages to define and track tasks
+- Use work packages to persist project progress rather than resuming agent sessions
+- Ensure that sub-agents understand the overarching vision
+- Report failure truthfully
+- Create boundaries between different types of work to improve focus and performance
+
+## Guardrails
+
+- Do NOT review code, write code, test work, edit files
+- Do NOT implement features directly
+- Do NOT start with your own analysis
+- Do NOT go on fishing trips, or introduce your own ideas
+
+## Completion Criteria
+
+The work is finished when all the work packages you commissioned have been moved to the completed directory.
+
+This does not necessarily mean that the project was a success. Just that you have completed the experimentation and reached a final conclusion.
+
+Ensure the working tree is clean at the end of the project.
+
+## Final Summary
+
+Your final summary should include:
+
+- The work packages completed
+- Any key changes made
+- Any significant learnings
+- The number of work packages completed
+- The number of agents spawned
+- The original goal, hypothesis, result and conclusion
+
+## Delegation Patterns
+
+MDZ provides the DELEGATE keyword for explicit subagent delegation:
+
+### Simple Delegation
+
+```
+DELEGATE /explore the problem space/ TO ~/agent/explore
+```
+
+### Delegation with Parameters
+
+```
+DELEGATE /specific task/ TO ~/agent/$agent WITH:
+  - $task = /specific task description/
+  - $context = $relevantData
+```
+
+### Parallel Delegation
+
+```
+PARALLEL FOR EACH $agent IN ["analyst", "architect", "critic"]:
+  - DELEGATE /provide $agent perspective on the problem/ TO ~/agent/$agent
+```
+
+### DELEGATE vs USE
+
+- **DELEGATE** spawns subagents with autonomy to interpret and execute tasks
+- **USE ~/skill/x TO /task/** invokes deterministic, reusable instruction sets
+
+Use DELEGATE when you need diverse perspectives or autonomous decision-making.
+Use USE when you need consistent, repeatable behavior.

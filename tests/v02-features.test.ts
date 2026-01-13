@@ -455,7 +455,7 @@ describe('v0.2 Integration', () => {
 name: parallel-processor
 description: Process items in parallel with early exit
 uses:
-  - validator
+  - ~validator
 ---
 
 ## Types
@@ -476,7 +476,7 @@ PARALLEL FOR EACH $item IN $items:
   - Process $item
   - IF $item.triggers_stop THEN:
     - BREAK
-  - Validate with [[validator]]
+  - Validate with ~/skill/validator
 `;
     const doc = parse(source);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
@@ -488,12 +488,11 @@ PARALLEL FOR EACH $item IN $items:
     assertIncludes(result.output, 'BREAK');
   });
 
-  test('backward compatibility with v0.1 skill', () => {
-    const v01Skill = `---
-name: legacy-skill
-description: A v0.1 compatible skill
-uses:
-  - helper-skill
+  test('v0.8 style skill with links', () => {
+    // v0.8: Use ~/skill/name syntax instead of (~skill) and uses:
+    const v08Skill = `---
+name: modern-skill
+description: A v0.8 compatible skill
 ---
 
 ## Types
@@ -509,13 +508,13 @@ FOR EACH $item IN $items:
     - Expedite
 
 WHILE NOT complete AND $iterations < 5 DO:
-  - Execute [[helper-skill]]
+  - Execute ~/skill/helper-skill
   - Update $iterations
 `;
-    const doc = parse(v01Skill);
-    assertEqual(doc.errors.length, 0, 'v0.1 skill should parse without errors');
+    const doc = parse(v08Skill);
+    assertEqual(doc.errors.length, 0, 'v0.8 skill should parse without errors');
     
-    const result = compile(v01Skill);
+    const result = compile(v08Skill);
     assert(result.diagnostics.filter(d => d.severity === 'error').length === 0, 'Should compile without errors');
   });
 
@@ -553,6 +552,7 @@ FOR EACH $a IN $as:
   test('BREAK inside WHILE > IF with delegation (issue: loop depth tracking)', () => {
     // This tests the fix for BREAK inside IF blocks nested in WHILE loops
     // when a Delegation with WITH clause precedes the IF
+    // v0.8: Use #task anchor syntax instead of (#task)
     const doc = parse(`---
 name: test
 description: test
@@ -560,7 +560,7 @@ description: test
 
 WHILE $round < $maxRounds DO:
 
-  Delegate to [[#task]] WITH:
+  Delegate to #task WITH:
     - $param = $value
 
   IF /condition/ THEN:

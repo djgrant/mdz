@@ -7,8 +7,6 @@ import Header from "../components/Header.astro";
 const codeExample = `<span class="zen-comment">---</span>
 <span class="zen-comment">name: iterative-solver</span>
 <span class="zen-comment">description: Hypothesis-driven problem solving</span>
-<span class="zen-comment">uses:</span>
-<span class="zen-comment">  - experiment</span>
 <span class="zen-comment">---</span>
 
 <span class="zen-heading">## Input</span>
@@ -22,15 +20,15 @@ const codeExample = `<span class="zen-comment">---</span>
 
 <span class="zen-heading">## Workflow</span>
 
+<span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/initial research/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/research</span>
 <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/problem solved/</span> <span class="zen-keyword">DO</span>:
   - Formulate <span class="zen-variable">$hypothesis</span>: <span class="zen-type">$Hypothesis</span>
-  - Execute <span class="zen-reference">[[experiment]]</span> <span class="zen-keyword">WITH</span>:
-    - <span class="zen-variable">$hypothesis</span>
+  - <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/experiment</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/test hypothesis/</span>
   - <span class="zen-keyword">IF</span> <span class="zen-variable">$outcome</span> = <span class="zen-string">"confirmed"</span> <span class="zen-keyword">THEN</span>:
     - Return <span class="zen-variable">$solution</span>`;
 ---
 
-<Layout title="MDZ - A language for the world's most powerful runtime">
+<Layout title="MDZ - A language for LLMs">
   <Header currentPath="/" />
 
   <main>
@@ -348,12 +346,12 @@ const codeExample = `<span class="zen-comment">---</span>
 - <span class="zen-variable">$path</span> = <span class="zen-variable">$n</span> =&gt; `output-<span class="zen-variable">$n</span>.mdz`</code></pre>
         </div>
 
-        <!-- References -->
+        <!-- Links -->
         <div
           class="p-6 rounded-xl border border-[var(--color-border)] dark:border-[var(--color-border-dark)] min-w-0"
         >
           <h3 class="font-medium mb-3 text-[var(--color-reference)]">
-            References
+            Links
           </h3>
           <p
             class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
@@ -361,9 +359,9 @@ const codeExample = `<span class="zen-comment">---</span>
             Dependencies the tooling validates
           </p>
           <pre
-            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-reference">[[skill-name]]</span>
-<span class="zen-reference">[[skill#section]]</span>
-<span class="zen-reference">[[#local-section]]</span></code></pre>
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-reference">~/skill/name</span>
+<span class="zen-reference">~/skill/name#section</span>
+<span class="zen-reference">#local-section</span></code></pre>
         </div>
 
         <!-- Semantic Markers -->
@@ -411,12 +409,12 @@ const codeExample = `<span class="zen-comment">---</span>
           <p
             class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] mb-4"
           >
-            Validated skill delegation
+            Skills and agent delegation
           </p>
           <pre
-            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code>Execute <span class="zen-reference">[[skill]]</span> <span class="zen-keyword">WITH</span>:
-  - <span class="zen-variable">$param</span> = value
-  - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#check]]</span></code></pre>
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/name</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/task/</span>
+
+<span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/task/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/name</span></code></pre>
         </div>
       </div>
     </div>

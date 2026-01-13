@@ -125,9 +125,9 @@ Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</
   </p>
 
   <ul>
-    <li><code>BaseNode</code> — Base class with <code>kind</code> and <code>span</code> properties</li>
-    <li><code>Span</code> — Source location with start/end positions</li>
-    <li><code>Position</code> — Line, column, and byte offset (1-based line, 0-based column/offset)</li>
+    <li><code>frontmatter</code> — Optional metadata (name, description)</li>
+    <li><code>sections</code> — Array of heading-based content sections</li>
+    <li><code>errors</code> — Parse errors encountered during parsing</li>
   </ul>
 
   <h3>Document Structure</h3>
@@ -141,9 +141,14 @@ Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</
   </p>
 
   <ul>
-    <li><code>frontmatter</code> — Optional metadata (name, description, uses)</li>
-    <li><code>sections</code> — Array of heading-based content sections</li>
-    <li><code>errors</code> — Parse errors encountered during parsing</li>
+    <li>Frontmatter (name, description)</li>
+    <li>Type definitions (<code>$Type: ...</code>)</li>
+    <li>Variable declarations (<code>$var: $Type = value</code>)</li>
+    <li>Control flow (FOR EACH, WHILE, IF/THEN/ELSE)</li>
+    <li>Composition keywords (USE, EXECUTE, DELEGATE, GOTO)</li>
+    <li>Links (<code>~/skill/name</code>, <code>~/agent/name</code>)</li>
+    <li>Anchors (<code>#section</code>)</li>
+    <li>Semantic markers (<code>/content/</code>, <code>$/name/</code>)</li>
   </ul>
 
   <h3>AST Construction Example</h3>

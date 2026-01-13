@@ -39,7 +39,10 @@
       exports.isVariableDeclaration = isVariableDeclaration;
       exports.isControlFlow = isControlFlow;
       exports.isLoopStatement = isLoopStatement;
-      exports.isReference = isReference;
+      exports.isLink = isLink;
+      exports.isAnchor = isAnchor;
+      exports.resolveLinkPath = resolveLinkPath;
+      exports.getLinkKind = getLinkKind2;
       function createSpan2(startLine, startColumn, startOffset, endLine, endColumn, endOffset) {
         return {
           start: { line: startLine, column: startColumn, offset: startOffset },
@@ -64,8 +67,24 @@
       function isLoopStatement(node) {
         return node.kind === "ForEachStatement" || node.kind === "ParallelForEachStatement" || node.kind === "WhileStatement";
       }
-      function isReference(node) {
-        return node.kind === "SkillReference" || node.kind === "SectionReference";
+      function isLink(node) {
+        return node.kind === "Link";
+      }
+      function isAnchor(node) {
+        return node.kind === "Anchor";
+      }
+      function resolveLinkPath(link) {
+        return link.path.join("/") + ".mdz";
+      }
+      function getLinkKind2(link) {
+        const folder = link.path[0];
+        if (folder === "agent" || folder === "agents")
+          return "agent";
+        if (folder === "skill" || folder === "skills")
+          return "skill";
+        if (folder === "tool" || folder === "tools")
+          return "tool";
+        return "unknown";
       }
     }
   });
@@ -166,15 +185,15 @@
             if (result)
               return;
           }
-          if (this.lookAhead("[[")) {
-            this.consumeChars(2);
-            this.addToken("DOUBLE_LBRACKET", "[[");
-            return;
+          if (char === "~" && this.peekAt(1) === "/") {
+            const result = this.tryScanLink();
+            if (result)
+              return;
           }
-          if (this.lookAhead("]]")) {
-            this.consumeChars(2);
-            this.addToken("DOUBLE_RBRACKET", "]]");
-            return;
+          if (char === "#" && this.column > 0) {
+            const result = this.tryScanAnchor();
+            if (result)
+              return;
           }
           if (this.lookAhead("=>")) {
             this.consumeChars(2);
@@ -219,10 +238,6 @@
           }
           if (char === "$") {
             this.scanDollarIdent();
-            return;
-          }
-          if (char === "#") {
-            this.scanHashIdent();
             return;
           }
           if (char === '"') {
@@ -314,7 +329,7 @@
           }
           this.addToken("CODE_BLOCK_START", "```" + lang);
           if (!this.isAtEnd())
-            this.consumeNewline();
+            this.consumeNewlineRaw();
           let content = "";
           while (!this.isAtEnd()) {
             if (this.column === 0 && this.lookAhead("```")) {
@@ -323,7 +338,7 @@
               this.consumeChars(3);
               this.addToken("CODE_BLOCK_END", "```");
               if (!this.isAtEnd() && this.peek() === "\n")
-                this.consumeNewline();
+                this.consumeNewlineRaw();
               return;
             }
             if (this.peek() === "\n") {
@@ -412,6 +427,100 @@
           }
           return false;
         }
+        /**
+         * v0.8: Tries to scan a link reference: ~/path/to/file or ~/path/to/file#anchor
+         * Assumes current position is at '~' and next char is '/'.
+         * Returns true if a link was found and tokenized.
+         *
+         * Token value is a JSON object: { path: string[], anchor: string | null }
+         */
+        tryScanLink() {
+          const startPos = this.pos;
+          const startLine = this.line;
+          const startColumn = this.column;
+          this.advance();
+          this.advance();
+          const path = [];
+          let segment = this.scanLinkSegment();
+          if (!segment) {
+            this.pos = startPos;
+            this.column = startColumn;
+            this.line = startLine;
+            return false;
+          }
+          path.push(segment);
+          while (this.peek() === "/" && this.peekAt(1) !== "\0") {
+            const nextChar = this.peekAt(1);
+            if (!this.isAlpha(nextChar) && nextChar !== "_") {
+              break;
+            }
+            this.advance();
+            segment = this.scanLinkSegment();
+            if (!segment)
+              break;
+            path.push(segment);
+          }
+          let anchor = null;
+          if (this.peek() === "#") {
+            this.advance();
+            anchor = this.scanLinkSegment();
+            if (!anchor) {
+              this.pos = startPos;
+              this.column = startColumn;
+              this.line = startLine;
+              return false;
+            }
+          }
+          const value = JSON.stringify({ path, anchor });
+          this.addToken("LINK", value);
+          return true;
+        }
+        /**
+         * Scans a link segment (kebab-case identifier).
+         * Returns the segment or empty string if not valid.
+         */
+        scanLinkSegment() {
+          let segment = "";
+          if (!this.isAlpha(this.peek()) && this.peek() !== "_") {
+            return "";
+          }
+          while (this.isAlphaNumeric(this.peek()) || this.peek() === "-" || this.peek() === "_") {
+            segment += this.advance();
+          }
+          return segment;
+        }
+        /**
+         * v0.8: Tries to scan an anchor reference: #section
+         * Assumes current position is at '#' and we're NOT at column 0 (not a heading).
+         * Returns true if an anchor was found and tokenized.
+         *
+         * Token value is the anchor name string.
+         */
+        tryScanAnchor() {
+          const startPos = this.pos;
+          const startLine = this.line;
+          const startColumn = this.column;
+          if (this.peek() !== "#") {
+            return false;
+          }
+          const nextChar = this.peekAt(1);
+          if (!this.isAlpha(nextChar) && nextChar !== "_") {
+            return false;
+          }
+          this.advance();
+          let name = "";
+          while (this.isAlphaNumeric(this.peek()) || this.peek() === "-" || this.peek() === "_") {
+            name += this.advance();
+          }
+          if (!name) {
+            this.pos = startPos;
+            this.column = startColumn;
+            this.line = startLine;
+            return false;
+          }
+          this.addToken("ANCHOR", name);
+          return true;
+        }
         scanDollarIdent() {
           this.advance();
           if (this.peek() === "/") {
@@ -438,14 +547,6 @@
           }
           const type = ident[0] >= "A" && ident[0] <= "Z" ? "TYPE_IDENT" : "DOLLAR_IDENT";
           this.addToken(type, "$" + ident);
-        }
-        scanHashIdent() {
-          this.advance();
-          let ident = "";
-          while (this.isAlphaNumeric(this.peek()) || this.peek() === "-") {
-            ident += this.advance();
-          }
-          this.addToken("LOWER_IDENT", "#" + ident);
         }
         scanString() {
           this.advance();
@@ -581,6 +682,8 @@
             "PARALLEL": "PARALLEL",
             "BREAK": "BREAK",
             "CONTINUE": "CONTINUE",
+            "DELEGATE": "DELEGATE",
+            "TO": "TO",
             "true": "TRUE",
             "false": "FALSE"
           };
@@ -744,15 +847,78 @@
           const end = this.advance();
           this.frontmatterContent = content;
           const parsed = this.parseYaml(content);
+          const { skills, agents, tools, uses } = this.parseUsesField(parsed);
           return {
             kind: "Frontmatter",
             name: parsed.name || "",
             description: parsed.description || "",
-            uses: parsed.uses || [],
+            skills,
+            agents,
+            tools,
+            uses,
             imports: this.parseImports(parsed.imports),
             raw: parsed,
             span: AST2.mergeSpans(start.span, end.span)
           };
+        }
+        // v0.7: Parse unified uses: field with sigil-based entries
+        parseUsesField(parsed) {
+          const skills = [];
+          const agents = [];
+          const tools = [];
+          const uses = [];
+          const hasExplicitSkills = Array.isArray(parsed.skills) && parsed.skills.length > 0;
+          const hasExplicitAgents = Array.isArray(parsed.agents) && parsed.agents.length > 0;
+          const hasExplicitTools = Array.isArray(parsed.tools) && parsed.tools.length > 0;
+          if (hasExplicitSkills) {
+            for (const skill of parsed.skills) {
+              skills.push(skill);
+              uses.push(`~${skill}`);
+            }
+          }
+          if (hasExplicitAgents) {
+            for (const agent of parsed.agents) {
+              agents.push(agent);
+              uses.push(`@${agent}`);
+            }
+          }
+          if (hasExplicitTools) {
+            for (const tool of parsed.tools) {
+              tools.push(tool);
+              uses.push(`!${tool}`);
+            }
+          }
+          if (Array.isArray(parsed.uses)) {
+            for (const entry of parsed.uses) {
+              if (typeof entry !== "string")
+                continue;
+              if (entry.startsWith("~")) {
+                const skill = entry.slice(1);
+                if (!skills.includes(skill)) {
+                  skills.push(skill);
+                  uses.push(entry);
+                }
+              } else if (entry.startsWith("@")) {
+                const agent = entry.slice(1);
+                if (!agents.includes(agent)) {
+                  agents.push(agent);
+                  uses.push(entry);
+                }
+              } else if (entry.startsWith("!")) {
+                const tool = entry.slice(1);
+                if (!tools.includes(tool)) {
+                  tools.push(tool);
+                  uses.push(entry);
+                }
+              } else {
+                if (!hasExplicitSkills && !skills.includes(entry)) {
+                  skills.push(entry);
+                  uses.push(entry);
+                }
+              }
+            }
+          }
+          return { skills, agents, tools, uses };
         }
         parseYaml(content) {
           const result = {};
@@ -933,6 +1099,9 @@
           if (this.check("CONTINUE")) {
             return this.parseContinue();
           }
+          if (this.check("DELEGATE")) {
+            return this.parseDelegateStatement();
+          }
           if (this.check("CODE_BLOCK_START")) {
             return this.parseCodeBlock();
           }
@@ -942,11 +1111,22 @@
           if (this.check("BLOCKQUOTE")) {
             return this.parseBlockquote();
           }
+          if (this.check("UPPER_IDENT") && this.current().value === "USE") {
+            return this.parseUseStatement();
+          }
+          if (this.check("UPPER_IDENT") && this.current().value === "EXECUTE") {
+            return this.parseExecuteStatement();
+          }
+          if (this.check("UPPER_IDENT") && this.current().value === "GOTO") {
+            return this.parseGotoStatement();
+          }
           if (this.check("LOWER_IDENT") || this.check("UPPER_IDENT")) {
             const verb = this.current().value.toLowerCase();
             if (verb === "execute" || verb === "call" || verb === "run" || verb === "invoke" || verb === "delegate" || verb === "use") {
-              const lookahead = this.peek(1);
-              if (lookahead?.type === "DOUBLE_LBRACKET") {
+              const lookahead1 = this.peek(1);
+              const lookahead2 = this.peek(2);
+              const isRefToken = (t) => t?.type === "LINK" || t?.type === "ANCHOR";
+              if (isRefToken(lookahead1) || lookahead1?.type === "LOWER_IDENT" && lookahead1.value === "to" && isRefToken(lookahead2)) {
                 return this.parseDelegation();
               }
             }
@@ -1170,6 +1350,9 @@
           if (this.check("CONTINUE")) {
             return this.parseContinue();
           }
+          if (this.check("DELEGATE")) {
+            return this.parseDelegateStatement();
+          }
           return this.parseParagraph();
         }
         // ==========================================================================
@@ -1286,8 +1469,11 @@
           if (this.check("TEMPLATE_START")) {
             return this.parseTemplateLiteral();
           }
-          if (this.check("DOUBLE_LBRACKET")) {
-            return this.parseReference();
+          if (this.check("LINK")) {
+            return this.parseLink();
+          }
+          if (this.check("ANCHOR")) {
+            return this.parseAnchor();
           }
           if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
             return this.parseSemanticMarker();
@@ -1378,30 +1564,43 @@
             span: AST2.mergeSpans(start.span, end?.span || this.previous().span)
           };
         }
-        parseReference() {
-          const start = this.advance();
-          let skill = null;
-          let section = null;
-          if (this.check("LOWER_IDENT")) {
-            const ident = this.advance().value;
-            if (ident.startsWith("#")) {
-              section = ident.slice(1);
-            } else {
-              skill = ident;
-            }
+        // v0.8: Parse ~/path/to/file or ~/path/to/file#anchor link reference
+        parseLink() {
+          const token = this.expect("LINK");
+          if (!token) {
+            return {
+              kind: "Link",
+              path: [],
+              anchor: null,
+              raw: "",
+              span: this.current().span
+            };
           }
-          if (skill && this.check("LOWER_IDENT")) {
-            const ident = this.advance().value;
-            if (ident.startsWith("#")) {
-              section = ident.slice(1);
-            }
+          const parsed = JSON.parse(token.value);
+          const raw = "~/" + parsed.path.join("/") + (parsed.anchor ? "#" + parsed.anchor : "");
+          return {
+            kind: "Link",
+            path: parsed.path,
+            anchor: parsed.anchor,
+            raw,
+            span: token.span
+          };
+        }
+        // v0.8: Parse #section anchor reference
+        parseAnchor() {
+          const token = this.expect("ANCHOR");
+          if (!token) {
+            return {
+              kind: "Anchor",
+              name: "",
+              span: this.current().span
+            };
           }
-          const end = this.expect("DOUBLE_RBRACKET");
-          const span = AST2.mergeSpans(start.span, end?.span || this.previous().span);
-          if (section !== null) {
-            return { kind: "SectionReference", skill, section, span };
-          }
-          return { kind: "SkillReference", skill: skill || "", span };
+          return {
+            kind: "Anchor",
+            name: token.value,
+            span: token.span
+          };
         }
         parseSemanticMarker() {
           if (this.check("SEMANTIC_MARKER")) {
@@ -1501,7 +1700,8 @@
         parseInlineText() {
           let text = "";
           const start = this.current();
-          while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("DOUBLE_LBRACKET") && !this.check("SEMANTIC_OPEN") && !this.check("SEMANTIC_MARKER") && !this.check("INFERRED_VAR") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
+          while (!this.isAtEnd() && !this.check("NEWLINE") && // v0.8: link-based references
+          !this.check("LINK") && !this.check("ANCHOR") && !this.check("SEMANTIC_OPEN") && !this.check("SEMANTIC_MARKER") && !this.check("INFERRED_VAR") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
             if (text)
               text += " ";
             text += this.advance().value;
@@ -1580,19 +1780,45 @@
           this.expect("COLON");
           this.skipNewlines();
           const thenBody = this.parseIndentedBlocks();
+          const elseIf = [];
           let elseBody = null;
-          if (this.check("ELSE")) {
+          while (this.check("ELSE")) {
+            const elseStart = this.current();
             this.advance();
-            this.expect("COLON");
-            this.skipNewlines();
-            elseBody = this.parseIndentedBlocks();
+            if (this.check("IF")) {
+              this.advance();
+              const elseIfCondition = this.parseCondition();
+              this.expect("THEN");
+              this.expect("COLON");
+              this.skipNewlines();
+              const elseIfBody = this.parseIndentedBlocks();
+              elseIf.push({
+                condition: elseIfCondition,
+                body: elseIfBody,
+                span: AST2.mergeSpans(elseStart.span, elseIfBody.length > 0 ? elseIfBody[elseIfBody.length - 1].span : elseIfCondition.span)
+              });
+            } else {
+              this.expect("COLON");
+              this.skipNewlines();
+              elseBody = this.parseIndentedBlocks();
+              break;
+            }
+          }
+          let endSpan = condition.span;
+          if (elseBody?.length) {
+            endSpan = elseBody[elseBody.length - 1].span;
+          } else if (elseIf.length > 0) {
+            endSpan = elseIf[elseIf.length - 1].span;
+          } else if (thenBody.length) {
+            endSpan = thenBody[thenBody.length - 1].span;
           }
           return {
             kind: "IfStatement",
             condition,
             thenBody,
+            elseIf,
             elseBody,
-            span: AST2.mergeSpans(start.span, elseBody?.length ? elseBody[elseBody.length - 1].span : thenBody.length ? thenBody[thenBody.length - 1].span : condition.span)
+            span: AST2.mergeSpans(start.span, endSpan)
           };
         }
         // v0.2: BREAK statement
@@ -1615,6 +1841,102 @@
           return {
             kind: "ContinueStatement",
             span: token.span
+          };
+        }
+        // v0.8: DELEGATE statement for agent delegation
+        // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+        parseDelegateStatement() {
+          const start = this.advance();
+          const task = this.parseSemanticMarker();
+          this.expect("TO");
+          const target = this.parseLink();
+          let withAnchor;
+          if (this.check("WITH")) {
+            this.advance();
+            withAnchor = this.parseAnchor();
+          }
+          let parameters;
+          if (this.check("COLON")) {
+            parameters = this.parseParameterBlock();
+          }
+          return {
+            kind: "DelegateStatement",
+            task,
+            target,
+            withAnchor,
+            parameters,
+            span: AST2.mergeSpans(start.span, this.previous().span)
+          };
+        }
+        // v0.8: USE statement for skill activation
+        // Syntax: USE ~/skill/x TO /task/
+        parseUseStatement() {
+          const start = this.advance();
+          const link = this.parseLink();
+          this.expect("TO");
+          const task = this.parseSemanticMarker();
+          let parameters;
+          if (this.check("COLON")) {
+            parameters = this.parseParameterBlock();
+          }
+          return {
+            kind: "UseStatement",
+            link,
+            task,
+            parameters,
+            span: AST2.mergeSpans(start.span, this.previous().span)
+          };
+        }
+        // v0.8: EXECUTE statement for tool invocation
+        // Syntax: EXECUTE ~/tool/x TO /action/
+        parseExecuteStatement() {
+          const start = this.advance();
+          const link = this.parseLink();
+          this.expect("TO");
+          const task = this.parseSemanticMarker();
+          return {
+            kind: "ExecuteStatement",
+            link,
+            task,
+            span: AST2.mergeSpans(start.span, this.previous().span)
+          };
+        }
+        // v0.8: GOTO statement for same-file navigation
+        // Syntax: GOTO #section
+        parseGotoStatement() {
+          const start = this.advance();
+          const anchor = this.parseAnchor();
+          return {
+            kind: "GotoStatement",
+            anchor,
+            span: AST2.mergeSpans(start.span, anchor.span)
+          };
+        }
+        // v0.8: Parse parameter block
+        parseParameterBlock() {
+          const start = this.advance();
+          this.skipNewlines();
+          const parameters = [];
+          const hasIndent = this.check("INDENT");
+          if (hasIndent) {
+            this.advance();
+          }
+          while (this.check("LIST_MARKER") && !this.isAtEnd()) {
+            this.advance();
+            const param = this.parseVariableDeclaration(true);
+            parameters.push(param);
+            this.skipNewlines();
+            if (!this.check("LIST_MARKER") || this.check("HEADING")) {
+              break;
+            }
+          }
+          if (hasIndent && this.check("DEDENT")) {
+            this.advance();
+          }
+          return {
+            kind: "ParameterBlock",
+            parameters,
+            span: AST2.mergeSpans(start.span, this.previous().span)
           };
         }
         parsePattern() {
@@ -1756,8 +2078,10 @@
           const content = [];
           const start = this.current();
           while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("HEADING")) {
-            if (this.check("DOUBLE_LBRACKET")) {
-              content.push(this.parseReference());
+            if (this.check("LINK")) {
+              content.push(this.parseLink());
+            } else if (this.check("ANCHOR")) {
+              content.push(this.parseAnchor());
             } else if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
               content.push(this.parseSemanticMarker());
             } else if (this.check("INFERRED_VAR")) {
@@ -1808,12 +2132,31 @@
         parseDelegation() {
           const verbToken = this.advance();
           const verb = verbToken.value;
-          const target = this.parseReference();
+          if (this.check("LOWER_IDENT") && this.current().value === "to") {
+            this.advance();
+          }
+          let target;
+          if (this.check("LINK")) {
+            target = this.parseLink();
+          } else if (this.check("ANCHOR")) {
+            target = this.parseAnchor();
+          } else {
+            this.error("E001", "Expected link reference (~/path) or anchor reference (#name)");
+            target = {
+              kind: "Anchor",
+              name: "",
+              span: this.current().span
+            };
+          }
           const parameters = [];
           if (this.check("WITH")) {
             this.advance();
             this.expect("COLON");
             this.skipNewlines();
+            const hasIndent = this.check("INDENT");
+            if (hasIndent) {
+              this.advance();
+            }
             while (this.check("LIST_MARKER") && !this.isAtEnd()) {
               this.advance();
               const param = this.parseVariableDeclaration(true);
@@ -1822,6 +2165,9 @@
               if (!this.check("LIST_MARKER") || this.check("HEADING")) {
                 break;
               }
+            }
+            if (hasIndent && this.check("DEDENT")) {
+              this.advance();
             }
           }
           const span = AST2.mergeSpans(verbToken.span, this.previous().span);
@@ -1904,14 +2250,53 @@
   var require_compiler = __commonJS({
     "../packages/core/dist/compiler/compiler.js"(exports) {
       "use strict";
+      var __createBinding = exports && exports.__createBinding || (Object.create ? function(o, m, k, k2) {
+        if (k2 === void 0) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+          desc = { enumerable: true, get: function() {
+            return m[k];
+          } };
+        }
+        Object.defineProperty(o, k2, desc);
+      } : function(o, m, k, k2) {
+        if (k2 === void 0) k2 = k;
+        o[k2] = m[k];
+      });
+      var __setModuleDefault = exports && exports.__setModuleDefault || (Object.create ? function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+      } : function(o, v) {
+        o["default"] = v;
+      });
+      var __importStar = exports && exports.__importStar || /* @__PURE__ */ function() {
+        var ownKeys = function(o) {
+          ownKeys = Object.getOwnPropertyNames || function(o2) {
+            var ar = [];
+            for (var k in o2) if (Object.prototype.hasOwnProperty.call(o2, k)) ar[ar.length] = k;
+            return ar;
+          };
+          return ownKeys(o);
+        };
+        return function(mod) {
+          if (mod && mod.__esModule) return mod;
+          var result = {};
+          if (mod != null) {
+            for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+          }
+          __setModuleDefault(result, mod);
+          return result;
+        };
+      }();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Compiler = void 0;
       exports.compile = compile2;
       exports.createRegistry = createRegistry;
       exports.buildFullDependencyGraph = buildFullDependencyGraph;
       var parser_1 = require_parser();
+      var AST2 = __importStar(require_ast());
       var BUILTIN_PRIMITIVES2 = /* @__PURE__ */ new Set(["String", "Number", "Boolean"]);
       var Compiler2 = class {
+        // v0.7: Track declared tools from uses:
         constructor(options = {}, registry) {
           __publicField(this, "options");
           __publicField(this, "registry");
@@ -1922,6 +2307,9 @@
           __publicField(this, "definedTypes", /* @__PURE__ */ new Set());
           __publicField(this, "definedVariables", /* @__PURE__ */ new Set());
           __publicField(this, "declaredDeps", /* @__PURE__ */ new Set());
+          __publicField(this, "declaredAgents", /* @__PURE__ */ new Set());
+          // v0.7: Track declared agents from uses:
+          __publicField(this, "declaredTools", /* @__PURE__ */ new Set());
           this.options = {
             includeHeader: false,
             // Changed default: no header
@@ -1940,7 +2328,11 @@
           return {
             name: "",
             description: "",
+            skills: [],
+            agents: [],
+            tools: [],
             uses: [],
+            // v0.7: raw uses array for reference
             imports: [],
             types: [],
             variables: [],
@@ -1957,6 +2349,8 @@
           this.definedTypes.clear();
           this.definedVariables.clear();
           this.declaredDeps.clear();
+          this.declaredAgents.clear();
+          this.declaredTools.clear();
           const ast = (0, parser_1.parse)(source);
           for (const error of ast.errors) {
             this.diagnostics.push({
@@ -1980,6 +2374,7 @@
           if (this.options.validateContracts) {
             this.validateContracts(ast);
           }
+          this.validateDelegateStatements(ast);
           let output = source;
           if (this.options.includeHeader) {
             const header = `<!-- MDZ Validated: ${this.metadata.name || "unnamed"} -->
@@ -2003,9 +2398,18 @@
           if (ast.frontmatter) {
             this.metadata.name = ast.frontmatter.name;
             this.metadata.description = ast.frontmatter.description;
+            this.metadata.skills = [...ast.frontmatter.skills];
+            this.metadata.agents = [...ast.frontmatter.agents];
+            this.metadata.tools = [...ast.frontmatter.tools];
             this.metadata.uses = [...ast.frontmatter.uses];
-            for (const use of ast.frontmatter.uses) {
-              this.declaredDeps.add(use);
+            for (const skill of ast.frontmatter.skills) {
+              this.declaredDeps.add(skill);
+            }
+            for (const agent of ast.frontmatter.agents) {
+              this.declaredAgents.add(agent);
+            }
+            for (const tool of ast.frontmatter.tools) {
+              this.declaredTools.add(tool);
             }
             for (const imp of ast.frontmatter.imports) {
               this.metadata.imports.push({
@@ -2064,6 +2468,9 @@
               break;
             case "Delegation":
               this.extractFromDelegation(block);
+              break;
+            case "DelegateStatement":
+              this.extractFromDelegateStatement(block);
               break;
           }
         }
@@ -2136,10 +2543,10 @@
         }
         extractFromParagraph(para) {
           for (const content of para.content) {
-            if (content.kind === "SkillReference") {
-              this.extractSkillReference(content);
-            } else if (content.kind === "SectionReference") {
-              this.extractSectionReference(content);
+            if (content.kind === "Link") {
+              this.extractLinkReference(content);
+            } else if (content.kind === "Anchor") {
+              this.extractAnchorReference(content);
             } else if (content.kind === "SemanticMarker") {
               this.sourceMap.push({
                 source: content.span,
@@ -2156,14 +2563,36 @@
           }
         }
         extractFromDelegation(deleg) {
-          if (deleg.target.kind === "SkillReference") {
-            this.extractSkillReference(deleg.target);
+          if (deleg.target.kind === "Link") {
+            this.extractLinkReference(deleg.target);
           } else {
-            this.extractSectionReference(deleg.target);
+            this.extractAnchorReference(deleg.target);
           }
           for (const param of deleg.parameters) {
             this.extractVariableDeclaration(param);
           }
+        }
+        // v0.8: Extract metadata from DELEGATE statement
+        extractFromDelegateStatement(deleg) {
+          this.extractLinkReference(deleg.target);
+          this.sourceMap.push({
+            source: deleg.task.span,
+            type: "semantic",
+            name: deleg.task.content
+          });
+          if (deleg.withAnchor) {
+            this.extractAnchorReference(deleg.withAnchor);
+          }
+          if (deleg.parameters) {
+            for (const param of deleg.parameters.parameters) {
+              this.extractVariableDeclaration(param);
+            }
+          }
+          this.sourceMap.push({
+            source: deleg.span,
+            type: "control-flow",
+            name: "DelegateStatement"
+          });
         }
         extractParameters(blocks) {
           for (const block of blocks) {
@@ -2188,11 +2617,12 @@
         }
         extractFromExpression(expr) {
           switch (expr.kind) {
-            case "SkillReference":
-              this.extractSkillReference(expr);
+            // v0.8: Link and Anchor references replace old sigil-based syntax
+            case "Link":
+              this.extractLinkReference(expr);
               break;
-            case "SectionReference":
-              this.extractSectionReference(expr);
+            case "Anchor":
+              this.extractAnchorReference(expr);
               break;
             case "SemanticMarker":
               this.sourceMap.push({
@@ -2234,31 +2664,36 @@
               break;
           }
         }
-        extractSkillReference(ref) {
+        // v0.8: Extract link reference (~/path/to/file or ~/path/to/file#anchor)
+        extractLinkReference(link) {
+          const kind = AST2.getLinkKind(link);
+          const target = link.raw;
           this.metadata.references.push({
-            kind: "skill",
-            target: ref.skill,
-            skill: ref.skill,
-            span: ref.span
+            kind: kind === "unknown" ? "skill" : kind,
+            // Default to skill for unknown
+            target,
+            path: link.path,
+            anchor: link.anchor || void 0,
+            span: link.span
           });
           this.sourceMap.push({
-            source: ref.span,
+            source: link.span,
             type: "reference",
-            name: ref.skill
+            name: target
           });
         }
-        extractSectionReference(ref) {
+        // v0.8: Extract anchor reference (#section)
+        extractAnchorReference(anchor) {
           this.metadata.references.push({
-            kind: "section",
-            target: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
-            skill: ref.skill || void 0,
-            section: ref.section,
-            span: ref.span
+            kind: "anchor",
+            target: `#${anchor.name}`,
+            anchor: anchor.name,
+            span: anchor.span
           });
           this.sourceMap.push({
-            source: ref.span,
+            source: anchor.span,
             type: "reference",
-            name: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`
+            name: `#${anchor.name}`
           });
         }
         // ==========================================================================
@@ -2267,19 +2702,11 @@
         buildDependencyGraph(ast) {
           const nodes = /* @__PURE__ */ new Set();
           const edges = [];
-          if (ast.frontmatter) {
-            for (const use of ast.frontmatter.uses) {
-              nodes.add(use);
-              edges.push({ target: use, type: "uses" });
-            }
-          }
           for (const ref of this.metadata.references) {
-            if (ref.kind === "skill" && ref.skill) {
-              nodes.add(ref.skill);
-              edges.push({ target: ref.skill, type: "reference", span: ref.span });
-            } else if (ref.kind === "section" && ref.skill) {
-              nodes.add(ref.skill);
-              edges.push({ target: ref.skill, type: "reference", span: ref.span });
+            if (ref.path && ref.path.length > 0) {
+              const depPath = ref.path.join("/");
+              nodes.add(depPath);
+              edges.push({ target: depPath, type: "reference", span: ref.span });
             }
           }
           this.dependencies.nodes = Array.from(nodes);
@@ -2347,6 +2774,21 @@
                   }
                 }
               }
+            } else if (block.kind === "DelegateStatement") {
+              if (block.task) {
+                for (const interpolation of block.task.interpolations) {
+                  if (!this.definedVariables.has(interpolation.name)) {
+                    usedBeforeDefined.add(interpolation.name);
+                  }
+                }
+              }
+              if (block.parameters) {
+                for (const param of block.parameters.parameters) {
+                  if (param.value) {
+                    this.checkExpressionScope(param.value, usedBeforeDefined);
+                  }
+                }
+              }
             }
           }
         }
@@ -2375,34 +2817,13 @@
         }
         validateReferences() {
           for (const ref of this.metadata.references) {
-            if (ref.kind === "skill" && ref.skill) {
-              if (!this.declaredDeps.has(ref.skill)) {
-                this.diagnostics.push({
-                  severity: "warning",
-                  code: "W001",
-                  message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-                  span: ref.span
-                });
-              }
-            } else if (ref.kind === "section" && ref.skill) {
-              if (!this.declaredDeps.has(ref.skill)) {
-                this.diagnostics.push({
-                  severity: "warning",
-                  code: "W001",
-                  message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-                  span: ref.span
-                });
-              }
-            }
-          }
-          for (const ref of this.metadata.references) {
-            if (ref.kind === "section" && !ref.skill && ref.section) {
-              const sectionExists = this.metadata.sections.some((s) => s.anchor === ref.section);
+            if (ref.kind === "anchor" && ref.anchor) {
+              const sectionExists = this.metadata.sections.some((s) => s.anchor === ref.anchor);
               if (!sectionExists) {
                 this.diagnostics.push({
                   severity: "error",
                   code: "E010",
-                  message: `Section '#${ref.section}' does not exist in this document`,
+                  message: `Section '#${ref.anchor}' does not exist in this document`,
                   span: ref.span
                 });
               }
@@ -2410,25 +2831,79 @@
           }
           if (this.registry) {
             for (const ref of this.metadata.references) {
-              if (ref.kind === "skill" && ref.skill) {
-                const skill = this.registry.get(ref.skill);
+              if (ref.path && ref.path.length > 0) {
+                const depPath = ref.path.join("/");
+                const skill = this.registry.get(depPath);
                 if (!skill) {
                   this.diagnostics.push({
                     severity: "error",
                     code: "E009",
-                    message: `Skill '${ref.skill}' is not found in registry`,
+                    message: `File '${ref.target}' is not found in registry`,
                     span: ref.span
                   });
+                } else if (ref.anchor) {
+                  const targetSection = skill.ast.sections.find((s) => s.anchor === ref.anchor);
+                  if (!targetSection) {
+                    this.diagnostics.push({
+                      severity: "error",
+                      code: "E010",
+                      message: `Section '#${ref.anchor}' does not exist in '${ref.target}'`,
+                      span: ref.span
+                    });
+                  }
                 }
               }
             }
+          }
+        }
+        // v0.3: Validate DELEGATE statements
+        validateDelegateStatements(ast) {
+          const delegateStatements = [];
+          this.findDelegateStatements(ast.sections, delegateStatements);
+          for (const deleg of delegateStatements) {
+            this.validateDelegateAgent(deleg);
+          }
+        }
+        findDelegateStatements(sections, statements) {
+          for (const section of sections) {
+            this.findDelegateStatementsInBlocks(section.content, statements);
+          }
+        }
+        findDelegateStatementsInBlocks(blocks, statements) {
+          for (const block of blocks) {
+            if (block.kind === "DelegateStatement") {
+              statements.push(block);
+            } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+              this.findDelegateStatementsInBlocks(block.body, statements);
+            } else if (block.kind === "WhileStatement") {
+              this.findDelegateStatementsInBlocks(block.body, statements);
+            } else if (block.kind === "IfStatement") {
+              this.findDelegateStatementsInBlocks(block.thenBody, statements);
+              for (const elseIf of block.elseIf) {
+                this.findDelegateStatementsInBlocks(elseIf.body, statements);
+              }
+              if (block.elseBody) {
+                this.findDelegateStatementsInBlocks(block.elseBody, statements);
+              }
+            }
+          }
+        }
+        validateDelegateAgent(deleg) {
+          const linkKind = AST2.getLinkKind(deleg.target);
+          if (linkKind !== "agent") {
+            this.diagnostics.push({
+              severity: "warning",
+              code: "W003",
+              message: `DELEGATE target '${deleg.target.raw}' should be an agent (~/agent/...)`,
+              span: deleg.target.span
+            });
           }
         }
         validateContracts(ast) {
           const delegations = [];
           this.findDelegations(ast.sections, delegations);
           for (const deleg of delegations) {
-            if (deleg.target.kind === "SkillReference" && deleg.target.skill) {
+            if (deleg.target.kind === "Link") {
               this.validateDelegationParameters(deleg);
             }
           }
@@ -2455,12 +2930,15 @@
           }
         }
         validateDelegationParameters(deleg) {
-          const skillName = deleg.target.skill;
+          if (deleg.target.kind !== "Link") {
+            return;
+          }
+          const targetPath = deleg.target.path.join("/");
           let skillParams = [];
-          if (skillName === this.metadata.name) {
+          if (targetPath === this.metadata.name) {
             skillParams = this.metadata.parameters;
           } else if (this.registry) {
-            const skill = this.registry.get(skillName);
+            const skill = this.registry.get(targetPath);
             if (skill) {
               const skillCompileResult = compile2(skill.source, { validateReferences: false, validateContracts: false });
               skillParams = skillCompileResult.metadata.parameters;
@@ -2473,7 +2951,7 @@
               this.diagnostics.push({
                 severity: "error",
                 code: "E011",
-                message: `Required parameter '${req.name}' is missing for skill '${skillName}'`,
+                message: `Required parameter '${req.name}' is missing for '${targetPath}'`,
                 span: deleg.span
               });
             }
@@ -2485,7 +2963,7 @@
                 this.diagnostics.push({
                   severity: "warning",
                   code: "W002",
-                  message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+                  message: `Parameter '${param.name}' is not defined for '${targetPath}'`,
                   span: param.span
                 });
               }
@@ -2650,6 +3128,13 @@
       end: a.end.offset > b.end.offset ? a.end : b.end
     };
   }
+  function getLinkKind(link) {
+    const folder = link.path[0];
+    if (folder === "agent" || folder === "agents") return "agent";
+    if (folder === "skill" || folder === "skills") return "skill";
+    if (folder === "tool" || folder === "tools") return "tool";
+    return "unknown";
+  }
 
   // ../packages/core/src/parser/lexer.ts
   var Lexer = class {
@@ -2738,15 +3223,13 @@
         const result = this.tryScanSemanticMarker();
         if (result) return;
       }
-      if (this.lookAhead("[[")) {
-        this.consumeChars(2);
-        this.addToken("DOUBLE_LBRACKET", "[[");
-        return;
+      if (char === "~" && this.peekAt(1) === "/") {
+        const result = this.tryScanLink();
+        if (result) return;
       }
-      if (this.lookAhead("]]")) {
-        this.consumeChars(2);
-        this.addToken("DOUBLE_RBRACKET", "]]");
-        return;
+      if (char === "#" && this.column > 0) {
+        const result = this.tryScanAnchor();
+        if (result) return;
       }
       if (this.lookAhead("=>")) {
         this.consumeChars(2);
@@ -2791,10 +3274,6 @@
       }
       if (char === "$") {
         this.scanDollarIdent();
-        return;
-      }
-      if (char === "#") {
-        this.scanHashIdent();
         return;
       }
       if (char === '"') {
@@ -2883,14 +3362,14 @@
         lang += this.advance();
       }
       this.addToken("CODE_BLOCK_START", "```" + lang);
-      if (!this.isAtEnd()) this.consumeNewline();
+      if (!this.isAtEnd()) this.consumeNewlineRaw();
       let content = "";
       while (!this.isAtEnd()) {
         if (this.column === 0 && this.lookAhead("```")) {
           if (content) this.addToken("CODE_BLOCK_CONTENT", content);
           this.consumeChars(3);
           this.addToken("CODE_BLOCK_END", "```");
-          if (!this.isAtEnd() && this.peek() === "\n") this.consumeNewline();
+          if (!this.isAtEnd() && this.peek() === "\n") this.consumeNewlineRaw();
           return;
         }
         if (this.peek() === "\n") {
@@ -2976,6 +3455,99 @@
       }
       return false;
     }
+    /**
+     * v0.8: Tries to scan a link reference: ~/path/to/file or ~/path/to/file#anchor
+     * Assumes current position is at '~' and next char is '/'.
+     * Returns true if a link was found and tokenized.
+     * 
+     * Token value is a JSON object: { path: string[], anchor: string | null }
+     */
+    tryScanLink() {
+      const startPos = this.pos;
+      const startLine = this.line;
+      const startColumn = this.column;
+      this.advance();
+      this.advance();
+      const path = [];
+      let segment = this.scanLinkSegment();
+      if (!segment) {
+        this.pos = startPos;
+        this.column = startColumn;
+        this.line = startLine;
+        return false;
+      }
+      path.push(segment);
+      while (this.peek() === "/" && this.peekAt(1) !== "\0") {
+        const nextChar = this.peekAt(1);
+        if (!this.isAlpha(nextChar) && nextChar !== "_") {
+          break;
+        }
+        this.advance();
+        segment = this.scanLinkSegment();
+        if (!segment) break;
+        path.push(segment);
+      }
+      let anchor = null;
+      if (this.peek() === "#") {
+        this.advance();
+        anchor = this.scanLinkSegment();
+        if (!anchor) {
+          this.pos = startPos;
+          this.column = startColumn;
+          this.line = startLine;
+          return false;
+        }
+      }
+      const value = JSON.stringify({ path, anchor });
+      this.addToken("LINK", value);
+      return true;
+    }
+    /**
+     * Scans a link segment (kebab-case identifier).
+     * Returns the segment or empty string if not valid.
+     */
+    scanLinkSegment() {
+      let segment = "";
+      if (!this.isAlpha(this.peek()) && this.peek() !== "_") {
+        return "";
+      }
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === "-" || this.peek() === "_") {
+        segment += this.advance();
+      }
+      return segment;
+    }
+    /**
+     * v0.8: Tries to scan an anchor reference: #section
+     * Assumes current position is at '#' and we're NOT at column 0 (not a heading).
+     * Returns true if an anchor was found and tokenized.
+     * 
+     * Token value is the anchor name string.
+     */
+    tryScanAnchor() {
+      const startPos = this.pos;
+      const startLine = this.line;
+      const startColumn = this.column;
+      if (this.peek() !== "#") {
+        return false;
+      }
+      const nextChar = this.peekAt(1);
+      if (!this.isAlpha(nextChar) && nextChar !== "_") {
+        return false;
+      }
+      this.advance();
+      let name = "";
+      while (this.isAlphaNumeric(this.peek()) || this.peek() === "-" || this.peek() === "_") {
+        name += this.advance();
+      }
+      if (!name) {
+        this.pos = startPos;
+        this.column = startColumn;
+        this.line = startLine;
+        return false;
+      }
+      this.addToken("ANCHOR", name);
+      return true;
+    }
     scanDollarIdent() {
       this.advance();
       if (this.peek() === "/") {
@@ -3002,14 +3574,6 @@
       }
       const type = ident[0] >= "A" && ident[0] <= "Z" ? "TYPE_IDENT" : "DOLLAR_IDENT";
       this.addToken(type, "$" + ident);
-    }
-    scanHashIdent() {
-      this.advance();
-      let ident = "";
-      while (this.isAlphaNumeric(this.peek()) || this.peek() === "-") {
-        ident += this.advance();
-      }
-      this.addToken("LOWER_IDENT", "#" + ident);
     }
     scanString() {
       this.advance();
@@ -3137,6 +3701,8 @@
         "PARALLEL": "PARALLEL",
         "BREAK": "BREAK",
         "CONTINUE": "CONTINUE",
+        "DELEGATE": "DELEGATE",
+        "TO": "TO",
         "true": "TRUE",
         "false": "FALSE"
       };
@@ -3253,15 +3819,77 @@
       const end = this.advance();
       this.frontmatterContent = content;
       const parsed = this.parseYaml(content);
+      const { skills, agents, tools, uses } = this.parseUsesField(parsed);
       return {
         kind: "Frontmatter",
         name: parsed.name || "",
         description: parsed.description || "",
-        uses: parsed.uses || [],
+        skills,
+        agents,
+        tools,
+        uses,
         imports: this.parseImports(parsed.imports),
         raw: parsed,
         span: mergeSpans(start.span, end.span)
       };
+    }
+    // v0.7: Parse unified uses: field with sigil-based entries
+    parseUsesField(parsed) {
+      const skills = [];
+      const agents = [];
+      const tools = [];
+      const uses = [];
+      const hasExplicitSkills = Array.isArray(parsed.skills) && parsed.skills.length > 0;
+      const hasExplicitAgents = Array.isArray(parsed.agents) && parsed.agents.length > 0;
+      const hasExplicitTools = Array.isArray(parsed.tools) && parsed.tools.length > 0;
+      if (hasExplicitSkills) {
+        for (const skill of parsed.skills) {
+          skills.push(skill);
+          uses.push(`~${skill}`);
+        }
+      }
+      if (hasExplicitAgents) {
+        for (const agent of parsed.agents) {
+          agents.push(agent);
+          uses.push(`@${agent}`);
+        }
+      }
+      if (hasExplicitTools) {
+        for (const tool of parsed.tools) {
+          tools.push(tool);
+          uses.push(`!${tool}`);
+        }
+      }
+      if (Array.isArray(parsed.uses)) {
+        for (const entry of parsed.uses) {
+          if (typeof entry !== "string") continue;
+          if (entry.startsWith("~")) {
+            const skill = entry.slice(1);
+            if (!skills.includes(skill)) {
+              skills.push(skill);
+              uses.push(entry);
+            }
+          } else if (entry.startsWith("@")) {
+            const agent = entry.slice(1);
+            if (!agents.includes(agent)) {
+              agents.push(agent);
+              uses.push(entry);
+            }
+          } else if (entry.startsWith("!")) {
+            const tool = entry.slice(1);
+            if (!tools.includes(tool)) {
+              tools.push(tool);
+              uses.push(entry);
+            }
+          } else {
+            if (!hasExplicitSkills && !skills.includes(entry)) {
+              skills.push(entry);
+              uses.push(entry);
+            }
+          }
+        }
+      }
+      return { skills, agents, tools, uses };
     }
     parseYaml(content) {
       const result = {};
@@ -3441,6 +4069,9 @@
       if (this.check("CONTINUE")) {
         return this.parseContinue();
       }
+      if (this.check("DELEGATE")) {
+        return this.parseDelegateStatement();
+      }
       if (this.check("CODE_BLOCK_START")) {
         return this.parseCodeBlock();
       }
@@ -3450,11 +4081,22 @@
       if (this.check("BLOCKQUOTE")) {
         return this.parseBlockquote();
       }
+      if (this.check("UPPER_IDENT") && this.current().value === "USE") {
+        return this.parseUseStatement();
+      }
+      if (this.check("UPPER_IDENT") && this.current().value === "EXECUTE") {
+        return this.parseExecuteStatement();
+      }
+      if (this.check("UPPER_IDENT") && this.current().value === "GOTO") {
+        return this.parseGotoStatement();
+      }
       if (this.check("LOWER_IDENT") || this.check("UPPER_IDENT")) {
         const verb = this.current().value.toLowerCase();
         if (verb === "execute" || verb === "call" || verb === "run" || verb === "invoke" || verb === "delegate" || verb === "use") {
-          const lookahead = this.peek(1);
-          if (lookahead?.type === "DOUBLE_LBRACKET") {
+          const lookahead1 = this.peek(1);
+          const lookahead2 = this.peek(2);
+          const isRefToken = (t) => t?.type === "LINK" || t?.type === "ANCHOR";
+          if (isRefToken(lookahead1) || lookahead1?.type === "LOWER_IDENT" && lookahead1.value === "to" && isRefToken(lookahead2)) {
             return this.parseDelegation();
           }
         }
@@ -3672,6 +4314,9 @@
       if (this.check("CONTINUE")) {
         return this.parseContinue();
       }
+      if (this.check("DELEGATE")) {
+        return this.parseDelegateStatement();
+      }
       return this.parseParagraph();
     }
     // ==========================================================================
@@ -3788,8 +4433,11 @@
       if (this.check("TEMPLATE_START")) {
         return this.parseTemplateLiteral();
       }
-      if (this.check("DOUBLE_LBRACKET")) {
-        return this.parseReference();
+      if (this.check("LINK")) {
+        return this.parseLink();
+      }
+      if (this.check("ANCHOR")) {
+        return this.parseAnchor();
       }
       if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
         return this.parseSemanticMarker();
@@ -3880,30 +4528,43 @@
         span: mergeSpans(start.span, end?.span || this.previous().span)
       };
     }
-    parseReference() {
-      const start = this.advance();
-      let skill = null;
-      let section = null;
-      if (this.check("LOWER_IDENT")) {
-        const ident = this.advance().value;
-        if (ident.startsWith("#")) {
-          section = ident.slice(1);
-        } else {
-          skill = ident;
-        }
+    // v0.8: Parse ~/path/to/file or ~/path/to/file#anchor link reference
+    parseLink() {
+      const token = this.expect("LINK");
+      if (!token) {
+        return {
+          kind: "Link",
+          path: [],
+          anchor: null,
+          raw: "",
+          span: this.current().span
+        };
       }
-      if (skill && this.check("LOWER_IDENT")) {
-        const ident = this.advance().value;
-        if (ident.startsWith("#")) {
-          section = ident.slice(1);
-        }
+      const parsed = JSON.parse(token.value);
+      const raw = "~/" + parsed.path.join("/") + (parsed.anchor ? "#" + parsed.anchor : "");
+      return {
+        kind: "Link",
+        path: parsed.path,
+        anchor: parsed.anchor,
+        raw,
+        span: token.span
+      };
+    }
+    // v0.8: Parse #section anchor reference
+    parseAnchor() {
+      const token = this.expect("ANCHOR");
+      if (!token) {
+        return {
+          kind: "Anchor",
+          name: "",
+          span: this.current().span
+        };
       }
-      const end = this.expect("DOUBLE_RBRACKET");
-      const span = mergeSpans(start.span, end?.span || this.previous().span);
-      if (section !== null) {
-        return { kind: "SectionReference", skill, section, span };
-      }
-      return { kind: "SkillReference", skill: skill || "", span };
+      return {
+        kind: "Anchor",
+        name: token.value,
+        span: token.span
+      };
     }
     parseSemanticMarker() {
       if (this.check("SEMANTIC_MARKER")) {
@@ -4003,7 +4664,8 @@
     parseInlineText() {
       let text = "";
       const start = this.current();
-      while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("DOUBLE_LBRACKET") && !this.check("SEMANTIC_OPEN") && !this.check("SEMANTIC_MARKER") && !this.check("INFERRED_VAR") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
+      while (!this.isAtEnd() && !this.check("NEWLINE") && // v0.8: link-based references
+      !this.check("LINK") && !this.check("ANCHOR") && !this.check("SEMANTIC_OPEN") && !this.check("SEMANTIC_MARKER") && !this.check("INFERRED_VAR") && !this.check("DOLLAR_IDENT") && !this.check("TYPE_IDENT")) {
         if (text) text += " ";
         text += this.advance().value;
       }
@@ -4081,22 +4743,48 @@
       this.expect("COLON");
       this.skipNewlines();
       const thenBody = this.parseIndentedBlocks();
+      const elseIf = [];
       let elseBody = null;
-      if (this.check("ELSE")) {
+      while (this.check("ELSE")) {
+        const elseStart = this.current();
         this.advance();
-        this.expect("COLON");
-        this.skipNewlines();
-        elseBody = this.parseIndentedBlocks();
+        if (this.check("IF")) {
+          this.advance();
+          const elseIfCondition = this.parseCondition();
+          this.expect("THEN");
+          this.expect("COLON");
+          this.skipNewlines();
+          const elseIfBody = this.parseIndentedBlocks();
+          elseIf.push({
+            condition: elseIfCondition,
+            body: elseIfBody,
+            span: mergeSpans(
+              elseStart.span,
+              elseIfBody.length > 0 ? elseIfBody[elseIfBody.length - 1].span : elseIfCondition.span
+            )
+          });
+        } else {
+          this.expect("COLON");
+          this.skipNewlines();
+          elseBody = this.parseIndentedBlocks();
+          break;
+        }
+      }
+      let endSpan = condition.span;
+      if (elseBody?.length) {
+        endSpan = elseBody[elseBody.length - 1].span;
+      } else if (elseIf.length > 0) {
+        endSpan = elseIf[elseIf.length - 1].span;
+      } else if (thenBody.length) {
+        endSpan = thenBody[thenBody.length - 1].span;
       }
       return {
         kind: "IfStatement",
         condition,
         thenBody,
+        elseIf,
         elseBody,
-        span: mergeSpans(
-          start.span,
-          elseBody?.length ? elseBody[elseBody.length - 1].span : thenBody.length ? thenBody[thenBody.length - 1].span : condition.span
-        )
+        span: mergeSpans(start.span, endSpan)
       };
     }
     // v0.2: BREAK statement
@@ -4119,6 +4807,102 @@
       return {
         kind: "ContinueStatement",
         span: token.span
+      };
+    }
+    // v0.8: DELEGATE statement for agent delegation
+    // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+    parseDelegateStatement() {
+      const start = this.advance();
+      const task = this.parseSemanticMarker();
+      this.expect("TO");
+      const target = this.parseLink();
+      let withAnchor;
+      if (this.check("WITH")) {
+        this.advance();
+        withAnchor = this.parseAnchor();
+      }
+      let parameters;
+      if (this.check("COLON")) {
+        parameters = this.parseParameterBlock();
+      }
+      return {
+        kind: "DelegateStatement",
+        task,
+        target,
+        withAnchor,
+        parameters,
+        span: mergeSpans(start.span, this.previous().span)
+      };
+    }
+    // v0.8: USE statement for skill activation
+    // Syntax: USE ~/skill/x TO /task/
+    parseUseStatement() {
+      const start = this.advance();
+      const link = this.parseLink();
+      this.expect("TO");
+      const task = this.parseSemanticMarker();
+      let parameters;
+      if (this.check("COLON")) {
+        parameters = this.parseParameterBlock();
+      }
+      return {
+        kind: "UseStatement",
+        link,
+        task,
+        parameters,
+        span: mergeSpans(start.span, this.previous().span)
+      };
+    }
+    // v0.8: EXECUTE statement for tool invocation
+    // Syntax: EXECUTE ~/tool/x TO /action/
+    parseExecuteStatement() {
+      const start = this.advance();
+      const link = this.parseLink();
+      this.expect("TO");
+      const task = this.parseSemanticMarker();
+      return {
+        kind: "ExecuteStatement",
+        link,
+        task,
+        span: mergeSpans(start.span, this.previous().span)
+      };
+    }
+    // v0.8: GOTO statement for same-file navigation
+    // Syntax: GOTO #section
+    parseGotoStatement() {
+      const start = this.advance();
+      const anchor = this.parseAnchor();
+      return {
+        kind: "GotoStatement",
+        anchor,
+        span: mergeSpans(start.span, anchor.span)
+      };
+    }
+    // v0.8: Parse parameter block
+    parseParameterBlock() {
+      const start = this.advance();
+      this.skipNewlines();
+      const parameters = [];
+      const hasIndent = this.check("INDENT");
+      if (hasIndent) {
+        this.advance();
+      }
+      while (this.check("LIST_MARKER") && !this.isAtEnd()) {
+        this.advance();
+        const param = this.parseVariableDeclaration(true);
+        parameters.push(param);
+        this.skipNewlines();
+        if (!this.check("LIST_MARKER") || this.check("HEADING")) {
+          break;
+        }
+      }
+      if (hasIndent && this.check("DEDENT")) {
+        this.advance();
+      }
+      return {
+        kind: "ParameterBlock",
+        parameters,
+        span: mergeSpans(start.span, this.previous().span)
       };
     }
     parsePattern() {
@@ -4258,8 +5042,10 @@
       const content = [];
       const start = this.current();
       while (!this.isAtEnd() && !this.check("NEWLINE") && !this.check("HEADING")) {
-        if (this.check("DOUBLE_LBRACKET")) {
-          content.push(this.parseReference());
+        if (this.check("LINK")) {
+          content.push(this.parseLink());
+        } else if (this.check("ANCHOR")) {
+          content.push(this.parseAnchor());
         } else if (this.check("SEMANTIC_OPEN") || this.check("SEMANTIC_MARKER")) {
           content.push(this.parseSemanticMarker());
         } else if (this.check("INFERRED_VAR")) {
@@ -4310,12 +5096,31 @@
     parseDelegation() {
       const verbToken = this.advance();
       const verb = verbToken.value;
-      const target = this.parseReference();
+      if (this.check("LOWER_IDENT") && this.current().value === "to") {
+        this.advance();
+      }
+      let target;
+      if (this.check("LINK")) {
+        target = this.parseLink();
+      } else if (this.check("ANCHOR")) {
+        target = this.parseAnchor();
+      } else {
+        this.error("E001", "Expected link reference (~/path) or anchor reference (#name)");
+        target = {
+          kind: "Anchor",
+          name: "",
+          span: this.current().span
+        };
+      }
       const parameters = [];
       if (this.check("WITH")) {
         this.advance();
         this.expect("COLON");
         this.skipNewlines();
+        const hasIndent = this.check("INDENT");
+        if (hasIndent) {
+          this.advance();
+        }
         while (this.check("LIST_MARKER") && !this.isAtEnd()) {
           this.advance();
           const param = this.parseVariableDeclaration(true);
@@ -4324,6 +5129,9 @@
           if (!this.check("LIST_MARKER") || this.check("HEADING")) {
             break;
           }
+        }
+        if (hasIndent && this.check("DEDENT")) {
+          this.advance();
         }
       }
       const span = mergeSpans(verbToken.span, this.previous().span);
@@ -4402,6 +5210,7 @@
   // ../packages/core/src/compiler/compiler.ts
   var BUILTIN_PRIMITIVES = /* @__PURE__ */ new Set(["String", "Number", "Boolean"]);
   var Compiler = class {
+    // v0.7: Track declared tools from uses:
     constructor(options = {}, registry) {
       __publicField(this, "options");
       __publicField(this, "registry");
@@ -4412,6 +5221,9 @@
       __publicField(this, "definedTypes", /* @__PURE__ */ new Set());
       __publicField(this, "definedVariables", /* @__PURE__ */ new Set());
       __publicField(this, "declaredDeps", /* @__PURE__ */ new Set());
+      __publicField(this, "declaredAgents", /* @__PURE__ */ new Set());
+      // v0.7: Track declared agents from uses:
+      __publicField(this, "declaredTools", /* @__PURE__ */ new Set());
       this.options = {
         includeHeader: false,
         // Changed default: no header
@@ -4430,7 +5242,11 @@
       return {
         name: "",
         description: "",
+        skills: [],
+        agents: [],
+        tools: [],
         uses: [],
+        // v0.7: raw uses array for reference
         imports: [],
         types: [],
         variables: [],
@@ -4447,6 +5263,8 @@
       this.definedTypes.clear();
       this.definedVariables.clear();
       this.declaredDeps.clear();
+      this.declaredAgents.clear();
+      this.declaredTools.clear();
       const ast = parse(source);
       for (const error of ast.errors) {
         this.diagnostics.push({
@@ -4470,6 +5288,7 @@
       if (this.options.validateContracts) {
         this.validateContracts(ast);
       }
+      this.validateDelegateStatements(ast);
       let output = source;
       if (this.options.includeHeader) {
         const header = `<!-- MDZ Validated: ${this.metadata.name || "unnamed"} -->
@@ -4493,9 +5312,18 @@
       if (ast.frontmatter) {
         this.metadata.name = ast.frontmatter.name;
         this.metadata.description = ast.frontmatter.description;
+        this.metadata.skills = [...ast.frontmatter.skills];
+        this.metadata.agents = [...ast.frontmatter.agents];
+        this.metadata.tools = [...ast.frontmatter.tools];
         this.metadata.uses = [...ast.frontmatter.uses];
-        for (const use of ast.frontmatter.uses) {
-          this.declaredDeps.add(use);
+        for (const skill of ast.frontmatter.skills) {
+          this.declaredDeps.add(skill);
+        }
+        for (const agent of ast.frontmatter.agents) {
+          this.declaredAgents.add(agent);
+        }
+        for (const tool of ast.frontmatter.tools) {
+          this.declaredTools.add(tool);
         }
         for (const imp of ast.frontmatter.imports) {
           this.metadata.imports.push({
@@ -4554,6 +5382,9 @@
           break;
         case "Delegation":
           this.extractFromDelegation(block);
+          break;
+        case "DelegateStatement":
+          this.extractFromDelegateStatement(block);
           break;
       }
     }
@@ -4626,10 +5457,10 @@
     }
     extractFromParagraph(para) {
       for (const content of para.content) {
-        if (content.kind === "SkillReference") {
-          this.extractSkillReference(content);
-        } else if (content.kind === "SectionReference") {
-          this.extractSectionReference(content);
+        if (content.kind === "Link") {
+          this.extractLinkReference(content);
+        } else if (content.kind === "Anchor") {
+          this.extractAnchorReference(content);
         } else if (content.kind === "SemanticMarker") {
           this.sourceMap.push({
             source: content.span,
@@ -4646,14 +5477,36 @@
       }
     }
     extractFromDelegation(deleg) {
-      if (deleg.target.kind === "SkillReference") {
-        this.extractSkillReference(deleg.target);
+      if (deleg.target.kind === "Link") {
+        this.extractLinkReference(deleg.target);
       } else {
-        this.extractSectionReference(deleg.target);
+        this.extractAnchorReference(deleg.target);
       }
       for (const param of deleg.parameters) {
         this.extractVariableDeclaration(param);
       }
+    }
+    // v0.8: Extract metadata from DELEGATE statement
+    extractFromDelegateStatement(deleg) {
+      this.extractLinkReference(deleg.target);
+      this.sourceMap.push({
+        source: deleg.task.span,
+        type: "semantic",
+        name: deleg.task.content
+      });
+      if (deleg.withAnchor) {
+        this.extractAnchorReference(deleg.withAnchor);
+      }
+      if (deleg.parameters) {
+        for (const param of deleg.parameters.parameters) {
+          this.extractVariableDeclaration(param);
+        }
+      }
+      this.sourceMap.push({
+        source: deleg.span,
+        type: "control-flow",
+        name: "DelegateStatement"
+      });
     }
     extractParameters(blocks) {
       for (const block of blocks) {
@@ -4677,11 +5530,12 @@
     }
     extractFromExpression(expr) {
       switch (expr.kind) {
-        case "SkillReference":
-          this.extractSkillReference(expr);
+        // v0.8: Link and Anchor references replace old sigil-based syntax
+        case "Link":
+          this.extractLinkReference(expr);
           break;
-        case "SectionReference":
-          this.extractSectionReference(expr);
+        case "Anchor":
+          this.extractAnchorReference(expr);
           break;
         case "SemanticMarker":
           this.sourceMap.push({
@@ -4723,31 +5577,36 @@
           break;
       }
     }
-    extractSkillReference(ref) {
+    // v0.8: Extract link reference (~/path/to/file or ~/path/to/file#anchor)
+    extractLinkReference(link) {
+      const kind = getLinkKind(link);
+      const target = link.raw;
       this.metadata.references.push({
-        kind: "skill",
-        target: ref.skill,
-        skill: ref.skill,
-        span: ref.span
+        kind: kind === "unknown" ? "skill" : kind,
+        // Default to skill for unknown
+        target,
+        path: link.path,
+        anchor: link.anchor || void 0,
+        span: link.span
       });
       this.sourceMap.push({
-        source: ref.span,
+        source: link.span,
         type: "reference",
-        name: ref.skill
+        name: target
       });
     }
-    extractSectionReference(ref) {
+    // v0.8: Extract anchor reference (#section)
+    extractAnchorReference(anchor) {
       this.metadata.references.push({
-        kind: "section",
-        target: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
-        skill: ref.skill || void 0,
-        section: ref.section,
-        span: ref.span
+        kind: "anchor",
+        target: `#${anchor.name}`,
+        anchor: anchor.name,
+        span: anchor.span
       });
       this.sourceMap.push({
-        source: ref.span,
+        source: anchor.span,
         type: "reference",
-        name: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`
+        name: `#${anchor.name}`
       });
     }
     // ==========================================================================
@@ -4756,19 +5615,11 @@
     buildDependencyGraph(ast) {
       const nodes = /* @__PURE__ */ new Set();
       const edges = [];
-      if (ast.frontmatter) {
-        for (const use of ast.frontmatter.uses) {
-          nodes.add(use);
-          edges.push({ target: use, type: "uses" });
-        }
-      }
       for (const ref of this.metadata.references) {
-        if (ref.kind === "skill" && ref.skill) {
-          nodes.add(ref.skill);
-          edges.push({ target: ref.skill, type: "reference", span: ref.span });
-        } else if (ref.kind === "section" && ref.skill) {
-          nodes.add(ref.skill);
-          edges.push({ target: ref.skill, type: "reference", span: ref.span });
+        if (ref.path && ref.path.length > 0) {
+          const depPath = ref.path.join("/");
+          nodes.add(depPath);
+          edges.push({ target: depPath, type: "reference", span: ref.span });
         }
       }
       this.dependencies.nodes = Array.from(nodes);
@@ -4836,6 +5687,21 @@
               }
             }
           }
+        } else if (block.kind === "DelegateStatement") {
+          if (block.task) {
+            for (const interpolation of block.task.interpolations) {
+              if (!this.definedVariables.has(interpolation.name)) {
+                usedBeforeDefined.add(interpolation.name);
+              }
+            }
+          }
+          if (block.parameters) {
+            for (const param of block.parameters.parameters) {
+              if (param.value) {
+                this.checkExpressionScope(param.value, usedBeforeDefined);
+              }
+            }
+          }
         }
       }
     }
@@ -4864,34 +5730,13 @@
     }
     validateReferences() {
       for (const ref of this.metadata.references) {
-        if (ref.kind === "skill" && ref.skill) {
-          if (!this.declaredDeps.has(ref.skill)) {
-            this.diagnostics.push({
-              severity: "warning",
-              code: "W001",
-              message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-              span: ref.span
-            });
-          }
-        } else if (ref.kind === "section" && ref.skill) {
-          if (!this.declaredDeps.has(ref.skill)) {
-            this.diagnostics.push({
-              severity: "warning",
-              code: "W001",
-              message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-              span: ref.span
-            });
-          }
-        }
-      }
-      for (const ref of this.metadata.references) {
-        if (ref.kind === "section" && !ref.skill && ref.section) {
-          const sectionExists = this.metadata.sections.some((s) => s.anchor === ref.section);
+        if (ref.kind === "anchor" && ref.anchor) {
+          const sectionExists = this.metadata.sections.some((s) => s.anchor === ref.anchor);
           if (!sectionExists) {
             this.diagnostics.push({
               severity: "error",
               code: "E010",
-              message: `Section '#${ref.section}' does not exist in this document`,
+              message: `Section '#${ref.anchor}' does not exist in this document`,
               span: ref.span
             });
           }
@@ -4899,25 +5744,79 @@
       }
       if (this.registry) {
         for (const ref of this.metadata.references) {
-          if (ref.kind === "skill" && ref.skill) {
-            const skill = this.registry.get(ref.skill);
+          if (ref.path && ref.path.length > 0) {
+            const depPath = ref.path.join("/");
+            const skill = this.registry.get(depPath);
             if (!skill) {
               this.diagnostics.push({
                 severity: "error",
                 code: "E009",
-                message: `Skill '${ref.skill}' is not found in registry`,
+                message: `File '${ref.target}' is not found in registry`,
                 span: ref.span
               });
+            } else if (ref.anchor) {
+              const targetSection = skill.ast.sections.find((s) => s.anchor === ref.anchor);
+              if (!targetSection) {
+                this.diagnostics.push({
+                  severity: "error",
+                  code: "E010",
+                  message: `Section '#${ref.anchor}' does not exist in '${ref.target}'`,
+                  span: ref.span
+                });
+              }
             }
           }
         }
+      }
+    }
+    // v0.3: Validate DELEGATE statements
+    validateDelegateStatements(ast) {
+      const delegateStatements = [];
+      this.findDelegateStatements(ast.sections, delegateStatements);
+      for (const deleg of delegateStatements) {
+        this.validateDelegateAgent(deleg);
+      }
+    }
+    findDelegateStatements(sections, statements) {
+      for (const section of sections) {
+        this.findDelegateStatementsInBlocks(section.content, statements);
+      }
+    }
+    findDelegateStatementsInBlocks(blocks, statements) {
+      for (const block of blocks) {
+        if (block.kind === "DelegateStatement") {
+          statements.push(block);
+        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+          this.findDelegateStatementsInBlocks(block.body, statements);
+        } else if (block.kind === "WhileStatement") {
+          this.findDelegateStatementsInBlocks(block.body, statements);
+        } else if (block.kind === "IfStatement") {
+          this.findDelegateStatementsInBlocks(block.thenBody, statements);
+          for (const elseIf of block.elseIf) {
+            this.findDelegateStatementsInBlocks(elseIf.body, statements);
+          }
+          if (block.elseBody) {
+            this.findDelegateStatementsInBlocks(block.elseBody, statements);
+          }
+        }
+      }
+    }
+    validateDelegateAgent(deleg) {
+      const linkKind = getLinkKind(deleg.target);
+      if (linkKind !== "agent") {
+        this.diagnostics.push({
+          severity: "warning",
+          code: "W003",
+          message: `DELEGATE target '${deleg.target.raw}' should be an agent (~/agent/...)`,
+          span: deleg.target.span
+        });
       }
     }
     validateContracts(ast) {
       const delegations = [];
       this.findDelegations(ast.sections, delegations);
       for (const deleg of delegations) {
-        if (deleg.target.kind === "SkillReference" && deleg.target.skill) {
+        if (deleg.target.kind === "Link") {
           this.validateDelegationParameters(deleg);
         }
       }
@@ -4944,12 +5843,15 @@
       }
     }
     validateDelegationParameters(deleg) {
-      const skillName = deleg.target.skill;
+      if (deleg.target.kind !== "Link") {
+        return;
+      }
+      const targetPath = deleg.target.path.join("/");
       let skillParams = [];
-      if (skillName === this.metadata.name) {
+      if (targetPath === this.metadata.name) {
         skillParams = this.metadata.parameters;
       } else if (this.registry) {
-        const skill = this.registry.get(skillName);
+        const skill = this.registry.get(targetPath);
         if (skill) {
           const skillCompileResult = compile(skill.source, { validateReferences: false, validateContracts: false });
           skillParams = skillCompileResult.metadata.parameters;
@@ -4962,7 +5864,7 @@
           this.diagnostics.push({
             severity: "error",
             code: "E011",
-            message: `Required parameter '${req.name}' is missing for skill '${skillName}'`,
+            message: `Required parameter '${req.name}' is missing for '${targetPath}'`,
             span: deleg.span
           });
         }
@@ -4974,7 +5876,7 @@
             this.diagnostics.push({
               severity: "warning",
               code: "W002",
-              message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+              message: `Parameter '${param.name}' is not defined for '${targetPath}'`,
               span: param.span
             });
           }
@@ -5056,7 +5958,7 @@
           case "VariableDeclaration":
             variables.set(block.name, {
               name: block.name,
-              typeName: block.typeAnnotation?.name,
+              typeName: block.typeAnnotation?.kind === "TypeReference" ? block.typeAnnotation.name : block.typeAnnotation?.kind === "SemanticType" ? block.typeAnnotation.description : void 0,
               span: block.span,
               isLambda: block.isLambda
             });
@@ -5096,10 +5998,21 @@
             break;
           case "Paragraph":
             for (const item of block.content) {
-              if (item.kind === "SkillReference") {
-                references.push({ skill: item.skill, section: null, span: item.span });
-              } else if (item.kind === "SectionReference") {
-                references.push({ skill: item.skill, section: item.section, span: item.span });
+              if (import_core.AST.isLink(item)) {
+                references.push({
+                  kind: "link",
+                  path: item.path,
+                  anchor: item.anchor ?? void 0,
+                  target: item.raw,
+                  span: item.span
+                });
+              } else if (import_core.AST.isAnchor(item)) {
+                references.push({
+                  kind: "anchor",
+                  anchor: item.name,
+                  target: `#${item.name}`,
+                  span: item.span
+                });
               } else if (item.kind === "SemanticMarker") {
                 semanticMarkers.push({ content: item.content, span: item.span });
               }
@@ -5109,13 +6022,26 @@
       }
     }
     analyzeExpression(expr, references, semanticMarkers) {
+      if (import_core.AST.isLink(expr)) {
+        references.push({
+          kind: "link",
+          path: expr.path,
+          anchor: expr.anchor ?? void 0,
+          target: expr.raw,
+          span: expr.span
+        });
+        return;
+      }
+      if (import_core.AST.isAnchor(expr)) {
+        references.push({
+          kind: "anchor",
+          anchor: expr.name,
+          target: `#${expr.name}`,
+          span: expr.span
+        });
+        return;
+      }
       switch (expr.kind) {
-        case "SkillReference":
-          references.push({ skill: expr.skill, section: null, span: expr.span });
-          break;
-        case "SectionReference":
-          references.push({ skill: expr.skill, section: expr.section, span: expr.span });
-          break;
         case "SemanticMarker":
           semanticMarkers.push({ content: expr.content, span: expr.span });
           break;
@@ -5190,13 +6116,37 @@
         });
       }
       for (const ref of state.references) {
-        if (ref.skill && !this.skillRegistry.has(ref.skill)) {
-          diagnostics.push({
-            range: this.spanToRange(ref.span),
-            severity: 3 /* Information */,
-            message: `Skill '${ref.skill}' not found in workspace`,
-            source: "zen"
-          });
+        if (ref.kind === "link" && ref.path) {
+          const linkPath = ref.path.join("/");
+          const targetState = this.skillRegistry.get(linkPath);
+          if (!targetState) {
+            diagnostics.push({
+              range: this.spanToRange(ref.span),
+              severity: 3 /* Information */,
+              message: `File not found in workspace: ~/${linkPath}`,
+              source: "zen"
+            });
+          } else if (ref.anchor) {
+            const section = targetState.ast.sections.find((s) => s.anchor === ref.anchor);
+            if (!section) {
+              diagnostics.push({
+                range: this.spanToRange(ref.span),
+                severity: 2 /* Warning */,
+                message: `Section "${ref.anchor}" not found in ~/${linkPath}`,
+                source: "zen"
+              });
+            }
+          }
+        } else if (ref.kind === "anchor" && ref.anchor) {
+          const section = state.ast.sections.find((s) => s.anchor === ref.anchor);
+          if (!section) {
+            diagnostics.push({
+              range: this.spanToRange(ref.span),
+              severity: 2 /* Warning */,
+              message: `Section "${ref.anchor}" not found in current file`,
+              source: "zen"
+            });
+          }
         }
       }
       return diagnostics;
@@ -5224,11 +6174,13 @@
         }
       }
       for (const ref of state.references) {
-        if (this.positionInSpan(position, ref.span) && ref.skill) {
-          const targetState = this.skillRegistry.get(ref.skill);
+        if (!this.positionInSpan(position, ref.span)) continue;
+        if (ref.kind === "link" && ref.path) {
+          const linkPath = ref.path.join("/");
+          const targetState = this.skillRegistry.get(linkPath);
           if (targetState) {
-            if (ref.section) {
-              const section = targetState.ast.sections.find((s) => s.anchor === ref.section);
+            if (ref.anchor) {
+              const section = targetState.ast.sections.find((s) => s.anchor === ref.anchor);
               if (section) {
                 return {
                   uri: targetState.uri,
@@ -5239,6 +6191,14 @@
             return {
               uri: targetState.uri,
               range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
+            };
+          }
+        } else if (ref.kind === "anchor" && ref.anchor) {
+          const section = state.ast.sections.find((s) => s.anchor === ref.anchor);
+          if (section) {
+            return {
+              uri,
+              range: this.spanToRange(section.span)
             };
           }
         }
@@ -5284,15 +6244,39 @@ ${type.definition}`;
       }
       for (const ref of state.references) {
         if (this.positionInSpan(position, ref.span)) {
-          const refStr = ref.skill ? ref.section ? `${ref.skill}#${ref.section}` : ref.skill : `#${ref.section}`;
-          let contents = `**Skill Reference** [[${refStr}]]`;
-          if (ref.skill) {
-            const targetState = this.skillRegistry.get(ref.skill);
-            if (targetState?.ast.frontmatter) {
-              contents += `
+          let contents;
+          if (ref.kind === "link" && ref.path) {
+            const linkPath = ref.path.join("/");
+            const linkKind = this.inferLinkKind(ref.path);
+            const targetState = this.skillRegistry.get(linkPath);
+            if (!targetState) {
+              contents = `**${linkKind}:** ${ref.target}
+
+*Not found in workspace*`;
+            } else {
+              contents = `**${linkKind}:** ${ref.target}`;
+              if (targetState.ast.frontmatter?.description) {
+                contents += `
 
 ${targetState.ast.frontmatter.description}`;
+              }
+              const sections = targetState.ast.sections.filter((s) => s.anchor).map((s) => s.anchor);
+              if (sections.length > 0) {
+                contents += `
+
+Sections: ${sections.join(", ")}`;
+              }
             }
+          } else if (ref.kind === "anchor") {
+            const section = state.ast.sections.find((s) => s.anchor === ref.anchor);
+            contents = `**Anchor** ${ref.target}`;
+            if (section?.title) {
+              contents += `
+
+Section: ${section.title}`;
+            }
+          } else {
+            continue;
           }
           return {
             contents,
@@ -5310,13 +6294,26 @@ ${targetState.ast.frontmatter.description}`;
       if (!state) return [];
       const lineContent = state.content.split("\n")[position.line] || "";
       const beforeCursor = lineContent.substring(0, position.character);
-      if (beforeCursor.endsWith("[[")) {
-        return this.getSkillCompletions();
+      if (beforeCursor.endsWith("~/")) {
+        return this.getPathCompletions("");
       }
-      const skillMatch = beforeCursor.match(/\[\[([a-z0-9-]*)$/);
-      if (skillMatch) {
-        const prefix = skillMatch[1];
-        return this.getSkillCompletions().filter(
+      const linkMatch = beforeCursor.match(/~\/([a-z0-9\/-]*)$/);
+      if (linkMatch) {
+        const partial = linkMatch[1];
+        const anchorInLink = partial.match(/^([^#]+)#([a-z0-9-]*)$/);
+        if (anchorInLink) {
+          const [, linkPath, anchorPrefix] = anchorInLink;
+          return this.getCrossFileAnchorCompletions(linkPath, anchorPrefix);
+        }
+        return this.getPathCompletions(partial);
+      }
+      if (beforeCursor.endsWith("#") && !beforeCursor.match(/~\/[^#]*#$/)) {
+        return this.getAnchorCompletions(state);
+      }
+      const anchorMatch = beforeCursor.match(/(?<!~\/[^#]*)#([a-z0-9-]+)$/);
+      if (anchorMatch) {
+        const prefix = anchorMatch[1];
+        return this.getAnchorCompletions(state).filter(
           (c) => c.label.toLowerCase().startsWith(prefix.toLowerCase())
         );
       }
@@ -5345,15 +6342,51 @@ ${targetState.ast.frontmatter.description}`;
       }
       return [];
     }
-    getSkillCompletions() {
+    // v0.8: Path completion for ~/path/to/file
+    getPathCompletions(partial) {
       const items = [];
-      for (const [name, state] of this.skillRegistry) {
-        items.push({
-          label: name,
-          kind: 9 /* Module */,
-          detail: state.ast.frontmatter?.description,
-          insertText: name + "]]"
-        });
+      for (const [key, docState] of this.skillRegistry) {
+        if (key.startsWith(partial)) {
+          const kind = this.inferLinkKind(key.split("/"));
+          items.push({
+            label: "~/" + key,
+            kind: 17 /* File */,
+            detail: kind,
+            insertText: key.substring(partial.length)
+          });
+        }
+      }
+      return items;
+    }
+    // v0.8: Anchor completion for cross-file references (~/path#anchor)
+    getCrossFileAnchorCompletions(linkPath, prefix) {
+      const targetState = this.skillRegistry.get(linkPath);
+      if (!targetState) return [];
+      const items = [];
+      for (const section of targetState.ast.sections) {
+        if (section.anchor && section.anchor.startsWith(prefix)) {
+          items.push({
+            label: "#" + section.anchor,
+            kind: 18 /* Reference */,
+            detail: section.title || "Section",
+            insertText: section.anchor.substring(prefix.length)
+          });
+        }
+      }
+      return items;
+    }
+    // v0.8: Anchor completion for same-file references (#anchor)
+    getAnchorCompletions(state) {
+      const items = [];
+      for (const section of state.ast.sections) {
+        if (section.anchor) {
+          items.push({
+            label: "#" + section.anchor,
+            kind: 18 /* Reference */,
+            detail: section.title || "Section",
+            insertText: section.anchor
+          });
+        }
       }
       return items;
     }
@@ -5402,6 +6435,16 @@ ${targetState.ast.frontmatter.description}`;
         { label: "IF", kind: 14 /* Keyword */, insertText: "IF $condition THEN:\n  - " },
         { label: "ELSE", kind: 14 /* Keyword */, insertText: "ELSE:\n  - " }
       ];
+    }
+    // ==========================================================================
+    // Link Helpers
+    // ==========================================================================
+    inferLinkKind(path) {
+      const folder = path[0];
+      if (folder === "agent" || folder === "agents") return "agent";
+      if (folder === "skill" || folder === "skills") return "skill";
+      if (folder === "tool" || folder === "tools") return "tool";
+      return "link";
     }
     // ==========================================================================
     // Document Symbols

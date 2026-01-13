@@ -1,0 +1,40 @@
+---
+name: skill-composer
+description: Compose multiple skills into workflows
+---
+
+## Types
+
+$SkillRef: /reference to another skill/
+$CompositionMode: "sequential" | "parallel"
+
+## Input
+
+- $skills: $SkillRef[]
+- $mode: $CompositionMode = "sequential"
+
+## Workflow
+
+### 1. Analyze Dependencies
+
+FOR EACH $skill IN $skills:
+  - Load skill source using ~/skill/work-packages
+  - Extract uses from frontmatter
+  - Build dependency graph
+
+### 2. Validate Composition
+
+Detect cycles in the graph
+IF /cycle detected/ THEN:
+  - Report error
+  - Abort
+
+### 3. Simplify
+
+USE ~/skill/simplify TO /reduce complexity/
+
+### 4. Execute
+
+USE ~/skill/orchestrate TO /execute workflow/ WITH:
+  - $skills
+  - $mode

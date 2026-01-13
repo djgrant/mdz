@@ -193,13 +193,13 @@ description: Test—with—em-dashes
 // ============================================================================
 
 describe('Error Recovery', () => {
-  test('Recovers from unclosed [[reference', () => {
+  test('Recovers from unclosed (reference', () => {
     const doc = parse(`---
 name: unclosed-ref
 description: Test
 ---
 
-See [[unclosed-reference
+See (~unclosed-reference
 Next line continues
 `);
     assert(doc.sections.length > 0, 'Should still parse sections');
@@ -252,14 +252,14 @@ FOR EACH $item IN $items
     assert(doc.sections.length > 0, 'Should have sections');
   });
 
-  test('Handles deeply unbalanced brackets', () => {
+  test('Handles deeply unbalanced parentheses', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Execute [[skill with [[nested]] and more]]
-Then [[another]]
+Execute (~skill with (~nested) and more)
+Then (~another)
 `);
     // Parser should handle this somehow
     assert(doc.sections.length > 0, 'Should have sections');
@@ -356,7 +356,7 @@ description: Large document test
   });
 
   test('Handles many references in one line', () => {
-    const refs = Array(20).fill(0).map((_, i) => `[[skill-${i}]]`).join(' and ');
+    const refs = Array(20).fill(0).map((_, i) => `(~skill-${i})`).join(' and ');
     const doc = parse(`---
 name: many-refs
 description: Test
@@ -609,13 +609,13 @@ description: test
 
 $Task: a task
 - $t: $Task = "test"
-Execute [[skill]]
+Execute (~skill)
 Write to {~~location}
 `;
     const result = compile(source, { includeHeader: false });
     // v0.3: Source = Output
     assert(result.output === source, 'Output should equal source');
-    assert(result.output.includes('[[skill]]'), 'Should keep raw reference');
+    assert(result.output.includes('(~skill)'), 'Should keep raw reference');
     assert(result.output.includes('{~~'), 'Should keep raw semantic');
   });
 
@@ -627,7 +627,7 @@ description: test
 
 $Task: a task
 - $t: $Task = "test"
-Execute [[skill]]
+Execute (~skill)
 {~~determine this}
 `, { generateSourceMap: true });
     

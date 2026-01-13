@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the formal grammar for MDZ v0.3 in Extended Backus-Naur Form (EBNF).
+This document defines the formal grammar for MDZ v0.8 in Extended Backus-Naur Form (EBNF).
 
 **Core principle:** The source document is the execution format. The grammar defines what tooling can validate—not what gets transformed.
 
@@ -73,6 +73,11 @@ WITH            = "WITH" ;
 PARALLEL        = "PARALLEL" ;     /* v0.2 */
 BREAK           = "BREAK" ;        /* v0.2 */
 CONTINUE        = "CONTINUE" ;     /* v0.2 */
+DELEGATE        = "DELEGATE" ;     /* v0.6 */
+TO              = "TO" ;           /* v0.6 */
+USE             = "USE" ;          /* v0.8 */
+EXECUTE         = "EXECUTE" ;      /* v0.8 */
+GOTO            = "GOTO" ;         /* v0.8 */
 ```
 
 ### Operators
@@ -94,9 +99,8 @@ lbracket        = '[' ;
 rbracket        = ']' ;
 lbrace          = '{' ;
 rbrace          = '}' ;
-double_lbracket = "[[" ;
-double_rbracket = "]]" ;
 semantic_delim  = '/' ;
+link_prefix     = '~/' ;                /* v0.8: Link prefix */
 ```
 
 ### Comments and Markdown
@@ -133,7 +137,11 @@ block           = type_definition
 
 ```ebnf
 /* Frontmatter fields for skill metadata */
-frontmatter_fields = name_field description_field [ uses_field ] ;
+frontmatter_fields = name_field description_field ;
+
+/* v0.8: No uses: field - dependencies are inferred from link statements */
+/* name_field: kebab-case identifier */
+/* description_field: "When..." trigger description */
 ```
 
 ### Type Definitions
@@ -235,16 +243,26 @@ Examples:
 
 Note: The `=` sign is reserved for **literal default values only**. Prose descriptions belong in comments (`<!-- -->`), not after `=`.
 
-### References
+### Links and Anchors
 
 ```ebnf
-skill_reference   = double_lbracket skill_name double_rbracket ;
-skill_name        = kebab_ident ;
+/* v0.8: Link-based reference syntax using paths */
+reference         = link | anchor ;
 
-section_reference = double_lbracket [ skill_name ] hash section_name double_rbracket ;
-section_name      = kebab_ident ;
+/* Links use ~/ prefix with path segments */
+link              = link_prefix path [ '#' kebab_ident ] ;   /* ~/path/to/thing or ~/path#section */
+link_prefix       = '~/' ;
+path              = kebab_ident { '/' kebab_ident } ;        /* e.g., agent/explorer, skill/validator */
 
-reference         = skill_reference | section_reference ;
+/* Anchors reference sections in current document */
+anchor            = '#' kebab_ident ;                        /* #section-name (same-file only) */
+
+/* Folder conventions for links:
+   ~/agent/name   → agent reference (./agent/name.mdz)
+   ~/skill/name   → skill reference (./skill/name.mdz)
+   ~/tool/name    → tool reference (./tool/name.mdz or external)
+   ~/skill/name#section → section in skill
+*/
 ```
 
 ### Semantic Markers
@@ -274,6 +292,10 @@ control_flow      = for_each_stmt
                   | if_then_stmt
                   | break_stmt
                   | continue_stmt
+                  | delegate_stmt           /* v0.8 */
+                  | use_stmt                /* v0.8 */
+                  | execute_stmt            /* v0.8 */
+                  | goto_stmt               /* v0.8 */
                   ;
 
 for_each_stmt     = FOR EACH pattern IN collection colon newline block_body ;
@@ -295,6 +317,24 @@ else_clause       = ELSE colon newline block_body ;
 
 break_stmt        = [ list_marker ] BREAK newline ;
 continue_stmt     = [ list_marker ] CONTINUE newline ;
+
+/* v0.8: Link-based statements */
+
+/* DELEGATE - spawn agent with task */
+delegate_stmt     = DELEGATE semantic_marker TO link [ WITH anchor ] newline  /* Inline: DELEGATE /task/ TO ~/agent/x */
+                  | DELEGATE TO link colon newline with_params                /* Full form with params */
+                  ;
+
+/* USE - follow skill instructions */
+use_stmt          = USE link TO semantic_marker newline ;                     /* USE ~/skill/x TO /task/ */
+
+/* EXECUTE - invoke tool */
+execute_stmt      = EXECUTE link TO semantic_marker newline ;                 /* EXECUTE ~/tool/x TO /action/ */
+
+/* GOTO - control flow to section */
+goto_stmt         = GOTO anchor newline ;                                     /* GOTO #section */
+
+dollar_ident      = dollar ident ;
 
 condition         = comparison_expr { logical_op comparison_expr } ;
 comparison_expr   = simple_condition | lparen condition rparen ;
@@ -328,11 +368,29 @@ indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 ### Composition
 
 ```ebnf
-delegation        = delegate_verb reference [ with_clause ] ;
-delegate_verb     = "Execute" | "Delegate" | "Use" | ? verb phrase ? ;
+/* v0.8: Skill composition using USE statement */
+use_stmt          = USE link TO semantic_marker [ colon newline with_params ] ;
 
 with_clause       = WITH colon newline { with_param } ;
 with_param        = list_marker ( var_decl | required_param ) [ comment ] newline ;
+with_params       = { with_param } ;
+```
+
+### Agent Delegation (v0.8)
+
+Agent delegation spawns a subagent with a task. This is distinct from skill composition:
+- **Skill composition** (`USE ~/skill/x TO /task/`) follows skill logic in the current context
+- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) spawns an independent subagent
+- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) invokes an external tool
+
+```ebnf
+/* Agent delegation - spawning subagents */
+delegate_stmt     = DELEGATE semantic_marker TO link [ WITH anchor ] newline  /* Inline with optional template */
+                  | DELEGATE TO link colon newline with_params                /* Full form with params */
+                  ;
+
+/* The WITH clause passes an anchor (section template) to the delegate */
+/* Example: DELEGATE /task/ TO ~/agent/x WITH #context-template */
 ```
 
 ### Prose Content
@@ -431,12 +489,16 @@ FOR EACH $x IN $items:
 Done with loop              ← Outside block
 ```
 
-#### Rule 5: Reference Parsing
+#### Rule 5: Link Parsing
 
-`[[` starts a reference that extends to matching `]]`:
-- `[[name]]` - Skill reference
-- `[[#section]]` - Section reference in current document
-- `[[name#section]]` - Section in another skill
+`~/` starts a link that extends to whitespace or end of line:
+- `~/skill/name` - Skill link
+- `~/agent/name` - Agent link
+- `~/tool/name` - Tool link
+- `~/skill/name#section` - Section in another skill
+
+`#` at word boundary starts an anchor (same-file section):
+- `#section` - Section reference in current document
 
 #### Rule 6: BREAK/CONTINUE Scope
 
@@ -452,6 +514,22 @@ FOR EACH $item IN $items:
   
 BREAK                       ← Error: outside loop
 ```
+
+#### Rule 8: DELEGATE vs USE vs EXECUTE
+
+Each keyword has a distinct purpose:
+
+```
+DELEGATE /task/ TO ~/agent/explorer      ← Spawns subagent
+USE ~/skill/validator TO /validate/      ← Follows skill instructions
+EXECUTE ~/tool/browser TO /screenshot/   ← Invokes external tool
+GOTO #section                            ← Control flow to section
+```
+
+- DELEGATE spawns an independent agent
+- USE loads and follows skill instructions in current context
+- EXECUTE invokes an external tool
+- GOTO jumps to a section in the current document
 
 #### Rule 7: Parentheses Requirements
 
@@ -489,12 +567,14 @@ FOR EACH $a, $b IN $pairs:   ← Parse error
 For error recovery, the parser recognizes these malformed constructs:
 
 ```ebnf
-error_unmatched_bracket  = ( "[[" | "[" ) { any_char } EOF ;
+error_unclosed_link      = '~/' { any_char } ( newline | EOF ) ;   /* Malformed link */
 error_unclosed_semantic  = '/' { any_char } ( newline | EOF ) ;
 error_invalid_type_name  = dollar lower_ident assign_op { any_char } newline ;
-error_malformed_control  = ( FOR | WHILE | IF | PARALLEL ) { any_char } ( newline | EOF ) ;
+error_malformed_control  = ( FOR | WHILE | IF | PARALLEL | DELEGATE | USE | EXECUTE | GOTO ) { any_char } ( newline | EOF ) ;
 error_break_outside_loop = BREAK ; /* When not inside a loop */
 error_continue_outside_loop = CONTINUE ; /* When not inside a loop */
+error_invalid_link_path  = link_prefix { any_char } ; /* Link path doesn't resolve to valid resource */
+error_invalid_anchor     = '#' kebab_ident ; /* Anchor references non-existent section */
 ```
 
 ## Whitespace Handling
@@ -519,17 +599,18 @@ The grammar enables deterministic validation:
 |------|-------------|------------|
 | Syntax correctness | Parser rules | E001-E007 |
 | Type reference exists | Symbol table lookup | E008 (warning) |
-| Skill reference declared | Frontmatter `uses:` check | W001 (warning) |
-| Section reference valid | Heading extraction | E010 (error) |
+| Link path resolves | File system / registry | E009 (error) |
+| Anchor reference valid | Heading extraction | E010 (error) |
 | BREAK/CONTINUE in loop | Loop depth tracking | E011 (error) |
 | Dependency cycles | Graph analysis | E012 (error) |
+| Link folder convention | Path prefix check | W002 (warning) |
 
 ## What Tooling Does NOT Do
 
 The grammar describes validation, not transformation:
 
 - **No type expansion** - `$Task` stays `$Task`
-- **No reference inlining** - `[[skill]]` stays `[[skill]]`
+- **No reference inlining** - `~/skill/x` stays `~/skill/x`
 - **No semantic transformation** - `/content/` stays `/content/`
 - **No output compilation** - Source IS the output
 
@@ -541,10 +622,6 @@ The grammar describes validation, not transformation:
 ---
 name: parallel-processor
 description: When you need to process items concurrently
-uses:
-  - validator
-  - item-validator
-  - omr
 ---
 
 ## Types
@@ -586,22 +663,77 @@ $Result: outcome of executing a task
      - Queue for later
 
 4. WHILE NOT $complete AND $iterations < 5 DO:
-   - Execute [[#process-step]]
-   - Validate with [[item-validator]]
+   - GOTO #process-step
+   - USE ~/skill/item-validator TO /validate current state/
 
-5. Return $result
+5. DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
+
+6. DELEGATE /analyze the findings/ TO ~/agent/analyzer
+
+7. EXECUTE ~/tool/browser TO /capture final screenshot/
+
+8. Return $result
 
 ## Process Step
 
-Execute [[omr]] WITH:
+USE ~/skill/omr TO /apply transforms/:
   - $transforms = [("Apply heuristic", "accumulate")]
   - $validator: $Task              <!-- Required parameter -->
+
+## Context Template
+
+Provide context for the explorer:
+- Current result: $result
+- Strategy: $strategy
 ```
 
 ## Version
 
-Grammar version: 0.5
-Aligned with: language-spec.md v0.5
+Grammar version: 0.8
+Aligned with: language-spec.md v0.8
+
+### Changes from v0.7
+
+- **Breaking change**: Replaced sigil-based `(reference)` syntax with link-based `~/path` syntax
+- New link syntax:
+  - `~/agent/name` - Agent link
+  - `~/skill/name` - Skill link
+  - `~/tool/name` - Tool link
+  - `~/skill/name#section` - Section in skill link
+  - `#section` - Same-file anchor (unchanged)
+- Removed `uses:` frontmatter field - dependencies inferred from statements
+- New keywords: `USE`, `EXECUTE`, `GOTO`
+- New statement forms:
+  - `DELEGATE /task/ TO ~/agent/x` - Spawn agent
+  - `USE ~/skill/x TO /task/` - Follow skill
+  - `EXECUTE ~/tool/x TO /action/` - Invoke tool
+  - `GOTO #section` - Control flow
+- Added `WITH #template` clause for passing context to delegates
+- Removed `at_sign`, `tilde`, `bang` operators (replaced by link_prefix)
+- Folder conventions: `agent/`, `skill/`, `tool/` prefixes in links
+
+### Changes from v0.6
+
+- **Breaking change**: Replaced `[[wiki-link]]` syntax with sigil-based `(reference)` syntax
+- New reference types with sigils:
+  - `(@agent)` - Agent reference
+  - `(~skill)` - Skill reference
+  - `(#section)` - Section reference
+  - `(!tool)` - Tool reference
+  - `(~skill#section)` - Cross-skill section reference
+- Unified `uses:` frontmatter field with sigil-prefixed identifiers
+- Removed separate `skills:`, `agents:`, `tools:` frontmatter fields
+- Added `at_sign`, `tilde`, `bang` operators
+- Removed `double_lbracket` and `double_rbracket` operators
+- Updated `delegate_stmt` to use new agent reference syntax
+- Added E014 error code for undeclared tool references
+
+### Changes from v0.5
+
+- Added `DELEGATE` and `TO` keywords for agent delegation
+- Added `delegate_stmt` production for spawning subagents
+- Added `agent_ref` production for agent references
+- Added frontmatter fields: `skills:`, `agents:`, `tools:`
 
 ### Changes from v0.4
 

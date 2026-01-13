@@ -5,6 +5,70 @@ All notable changes to MDZ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-13
+
+### Changed - Sigil-Based Reference Syntax
+
+**Breaking change: Reference syntax has moved from wiki-links to sigils.**
+
+v0.7 adopts a sigil-based reference syntax that is more explicit and consistent across all reference types.
+
+#### Reference Syntax Changes
+
+| Old Syntax | New Syntax |
+|------------|------------|
+| `[[skill]]` | `(~skill)` |
+| `[[#section]]` | `(#section)` |
+| `[[skill#section]]` | `(~skill#section)` |
+| `DELEGATE TO $agent:` or `DELEGATE TO "agent"` | `DELEGATE TO (@agent):` |
+
+#### Frontmatter Changes
+
+The separate `skills:`, `agents:`, and `tools:` fields have been unified into a single `uses:` field with sigil prefixes:
+
+**Before:**
+```yaml
+skills:
+  - skill-a
+  - skill-b
+agents:
+  - explorer
+tools:
+  - file-reader
+```
+
+**After:**
+```yaml
+uses:
+  - ~skill-a
+  - ~skill-b
+  - @explorer
+  - !file-reader
+```
+
+#### Why This Change?
+
+- **Consistency** - All references use the same parenthesis-based syntax
+- **Explicit typing** - Sigils (`~`, `@`, `#`, `!`) immediately indicate reference type
+- **Cleaner parsing** - No ambiguity between wiki-links and markdown links
+- **Unified frontmatter** - Single `uses:` field with typed references
+
+### Migration
+
+Update your `.mdz` files:
+
+1. Replace `[[skill-name]]` with `(~skill-name)`
+2. Replace `[[#section]]` with `(#section)`
+3. Replace `[[skill#section]]` with `(~skill#section)`
+4. Replace `DELEGATE TO "agent"` with `DELEGATE TO (@agent):`
+5. Merge `skills:`, `agents:`, `tools:` into `uses:` with appropriate sigils
+
+### Breaking Changes
+
+- `[[wiki-link]]` syntax is no longer recognized
+- Separate `skills:`, `agents:`, `tools:` frontmatter fields removed
+- `DELEGATE TO` requires `(@agent)` syntax
+
 ## [0.3.0] - 2026-01-03
 
 ### Changed - Validator-First Architecture
@@ -16,7 +80,7 @@ v0.3 adopts a validation-first model: the compiler validates source documents an
 #### Removed
 - **Type expansion** - No longer transforms `$Task` → `Task (description)`
 - **Semantic marker transformation** - `{~~content}` stays as `{~~content}`, not `(determine: content)`
-- **Reference transformation** - `[[skill]]` stays as `[[skill]]`, not `[skill]`
+- **Reference transformation** - References stay as written, not transformed
 - **Compile flags** - Removed `--no-expand-types`, `--no-resolve-refs`, `--no-transform-sem`
 - **Two-layer model** - No more "source format" vs "compiled format"
 
@@ -136,7 +200,7 @@ If you relied on compiled output format:
 - **Frontmatter** - YAML metadata with name, description, and uses fields
 - **Type definitions** - Semantic types (`$TypeName = description`) and enums (`$Enum = "a" | "b"`)
 - **Variable declarations** - Typed variables (`$name: $Type = value`) and lambdas (`$fn = $x => expr`)
-- **Skill references** - Wiki-link syntax (`[[skill-name]]`, `[[skill#section]]`, `[[#section]]`)
+- **Skill references** - Reference syntax with sigils
 - **Semantic markers** - LLM-interpreted content (`{~~determine appropriate value}`)
 - **Control flow** - FOR EACH, WHILE, IF/THEN/ELSE with CAPS keywords
 - **Composition** - WITH clause for parameter passing

@@ -20,6 +20,8 @@ export type TokenType =
   | 'PARALLEL'  // v0.2
   | 'BREAK'     // v0.2
   | 'CONTINUE'  // v0.2
+  | 'DELEGATE'  // v0.3
+  | 'TO'        // v0.3
   // Literals
   | 'STRING' | 'NUMBER' | 'TRUE' | 'FALSE'
   | 'TEMPLATE_START' | 'TEMPLATE_PART' | 'TEMPLATE_END'
@@ -30,7 +32,9 @@ export type TokenType =
   | 'EQ' | 'NEQ' | 'LT' | 'GT' | 'LTE' | 'GTE'
   // Brackets
   | 'LPAREN' | 'RPAREN' | 'LBRACKET' | 'RBRACKET' | 'LBRACE' | 'RBRACE'
-  | 'DOUBLE_LBRACKET' | 'DOUBLE_RBRACKET'
+  // v0.8: Link-based references (replaces sigil-based refs)
+  | 'LINK'         // ~/path/to/file or ~/path/to/file#anchor
+  | 'ANCHOR'       // #section (same-file reference)
   // Special - semantic markers (v0.4: new /content/ syntax)
   | 'SEMANTIC_MARKER'   // /content with spaces/
   | 'INFERRED_VAR'      // $/name/
@@ -170,16 +174,17 @@ export class Lexer {
       // Not a semantic marker - fall through to emit as TEXT
     }
 
-    // Double brackets
-    if (this.lookAhead('[[')) {
-      this.consumeChars(2);
-      this.addToken('DOUBLE_LBRACKET', '[[');
-      return;
+    // v0.8: Link-based references: ~/path/to/file or ~/path/to/file#anchor
+    if (char === '~' && this.peekAt(1) === '/') {
+      const result = this.tryScanLink();
+      if (result) return;
     }
-    if (this.lookAhead(']]')) {
-      this.consumeChars(2);
-      this.addToken('DOUBLE_RBRACKET', ']]');
-      return;
+
+    // v0.8: Anchor references: #section (same-file reference)
+    // Must come before hash identifier scanning for inline anchors
+    if (char === '#' && this.column > 0) {
+      const result = this.tryScanAnchor();
+      if (result) return;
     }
 
     // Arrow
@@ -223,12 +228,6 @@ export class Lexer {
     // Dollar identifier
     if (char === '$') {
       this.scanDollarIdent();
-      return;
-    }
-
-    // Hash (section ref start)
-    if (char === '#') {
-      this.scanHashIdent();
       return;
     }
 
@@ -444,6 +443,126 @@ export class Lexer {
     return false;
   }
 
+  /**
+   * v0.8: Tries to scan a link reference: ~/path/to/file or ~/path/to/file#anchor
+   * Assumes current position is at '~' and next char is '/'.
+   * Returns true if a link was found and tokenized.
+   * 
+   * Token value is a JSON object: { path: string[], anchor: string | null }
+   */
+  private tryScanLink(): boolean {
+    const startPos = this.pos;
+    const startLine = this.line;
+    const startColumn = this.column;
+
+    this.advance(); // ~
+    this.advance(); // /
+
+    // Scan path segments: identifier(/identifier)*
+    const path: string[] = [];
+    
+    // First segment is required
+    let segment = this.scanLinkSegment();
+    if (!segment) {
+      // No valid path segment - rewind and return false
+      this.pos = startPos;
+      this.column = startColumn;
+      this.line = startLine;
+      return false;
+    }
+    path.push(segment);
+
+    // Additional segments
+    while (this.peek() === '/' && this.peekAt(1) !== '\0') {
+      // Peek ahead to see if this is another segment or end of link
+      const nextChar = this.peekAt(1);
+      if (!this.isAlpha(nextChar) && nextChar !== '_') {
+        break;
+      }
+      this.advance(); // /
+      segment = this.scanLinkSegment();
+      if (!segment) break;
+      path.push(segment);
+    }
+
+    // Optional anchor: #identifier
+    let anchor: string | null = null;
+    if (this.peek() === '#') {
+      this.advance(); // #
+      anchor = this.scanLinkSegment();
+      if (!anchor) {
+        // Hash without valid identifier - rewind entirely
+        this.pos = startPos;
+        this.column = startColumn;
+        this.line = startLine;
+        return false;
+      }
+    }
+
+    // Build token value as JSON
+    const value = JSON.stringify({ path, anchor });
+    this.addToken('LINK', value);
+    return true;
+  }
+
+  /**
+   * Scans a link segment (kebab-case identifier).
+   * Returns the segment or empty string if not valid.
+   */
+  private scanLinkSegment(): string {
+    let segment = '';
+    // Must start with alpha or underscore
+    if (!this.isAlpha(this.peek()) && this.peek() !== '_') {
+      return '';
+    }
+    while (this.isAlphaNumeric(this.peek()) || this.peek() === '-' || this.peek() === '_') {
+      segment += this.advance();
+    }
+    return segment;
+  }
+
+  /**
+   * v0.8: Tries to scan an anchor reference: #section
+   * Assumes current position is at '#' and we're NOT at column 0 (not a heading).
+   * Returns true if an anchor was found and tokenized.
+   * 
+   * Token value is the anchor name string.
+   */
+  private tryScanAnchor(): boolean {
+    const startPos = this.pos;
+    const startLine = this.line;
+    const startColumn = this.column;
+
+    // Check for # followed by identifier start
+    if (this.peek() !== '#') {
+      return false;
+    }
+    
+    const nextChar = this.peekAt(1);
+    if (!this.isAlpha(nextChar) && nextChar !== '_') {
+      return false;
+    }
+
+    this.advance(); // #
+    
+    // Scan identifier (kebab-case)
+    let name = '';
+    while (this.isAlphaNumeric(this.peek()) || this.peek() === '-' || this.peek() === '_') {
+      name += this.advance();
+    }
+
+    if (!name) {
+      // No valid identifier - rewind
+      this.pos = startPos;
+      this.column = startColumn;
+      this.line = startLine;
+      return false;
+    }
+
+    this.addToken('ANCHOR', name);
+    return true;
+  }
+
   private scanDollarIdent(): void {
     this.advance(); // $
     
@@ -475,15 +594,6 @@ export class Lexer {
     }
     const type = ident[0] >= 'A' && ident[0] <= 'Z' ? 'TYPE_IDENT' : 'DOLLAR_IDENT';
     this.addToken(type, '$' + ident);
-  }
-
-  private scanHashIdent(): void {
-    this.advance(); // #
-    let ident = '';
-    while (this.isAlphaNumeric(this.peek()) || this.peek() === '-') {
-      ident += this.advance();
-    }
-    this.addToken('LOWER_IDENT', '#' + ident);
   }
 
   private scanString(): void {
@@ -584,7 +694,7 @@ export class Lexer {
     }
 
     // v0.2: Added PARALLEL, BREAK, CONTINUE
-    // v0.3: Added DO for WHILE...DO syntax
+    // v0.3: Added DO for WHILE...DO syntax, DELEGATE and TO for agent delegation
     const keywords: Record<string, TokenType> = {
       'FOR': 'FOR', 'EACH': 'EACH', 'IN': 'IN', 'WHILE': 'WHILE',
       'DO': 'DO',
@@ -593,6 +703,8 @@ export class Lexer {
       'PARALLEL': 'PARALLEL',
       'BREAK': 'BREAK',
       'CONTINUE': 'CONTINUE',
+      'DELEGATE': 'DELEGATE',
+      'TO': 'TO',
       'true': 'TRUE', 'false': 'FALSE',
     };
 

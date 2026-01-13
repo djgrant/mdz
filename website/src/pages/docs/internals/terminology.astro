@@ -9,7 +9,23 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     This glossary provides canonical names for MDZ syntax elements. Use these terms consistently in documentation, error messages, and discussion.
   </p>
 
-  <h2>Sigils</h2>
+  <h2>Path Syntax</h2>
+
+  <ul>
+    <li><strong>Link</strong> (<code>~/path/to/file</code>) — Reference to another file. Type inferred from folder.</li>
+    <li><strong>Anchor</strong> (<code>#section</code>) — Reference to a section in the current file.</li>
+    <li><strong>Link with anchor</strong> (<code>~/path/to/file#section</code>) — Reference to a section in another file.</li>
+  </ul>
+
+  <h2>Folder Conventions</h2>
+
+  <ul>
+    <li><strong>agent/</strong> — Contains agent definitions for delegation</li>
+    <li><strong>skill/</strong> — Contains reusable skill modules</li>
+    <li><strong>tool/</strong> — Contains tool integrations</li>
+  </ul>
+
+  <h2>Dollar Sigil</h2>
 
   <ul>
     <li><strong>Dollar sigil</strong> (<code>$</code>) — Prefix marking variables and types. <code>$name</code> for variables, <code>$Name</code> for types.</li>
@@ -19,15 +35,13 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 
   <ul>
     <li><strong>Frontmatter fence</strong> (<code>---</code>) — YAML frontmatter delimiter (opening and closing).</li>
-    <li><strong>Skill link</strong> (<code>[[name]]</code>) — Reference to another skill. Wiki-link style.</li>
-    <li><strong>Section link</strong> (<code>[[#name]]</code> or <code>[[skill#name]]</code>) — Reference to a section, optionally in another skill.</li>
     <li><strong>Semantic marker</strong> (<code>/content/</code>) — Content for LLM interpretation.</li>
     <li><strong>Tuple</strong> (<code>(a, b)</code>) — Grouping of multiple values. Used in types and destructuring.</li>
     <li><strong>Array literal</strong> (<code>[a, b]</code>) — Collection of values.</li>
     <li><strong>Array suffix</strong> (<code>$Type[]</code>) — Type modifier indicating a collection.</li>
   </ul>
 
-  <h2>Keywords</h2>
+  <h2>Control Flow Keywords</h2>
 
   <ul>
     <li><strong>For-each loop</strong> (<code>FOR EACH $x IN $y:</code>) — Iteration over a collection.</li>
@@ -35,10 +49,20 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     <li><strong>While loop</strong> (<code>WHILE (cond):</code>) — Conditional loop.</li>
     <li><strong>Conditional</strong> (<code>IF cond THEN:</code>) — Conditional branching.</li>
     <li><strong>Else clause</strong> (<code>ELSE:</code>) — Alternative branch of a conditional.</li>
-    <li><strong>With clause</strong> (<code>WITH:</code>) — Parameter block for skill delegation.</li>
     <li><strong>Logical operators</strong> (<code>AND</code>, <code>OR</code>, <code>NOT</code>) — Boolean logic in conditions.</li>
     <li><strong>Loop control</strong> (<code>BREAK</code>, <code>CONTINUE</code>) — Early exit or skip within loops.</li>
     <li><strong>Collection operator</strong> (<code>IN</code>) — Specifies the collection in a loop.</li>
+  </ul>
+
+  <h2>Composition Keywords</h2>
+
+  <ul>
+    <li><strong>USE</strong> (<code>USE ~/skill/x TO /task/</code>) — Invoke a skill to perform a task.</li>
+    <li><strong>EXECUTE</strong> (<code>EXECUTE ~/tool/x TO /action/</code>) — Execute a tool.</li>
+    <li><strong>DELEGATE</strong> (<code>DELEGATE /task/ TO ~/agent/x</code>) — Delegate to an autonomous agent.</li>
+    <li><strong>GOTO</strong> (<code>GOTO #section</code>) — Jump to a section anchor.</li>
+    <li><strong>WITH</strong> (<code>WITH #anchor</code>) — Pass a template section.</li>
+    <li><strong>TO</strong> — Target specifier in composition statements.</li>
   </ul>
 
   <h2>Operators</h2>
@@ -65,7 +89,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Document Structure</h2>
 
   <ul>
-    <li><strong>Frontmatter</strong> — Skill metadata in YAML between <code>---</code> fences: name, description, uses.</li>
+    <li><strong>Frontmatter</strong> — Skill metadata in YAML between <code>---</code> fences: name, description.</li>
     <li><strong>Section heading</strong> (<code>##</code>) — Markdown heading that defines a referenceable section.</li>
     <li><strong>List item</strong> (<code>-</code>) — Markdown list marker for steps and declarations.</li>
     <li><strong>Code block</strong> (<code>```</code>) — Fenced code block (standard markdown).</li>
@@ -87,7 +111,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li><strong>Variable declaration</strong> (<code>$name = value</code>) — Creates a variable with a value.</li>
     <li><strong>Typed declaration</strong> (<code>$name: $Type = value</code>) — Declaration with type annotation.</li>
-    <li><strong>Required parameter</strong> (<code>$name: $Type</code>) — In WITH clause, parameter without default (required).</li>
+    <li><strong>Required parameter</strong> (<code>$name: $Type</code>) — Parameter without default (required).</li>
     <li><strong>Variable reference</strong> (<code>$name</code>) — Use of a defined variable.</li>
     <li><strong>Lambda expression</strong> (<code>$fn = $x =&gt; expr</code>) — Anonymous function definition.</li>
   </ul>
@@ -105,8 +129,10 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Composition</h2>
 
   <ul>
-    <li><strong>Delegation</strong> (<code>Execute [[skill]] WITH:</code>) — Invoking another skill with parameters.</li>
-    <li><strong>Dependency</strong> (<code>uses:</code> in frontmatter) — Declared skill dependency.</li>
+    <li><strong>Skill invocation</strong> (<code>USE ~/skill/x TO /task/</code>) — Invoking another skill.</li>
+    <li><strong>Tool execution</strong> (<code>EXECUTE ~/tool/x TO /action/</code>) — Running an external tool.</li>
+    <li><strong>Agent delegation</strong> (<code>DELEGATE /task/ TO ~/agent/x</code>) — Spawning autonomous subagent.</li>
+    <li><strong>Section navigation</strong> (<code>GOTO #section</code>) — Jumping to a section anchor.</li>
   </ul>
 
   <h2>Operator Precedence</h2>

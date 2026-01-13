@@ -24,7 +24,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   </p>
   
   <ul>
-    <li>Declare dependencies on multiple skills via <code>uses:</code></li>
+    <li>Link to multiple skills for delegation</li>
     <li>Define iteration or branching logic to coordinate execution</li>
     <li>Manage state across multiple sub-skill invocations</li>
     <li>Synthesize results from delegated work</li>
@@ -39,7 +39,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   </p>
   
   <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
-  - Delegate to sub-agent <span class="zen-keyword">WITH</span> <span class="zen-reference">[[process-item]]</span>
+  - <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/processor</span>
   - Collect <span class="zen-variable">$result</span> into <span class="zen-variable">$results</span>
 
 Synthesize <span class="zen-variable">$results</span> into final output</code></pre>
@@ -70,9 +70,9 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
     Sequential skill chaining where output flows from one stage to the next:
   </p>
   
-  <pre><code class="mdz"><span class="zen-variable">$stage1Result</span> = Execute <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$input</span>
-<span class="zen-variable">$stage2Result</span> = Execute <span class="zen-reference">[[skill-b]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$stage1Result</span>
-<span class="zen-variable">$final</span> = Execute <span class="zen-reference">[[skill-c]]</span> <span class="zen-keyword">WITH</span> <span class="zen-variable">$stage2Result</span></code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/analyze</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/analyze input/</span>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/transform</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/transform results/</span>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/validate</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/validate output/</span></code></pre>
 
   <p>
     Use this when each step transforms data for the next stage.
@@ -91,14 +91,12 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
   <pre><code class="mdz"><span class="zen-comment">---
 name: scientific-method
 description: When orchestrating hypothesis-driven iteration
-uses:
-  - work-packages
 ---</span></code></pre>
 
   <h3>State Persistence with Work Packages</h3>
   
   <p>
-    The scientist uses <code>[[work-packages]]</code> to persist state across iterations:
+    The scientist uses <code>~/skill/work-packages</code> to persist state across iterations:
   </p>
   
   <ul>
@@ -121,7 +119,7 @@ uses:
   Create experiment work package with success criteria
   
   #### Run Experiment
-  Delegate to sub-agent with <span class="zen-reference">[[#experiment-prompt]]</span>
+  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/run experiment/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/experimenter</span> <span class="zen-keyword">WITH</span> <span class="zen-reference">#experiment-prompt</span>
   
   #### Observe Results
   Extract <span class="zen-variable">$observations</span> and update master work package
@@ -156,10 +154,6 @@ uses:
   <pre><code class="mdz"><span class="zen-comment">---
 name: orchestrator-skill
 description: When coordinating multiple skills
-uses:
-  - skill-a
-  - skill-b
-  - work-packages
 ---</span>
 
 <span class="zen-heading">## Types</span>
@@ -180,16 +174,15 @@ uses:
 <span class="zen-heading">## Workflow</span>
 
 <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
-  - Delegate to <span class="zen-reference">[[skill-a]]</span> <span class="zen-keyword">WITH</span>:
-    - <span class="zen-variable">$param</span> = <span class="zen-variable">$item</span>
+  - <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span>
   - Collect result
 
-Synthesize <span class="zen-variable">$results</span> using <span class="zen-reference">[[skill-b]]</span></code></pre>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/synthesize</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/combine results/</span></code></pre>
 
   <h2>Key Techniques</h2>
   
   <ul>
-    <li><strong>Declare dependencies</strong>: List all orchestrated skills in <code>uses:</code></li>
+    <li><strong>Link to dependencies</strong>: Reference all orchestrated skills and agents</li>
     <li><strong>Define iteration variables</strong>: Track state in the Context section</li>
     <li><strong>Use work packages</strong>: Persist state for complex, multi-step workflows</li>
     <li><strong>Create sub-agent prompts</strong>: Define reusable prompt sections for delegation</li>
@@ -199,7 +192,7 @@ Synthesize <span class="zen-variable">$results</span> using <span class="zen-ref
   <h2>See Also</h2>
   
   <ul>
-    <li><a href="/docs/composition">Composition</a> — Skill references and delegation</li>
+    <li><a href="/docs/composition">Composition</a> — Links and delegation</li>
     <li><a href="/docs/control-flow">Control Flow</a> — WHILE, FOR EACH, IF/THEN/ELSE</li>
     <li><a href="/examples">Examples</a> — Full implementations including scientific-method</li>
   </ul>

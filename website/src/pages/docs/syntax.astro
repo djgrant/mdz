@@ -28,10 +28,12 @@ Body content with MDZ constructs</code></pre>
   <pre><code class="mdz"><span class="zen-comment">---
 name: skill-name              # Required: identifier (kebab-case)
 description: When...          # Required: trigger description
-uses:                         # Optional: skill dependencies
-  - skill-a
-  - skill-b
 ---</span></code></pre>
+
+  <p>
+    <strong>Note:</strong> Dependencies are now inferred automatically from links in your document.
+    No <code>uses:</code> block is needed.
+  </p>
 
   <h2>Types</h2>
   
@@ -96,20 +98,53 @@ uses:                         # Optional: skill dependencies
 
   <p>This pattern makes semantic transformations explicit and avoids confusion about where properties come from.</p>
 
-  <h2>References</h2>
+  <h2>Links</h2>
   
-  <h3>Skill Links</h3>
+  <p>Links reference other files using path syntax. The type is inferred from the folder:</p>
   
-  <p>Reference another skill using wiki-link syntax:</p>
+  <h3>Link Syntax</h3>
   
-  <pre><code class="mdz"><span class="zen-reference">[[skill-name]]</span></code></pre>
+  <ul>
+    <li><code>~/skill/name</code> — Link to a skill in the <code>skill/</code> folder</li>
+    <li><code>~/agent/name</code> — Link to an agent in the <code>agent/</code> folder</li>
+    <li><code>~/tool/name</code> — Link to a tool in the <code>tool/</code> folder</li>
+    <li><code>#section</code> — Anchor to a section in the current file</li>
+    <li><code>~/skill/name#section</code> — Link with anchor to a specific section</li>
+  </ul>
 
-  <h3>Section Links</h3>
+  <h3>Folder Conventions</h3>
   
-  <p>Reference a section within a skill:</p>
+  <p>The folder in the path determines the reference type:</p>
   
-  <pre><code class="mdz"><span class="zen-reference">[[skill-name#section-name]]</span>   <span class="zen-comment">&lt;!-- Section in another skill --&gt;</span>
-[[#section-name]]             <span class="zen-comment">&lt;!-- Section in current skill --&gt;</span></code></pre>
+  <ul>
+    <li><code>agent/</code> — Agents for delegation</li>
+    <li><code>skill/</code> — Reusable skill modules</li>
+    <li><code>tool/</code> — Tool integrations</li>
+  </ul>
+  
+  <h3>Examples</h3>
+  
+  <pre><code class="mdz"><span class="zen-reference">~/skill/code-review</span>           <span class="zen-comment">&lt;!-- skill reference --&gt;</span>
+<span class="zen-reference">~/agent/architect</span>             <span class="zen-comment">&lt;!-- agent reference --&gt;</span>
+<span class="zen-reference">~/tool/browser</span>                <span class="zen-comment">&lt;!-- tool reference --&gt;</span>
+<span class="zen-reference">#validation-prompt</span>            <span class="zen-comment">&lt;!-- local anchor --&gt;</span>
+<span class="zen-reference">~/skill/review#checklist</span>      <span class="zen-comment">&lt;!-- link with anchor --&gt;</span></code></pre>
+
+  <h3>Section Anchors</h3>
+  
+  <p>Section names are derived from headings by:</p>
+  
+  <ol>
+    <li>Converting to lowercase</li>
+    <li>Replacing spaces with hyphens</li>
+    <li>Removing special characters</li>
+  </ol>
+  
+  <pre><code class="mdz"><span class="zen-heading">## Validate Prompt</span>
+→ <span class="zen-reference">#validate-prompt</span>
+
+<span class="zen-heading">## 2. Execute Phase</span>
+→ <span class="zen-reference">#2-execute-phase</span></code></pre>
 
   <h2>Semantic Markers</h2>
   
@@ -180,24 +215,54 @@ uses:                         # Optional: skill dependencies
 <span class="zen-keyword">ELSE</span>:
   - Collect all candidates</code></pre>
 
+  <h3>GOTO</h3>
+  
+  <p>Jump to a section anchor:</p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">GOTO</span> <span class="zen-reference">#validation-prompt</span>
+<span class="zen-keyword">GOTO</span> <span class="zen-reference">~/skill/helper#setup</span></code></pre>
+
   <h2>Composition</h2>
   
-  <h3>Delegation</h3>
+  <h3>USE (Skill Invocation)</h3>
   
-  <p>Invoke another skill using a <strong>skill link</strong> and <strong>with clause</strong>:</p>
+  <p>Invoke a skill to perform a task:</p>
   
-  <pre><code>Execute <span class="zen-reference">[[orchestrate-map-reduce]]</span> <span class="zen-keyword">WITH</span>:
-  - <span class="zen-variable">$transforms</span> = [(<span class="zen-string">"Apply heuristic"</span>, <span class="zen-string">"accumulate"</span>)]
-  - <span class="zen-variable">$validator</span> = <span class="zen-reference">[[#validate-essence]]</span>
-  - <span class="zen-variable">$return</span> = <span class="zen-string">"Report findings"</span></code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/code-review</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/check style/</span>
 
-  <h3>Parameter Passing</h3>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/orchestrate</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/coordinate tasks/</span></code></pre>
+
+  <h3>WITH Clause (Passing Templates)</h3>
   
-  <p>Pass parameters via the <strong>with clause</strong>:</p>
+  <p>Pass a section template when invoking:</p>
   
-  <pre><code>Delegate to <span class="zen-reference">[[skill-name]]</span> <span class="zen-keyword">WITH</span>:
-  - <span class="zen-variable">$param1</span> = value1
-  - <span class="zen-variable">$param2</span> = value2</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/mapper</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/process items/</span> <span class="zen-keyword">WITH</span> <span class="zen-reference">#item-prompt</span></code></pre>
+
+  <h3>EXECUTE (Tool Invocation)</h3>
+  
+  <p>Execute a tool to perform an action:</p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">EXECUTE</span> <span class="zen-reference">~/tool/browser</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/take screenshot/</span>
+
+<span class="zen-keyword">EXECUTE</span> <span class="zen-reference">~/tool/file-system</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/read config/</span></code></pre>
+
+  <h3>DELEGATE (Agent Delegation)</h3>
+  
+  <p>Delegate to an agent for autonomous work:</p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/task description/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/architect</span>
+
+<span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/research phase/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/explorer</span></code></pre>
+
+  <h3>Pattern Summary</h3>
+  
+  <ul>
+    <li><strong>USE</strong> — Invoke skills for reusable workflows</li>
+    <li><strong>EXECUTE</strong> — Run tools for external actions</li>
+    <li><strong>DELEGATE</strong> — Spawn autonomous agents</li>
+    <li><strong>GOTO</strong> — Jump to section anchors</li>
+    <li><strong>WITH</strong> — Pass template sections</li>
+  </ul>
 
   <h2>Conventional Sections</h2>
   

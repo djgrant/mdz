@@ -1,0 +1,39 @@
+---
+name: code-analysis
+description: When analyzing a file diff, use this skill to find issues while respecting learned preferences.
+---
+
+## Types
+
+$Finding: an issue with location and suggestion
+$Severity: "critical" | "major" | "minor" | "trivial"
+
+## Input
+
+- $filename: $String
+- $diff: $String
+- $learnings: $String[] = []
+
+## Guidelines
+
+- **critical**: Crashes, data loss, security breaches
+- **major**: Bugs, O(n^2) in hot paths, missing error handling
+- **minor**: Maintainability, unclear naming
+- **trivial**: Style preferences
+
+## Workflow
+
+FOR EACH $learning IN $learnings:
+  Adjust criteria to respect the preference.
+
+Scan $diff for findings. Assign severity per #guidelines.
+
+## Output
+
+Return findings as ($Finding, $Severity)[].
+
+Each finding includes file, line, issue, and suggestion.
+
+## Tone
+
+Every criticism includes a suggestion. Be direct but not harsh.

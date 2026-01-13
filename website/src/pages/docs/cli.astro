@@ -30,7 +30,8 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <ul>
     <li><strong>Syntax</strong> — Valid MDZ constructs</li>
-    <li><strong>References</strong> — <code>[[skill]]</code> targets exist</li>
+    <li><strong>Links</strong> — <code>~/skill/name</code> and <code>~/agent/name</code> targets exist</li>
+    <li><strong>Anchors</strong> — <code>#section</code> targets exist</li>
     <li><strong>Types</strong> — Contracts match across boundaries</li>
     <li><strong>Dependencies</strong> — No circular references</li>
     <li><strong>Scope</strong> — Variables defined before use</li>
@@ -94,7 +95,7 @@ mdz compile skill.mdz -V</code></pre>
   </ul>
   
   <p>
-    Shows which skills are referenced via <code>uses:</code>.
+    Shows which files are linked from your skill.
   </p>
 
   <h2>Exit Codes</h2>

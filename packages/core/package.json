@@ -1,6 +1,6 @@
 {
   "name": "@zenmarkdown/core",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "description": "MDZ parser and compiler - core library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

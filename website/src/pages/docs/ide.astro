@@ -18,8 +18,10 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <ul>
     <li>Syntax highlighting for <code>.mdz</code> files</li>
     <li>Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)</li>
+    <li>Composition keywords (USE, EXECUTE, DELEGATE, GOTO)</li>
     <li>Variable and type highlighting</li>
-    <li>Skill references ([[links]])</li>
+    <li>Link highlighting (<code>~/skill/name</code>, <code>~/agent/name</code>)</li>
+    <li>Anchor highlighting (<code>#section</code>)</li>
     <li>Semantic markers</li>
   </ul>
 
@@ -53,8 +55,9 @@ npm run compile
     <li><strong>Headings</strong> — Section markers</li>
     <li><strong>Types</strong> — <code>$TypeName</code> in cyan</li>
     <li><strong>Variables</strong> — <code>$varName</code> in yellow</li>
-    <li><strong>Keywords</strong> — FOR EACH, WHILE, etc. in purple</li>
-    <li><strong>References</strong> — [[links]] in blue</li>
+    <li><strong>Keywords</strong> — FOR EACH, WHILE, USE, DELEGATE, etc. in purple</li>
+    <li><strong>Links</strong> — <code>~/skill/name</code>, <code>~/agent/name</code> in blue</li>
+    <li><strong>Anchors</strong> — <code>#section</code> in blue</li>
     <li><strong>Semantics</strong> — semantic markers in pink</li>
     <li><strong>Strings</strong> — "quoted" in green</li>
   </ul>
@@ -66,9 +69,9 @@ npm run compile
   </p>
   
   <ul>
-    <li>Autocomplete after <code>[[</code>, <code>$</code>, and <code>/</code></li>
+    <li>Autocomplete after <code>~/</code>, <code>#</code>, <code>$</code>, and <code>/</code></li>
     <li>Hover information for types and variables</li>
-    <li>Go-to-definition for references</li>
+    <li>Go-to-definition for links and anchors</li>
     <li>Error diagnostics</li>
     <li>Document symbols</li>
   </ul>

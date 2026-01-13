@@ -75,15 +75,96 @@ export class Parser {
 
     const parsed = this.parseYaml(content);
 
+    // v0.7: Parse unified uses: field with sigil-based entries
+    // Supports: ~skill-name, @agent-name, !tool-name
+    // Also supports legacy separate skills:/agents:/tools: fields for backward compat
+    const { skills, agents, tools, uses } = this.parseUsesField(parsed);
+    
     return {
       kind: 'Frontmatter',
       name: parsed.name || '',
       description: parsed.description || '',
-      uses: parsed.uses || [],
+      skills,
+      agents,
+      tools,
+      uses,
       imports: this.parseImports(parsed.imports),
       raw: parsed,
       span: AST.mergeSpans(start.span, end.span),
     };
+  }
+
+  // v0.7: Parse unified uses: field with sigil-based entries
+  private parseUsesField(parsed: Record<string, any>): { skills: string[]; agents: string[]; tools: string[]; uses: string[] } {
+    const skills: string[] = [];
+    const agents: string[] = [];
+    const tools: string[] = [];
+    const uses: string[] = [];
+
+    // Priority: explicit skills:/agents:/tools: fields take precedence over uses:
+    // This maintains backward compatibility where skills: is the preferred name
+    const hasExplicitSkills = Array.isArray(parsed.skills) && parsed.skills.length > 0;
+    const hasExplicitAgents = Array.isArray(parsed.agents) && parsed.agents.length > 0;
+    const hasExplicitTools = Array.isArray(parsed.tools) && parsed.tools.length > 0;
+
+    // First, add explicit skills/agents/tools fields
+    if (hasExplicitSkills) {
+      for (const skill of parsed.skills) {
+        skills.push(skill);
+        uses.push(`~${skill}`);
+      }
+    }
+    if (hasExplicitAgents) {
+      for (const agent of parsed.agents) {
+        agents.push(agent);
+        uses.push(`@${agent}`);
+      }
+    }
+    if (hasExplicitTools) {
+      for (const tool of parsed.tools) {
+        tools.push(tool);
+        uses.push(`!${tool}`);
+      }
+    }
+
+    // Then process uses: field with sigil-based entries
+    // Skip non-sigil entries if explicit skills: was provided (backward compat)
+    if (Array.isArray(parsed.uses)) {
+      for (const entry of parsed.uses) {
+        if (typeof entry !== 'string') continue;
+        
+        if (entry.startsWith('~')) {
+          // ~skill-name -> skills
+          const skill = entry.slice(1);
+          if (!skills.includes(skill)) {
+            skills.push(skill);
+            uses.push(entry);
+          }
+        } else if (entry.startsWith('@')) {
+          // @agent-name -> agents
+          const agent = entry.slice(1);
+          if (!agents.includes(agent)) {
+            agents.push(agent);
+            uses.push(entry);
+          }
+        } else if (entry.startsWith('!')) {
+          // !tool-name -> tools
+          const tool = entry.slice(1);
+          if (!tools.includes(tool)) {
+            tools.push(tool);
+            uses.push(entry);
+          }
+        } else {
+          // No sigil - treat as skill only if no explicit skills: field
+          if (!hasExplicitSkills && !skills.includes(entry)) {
+            skills.push(entry);
+            uses.push(entry);
+          }
+        }
+      }
+    }
+
+    return { skills, agents, tools, uses };
   }
 
   private parseYaml(content: string): Record<string, any> {
@@ -315,6 +396,11 @@ export class Parser {
       return this.parseContinue();
     }
 
+    // v0.3: DELEGATE statement
+    if (this.check('DELEGATE')) {
+      return this.parseDelegateStatement();
+    }
+
     // Code block
     if (this.check('CODE_BLOCK_START')) {
       return this.parseCodeBlock();
@@ -330,15 +416,32 @@ export class Parser {
       return this.parseBlockquote();
     }
 
-    // Delegation
+    // v0.8: USE statement
+    if (this.check('UPPER_IDENT') && this.current().value === 'USE') {
+      return this.parseUseStatement();
+    }
+
+    // v0.8: EXECUTE statement
+    if (this.check('UPPER_IDENT') && this.current().value === 'EXECUTE') {
+      return this.parseExecuteStatement();
+    }
+
+    // v0.8: GOTO statement
+    if (this.check('UPPER_IDENT') && this.current().value === 'GOTO') {
+      return this.parseGotoStatement();
+    }
+
+    // Delegation - v0.8: check for link-based references
     if (this.check('LOWER_IDENT') || this.check('UPPER_IDENT')) {
       const verb = this.current().value.toLowerCase();
       if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke' || verb === 'delegate' || verb === 'use') {
-        // Check for "verb [[ref]]" or "verb to [[ref]]" patterns
+        // Check for "verb (ref)" or "verb to (ref)" patterns with LINK or ANCHOR
         const lookahead1 = this.peek(1);
         const lookahead2 = this.peek(2);
-        if (lookahead1?.type === 'DOUBLE_LBRACKET' ||
-            (lookahead1?.type === 'LOWER_IDENT' && lookahead1.value === 'to' && lookahead2?.type === 'DOUBLE_LBRACKET')) {
+        const isRefToken = (t: Token | null) => 
+          t?.type === 'LINK' || t?.type === 'ANCHOR';
+        if (isRefToken(lookahead1) ||
+            (lookahead1?.type === 'LOWER_IDENT' && lookahead1.value === 'to' && isRefToken(lookahead2))) {
           return this.parseDelegation();
         }
       }
@@ -610,6 +713,11 @@ export class Parser {
       return this.parseContinue();
     }
 
+    // v0.3: DELEGATE inside list items
+    if (this.check('DELEGATE')) {
+      return this.parseDelegateStatement();
+    }
+
     return this.parseParagraph();
   }
 
@@ -741,8 +849,12 @@ export class Parser {
       return this.parseTemplateLiteral();
     }
 
-    if (this.check('DOUBLE_LBRACKET')) {
-      return this.parseReference();
+    // v0.8: Link-based references
+    if (this.check('LINK')) {
+      return this.parseLink();
+    }
+    if (this.check('ANCHOR')) {
+      return this.parseAnchor();
     }
 
     if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
@@ -853,36 +965,48 @@ export class Parser {
     };
   }
 
-  private parseReference(): AST.SkillReference | AST.SectionReference {
-    const start = this.advance();
-
-    let skill: string | null = null;
-    let section: string | null = null;
-
-    if (this.check('LOWER_IDENT')) {
-      const ident = this.advance().value;
-      if (ident.startsWith('#')) {
-        section = ident.slice(1);
-      } else {
-        skill = ident;
-      }
+  // v0.8: Parse ~/path/to/file or ~/path/to/file#anchor link reference
+  private parseLink(): AST.LinkNode {
+    const token = this.expect('LINK');
+    if (!token) {
+      return {
+        kind: 'Link',
+        path: [],
+        anchor: null,
+        raw: '',
+        span: this.current().span,
+      };
     }
+    
+    // Token value is JSON: { path: string[], anchor: string | null }
+    const parsed = JSON.parse(token.value);
+    const raw = '~/' + parsed.path.join('/') + (parsed.anchor ? '#' + parsed.anchor : '');
+    
+    return {
+      kind: 'Link',
+      path: parsed.path,
+      anchor: parsed.anchor,
+      raw,
+      span: token.span,
+    };
+  }
 
-    if (skill && this.check('LOWER_IDENT')) {
-      const ident = this.advance().value;
-      if (ident.startsWith('#')) {
-        section = ident.slice(1);
-      }
+  // v0.8: Parse #section anchor reference
+  private parseAnchor(): AST.AnchorNode {
+    const token = this.expect('ANCHOR');
+    if (!token) {
+      return {
+        kind: 'Anchor',
+        name: '',
+        span: this.current().span,
+      };
     }
-
-    const end = this.expect('DOUBLE_RBRACKET');
-    const span = AST.mergeSpans(start.span, end?.span || this.previous().span);
-
-    if (section !== null) {
-      return { kind: 'SectionReference', skill, section, span };
-    }
-
-    return { kind: 'SkillReference', skill: skill || '', span };
+    
+    return {
+      kind: 'Anchor',
+      name: token.value,
+      span: token.span,
+    };
   }
 
   private parseSemanticMarker(): AST.SemanticMarker {
@@ -1005,7 +1129,9 @@ export class Parser {
     while (
       !this.isAtEnd() &&
       !this.check('NEWLINE') &&
-      !this.check('DOUBLE_LBRACKET') &&
+      // v0.8: link-based references
+      !this.check('LINK') &&
+      !this.check('ANCHOR') &&
       !this.check('SEMANTIC_OPEN') &&
       !this.check('SEMANTIC_MARKER') &&
       !this.check('INFERRED_VAR') &&
@@ -1183,6 +1309,146 @@ export class Parser {
     return {
       kind: 'ContinueStatement',
       span: token.span,
+    };
+  }
+
+  // v0.8: DELEGATE statement for agent delegation
+  // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+  private parseDelegateStatement(): AST.DelegateStatement {
+    const start = this.advance();  // consume DELEGATE
+    
+    // Parse task: /semantic marker/
+    const task = this.parseSemanticMarker();
+    
+    // Expect TO keyword
+    this.expect('TO');
+    
+    // Parse target: ~/agent/x
+    const target = this.parseLink();
+    
+    // Optional WITH #anchor
+    let withAnchor: AST.AnchorNode | undefined;
+    if (this.check('WITH')) {
+      this.advance();  // consume WITH
+      withAnchor = this.parseAnchor();
+    }
+    
+    // Optional parameter block with colon
+    let parameters: AST.ParameterBlock | undefined;
+    if (this.check('COLON')) {
+      parameters = this.parseParameterBlock();
+    }
+    
+    return {
+      kind: 'DelegateStatement',
+      task,
+      target,
+      withAnchor,
+      parameters,
+      span: AST.mergeSpans(start.span, this.previous().span),
+    };
+  }
+
+  // v0.8: USE statement for skill activation
+  // Syntax: USE ~/skill/x TO /task/
+  private parseUseStatement(): AST.UseStatement {
+    const start = this.advance();  // consume USE
+    
+    // Parse link: ~/skill/x
+    const link = this.parseLink();
+    
+    // Expect TO keyword
+    this.expect('TO');
+    
+    // Parse task: /semantic marker/
+    const task = this.parseSemanticMarker();
+    
+    // Optional parameter block with colon
+    let parameters: AST.ParameterBlock | undefined;
+    if (this.check('COLON')) {
+      parameters = this.parseParameterBlock();
+    }
+    
+    return {
+      kind: 'UseStatement',
+      link,
+      task,
+      parameters,
+      span: AST.mergeSpans(start.span, this.previous().span),
+    };
+  }
+
+  // v0.8: EXECUTE statement for tool invocation
+  // Syntax: EXECUTE ~/tool/x TO /action/
+  private parseExecuteStatement(): AST.ExecuteStatement {
+    const start = this.advance();  // consume EXECUTE
+    
+    // Parse link: ~/tool/x
+    const link = this.parseLink();
+    
+    // Expect TO keyword
+    this.expect('TO');
+    
+    // Parse task: /semantic marker/
+    const task = this.parseSemanticMarker();
+    
+    return {
+      kind: 'ExecuteStatement',
+      link,
+      task,
+      span: AST.mergeSpans(start.span, this.previous().span),
+    };
+  }
+
+  // v0.8: GOTO statement for same-file navigation
+  // Syntax: GOTO #section
+  private parseGotoStatement(): AST.GotoStatement {
+    const start = this.advance();  // consume GOTO
+    
+    // Parse anchor: #section
+    const anchor = this.parseAnchor();
+    
+    return {
+      kind: 'GotoStatement',
+      anchor,
+      span: AST.mergeSpans(start.span, anchor.span),
+    };
+  }
+
+  // v0.8: Parse parameter block
+  private parseParameterBlock(): AST.ParameterBlock {
+    const start = this.advance();  // consume COLON
+    this.skipNewlines();
+    
+    const parameters: AST.VariableDeclaration[] = [];
+    
+    // Consume INDENT if present
+    const hasIndent = this.check('INDENT');
+    if (hasIndent) {
+      this.advance();
+    }
+    
+    // Parse parameters as list items
+    while (this.check('LIST_MARKER') && !this.isAtEnd()) {
+      this.advance();  // consume LIST_MARKER
+      const param = this.parseVariableDeclaration(true);
+      parameters.push(param);
+      this.skipNewlines();
+      
+      if (!this.check('LIST_MARKER') || this.check('HEADING')) {
+        break;
+      }
+    }
+    
+    // Consume matching DEDENT if we consumed an INDENT
+    if (hasIndent && this.check('DEDENT')) {
+      this.advance();
+    }
+    
+    return {
+      kind: 'ParameterBlock',
+      parameters,
+      span: AST.mergeSpans(start.span, this.previous().span),
     };
   }
 
@@ -1364,8 +1630,11 @@ export class Parser {
     const start = this.current();
 
     while (!this.isAtEnd() && !this.check('NEWLINE') && !this.check('HEADING')) {
-      if (this.check('DOUBLE_LBRACKET')) {
-        content.push(this.parseReference());
+      // v0.8: link-based references
+      if (this.check('LINK')) {
+        content.push(this.parseLink());
+      } else if (this.check('ANCHOR')) {
+        content.push(this.parseAnchor());
       } else if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
         content.push(this.parseSemanticMarker());
       } else if (this.check('INFERRED_VAR')) {
@@ -1430,7 +1699,22 @@ export class Parser {
       this.advance();
     }
 
-    const target = this.parseReference();
+    // v0.8: Parse link-based reference (link or anchor)
+    let target: AST.LinkNode | AST.AnchorNode;
+    if (this.check('LINK')) {
+      target = this.parseLink();
+    } else if (this.check('ANCHOR')) {
+      target = this.parseAnchor();
+    } else {
+      // Error - expected a reference
+      this.error('E001', 'Expected link reference (~/path) or anchor reference (#name)');
+      // Return a dummy target
+      target = {
+        kind: 'Anchor',
+        name: '',
+        span: this.current().span,
+      };
+    }
 
     const parameters: AST.VariableDeclaration[] = [];
 

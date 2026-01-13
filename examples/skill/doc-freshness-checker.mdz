@@ -1,0 +1,59 @@
+---
+name: doc-freshness-checker
+description: When documentation may be stale, use this skill to identify docs needing updates.
+---
+
+## Types
+
+$Signal: an indicator of staleness (broken example, deprecated API, old version)
+$Assessment: judgment of doc health based on signals found
+
+## Input
+
+- $docPaths: $FilePath[]
+- $codebasePath: $FilePath
+
+## Context
+
+- $findings: ($FilePath, $Signal[], $Assessment)[] = []
+- $reportPath = ".opencode/docs/freshness-report.md"
+
+## Workflow
+
+### 1. Scan for Signals
+
+PARALLEL FOR EACH $doc IN $docPaths:
+  DELEGATE /scan for staleness signals/ TO ~/agent/doc-scanner:
+    - $task = /scan for staleness signals/
+    - $doc = $doc
+    - $codebase = $codebasePath
+    - $signals = /APIs that no longer exist, version mismatches, broken examples, 404 links/
+  
+  Add result to $findings
+
+### 2. Prioritize
+
+Sort $findings by impact on users:
+- Onboarding docs with issues are more urgent
+- High-traffic pages need faster fixes
+- Internal docs can wait longer
+
+### 3. Report
+
+Write to $reportPath:
+
+#### Needs Immediate Attention
+
+FOR EACH ($doc, $signals, $assessment) IN $findings:
+  IF $assessment = "critical" THEN:
+    - $doc: $signals
+
+#### Schedule for Review
+
+FOR EACH ($doc, $signals, $assessment) IN $findings:
+  IF $assessment = "warning" THEN:
+    - $doc: $signals
+
+#### Healthy
+
+Count of docs with no concerning signals

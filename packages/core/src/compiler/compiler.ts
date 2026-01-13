@@ -1,11 +1,18 @@
 /**
- * MDZ Compiler - v0.3 Validator-First Refactor
+ * MDZ Compiler - v0.8 Link-Based References
  * 
  * The compiler validates MDZ source and extracts metadata.
  * It does NOT transform source - the LLM sees MDZ as authored.
  * 
  * Key change from v0.2: Removed all expansion/transformation logic.
  * The compiler now validates, extracts dependency graphs, and checks contracts.
+ * 
+ * v0.8 changes:
+ * - Link-based references replace sigil-based syntax
+ * - LinkNode: ~/path/to/file or ~/path/to/file#anchor
+ * - AnchorNode: #section (same-file reference)
+ * - Dependencies inferred from links, not frontmatter uses:
+ * - Type inferred from folder: ~/agent/x → agent, ~/skill/x → skill, ~/tool/x → tool
  */
 
 import { parse } from '../parser/parser';
@@ -52,7 +59,10 @@ export interface CompileResult {
 export interface DocumentMetadata {
   name: string;
   description: string;
-  uses: string[];
+  skills: string[];     // v0.7: extracted from uses: with ~ sigil
+  agents: string[];     // v0.7: extracted from uses: with @ sigil
+  tools: string[];      // v0.7: extracted from uses: with ! sigil
+  uses: string[];       // v0.7: raw uses array (for backward compat)
   imports: ImportInfo[];
   types: TypeInfo[];
   variables: VariableInfo[];
@@ -81,11 +91,12 @@ export interface VariableInfo {
   span: AST.Span;
 }
 
+// v0.8: Reference info based on LinkNode and AnchorNode
 export interface ReferenceInfo {
-  kind: 'skill' | 'section';
-  target: string;
-  skill?: string;
-  section?: string;
+  kind: 'skill' | 'section' | 'agent' | 'tool' | 'anchor';
+  target: string;      // Full path for links, name for anchors
+  path?: string[];     // For links: the path segments
+  anchor?: string;     // For links with anchors or anchor references
   span: AST.Span;
 }
 
@@ -154,6 +165,8 @@ export class Compiler {
   private definedTypes: Set<string> = new Set();
   private definedVariables: Set<string> = new Set();
   private declaredDeps: Set<string> = new Set();
+  private declaredAgents: Set<string> = new Set();  // v0.7: Track declared agents from uses:
+  private declaredTools: Set<string> = new Set();   // v0.7: Track declared tools from uses:
 
   constructor(options: Partial<CompileOptions> = {}, registry?: SkillRegistry) {
     this.options = {
@@ -174,7 +187,10 @@ export class Compiler {
     return {
       name: '',
       description: '',
-      uses: [],
+      skills: [],
+      agents: [],
+      tools: [],
+      uses: [],  // v0.7: raw uses array for reference
       imports: [],
       types: [],
       variables: [],
@@ -193,6 +209,8 @@ export class Compiler {
     this.definedTypes.clear();
     this.definedVariables.clear();
     this.declaredDeps.clear();
+    this.declaredAgents.clear();
+    this.declaredTools.clear();
 
     // Parse source
     const ast = parse(source);
@@ -223,6 +241,9 @@ export class Compiler {
     if (this.options.validateContracts) {
       this.validateContracts(ast);
     }
+    
+    // v0.3: Validate DELEGATE statements
+    this.validateDelegateStatements(ast);
 
     // Output is the original source, unchanged
     // We only prepend a header if requested (for debugging)
@@ -250,11 +271,24 @@ export class Compiler {
     if (ast.frontmatter) {
       this.metadata.name = ast.frontmatter.name;
       this.metadata.description = ast.frontmatter.description;
+      this.metadata.skills = [...ast.frontmatter.skills];
+      this.metadata.agents = [...ast.frontmatter.agents];
+      this.metadata.tools = [...ast.frontmatter.tools];
       this.metadata.uses = [...ast.frontmatter.uses];
       
-      // Track declared dependencies
-      for (const use of ast.frontmatter.uses) {
-        this.declaredDeps.add(use);
+      // v0.7: Track declared dependencies (skills)
+      for (const skill of ast.frontmatter.skills) {
+        this.declaredDeps.add(skill);
+      }
+      
+      // v0.7: Track declared agents
+      for (const agent of ast.frontmatter.agents) {
+        this.declaredAgents.add(agent);
+      }
+
+      // v0.7: Track declared tools
+      for (const tool of ast.frontmatter.tools) {
+        this.declaredTools.add(tool);
       }
 
       // Extract imports
@@ -324,6 +358,9 @@ export class Compiler {
         break;
       case 'Delegation':
         this.extractFromDelegation(block);
+        break;
+      case 'DelegateStatement':
+        this.extractFromDelegateStatement(block);
         break;
     }
   }
@@ -408,10 +445,12 @@ export class Compiler {
 
   private extractFromParagraph(para: AST.Paragraph): void {
     for (const content of para.content) {
-      if (content.kind === 'SkillReference') {
-        this.extractSkillReference(content);
-      } else if (content.kind === 'SectionReference') {
-        this.extractSectionReference(content);
+      if (content.kind === 'Link') {
+        // v0.8: Link reference (~/path/to/file or ~/path/to/file#anchor)
+        this.extractLinkReference(content);
+      } else if (content.kind === 'Anchor') {
+        // v0.8: Anchor reference (#section)
+        this.extractAnchorReference(content);
       } else if (content.kind === 'SemanticMarker') {
         this.sourceMap.push({
           source: content.span,
@@ -431,15 +470,48 @@ export class Compiler {
   }
 
   private extractFromDelegation(deleg: AST.Delegation): void {
-    if (deleg.target.kind === 'SkillReference') {
-      this.extractSkillReference(deleg.target);
+    // v0.8: Delegation target is now LinkNode or AnchorNode
+    if (deleg.target.kind === 'Link') {
+      this.extractLinkReference(deleg.target);
     } else {
-      this.extractSectionReference(deleg.target);
+      this.extractAnchorReference(deleg.target);
     }
     
     for (const param of deleg.parameters) {
       this.extractVariableDeclaration(param);
     }
+  }
+
+  // v0.8: Extract metadata from DELEGATE statement
+  private extractFromDelegateStatement(deleg: AST.DelegateStatement): void {
+    // v0.8: Extract from target link (~/agent/x)
+    this.extractLinkReference(deleg.target);
+    
+    // Extract from task semantic marker
+    this.sourceMap.push({
+      source: deleg.task.span,
+      type: 'semantic',
+      name: deleg.task.content,
+    });
+    
+    // Extract from withAnchor if present
+    if (deleg.withAnchor) {
+      this.extractAnchorReference(deleg.withAnchor);
+    }
+    
+    // Extract from parameters if present
+    if (deleg.parameters) {
+      for (const param of deleg.parameters.parameters) {
+        this.extractVariableDeclaration(param);
+      }
+    }
+    
+    // Add source map entry
+    this.sourceMap.push({
+      source: deleg.span,
+      type: 'control-flow',
+      name: 'DelegateStatement',
+    });
   }
 
   private extractParameters(blocks: AST.Block[]): void {
@@ -467,11 +539,12 @@ export class Compiler {
 
   private extractFromExpression(expr: AST.Expression): void {
     switch (expr.kind) {
-      case 'SkillReference':
-        this.extractSkillReference(expr);
+      // v0.8: Link and Anchor references replace old sigil-based syntax
+      case 'Link':
+        this.extractLinkReference(expr);
         break;
-      case 'SectionReference':
-        this.extractSectionReference(expr);
+      case 'Anchor':
+        this.extractAnchorReference(expr);
         break;
       case 'SemanticMarker':
         this.sourceMap.push({
@@ -516,34 +589,39 @@ export class Compiler {
     }
   }
 
-  private extractSkillReference(ref: AST.SkillReference): void {
+  // v0.8: Extract link reference (~/path/to/file or ~/path/to/file#anchor)
+  private extractLinkReference(link: AST.LinkNode): void {
+    const kind = AST.getLinkKind(link);
+    const target = link.raw;
+    
     this.metadata.references.push({
-      kind: 'skill',
-      target: ref.skill,
-      skill: ref.skill,
-      span: ref.span,
+      kind: kind === 'unknown' ? 'skill' : kind,  // Default to skill for unknown
+      target,
+      path: link.path,
+      anchor: link.anchor || undefined,
+      span: link.span,
     });
 
     this.sourceMap.push({
-      source: ref.span,
+      source: link.span,
       type: 'reference',
-      name: ref.skill,
+      name: target,
     });
   }
 
-  private extractSectionReference(ref: AST.SectionReference): void {
+  // v0.8: Extract anchor reference (#section)
+  private extractAnchorReference(anchor: AST.AnchorNode): void {
     this.metadata.references.push({
-      kind: 'section',
-      target: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
-      skill: ref.skill || undefined,
-      section: ref.section,
-      span: ref.span,
+      kind: 'anchor',
+      target: `#${anchor.name}`,
+      anchor: anchor.name,
+      span: anchor.span,
     });
 
     this.sourceMap.push({
-      source: ref.span,
+      source: anchor.span,
       type: 'reference',
-      name: ref.skill ? `${ref.skill}#${ref.section}` : `#${ref.section}`,
+      name: `#${anchor.name}`,
     });
   }
 
@@ -555,22 +633,14 @@ export class Compiler {
     const nodes = new Set<string>();
     const edges: DependencyEdge[] = [];
 
-    // Add uses: dependencies
-    if (ast.frontmatter) {
-      for (const use of ast.frontmatter.uses) {
-        nodes.add(use);
-        edges.push({ target: use, type: 'uses' });
-      }
-    }
-
-    // Add reference dependencies
+    // v0.8: Dependencies are inferred from link references
+    // No longer using frontmatter uses:
     for (const ref of this.metadata.references) {
-      if (ref.kind === 'skill' && ref.skill) {
-        nodes.add(ref.skill);
-        edges.push({ target: ref.skill, type: 'reference', span: ref.span });
-      } else if (ref.kind === 'section' && ref.skill) {
-        nodes.add(ref.skill);
-        edges.push({ target: ref.skill, type: 'reference', span: ref.span });
+      // Only link-based references (not anchors) create dependencies
+      if (ref.path && ref.path.length > 0) {
+        const depPath = ref.path.join('/');
+        nodes.add(depPath);
+        edges.push({ target: depPath, type: 'reference', span: ref.span });
       }
     }
 
@@ -659,6 +729,23 @@ export class Compiler {
           // InferredVariable ($/name/) nodes are intentionally unresolved
           // They don't need scope validation - the LLM infers them at runtime
         }
+      } else if (block.kind === 'DelegateStatement') {
+        // v0.8: Check scope in DELEGATE statement
+        // Target is a LinkNode, task is a SemanticMarker - both can have variable interpolations
+        if (block.task) {
+          for (const interpolation of block.task.interpolations) {
+            if (!this.definedVariables.has(interpolation.name)) {
+              usedBeforeDefined.add(interpolation.name);
+            }
+          }
+        }
+        if (block.parameters) {
+          for (const param of block.parameters.parameters) {
+            if (param.value) {
+              this.checkExpressionScope(param.value, usedBeforeDefined);
+            }
+          }
+        }
       }
     }
   }
@@ -694,59 +781,102 @@ export class Compiler {
   }
 
   private validateReferences(): void {
-    // Check that skill references are declared in uses:
+    // v0.8: Validate link references - check that files exist
+    // This is done via registry if available
+    
+    // Validate anchor references (same-file section refs)
     for (const ref of this.metadata.references) {
-      if (ref.kind === 'skill' && ref.skill) {
-        if (!this.declaredDeps.has(ref.skill)) {
-          this.diagnostics.push({
-            severity: 'warning',
-            code: 'W001',
-            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-            span: ref.span,
-          });
-        }
-      } else if (ref.kind === 'section' && ref.skill) {
-        if (!this.declaredDeps.has(ref.skill)) {
-          this.diagnostics.push({
-            severity: 'warning',
-            code: 'W001',
-            message: `Skill '${ref.skill}' is referenced but not declared in 'uses:'`,
-            span: ref.span,
-          });
-        }
-      }
-    }
-
-    // Check that local section references resolve
-    for (const ref of this.metadata.references) {
-      if (ref.kind === 'section' && !ref.skill && ref.section) {
-        const sectionExists = this.metadata.sections.some(s => s.anchor === ref.section);
+      if (ref.kind === 'anchor' && ref.anchor) {
+        const sectionExists = this.metadata.sections.some(s => s.anchor === ref.anchor);
         if (!sectionExists) {
           this.diagnostics.push({
             severity: 'error',
             code: 'E010',
-            message: `Section '#${ref.section}' does not exist in this document`,
+            message: `Section '#${ref.anchor}' does not exist in this document`,
             span: ref.span,
           });
         }
       }
     }
 
-    // If registry available, check that referenced skills exist
+    // If registry available, check that referenced files exist
     if (this.registry) {
       for (const ref of this.metadata.references) {
-        if (ref.kind === 'skill' && ref.skill) {
-          const skill = this.registry.get(ref.skill);
+        // Only validate link references (those with paths)
+        if (ref.path && ref.path.length > 0) {
+          const depPath = ref.path.join('/');
+          const skill = this.registry.get(depPath);
           if (!skill) {
             this.diagnostics.push({
               severity: 'error',
               code: 'E009',
-              message: `Skill '${ref.skill}' is not found in registry`,
+              message: `File '${ref.target}' is not found in registry`,
               span: ref.span,
             });
+          } else if (ref.anchor) {
+            // Check that anchor exists in target file
+            const targetSection = skill.ast.sections.find(s => s.anchor === ref.anchor);
+            if (!targetSection) {
+              this.diagnostics.push({
+                severity: 'error',
+                code: 'E010',
+                message: `Section '#${ref.anchor}' does not exist in '${ref.target}'`,
+                span: ref.span,
+              });
+            }
           }
         }
       }
+    }
+  }
+
+  // v0.3: Validate DELEGATE statements
+  private validateDelegateStatements(ast: AST.Document): void {
+    const delegateStatements: AST.DelegateStatement[] = [];
+    this.findDelegateStatements(ast.sections, delegateStatements);
+    
+    for (const deleg of delegateStatements) {
+      this.validateDelegateAgent(deleg);
+    }
+  }
+  
+  private findDelegateStatements(sections: AST.Section[], statements: AST.DelegateStatement[]): void {
+    for (const section of sections) {
+      this.findDelegateStatementsInBlocks(section.content, statements);
+    }
+  }
+  
+  private findDelegateStatementsInBlocks(blocks: AST.Block[], statements: AST.DelegateStatement[]): void {
+    for (const block of blocks) {
+      if (block.kind === 'DelegateStatement') {
+        statements.push(block);
+      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+        this.findDelegateStatementsInBlocks(block.body, statements);
+      } else if (block.kind === 'WhileStatement') {
+        this.findDelegateStatementsInBlocks(block.body, statements);
+      } else if (block.kind === 'IfStatement') {
+        this.findDelegateStatementsInBlocks(block.thenBody, statements);
+        for (const elseIf of block.elseIf) {
+          this.findDelegateStatementsInBlocks(elseIf.body, statements);
+        }
+        if (block.elseBody) {
+          this.findDelegateStatementsInBlocks(block.elseBody, statements);
+        }
+      }
+    }
+  }
+  
+  private validateDelegateAgent(deleg: AST.DelegateStatement): void {
+    // v0.8: Validate that DELEGATE target is an agent (based on path)
+    const linkKind = AST.getLinkKind(deleg.target);
+    
+    if (linkKind !== 'agent') {
+      this.diagnostics.push({
+        severity: 'warning',
+        code: 'W003',
+        message: `DELEGATE target '${deleg.target.raw}' should be an agent (~/agent/...)`,
+        span: deleg.target.span,
+      });
     }
   }
 
@@ -756,9 +886,11 @@ export class Compiler {
     this.findDelegations(ast.sections, delegations);
 
     for (const deleg of delegations) {
-      if (deleg.target.kind === 'SkillReference' && deleg.target.skill) {
+      // v0.8: Delegation target is LinkNode or AnchorNode
+      if (deleg.target.kind === 'Link') {
         this.validateDelegationParameters(deleg);
       }
+      // Anchor delegations are same-file, no parameter validation needed
     }
   }
 
@@ -786,15 +918,21 @@ export class Compiler {
   }
 
   private validateDelegationParameters(deleg: AST.Delegation): void {
-    const skillName = deleg.target.skill!;
+    // v0.8: Only Link targets have external parameters to validate
+    if (deleg.target.kind !== 'Link') {
+      // Anchor delegations are same-file, no external parameter validation
+      return;
+    }
+    
+    const targetPath = deleg.target.path.join('/');
     let skillParams: VariableInfo[] = [];
 
     // If it's the current document's skill, use this.metadata.parameters
-    if (skillName === this.metadata.name) {
+    if (targetPath === this.metadata.name) {
       skillParams = this.metadata.parameters;
     } else if (this.registry) {
       // Get from registry
-      const skill = this.registry.get(skillName);
+      const skill = this.registry.get(targetPath);
       if (skill) {
         const skillCompileResult = compile(skill.source, { validateReferences: false, validateContracts: false });
         skillParams = skillCompileResult.metadata.parameters;
@@ -811,7 +949,7 @@ export class Compiler {
         this.diagnostics.push({
           severity: 'error',
           code: 'E011',
-          message: `Required parameter '${req.name}' is missing for skill '${skillName}'`,
+          message: `Required parameter '${req.name}' is missing for '${targetPath}'`,
           span: deleg.span,
         });
       }
@@ -825,7 +963,7 @@ export class Compiler {
           this.diagnostics.push({
             severity: 'warning',
             code: 'W002',
-            message: `Parameter '${param.name}' is not defined for skill '${skillName}'`,
+            message: `Parameter '${param.name}' is not defined for '${targetPath}'`,
             span: param.span,
           });
         }

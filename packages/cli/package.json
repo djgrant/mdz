@@ -1,6 +1,6 @@
 {
   "name": "@zenmarkdown/cli",
-  "version": "0.3.0",
+  "version": "0.7.0",
   "description": "MDZ command-line interface",
   "bin": {
     "mdz": "dist/index.js"

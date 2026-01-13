@@ -1,12 +1,12 @@
 /**
- * MDZ Language Server
+ * MDZ Language Server v0.8
  * 
  * A minimal LSP implementation for MDZ files.
  * Supports:
- * - Go-to-definition for [[references]] and $variables
- * - Hover information for types
- * - Autocomplete after [[, $, and /
- * - Diagnostics for undefined references
+ * - Go-to-definition for ~/path/to/file, #anchor, $variables
+ * - Hover information for links, anchors, and types
+ * - Autocomplete after ~/, #, $, and /
+ * - Diagnostics for broken links
  * - Document symbols
  */
 
@@ -143,9 +143,12 @@ export interface VariableInfo {
   isLambda: boolean;
 }
 
+// v0.8: Link-based reference info
 export interface ReferenceInfo {
-  skill: string | null;
-  section: string | null;
+  kind: 'link' | 'anchor';
+  path?: string[];        // For links: ['agent', 'architect']
+  anchor?: string;        // For anchors or link#anchor
+  target: string;         // Display string: '~/agent/architect' or '#section'
   span: AST.Span;
 }
 
@@ -244,7 +247,11 @@ export class ZenLanguageServer {
         case 'VariableDeclaration':
           variables.set(block.name, {
             name: block.name,
-            typeName: block.typeAnnotation?.name,
+            typeName: block.typeAnnotation?.kind === 'TypeReference' 
+              ? block.typeAnnotation.name 
+              : block.typeAnnotation?.kind === 'SemanticType'
+                ? block.typeAnnotation.description
+                : undefined,
             span: block.span,
             isLambda: block.isLambda,
           });
@@ -288,10 +295,23 @@ export class ZenLanguageServer {
 
         case 'Paragraph':
           for (const item of block.content) {
-            if (item.kind === 'SkillReference') {
-              references.push({ skill: item.skill, section: null, span: item.span });
-            } else if (item.kind === 'SectionReference') {
-              references.push({ skill: item.skill, section: item.section, span: item.span });
+            if (AST.isLink(item)) {
+              // v0.8: Link reference ~/path/to/file or ~/path/to/file#anchor
+              references.push({
+                kind: 'link',
+                path: item.path,
+                anchor: item.anchor ?? undefined,
+                target: item.raw,
+                span: item.span,
+              });
+            } else if (AST.isAnchor(item)) {
+              // v0.8: Anchor reference #section
+              references.push({
+                kind: 'anchor',
+                anchor: item.name,
+                target: `#${item.name}`,
+                span: item.span,
+              });
             } else if (item.kind === 'SemanticMarker') {
               semanticMarkers.push({ content: item.content, span: item.span });
             }
@@ -306,13 +326,30 @@ export class ZenLanguageServer {
     references: ReferenceInfo[],
     semanticMarkers: SemanticMarkerInfo[]
   ): void {
+    if (AST.isLink(expr)) {
+      // v0.8: Link reference ~/path/to/file or ~/path/to/file#anchor
+      references.push({
+        kind: 'link',
+        path: expr.path,
+        anchor: expr.anchor ?? undefined,
+        target: expr.raw,
+        span: expr.span,
+      });
+      return;
+    }
+    
+    if (AST.isAnchor(expr)) {
+      // v0.8: Anchor reference #section
+      references.push({
+        kind: 'anchor',
+        anchor: expr.name,
+        target: `#${expr.name}`,
+        span: expr.span,
+      });
+      return;
+    }
+    
     switch (expr.kind) {
-      case 'SkillReference':
-        references.push({ skill: expr.skill, section: null, span: expr.span });
-        break;
-      case 'SectionReference':
-        references.push({ skill: expr.skill, section: expr.section, span: expr.span });
-        break;
       case 'SemanticMarker':
         semanticMarkers.push({ content: expr.content, span: expr.span });
         break;
@@ -397,19 +434,43 @@ export class ZenLanguageServer {
       });
     }
 
-    // Undefined variable references
-    // (simplified - would need full scope analysis for accuracy)
-
-    // Undefined skill references
+    // v0.8: Check link references
     for (const ref of state.references) {
-      if (ref.skill && !this.skillRegistry.has(ref.skill)) {
-        // Only warn, don't error - skill might be external
-        diagnostics.push({
-          range: this.spanToRange(ref.span),
-          severity: DiagnosticSeverity.Information,
-          message: `Skill '${ref.skill}' not found in workspace`,
-          source: 'zen',
-        });
+      if (ref.kind === 'link' && ref.path) {
+        const linkPath = ref.path.join('/');
+        const targetState = this.skillRegistry.get(linkPath);
+        
+        if (!targetState) {
+          // Only warn, don't error - file might be external
+          diagnostics.push({
+            range: this.spanToRange(ref.span),
+            severity: DiagnosticSeverity.Information,
+            message: `File not found in workspace: ~/${linkPath}`,
+            source: 'zen',
+          });
+        } else if (ref.anchor) {
+          // Check if anchor exists in target file
+          const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
+          if (!section) {
+            diagnostics.push({
+              range: this.spanToRange(ref.span),
+              severity: DiagnosticSeverity.Warning,
+              message: `Section "${ref.anchor}" not found in ~/${linkPath}`,
+              source: 'zen',
+            });
+          }
+        }
+      } else if (ref.kind === 'anchor' && ref.anchor) {
+        // Check same-file anchor
+        const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
+        if (!section) {
+          diagnostics.push({
+            range: this.spanToRange(ref.span),
+            severity: DiagnosticSeverity.Warning,
+            message: `Section "${ref.anchor}" not found in current file`,
+            source: 'zen',
+          });
+        }
       }
     }
 
@@ -444,14 +505,18 @@ export class ZenLanguageServer {
       }
     }
 
-    // Check if position is on a skill reference
+    // v0.8: Check if position is on a link or anchor reference
     for (const ref of state.references) {
-      if (this.positionInSpan(position, ref.span) && ref.skill) {
-        const targetState = this.skillRegistry.get(ref.skill);
+      if (!this.positionInSpan(position, ref.span)) continue;
+      
+      if (ref.kind === 'link' && ref.path) {
+        const linkPath = ref.path.join('/');
+        const targetState = this.skillRegistry.get(linkPath);
+        
         if (targetState) {
-          // If section specified, find that section
-          if (ref.section) {
-            const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.section);
+          // If anchor specified, find that section
+          if (ref.anchor) {
+            const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
             if (section) {
               return {
                 uri: targetState.uri,
@@ -463,6 +528,15 @@ export class ZenLanguageServer {
           return {
             uri: targetState.uri,
             range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+          };
+        }
+      } else if (ref.kind === 'anchor' && ref.anchor) {
+        // Same-file anchor reference
+        const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
+        if (section) {
+          return {
+            uri,
+            range: this.spanToRange(section.span),
           };
         }
       }
@@ -510,19 +584,39 @@ export class ZenLanguageServer {
       }
     }
 
-    // Check skill references
+    // v0.8: Check link and anchor references
     for (const ref of state.references) {
       if (this.positionInSpan(position, ref.span)) {
-        const refStr = ref.skill 
-          ? (ref.section ? `${ref.skill}#${ref.section}` : ref.skill)
-          : `#${ref.section}`;
-        let contents = `**Skill Reference** [[${refStr}]]`;
+        let contents: string;
         
-        if (ref.skill) {
-          const targetState = this.skillRegistry.get(ref.skill);
-          if (targetState?.ast.frontmatter) {
-            contents += `\n\n${targetState.ast.frontmatter.description}`;
+        if (ref.kind === 'link' && ref.path) {
+          const linkPath = ref.path.join('/');
+          const linkKind = this.inferLinkKind(ref.path);
+          const targetState = this.skillRegistry.get(linkPath);
+          
+          if (!targetState) {
+            contents = `**${linkKind}:** ${ref.target}\n\n*Not found in workspace*`;
+          } else {
+            contents = `**${linkKind}:** ${ref.target}`;
+            if (targetState.ast.frontmatter?.description) {
+              contents += `\n\n${targetState.ast.frontmatter.description}`;
+            }
+            const sections = targetState.ast.sections
+              .filter((s: AST.Section) => s.anchor)
+              .map((s: AST.Section) => s.anchor);
+            if (sections.length > 0) {
+              contents += `\n\nSections: ${sections.join(', ')}`;
+            }
           }
+        } else if (ref.kind === 'anchor') {
+          // Anchor reference: #section
+          const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
+          contents = `**Anchor** ${ref.target}`;
+          if (section?.title) {
+            contents += `\n\nSection: ${section.title}`;
+          }
+        } else {
+          continue;
         }
         
         return {
@@ -546,16 +640,37 @@ export class ZenLanguageServer {
     const lineContent = state.content.split('\n')[position.line] || '';
     const beforeCursor = lineContent.substring(0, position.character);
 
-    // After [[
-    if (beforeCursor.endsWith('[[')) {
-      return this.getSkillCompletions();
+    // v0.8: After ~/ - trigger link path completion
+    if (beforeCursor.endsWith('~/')) {
+      return this.getPathCompletions('');
     }
 
-    // After [[ with partial text
-    const skillMatch = beforeCursor.match(/\[\[([a-z0-9-]*)$/);
-    if (skillMatch) {
-      const prefix = skillMatch[1];
-      return this.getSkillCompletions().filter(c => 
+    // v0.8: After ~/ with partial path
+    const linkMatch = beforeCursor.match(/~\/([a-z0-9\/-]*)$/);
+    if (linkMatch) {
+      const partial = linkMatch[1];
+      
+      // Check if we're completing an anchor after a link path
+      const anchorInLink = partial.match(/^([^#]+)#([a-z0-9-]*)$/);
+      if (anchorInLink) {
+        const [, linkPath, anchorPrefix] = anchorInLink;
+        return this.getCrossFileAnchorCompletions(linkPath, anchorPrefix);
+      }
+      
+      return this.getPathCompletions(partial);
+    }
+
+    // v0.8: After # - trigger same-file anchor completion
+    // But only if not after ~/ (handled above)
+    if (beforeCursor.endsWith('#') && !beforeCursor.match(/~\/[^#]*#$/)) {
+      return this.getAnchorCompletions(state);
+    }
+
+    // v0.8: After # with partial text (same-file anchor)
+    const anchorMatch = beforeCursor.match(/(?<!~\/[^#]*)#([a-z0-9-]+)$/);
+    if (anchorMatch) {
+      const prefix = anchorMatch[1];
+      return this.getAnchorCompletions(state).filter(c =>
         c.label.toLowerCase().startsWith(prefix.toLowerCase())
       );
     }
@@ -594,16 +709,58 @@ export class ZenLanguageServer {
     return [];
   }
 
-  private getSkillCompletions(): CompletionItem[] {
+  // v0.8: Path completion for ~/path/to/file
+  private getPathCompletions(partial: string): CompletionItem[] {
     const items: CompletionItem[] = [];
     
-    for (const [name, state] of this.skillRegistry) {
-      items.push({
-        label: name,
-        kind: CompletionItemKind.Module,
-        detail: state.ast.frontmatter?.description,
-        insertText: name + ']]',
-      });
+    for (const [key, docState] of this.skillRegistry) {
+      if (key.startsWith(partial)) {
+        const kind = this.inferLinkKind(key.split('/'));
+        items.push({
+          label: '~/' + key,
+          kind: CompletionItemKind.File,
+          detail: kind,
+          insertText: key.substring(partial.length),
+        });
+      }
+    }
+
+    return items;
+  }
+
+  // v0.8: Anchor completion for cross-file references (~/path#anchor)
+  private getCrossFileAnchorCompletions(linkPath: string, prefix: string): CompletionItem[] {
+    const targetState = this.skillRegistry.get(linkPath);
+    if (!targetState) return [];
+    
+    const items: CompletionItem[] = [];
+    for (const section of targetState.ast.sections) {
+      if (section.anchor && section.anchor.startsWith(prefix)) {
+        items.push({
+          label: '#' + section.anchor,
+          kind: CompletionItemKind.Reference,
+          detail: section.title || 'Section',
+          insertText: section.anchor.substring(prefix.length),
+        });
+      }
+    }
+    
+    return items;
+  }
+
+  // v0.8: Anchor completion for same-file references (#anchor)
+  private getAnchorCompletions(state: DocumentState): CompletionItem[] {
+    const items: CompletionItem[] = [];
+    
+    for (const section of state.ast.sections) {
+      if (section.anchor) {
+        items.push({
+          label: '#' + section.anchor,
+          kind: CompletionItemKind.Reference,
+          detail: section.title || 'Section',
+          insertText: section.anchor,
+        });
+      }
     }
 
     return items;
@@ -664,6 +821,18 @@ export class ZenLanguageServer {
       { label: 'IF', kind: CompletionItemKind.Keyword, insertText: 'IF $condition THEN:\n  - ' },
       { label: 'ELSE', kind: CompletionItemKind.Keyword, insertText: 'ELSE:\n  - ' },
     ];
+  }
+
+  // ==========================================================================
+  // Link Helpers
+  // ==========================================================================
+
+  private inferLinkKind(path: string[]): string {
+    const folder = path[0];
+    if (folder === 'agent' || folder === 'agents') return 'agent';
+    if (folder === 'skill' || folder === 'skills') return 'skill';
+    if (folder === 'tool' || folder === 'tools') return 'tool';
+    return 'link';
   }
 
   // ==========================================================================

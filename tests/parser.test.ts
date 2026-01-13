@@ -220,33 +220,37 @@ description: test
 });
 
 // ============================================================================
-// Reference Tests
+// Reference Tests (v0.8: Link-Based References)
 // ============================================================================
 
-describe('References', () => {
-  test('parses skill reference', () => {
+describe('References (v0.8 Link-Based)', () => {
+  // v0.8: Skill references use ~/skill/name syntax
+  test('parses skill reference as LinkNode', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Execute [[orchestrate-map-reduce]]
+Execute ~/skill/orchestrate-map-reduce
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].target.kind, 'SkillReference');
-    assertEqual((delegs[0].target as AST.SkillReference).skill, 'orchestrate-map-reduce');
+    assertEqual(delegs[0].target.kind, 'Link');
+    const link = delegs[0].target as AST.LinkNode;
+    assertEqual(link.path, ['skill', 'orchestrate-map-reduce']);
+    assertEqual(AST.getLinkKind(link), 'skill');
   });
 
+  // v0.8: Delegation with skill reference and WITH parameters
   test('parses delegation with WITH parameters', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Execute [[process-data]] WITH:
+Execute ~/skill/process-data WITH:
 - $input: $String
 - $format = "json"
 `);
@@ -264,42 +268,115 @@ Execute [[process-data]] WITH:
     assertEqual((delegs[0].parameters[1].value as AST.StringLiteral).value, 'json');
   });
 
-  test('parses section reference in current doc', () => {
+  // v0.8: Local section references use #section syntax (AnchorNode)
+  test('parses local section reference as AnchorNode', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-See [[#my-section]]
+See #my-section
 `);
     const paras = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
     );
     const refs = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SectionReference => c.kind === 'SectionReference')
+      p.content.filter((c): c is AST.AnchorNode => c.kind === 'Anchor')
     );
     assertEqual(refs.length, 1);
-    assertEqual(refs[0].section, 'my-section');
-    assertEqual(refs[0].skill, null);
+    assertEqual(refs[0].name, 'my-section');
   });
 
-  test('parses section reference in other skill', () => {
+  // v0.8: Cross-skill section references use ~/skill/name#section syntax
+  test('parses cross-skill section reference as LinkNode with anchor', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-See [[other-skill#section]]
+See ~/skill/other-skill#section
 `);
     const paras = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
     );
     const refs = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SectionReference => c.kind === 'SectionReference')
+      p.content.filter((c): c is AST.LinkNode => c.kind === 'Link')
     );
     assertEqual(refs.length, 1);
-    assertEqual(refs[0].skill, 'other-skill');
-    assertEqual(refs[0].section, 'section');
+    assertEqual(refs[0].path, ['skill', 'other-skill']);
+    assertEqual(refs[0].anchor, 'section');
+  });
+
+  // v0.8: Agent references use ~/agent/name syntax
+  // Note: In paragraph context (not starting with delegation verb), ~/agent/x should parse as LinkNode
+  test('parses agent reference as LinkNode in paragraph', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+The ~/agent/explorer handles this task
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const refs = paras.flatMap(p => 
+      p.content.filter((c): c is AST.LinkNode => c.kind === 'Link')
+    );
+    assertEqual(refs.length, 1);
+    assertEqual(refs[0].path, ['agent', 'explorer']);
+    assertEqual(AST.getLinkKind(refs[0]), 'agent');
+  });
+
+  // v0.8: Tool references use ~/tool/name syntax
+  test('parses tool reference as LinkNode in paragraph', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+The ~/tool/browser helps verify
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    const refs = paras.flatMap(p => 
+      p.content.filter((c): c is AST.LinkNode => c.kind === 'Link')
+    );
+    assertEqual(refs.length, 1);
+    assertEqual(refs[0].path, ['tool', 'browser']);
+    assertEqual(AST.getLinkKind(refs[0]), 'tool');
+  });
+
+  // v0.8: All reference types in one document using link syntax
+  test('parses all v0.8 link reference types in paragraph', () => {
+    const doc = parse(`---
+name: test
+description: test
+---
+
+The ~/agent/explorer and ~/tool/browser work with ~/skill/validator at #methodology
+`);
+    const paras = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    );
+    
+    const links = paras.flatMap(p => 
+      p.content.filter((c): c is AST.LinkNode => c.kind === 'Link')
+    );
+    const anchors = paras.flatMap(p => 
+      p.content.filter((c): c is AST.AnchorNode => c.kind === 'Anchor')
+    );
+    
+    assertEqual(links.length, 3);
+    assertEqual(AST.getLinkKind(links[0]), 'agent');
+    assertEqual(links[0].path, ['agent', 'explorer']);
+    assertEqual(AST.getLinkKind(links[1]), 'tool');
+    assertEqual(links[1].path, ['tool', 'browser']);
+    assertEqual(AST.getLinkKind(links[2]), 'skill');
+    assertEqual(links[2].path, ['skill', 'validator']);
+    assertEqual(anchors.length, 1);
+    assertEqual(anchors[0].name, 'methodology');
   });
 });
 
@@ -762,14 +839,15 @@ FOR EACH $a IN $as:
 // Delegation and WITH Clause Tests
 // ============================================================================
 
-describe('Delegation WITH Clause', () => {
+// v0.8: Updated Delegation tests with link-based syntax ~/path/to/file
+describe('Delegation WITH Clause (v0.8 Link-Based)', () => {
   test('parses delegation without WITH clause', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Execute [[other-skill]]
+Execute ~/skill/other-skill
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -777,7 +855,8 @@ Execute [[other-skill]]
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].verb, 'Execute');
     assertEqual(delegs[0].parameters.length, 0);
-    assertEqual(delegs[0].target.kind, 'SkillReference');
+    assertEqual(delegs[0].target.kind, 'Link');
+    assertEqual(AST.getLinkKind(delegs[0].target as AST.LinkNode), 'skill');
   });
 
   test('parses Call verb', () => {
@@ -786,7 +865,7 @@ name: test
 description: test
 ---
 
-Call [[helper]]
+Call ~/skill/helper
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -795,13 +874,13 @@ Call [[helper]]
     assertEqual(delegs[0].verb, 'Call');
   });
 
-  test('parses Delegate verb', () => {
+  test('parses Delegate verb with skill', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Delegate [[sub-task]]
+Delegate ~/skill/sub-task
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -816,7 +895,7 @@ name: test
 description: test
 ---
 
-Use [[utility-skill]]
+Use ~/skill/utility-skill
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -831,7 +910,7 @@ name: test
 description: test
 ---
 
-Execute [[process]] WITH:
+Execute ~/skill/process WITH:
 - $task: $Task
 `);
     const delegs = doc.sections.flatMap(s =>
@@ -852,7 +931,7 @@ name: test
 description: test
 ---
 
-Execute [[process]] WITH:
+Execute ~/skill/process WITH:
 - $mode = "fast"
 `);
     const delegs = doc.sections.flatMap(s =>
@@ -871,7 +950,7 @@ name: test
 description: test
 ---
 
-Execute [[process]] WITH:
+Execute ~/skill/process WITH:
 - $count: $Number = 10
 `);
     const delegs = doc.sections.flatMap(s =>
@@ -891,7 +970,7 @@ name: test
 description: test
 ---
 
-Execute [[orchestrate]] WITH:
+Execute ~/skill/orchestrate WITH:
 - $plan = $plan
 - $mode = $mode
 - $results = $results
@@ -906,21 +985,21 @@ Execute [[orchestrate]] WITH:
     assertEqual(delegs[0].parameters[2].name, 'results');
   });
 
-  test('parses delegation to section reference', () => {
+  test('parses delegation to section reference (AnchorNode)', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Execute [[#iteration-manager]] WITH:
+Execute #iteration-manager WITH:
 - $iteration = 1
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].target.kind, 'SectionReference');
-    assertEqual((delegs[0].target as AST.SectionReference).section, 'iteration-manager');
+    assertEqual(delegs[0].target.kind, 'Anchor');
+    assertEqual((delegs[0].target as AST.AnchorNode).name, 'iteration-manager');
   });
 
   test('parses WITH clause with variable reference value', () => {
@@ -929,7 +1008,7 @@ name: test
 description: test
 ---
 
-Execute [[process]] WITH:
+Execute ~/skill/process WITH:
 - $input = $data
 `);
     const delegs = doc.sections.flatMap(s =>
@@ -946,7 +1025,7 @@ name: test
 description: test
 ---
 
-Execute [[process]] WITH:
+Execute ~/skill/process WITH:
 - $items = ["a", "b", "c"]
 `);
     const delegs = doc.sections.flatMap(s =>
@@ -963,7 +1042,7 @@ description: test
 ---
 
 FOR EACH $task IN $tasks:
-  Execute [[sub-processor]] WITH:
+  Execute ~/skill/sub-processor WITH:
   - $current = $task
 `);
     const forEachs = doc.sections.flatMap(s =>

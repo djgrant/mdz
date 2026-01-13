@@ -1,0 +1,124 @@
+---
+name: parallel-delegation
+description: When you need to fan out work to multiple agents simultaneously, use this skill for parallel delegation patterns.
+---
+
+## Types
+
+$AgentRole: "analyst" | "researcher" | "validator"
+$Finding: a discrete insight or recommendation from an agent
+$Perspective: a viewpoint shaped by an agent's role and expertise
+
+## Input
+
+- $objective: $String          <!-- the goal to achieve -->
+- $agents: $AgentRole[] = ["analyst", "researcher", "validator"]
+
+## Context
+
+- $findings: $Finding[] = []
+- $perspectives: $Perspective[] = []
+
+## Workflow
+
+### 1. Setup
+
+Create work package using ~/skill/work-packages to track parallel delegations.
+
+### 2. Fan-Out Phase
+
+PARALLEL FOR EACH $agent IN $agents:
+  - DELEGATE /analyze objective from agent perspective/ TO ~/agent/$agent:
+    - $task = /analyze $objective from $agent perspective/
+    - $constraints = /focus on $agent domain expertise/
+  - Collect result into $perspectives
+
+### 3. Cross-Pollination
+
+After all parallel work completes:
+
+FOR EACH $perspective IN $perspectives:
+  - DELEGATE /review other perspectives and identify synergies/ TO ~/agent/analyst:
+    - $task = /review other perspectives and identify synergies/
+    - $context = $perspectives
+
+### 4. Validation Round
+
+PARALLEL FOR EACH $finding IN $findings:
+  - DELEGATE /validate this finding for accuracy and completeness/ TO ~/agent/validator
+
+### 5. Consolidate
+
+Merge validated $findings into final report.
+
+## Patterns
+
+### Simple Fan-Out
+
+When you need the same task executed by multiple agents:
+
+```
+PARALLEL FOR EACH $agent IN ["a", "b", "c"]:
+  - DELEGATE /the task/ TO ~/agent/$agent
+```
+
+### Fan-Out with Context
+
+When each agent needs shared context:
+
+```
+PARALLEL FOR EACH $agent IN $agents:
+  - DELEGATE /specific task/ TO ~/agent/$agent:
+    - $task = /specific task/
+    - $shared = $contextData
+```
+
+### Sequential Then Parallel
+
+When initial work informs parallel execution:
+
+```
+DELEGATE /initial analysis/ TO ~/agent/analyst
+
+PARALLEL FOR EACH $area IN $analysisResults.areas:
+  - DELEGATE /deep dive on $area/ TO ~/agent/researcher
+```
+
+### Parallel with Validation
+
+When parallel results need cross-checking:
+
+```
+PARALLEL FOR EACH $agent IN $agents:
+  - DELEGATE /generate proposal/ TO ~/agent/$agent
+  - Collect into $proposals
+
+FOR EACH $proposal IN $proposals:
+  - DELEGATE /validate $proposal/ TO ~/agent/validator
+```
+
+## Anti-Patterns
+
+### Avoid: Sequential When Parallel Would Work
+
+```
+# Slow - each waits for the previous
+FOR EACH $agent IN $agents:
+  - DELEGATE /independent task/ TO ~/agent/$agent
+
+# Better - all run concurrently
+PARALLEL FOR EACH $agent IN $agents:
+  - DELEGATE /independent task/ TO ~/agent/$agent
+```
+
+### Avoid: Parallel When Order Matters
+
+```
+# Wrong - results may arrive out of order
+PARALLEL FOR EACH $step IN $orderedSteps:
+  - DELEGATE /execute $step/ TO ~/agent/$agent
+
+# Correct - preserves sequence
+FOR EACH $step IN $orderedSteps:
+  - DELEGATE /execute $step/ TO ~/agent/$agent
+```

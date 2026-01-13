@@ -65,7 +65,7 @@ description: A test
 
 ## Section
 
-Some content with $variable and [[skill]] and /semantic marker/.
+Some content with $variable and ~/skill/my-skill and /semantic marker/.
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Output should equal source exactly');
@@ -102,17 +102,17 @@ Write to /appropriate location/
       'Semantic markers should NOT be transformed');
   });
 
-  test('[[reference]] stays as [[reference]]', () => {
+  test('~/link/ref stays as ~/link/ref (v0.8)', () => {
     const source = `---
 name: test
 description: test
 ---
 
-Execute [[other-skill]]
+Execute ~/skill/other-skill
 `;
     const result = compile(source, { includeHeader: false });
-    assertIncludes(result.output, '[[other-skill]]');
-    assert(!result.output.includes('[other-skill]') || result.output.includes('[[other-skill]]'),
+    assertIncludes(result.output, '~/skill/other-skill');
+    assert(!result.output.includes('(other-skill)'),
       'References should NOT be transformed');
   });
 });
@@ -167,24 +167,27 @@ description: test
     assertEqual(result.metadata.variables[1].type, 'FilePath');
   });
 
-  test('extracts skill references', () => {
+  test('extracts skill references (v0.8 link syntax)', () => {
     const result = compile(`---
 name: test
 description: test
 uses:
-  - orchestrate
+  - ~orchestrate
 ---
 
-Execute [[orchestrate]]
-See [[helper]]
+Execute ~/skill/orchestrate
+See ~/skill/helper
 `);
     const skillRefs = result.metadata.references.filter(r => r.kind === 'skill');
     assertEqual(skillRefs.length, 2);
-    assertEqual(skillRefs[0].target, 'orchestrate');
-    assertEqual(skillRefs[1].target, 'helper');
+    // v0.8: target is the full raw link path
+    assertEqual(skillRefs[0].target, '~/skill/orchestrate');
+    assertEqual(skillRefs[0].path?.join('/'), 'skill/orchestrate');
+    assertEqual(skillRefs[1].target, '~/skill/helper');
+    assertEqual(skillRefs[1].path?.join('/'), 'skill/helper');
   });
 
-  test('extracts section references', () => {
+  test('extracts section references (v0.8 anchor/link syntax)', () => {
     const result = compile(`---
 name: test
 description: test
@@ -192,13 +195,19 @@ description: test
 
 ## My Section
 
-See [[#my-section]]
-See [[other-skill#other-section]]
+See #my-section
+See ~/skill/other-skill#other-section
 `);
-    const sectionRefs = result.metadata.references.filter(r => r.kind === 'section');
-    assertEqual(sectionRefs.length, 2);
-    assertEqual(sectionRefs[0].section, 'my-section');
-    assertEqual(sectionRefs[1].skill, 'other-skill');
+    // v0.8: Local section refs are 'anchor' kind
+    const anchorRefs = result.metadata.references.filter(r => r.kind === 'anchor');
+    assertEqual(anchorRefs.length, 1);
+    assertEqual(anchorRefs[0].anchor, 'my-section');
+    
+    // v0.8: Cross-file refs with anchors are 'skill' kind (the link determines the kind, anchor is just a property)
+    const skillRefsWithAnchor = result.metadata.references.filter(r => r.kind === 'skill' && r.anchor);
+    assertEqual(skillRefsWithAnchor.length, 1);
+    assertEqual(skillRefsWithAnchor[0].path?.join('/'), 'skill/other-skill');
+    assertEqual(skillRefsWithAnchor[0].anchor, 'other-section');
   });
 
   test('extracts sections with anchors', () => {
@@ -224,50 +233,49 @@ description: test
 // Dependency Graph
 // ============================================================================
 
-describe('Dependency Graph', () => {
-  test('builds graph from uses:', () => {
+describe('Dependency Graph (v0.8)', () => {
+  // v0.8: Dependencies are inferred from link references, not frontmatter uses:
+  test('builds graph from inline link references', () => {
     const result = compile(`---
 name: test
 description: test
-uses:
-  - skill-a
-  - skill-b
 ---
+
+Execute ~/skill/skill-a
+Execute ~/skill/skill-b
 `);
-    assert(result.dependencies.nodes.includes('skill-a'), 'Should include skill-a');
-    assert(result.dependencies.nodes.includes('skill-b'), 'Should include skill-b');
+    assert(result.dependencies.nodes.includes('skill/skill-a'), 'Should include skill/skill-a');
+    assert(result.dependencies.nodes.includes('skill/skill-b'), 'Should include skill/skill-b');
     
-    const usesEdges = result.dependencies.edges.filter(e => e.type === 'uses');
-    assertEqual(usesEdges.length, 2);
+    const refEdges = result.dependencies.edges.filter(e => e.type === 'reference');
+    assertEqual(refEdges.length, 2);
   });
 
-  test('builds graph from inline references', () => {
+  test('builds graph from inline references (v0.8 link syntax)', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-Execute [[inline-skill]]
+Execute ~/skill/inline-skill
 `);
-    assert(result.dependencies.nodes.includes('inline-skill'), 'Should include inline-skill');
+    assert(result.dependencies.nodes.includes('skill/inline-skill'), 'Should include skill/inline-skill');
     
     const refEdges = result.dependencies.edges.filter(e => e.type === 'reference');
     assertEqual(refEdges.length, 1);
-    assertEqual(refEdges[0].target, 'inline-skill');
+    assertEqual(refEdges[0].target, 'skill/inline-skill');
   });
 
-  test('deduplicates dependencies', () => {
+  test('deduplicates dependencies (v0.8 link syntax)', () => {
     const result = compile(`---
 name: test
 description: test
-uses:
-  - helper
 ---
 
-Execute [[helper]]
-Execute [[helper]] again
+Execute ~/skill/helper
+Execute ~/skill/helper again
 `);
-    const helperNodes = result.dependencies.nodes.filter(n => n === 'helper');
+    const helperNodes = result.dependencies.nodes.filter(n => n === 'skill/helper');
     assertEqual(helperNodes.length, 1, 'Should deduplicate nodes');
   });
 });
@@ -307,32 +315,35 @@ $Task: any task
   });
 });
 
-describe('Validation - References', () => {
-  test('warns on undeclared skill reference', () => {
+describe('Validation - References (v0.8 link syntax)', () => {
+  // v0.8: References are inferred from links, no uses: declaration needed
+  // No warning for undeclared skill references since all references are auto-inferred
+  test('skill references are auto-inferred (no undeclared warning)', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-Execute [[undeclared-skill]]
+Execute ~/skill/undeclared-skill
 `, { validateReferences: true });
     
+    // v0.8: No warning since references are inferred from the document
     const refWarnings = result.diagnostics.filter(d => d.code === 'W001');
-    assertEqual(refWarnings.length, 1);
-    assertIncludes(refWarnings[0].message, 'undeclared-skill');
+    assertEqual(refWarnings.length, 0);
   });
 
-  test('no warning when skill is declared in uses:', () => {
+  test('skill references work with or without uses: declaration', () => {
     const result = compile(`---
 name: test
 description: test
 uses:
-  - declared-skill
+  - ~declared-skill
 ---
 
-Execute [[declared-skill]]
+Execute ~/skill/declared-skill
 `, { validateReferences: true });
     
+    // No warnings in either case
     const refWarnings = result.diagnostics.filter(d => d.code === 'W001');
     assertEqual(refWarnings.length, 0);
   });
@@ -343,7 +354,7 @@ name: test
 description: test
 ---
 
-See [[#nonexistent-section]]
+See #nonexistent-section
 `, { validateReferences: true });
     
     const sectionErrors = result.diagnostics.filter(d => d.code === 'E010');
@@ -359,7 +370,7 @@ description: test
 
 ## My Section
 
-See [[#my-section]]
+See #my-section
 `, { validateReferences: true });
     
     const sectionErrors = result.diagnostics.filter(d => d.code === 'E010');
@@ -367,10 +378,11 @@ See [[#my-section]]
   });
 });
 
-describe('Validation - Contracts', () => {
+describe('Validation - Contracts (v0.8 link syntax)', () => {
+  // v0.8: Skill name must match the path in link references for self-reference
   test('errors on missing required parameter', () => {
     const skillSource = `---
-name: test-skill
+name: skill/test-skill
 description: test
 ---
 
@@ -378,7 +390,7 @@ description: test
 
 - $requiredParam: $String
 
-Execute [[test-skill]]
+Execute ~/skill/test-skill
 `;
 
     const result = compile(skillSource, { validateContracts: true });
@@ -391,7 +403,7 @@ Execute [[test-skill]]
 
   test('no error when required parameter is provided', () => {
     const skillSource = `---
-name: test-skill
+name: skill/test-skill
 description: test
 ---
 
@@ -399,7 +411,7 @@ description: test
 
 - $requiredParam: $String
 
-Execute [[test-skill]] WITH:
+Execute ~/skill/test-skill WITH:
 - $requiredParam = "value"
 `;
 
@@ -411,11 +423,11 @@ Execute [[test-skill]] WITH:
 
   test('warns on extra parameter', () => {
     const skillSource = `---
-name: test-skill
+name: skill/test-skill
 description: test
 ---
 
-Execute [[test-skill]] WITH:
+Execute ~/skill/test-skill WITH:
 - $extraParam = "value"
 `;
 
@@ -461,14 +473,13 @@ description: test
     assertEqual(varEntries.length, 2);
   });
 
-  test('generates source map entries for references', () => {
+  test('generates source map entries for references (v0.8 link syntax)', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-[[skill-ref]]
-[[#section-ref]]
+Reference ~/skill/skill-ref and #section-ref
 `, { generateSourceMap: true });
     
     const refEntries = result.sourceMap.filter(e => e.type === 'reference');
@@ -522,21 +533,18 @@ description: A helper skill
     assert(list.includes('skill-b'), 'Should include skill-b');
   });
 
-  test('validates references against registry', () => {
+  test('validates references against registry (v0.8 link syntax)', () => {
+    // v0.8: Registry keys must match the link path (e.g., 'skill/existing-skill' for ~/skill/existing-skill)
     const registry = createRegistry({
-      'existing-skill': '---\nname: existing\ndescription: exists\n---',
+      'skill/existing-skill': '---\nname: skill/existing-skill\ndescription: exists\n---',
     });
 
     const result = compile(`---
 name: test
 description: test
-uses:
-  - existing-skill
-  - missing-skill
 ---
 
-[[existing-skill]]
-[[missing-skill]]
+See ~/skill/existing-skill and ~/skill/missing-skill
 `, { validateReferences: true }, registry);
 
     const registryErrors = result.diagnostics.filter(d => d.code === 'E009');
@@ -549,27 +557,31 @@ uses:
 // Full Graph Cycle Detection
 // ============================================================================
 
-describe('Full Graph Cycle Detection', () => {
+describe('Full Graph Cycle Detection (v0.8)', () => {
+  // v0.8: Cycles are detected from link references in content, not frontmatter uses:
   test('detects cycles in multi-skill graph', () => {
     const registry = createRegistry({
-      'skill-a': `---
-name: skill-a
+      'skill/skill-a': `---
+name: skill/skill-a
 description: A
-uses:
-  - skill-b
----`,
-      'skill-b': `---
-name: skill-b
+---
+
+Execute ~/skill/skill-b
+`,
+      'skill/skill-b': `---
+name: skill/skill-b
 description: B
-uses:
-  - skill-c
----`,
-      'skill-c': `---
-name: skill-c
+---
+
+Execute ~/skill/skill-c
+`,
+      'skill/skill-c': `---
+name: skill/skill-c
 description: C
-uses:
-  - skill-a
----`,
+---
+
+Execute ~/skill/skill-a
+`,
     });
 
     const { cycles } = buildFullDependencyGraph(registry);
@@ -578,16 +590,18 @@ uses:
 
   test('no cycles in acyclic graph', () => {
     const registry = createRegistry({
-      'skill-a': `---
-name: skill-a
+      'skill/skill-a': `---
+name: skill/skill-a
 description: A
-uses:
-  - skill-b
----`,
-      'skill-b': `---
-name: skill-b
+---
+
+Execute ~/skill/skill-b
+`,
+      'skill/skill-b': `---
+name: skill/skill-b
 description: B
----`,
+---
+`,
     });
 
     const { cycles } = buildFullDependencyGraph(registry);
@@ -623,13 +637,13 @@ FOR EACH without proper syntax
 // Integration: Full Skill
 // ============================================================================
 
-describe('Full Skill Validation', () => {
+describe('Full Skill Validation (v0.8 link syntax)', () => {
   test('validates complete orchestrate-map-reduce skill', () => {
     const result = compile(`---
 name: orchestrate-map-reduce
 description: Fan out to multiple agents
 uses:
-  - work-packages
+  - ~work-packages
 ---
 
 ## Types
@@ -647,7 +661,7 @@ $Strategy: "accumulate" | "independent"
 1. Create master work package at /appropriate location/
 
 2. FOR EACH ($task, $strategy) IN $transforms:
-   - Delegate to [[#iteration-manager]]
+   - Delegate to #iteration-manager
    
 3. WHILE NOT diminishing returns AND $iterations < 5 DO:
    - Execute iteration
@@ -664,7 +678,7 @@ Handle a single iteration.
     // Source unchanged
     assertIncludes(result.output, '$Task: any task');
     assertIncludes(result.output, '/appropriate location/');
-    assertIncludes(result.output, '[[#iteration-manager]]');
+    assertIncludes(result.output, '#iteration-manager');
     
     // Metadata extracted
     assertEqual(result.metadata.name, 'orchestrate-map-reduce');

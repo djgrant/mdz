@@ -147,6 +147,48 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 <span class="zen-keyword">IF</span> the result looks promising <span class="zen-keyword">THEN</span>:
   - Proceed with optimization</code></pre>
 
+  <h2>Composition Keywords</h2>
+  
+  <p>
+    MDZ provides several keywords for composition:
+  </p>
+
+  <h3>DELEGATE (Agent Delegation)</h3>
+  
+  <p>
+    Use <strong>DELEGATE</strong> to spawn autonomous subagent tasks:
+  </p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/initial research/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/explorer</span></code></pre>
+
+  <h3>USE (Skill Invocation)</h3>
+  
+  <p>
+    Use <strong>USE</strong> to invoke a skill:
+  </p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/orchestrate</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/coordinate the workflow/</span></code></pre>
+
+  <h3>EXECUTE (Tool Execution)</h3>
+  
+  <p>
+    Use <strong>EXECUTE</strong> to run an external tool:
+  </p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">EXECUTE</span> <span class="zen-reference">~/tool/browser</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/take screenshot/</span></code></pre>
+
+  <h3>GOTO (Section Navigation)</h3>
+  
+  <p>
+    Use <strong>GOTO</strong> to jump to a section anchor:
+  </p>
+  
+  <pre><code class="mdz"><span class="zen-keyword">GOTO</span> <span class="zen-reference">#validation-prompt</span></code></pre>
+
+  <p>
+    See <a href="/docs/composition">Composition</a> for more details on these keywords.
+  </p>
+
   <h2>Design Philosophy</h2>
   
   <ul>
@@ -156,5 +198,6 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     <li><strong>Clear Indentation</strong> — Structure is visible at a glance</li>
     <li><strong>PARALLEL</strong> — Enables concurrent execution</li>
     <li><strong>BREAK/CONTINUE</strong> — Enable early exit from loops</li>
+    <li><strong>USE/EXECUTE/DELEGATE/GOTO</strong> — Composition keywords</li>
   </ul>
 </DocsLayout>

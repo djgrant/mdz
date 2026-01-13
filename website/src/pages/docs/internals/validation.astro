@@ -19,8 +19,8 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     <li><strong>Parse Validation</strong> — Syntax errors during parsing</li>
     <li><strong>Type Validation</strong> — Type reference resolution</li>
     <li><strong>Scope Validation</strong> — Variable definition and usage</li>
-    <li><strong>Reference Validation</strong> — Skill and section references</li>
-    <li><strong>Dependency Analysis</strong> — Cross-skill dependencies and cycles</li>
+    <li><strong>Link Validation</strong> — File link and anchor validation</li>
+    <li><strong>Dependency Analysis</strong> — Cross-file dependencies and cycles</li>
   </ol>
 
   <h2>Stage 1: Parse Validation</h2>
@@ -120,35 +120,32 @@ description: missing closing dashes
     <li><strong>Span:</strong> Position of '$undefined_var'</li>
   </ul>
 
-  <h2>Stage 4: Reference Validation</h2>
+  <h2>Stage 4: Link Validation</h2>
 
   <p>
-    Skill and section references must resolve:
+    Links and anchors must resolve:
   </p>
 
   <ul>
-    <li>Skills referenced with <code>[[skill]]</code> must be declared in <code>uses:</code></li>
-    <li>Local section references <code>[[#section]]</code> must exist in the current document</li>
-    <li>Cross-skill section references require the skill to be available in the registry</li>
+    <li>Links like <code>~/skill/name</code> must point to existing files</li>
+    <li>Local anchors <code>#section</code> must exist in the current document</li>
+    <li>Cross-file anchors <code>~/skill/name#section</code> require the file and section to exist</li>
   </ul>
 
-  <h3>Example Reference Error</h3>
+  <h3>Example Link Error</h3>
 
-  <pre><code class="mdz">uses:
-  - math
+  <pre><code class="mdz">## Workflow
 
-## Workflow
-
-1. Use [[advanced-math#calculate]] function</code></pre>
+1. USE ~/skill/advanced-math TO /calculate result/</code></pre>
 
   <p>
-    If 'advanced-math' is not in uses, produces error:
+    If 'skill/advanced-math.mdz' doesn't exist, produces error:
   </p>
 
   <ul>
-    <li><strong>Diagnostic:</strong> E009 - Undefined skill reference</li>
-    <li><strong>Message:</strong> "Skill 'advanced-math' is not declared in uses"</li>
-    <li><strong>Span:</strong> Position of '[[advanced-math]]'</li>
+    <li><strong>Diagnostic:</strong> E009 - Undefined link target</li>
+    <li><strong>Message:</strong> "File 'skill/advanced-math.mdz' does not exist"</li>
+    <li><strong>Span:</strong> Position of '~/skill/advanced-math'</li>
   </ul>
 
   <h2>Stage 5: Dependency Analysis</h2>
@@ -158,7 +155,7 @@ description: missing closing dashes
   </p>
 
   <ul>
-    <li>Extracts dependencies from <code>uses:</code> and inline references</li>
+    <li>Extracts dependencies from inline links (<code>~/skill/name</code>, etc.)</li>
     <li>Detects circular dependencies that could cause infinite loops</li>
     <li>Generates visualization data for <code>mdz graph</code></li>
   </ul>
@@ -199,10 +196,10 @@ description: missing closing dashes
   <ul>
     <li><strong>E007</strong> — Undefined variable reference</li>
     <li><strong>E008</strong> — Undefined type reference (often warning)</li>
-    <li><strong>E009</strong> — Undefined skill reference</li>
-    <li><strong>E010</strong> — Undefined section reference</li>
+    <li><strong>E009</strong> — Undefined link target</li>
+    <li><strong>E010</strong> — Undefined anchor</li>
     <li><strong>E011</strong> — Duplicate definition</li>
-    <li><strong>E012</strong> — Invalid reference format</li>
+    <li><strong>E012</strong> — Invalid link format</li>
   </ul>
 
   <h3>Dependency Errors (E999)</h3>
@@ -214,7 +211,7 @@ description: missing closing dashes
   <h3>Warnings (W001-W010)</h3>
 
   <ul>
-    <li><strong>W001</strong> — Skill not declared in uses</li>
+    <li><strong>W001</strong> — Link target may not exist</li>
     <li><strong>W002</strong> — Unused variable</li>
     <li><strong>W003</strong> — Unused type</li>
     <li><strong>W008</strong> — Type not defined (semantic types are flexible)</li>

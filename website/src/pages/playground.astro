@@ -1,6 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
+import examplesData from "../data/examples.json";
+
+// Pass examples data to client
+const projectsJson = JSON.stringify(examplesData.projects);
 ---
 
 <Layout title="Playground - zen">
@@ -46,31 +50,19 @@ import Header from "../components/Header.astro";
   </div>
 
   <div class="h-[calc(100vh-4rem)] flex flex-col">
-    <!-- Top Bar -->
+    <!-- Top Bar (mobile only) -->
     <div
-      class="flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
+      class="lg:hidden flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
     >
-      <div class="flex items-center gap-4">
-        <!-- Mobile project selector -->
-        <select
-          id="scenario-mobile"
-          class="lg:hidden text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-2 py-1 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
-        >
-          <option value="project:compiler-examples">Compiler Examples</option>
-          <option value="project:the-scientist">The Scientist</option>
-        </select>
-        <span
-          class="hidden md:inline text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
-        >
-          Edit code to see zen's validation in action
-        </span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span
-          id="validation-status"
-          class="text-xs text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
-        ></span>
-      </div>
+      <select
+        id="scenario-mobile"
+        class="text-sm bg-transparent border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded px-2 py-1 text-[var(--color-text)] dark:text-[var(--color-text-dark)]"
+      >
+      </select>
+      <span
+        id="validation-status"
+        class="text-xs text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]"
+      ></span>
     </div>
 
     <!-- Main Content with Sidebar -->
@@ -78,18 +70,18 @@ import Header from "../components/Header.astro";
       <!-- Sidebar - hidden on mobile -->
       <div
         id="sidebar"
-        class="hidden lg:flex flex-col w-52 border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
+        class="hidden lg:flex flex-col w-60 xl:w-72 border-r border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-[var(--color-bg)] dark:bg-[var(--color-bg-dark)]"
       >
-        <!-- Projects Section -->
+        <!-- Examples Section -->
         <div class="p-2">
-          <div class="text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide px-2 py-1">Projects</div>
+          <div class="text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide px-2 py-1">Examples</div>
           <div id="project-list" class="flex flex-col"></div>
         </div>
 
         <!-- Files Section (when project selected) -->
         <div id="file-tree-container" class="hidden flex-1 overflow-auto border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
           <div class="text-xs font-medium text-[var(--color-muted)] dark:text-[var(--color-muted-dark)] uppercase tracking-wide px-3 py-2">Files</div>
-          <div id="file-tree" class="flex flex-col px-1 pb-3"></div>
+          <div id="file-tree" class="px-2 pb-3"></div>
         </div>
       </div>
 
@@ -205,100 +197,58 @@ import Header from "../components/Header.astro";
     background-color: rgba(99, 102, 241, 0.1);
   }
 
-  /* Project list */
-  .project-item {
-    width: 100%;
+  /* Project/Example list - VS Code style */
+  :global(.project-item) {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
-    margin: 0.125rem 0;
-    font-size: 0.8125rem;
-    border-radius: 0.25rem;
+    height: 22px;
+    padding: 0 8px;
     cursor: pointer;
-    transition: all 0.15s;
+    user-select: none;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--color-muted);
-  }
-  .project-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--color-text);
-  }
-  .project-item.active {
-    background: rgba(99, 102, 241, 0.15);
-    color: var(--color-accent);
-  }
-  :global(.dark) .project-item {
-    color: var(--color-muted-dark);
-  }
-  :global(.dark) .project-item:hover {
-    color: var(--color-text-dark);
-  }
-  :global(.dark) .project-item.active {
-    color: var(--color-accent);
-  }
-  .project-item svg {
-    flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    opacity: 0.7;
-  }
-  .project-item.active svg {
-    opacity: 1;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: #171717;
   }
 
-  /* File tree */
-  .file-tree-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.75rem;
-    margin: 0.125rem 0;
-    font-size: 0.75rem;
-    font-family: monospace;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
+  :global(.project-item:hover) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(.project-item) {
+      color: #EDEDED;
+    }
+    :global(.project-item:hover) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  :global(.project-item.active) {
+    background-color: var(--color-accent);
+    color: white;
+  }
+
+  :global(.project-item.active:hover) {
+    background-color: var(--color-accent);
+  }
+
+  :global(.project-icon) {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    color: #e8a838;
+  }
+
+  :global(.project-item.active .project-icon) {
+    color: white;
+  }
+
+  :global(.project-name) {
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--color-muted);
-  }
-  .file-tree-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--color-text);
-  }
-  .file-tree-item.active {
-    background: rgba(99, 102, 241, 0.2);
-    color: var(--color-accent);
-    font-weight: 500;
-  }
-  :global(.dark) .file-tree-item {
-    width: 100%;
-    color: var(--color-muted-dark);
-  }
-  :global(.dark) .file-tree-item:hover {
-    color: var(--color-text-dark);
-  }
-  :global(.dark) .file-tree-item.active {
-    background: rgba(99, 102, 241, 0.25);
-    color: var(--color-accent);
-  }
-  .file-tree-item svg {
-    flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    min-width: 1rem;
-    min-height: 1rem;
-    max-width: 1rem;
-    max-height: 1rem;
-    opacity: 0.7;
-  }
-  .file-tree-item.active svg {
-    opacity: 1;
   }
 
   /* Graph node clickable - ensure SVG elements get cursor */
@@ -312,6 +262,112 @@ import Header from "../components/Header.astro";
   .graph-node:hover {
     opacity: 0.8;
   }
+
+  /* File tree styles (VS Code-style) */
+  :global(.tree-list) {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  :global(.tree-item) {
+    display: flex;
+    align-items: center;
+    height: 22px;
+    padding-right: 8px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    border-radius: 3px;
+  }
+
+  :global(.tree-item:hover) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.dark .tree-item:hover) {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  :global(.tree-item.active) {
+    background-color: var(--color-accent);
+    color: white;
+  }
+
+  :global(.tree-item.active:hover) {
+    background-color: var(--color-accent);
+  }
+
+  :global(.tree-item.active .tree-icon) {
+    color: white;
+  }
+
+  :global(.tree-item.active .tree-chevron) {
+    color: white;
+  }
+
+  :global(.tree-chevron) {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    margin-right: 2px;
+    color: var(--color-muted);
+    transition: transform 0.15s ease;
+  }
+
+  :global(.dark .tree-chevron) {
+    color: #A3A3A3;
+  }
+
+  :global(.tree-chevron.expanded) {
+    transform: rotate(90deg);
+  }
+
+  :global(.tree-chevron-spacer) {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    margin-right: 2px;
+  }
+
+  :global(.tree-icon) {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-right: 4px;
+    color: var(--color-muted);
+  }
+
+  :global(.dark .tree-icon) {
+    color: #A3A3A3;
+  }
+
+  :global(.tree-folder .tree-icon) {
+    color: #e8a838;
+  }
+
+  :global(.dark .tree-folder .tree-icon) {
+    color: #e8a838;
+  }
+
+  :global(.tree-name) {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 22px;
+    color: #171717;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(.tree-name) {
+      color: #EDEDED;
+    }
+  }
+
+  :global(.tree-item.active .tree-name) {
+    color: white;
+  }
 </style>
 
 <script
@@ -319,603 +375,14 @@ import Header from "../components/Header.astro";
   src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"
 ></script>
 
+<!-- Inject examples data from build -->
+<script is:inline define:vars={{ projectsJson }}>
+  window.__PLAYGROUND_PROJECTS__ = JSON.parse(projectsJson);
+</script>
+
 <script type="module">
-  // Project descriptions for insights
-  const projectDescriptions = {
-    "compiler-examples": {
-      name: "Compiler Examples",
-      description: "Demonstrates validation capabilities",
-      fileInsights: {
-        "valid-skill.mdz": "💡 <strong>All references validated!</strong> This skill correctly declares its dependencies. Changes to work-packages will be caught if they break this contract.",
-        "broken-reference.mdz": "🔴 <strong>Broken section reference:</strong> The compiler catches references to sections that don't exist in this document, preventing runtime confusion.",
-        "missing-type.mdz": "🔴 <strong>Type safety matters:</strong> Typos like '$Numbr' and '$DataSorce' would silently create undefined types. zen's type checking catches these mistakes before your agent runs.",
-        "undeclared-skill.mdz": "⚠️ <strong>Undeclared dependencies:</strong> These skills are referenced but not declared in 'uses:'. While zen allows this as a warning, explicit declarations make dependencies clear.",
-        "complex-system.mdz": "📊 <strong>System overview:</strong> This skill composes multiple other skills. The dependency graph shows how your agent system fits together.",
-      }
-    }
-  };
-
-  // Multi-file projects
-  const projects = {
-    "compiler-examples": {
-      name: "Compiler Examples",
-      description: "Demonstrates validation capabilities",
-      files: {
-        "valid-skill.mdz": `---
-name: scientific-method
-description: When orchestrating hypothesis-driven iteration
-uses:
-  - work-packages
----
-
-## Types
-
-$Hypothesis: /a testable prediction about what will solve the problem/
-$Result: "confirmed" | "refuted" | "inconclusive"
-
-## Input
-
-- $problem: $String
-- $maxIterations: $Number = 5
-
-## Context
-
-- $hypothesis: $Hypothesis
-- $result: $Result
-- $iteration = 0
-
-## Workflow
-
-WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO:
-  - Formulate $hypothesis based on $problem
-  - Design experiment to test $hypothesis
-  - Execute experiment using [[work-packages]]
-  - Evaluate $result from experiment
-  - IF $result = "confirmed" THEN:
-    - Commit changes
-  - Increment $iteration
-`,
-        "broken-reference.mdz": `---
-name: my-workflow
-description: A workflow with a broken section reference
-uses:
-  - work-packages
----
-
-## Workflow
-
-1. Start by executing [[work-packages]]
-2. Then jump to [[#non-existent-section]]
-3. Finally check [[#missing-step]]
-`,
-        "missing-type.mdz": `---
-name: data-processor
-description: Process some data
----
-
-## Types
-
-$DataSource: "api" | "file" | "database"
-
-## Input
-
-- $source: $DataSorce
-- $count: $Numbr = 10
-- $validator: $Task
-
-## Workflow
-
-Process $count items from $source
-`,
-        "undeclared-skill.mdz": `---
-name: quick-skill
-description: A skill that uses undeclared dependencies
----
-
-## Workflow
-
-1. First run [[orchestrate]]
-2. Then use [[work-packages]]
-3. Finally apply [[simplify]]
-`,
-        "complex-system.mdz": `---
-name: skill-composer
-description: Compose multiple skills into workflows
-uses:
-  - orchestrate
-  - work-packages
-  - simplify
----
-
-## Types
-
-$SkillRef: /reference to another skill/
-$CompositionMode: "sequential" | "parallel"
-
-## Input
-
-- $skills: $SkillRef[]
-- $mode: $CompositionMode = "sequential"
-
-## Workflow
-
-### 1. Analyze Dependencies
-
-FOR EACH $skill IN $skills:
-  - Load skill source using [[work-packages]]
-  - Extract uses from frontmatter
-  - Build dependency graph
-
-### 2. Validate Composition
-
-Detect cycles in the graph
-IF /cycle detected/ THEN:
-  - Report error
-  - Abort
-
-### 3. Simplify
-
-Apply [[simplify]] to reduce complexity
-
-### 4. Execute
-
-Execute [[orchestrate]] WITH:
-  - $skills
-  - $mode
-`,
-      },
-    },
-    "the-scientist": {
-      name: "The Scientist",
-      description: "Orchestration and hypothesis-driven workflows",
-      files: {
-        "work-packages.mdz": `---
-name: work-packages
-description: When asked to create a work package (aka WP), or are using a skill that depends on work packages, or are given a work package to complete, use this skill to understand the correct methodology.
----
-
-## Types
-
-$WorkPackage: /a structured document tracking a discrete unit of work/
-$Lifecycle: "create" | "read" | "move" | "act" | "record" | "report"
-$Directory: "todo" | "in-progress" | "completed" | "backlog"
-
-## Context
-
-- $basePath = ".opencode/work"
-- $wpPath = ($dir, $name) => \`\${$basePath}/\${$dir}/wp-\${$name}.md\`
-
-## Work Package Template
-
-A $WorkPackage contains these sections:
-
-1. **Title** - Descriptive name for the work
-2. **Goal/Problem** - What needs to be solved
-3. **Scope** - Which files/packages this touches
-4. **Approach** - How to do it
-5. **Hypothesis** - Why you think this will work
-6. **Results** - Filled upon completion (can contain multiple iterations)
-7. **Evaluation** - What you learned, was hypothesis correct?
-
-## Lifecycle
-
-Work packages enable large tasks to be handled by multiple agents. The state persists between agent sessions. Each stage does not necessarily need to be handled by a single agent.
-
-### 1. Create
-
-Create the work package at $wpPath("todo", /date-name/)
-
-### 2. Read
-
-Read the document to understand the task fully before acting.
-
-### 3. Move
-
-Move from \`todo/\` to \`in-progress/\` to claim ownership.
-
-### 4. Act
-
-Act on the work package within the scope defined in the package.
-
-### 5. Record
-
-Record results and findings in the Results section.
-
-### 6. Report
-
-Report the status of the work package to the delegator.
-
-## Post-Completion
-
-The delegator may then ask you to:
-
-- Move the work package to \`completed/\`
-- Revise the hypothesis and run another iteration
-- Commit your changes
-
-IF /not sure how to proceed/ THEN:
-  - Yield control back to the delegator
-`,
-        "orchestrate.mdz": `---
-name: orchestrate
-description: When running any orchestration operation, load this skill to understand the core methodology using sub-agents and work packages.
-uses:
-  - work-packages
----
-
-Orchestration enables you to track and delegate sub-tasks effectively.
-
-## Types
-
-$OrchestrationStrategy: "project" | "map-reduce" | "ad-hoc"
-$WorkPackageStatus: "todo" | "in-progress" | "completed"
-$AgentRole: /a specialized focus area for a sub-agent/
-
-## What You Do
-
-Commission and track work packages, evaluate results, and act executively on findings.
-
-There are a range of sub-agents available, and a range of skills available for them to use. Together, these unlock a wide range of possible approaches to solve problems via orchestration.
-
-## Methodology
-
-Any orchestration strategy requires you to:
-
-1. Understand the requirements
-2. Define measures of success
-3. Choose $strategy: $OrchestrationStrategy if not already specified
-4. Create a master work package using [[work-packages]]
-5. Delegate creation and completion of work packages to sub-agents
-6. Delegate testing of solutions to separate sub-agents
-7. Commission up to five iterations of each work package
-8. Update the master work package after each iteration
-9. Revise your strategy and commission new work packages dynamically when needed
-10. Report the results
-
-## Expectations
-
-- Use a diversity of agents with different $AgentRole values
-- Consider how skills can enhance the process
-- Use [[work-packages]] to define and track tasks
-- Use work packages to persist project progress rather than resuming agent sessions
-- Ensure that sub-agents understand the overarching vision
-- Report failure truthfully
-- Create boundaries between different /types of work/ to improve focus and performance
-
-## Guardrails
-
-- Do NOT review code, write code, test work, edit files
-- Do NOT implement features directly
-- Do NOT start with your own analysis
-- Do NOT go on fishing trips, or introduce your own ideas
-
-## Completion Criteria
-
-The work is finished when all the work packages you commissioned have been moved to the completed directory.
-
-This does not necessarily mean that the project was a success. Just that you have completed the experimentation and reached a final conclusion.
-
-Ensure the working tree is clean at the end of the project.
-
-## Final Summary
-
-Your final summary should include:
-
-- The work packages completed
-- Any key changes made
-- Any significant learnings
-- The number of work packages completed
-- The number of agents spawned
-- The original goal, hypothesis, result and conclusion
-`,
-        "scientific-method.mdz": `---
-name: scientific-method
-description: When a task requires observation and verification, use this skill to extend work packages to deliver hypothesis-driven iteration.
-uses:
-  - work-packages
----
-
-## Types
-
-$Hypothesis: /a testable theory about what is happening and what will fix it/
-$Prediction: /the expected observable result if the hypothesis is true/
-$Observation: /the actual result observed after taking action/
-$Conclusion: "validated" | "falsified"
-
-## Input
-
-- $goal: $String                        <!-- the desired end state -->
-- $maxIterations: $Number = 10
-
-## Context
-
-- $iteration = 0
-- $currentHypothesis: $Hypothesis
-
-## Workflow
-
-### 1. Evaluate
-
-Observe the current state:
-- Take screenshots if UI-related
-- Read output or check files
-- Document the gap between current and $goal
-
-### 2. Iterate
-
-WHILE NOT $/goal achieved/ AND $iteration < $maxIterations DO:
-
-  1. **Hypothesize**: Form $currentHypothesis about what will reach $goal
-     - State the hypothesis clearly in the work package
-     - For debugging, consider null hypotheses like "The API latency is unrelated to the crash"
-  
-  2. **Predict**: State $prediction for what observable effect you expect
-     - Define measurable success criteria
-  
-  3. **Act**: Implement the proposed solution
-     - Keep changes minimal and reversible
-  
-  4. **Observe**: Record $observation of what actually happened
-     - Compare to $prediction objectively
-  
-  5. **Verify**: Determine $conclusion: $Conclusion
-  
-  IF $conclusion = "validated" THEN:
-    - Record success and learnings
-    - Update hypothesis for next iteration if goal not yet achieved
-  ELSE:
-    - Record what was learned from falsification
-    - Revise hypothesis based on observations
-  
-  6. Increment $iteration
-
-### 3. Finish
-
-Complete when any condition is met:
-- Goal achieved
-- Hypothesis proven wrong with no viable alternative
-- Diminishing returns detected
-
-## Tracking Template
-
-Track iterations in the work package using [[work-packages]].
-
-Include a Hypothesis section with what you think is happening and what you predict will fix it.
-
-Include a Results section with iterations containing:
-- Hypothesis: The theory being tested
-- Action: The specific step taken
-- Prediction: The expected observable result if true
-- Observed: The actual result
-- Conclusion: Validated or falsified, with next step
-
-Update the work package document as you iterate.
-`,
-        "orchestrate-map-reduce.mdz": `---
-name: orchestrate-map-reduce
-description: When you need multiple operations to get one solution, use this orchestration strategy to fan out to multiple agents, validate their solutions and find a winning solution.
-uses:
-  - orchestrate
-  - work-packages
----
-
-## Types
-
-$Task: /any task that an agent can execute/
-$Strategy: "accumulate" | "independent"
-$FilePath: /a file system path/
-
-## Input
-
-- $transforms: ($Task, $Strategy)[]      <!-- task-strategy pairs to execute -->
-- $validator: $Task                       <!-- validation method for solutions -->
-- $return: $Task                          <!-- final aggregation task -->
-
-## Choosing a Strategy
-
-- **Accumulate**: When the aim is to progressively work toward the best solution
-- **Independent**: When the aim is to review a diverse set of candidates (can be run in parallel)
-
-## Context
-
-- $current: $FilePath                    <!-- current solution path -->
-- $masterWP: $FilePath                   <!-- master work package path -->
-- $SolutionPath = $n => /candidate solution path for iteration $n/
-
-## Workflow
-
-### Initialize
-
-1. Create master work package at /appropriate location/
-2. Delegate to sub-agent: summarize the status quo solution and write to $current
-
-### Map Phase
-
-FOR EACH ($task, $strategy) IN $transforms:
-  - Delegate to sub-agent with [[#iteration-manager]] WITH:
-    - $task = $task
-    - $strategy = $strategy
-    - $validator = $validator
-
-### Reduce Phase
-
-1. Collect findings from each iteration manager
-2. Update master work package with aggregated results
-3. Execute $return task to produce final output
-
-## Iteration Manager
-
-You are responsible for mapping over Task until it passes Validator.
-
-### Reference
-
-- $strategy: $Strategy
-- $task: $Task
-- $validator: $Task
-
-### Iteration Context
-
-- $iteration = 0
-- $current: $FilePath = $SolutionPath(0)
-- $next: $FilePath = $SolutionPath(1)
-
-Each proposed solution should be stored in a markdown document at $next.
-
-### Accumulate Strategy
-
-IF $strategy = "accumulate" THEN:
-  - Execute iterative refinement until validation passes or max iterations reached
-  - For each iteration:
-    - Delegate to sub-agent with [[#build-prompt]]
-    - Delegate to sub-agent with [[#validate-prompt]]
-    - IF /validation passes/ THEN:
-      - Update work package with success
-      - Advance $current and $next paths
-    - Increment $iteration
-
-### Independent Strategy
-
-IF $strategy = "independent" THEN:
-  - Execute parallel candidate generation
-  - For each iteration up to 5:
-    - Delegate to sub-agent with [[#build-prompt]]
-    - Increment $iteration
-  - Delegate to sub-agent with [[#validate-all-prompt]]
-
-### Return Findings
-
-Return findings to parent orchestrator.
-
-## Build Prompt
-
-Execute the following task:
-
-$task
-
-Current solution: $current
-
-Write your proposed solution to: $next
-
-## Validate Prompt
-
-Validation method: $validator
-
-Use the validator on the proposed solution.
-
-Update $next with your validation findings.
-
-## Validate All Prompt
-
-Review all proposed solutions from $SolutionPath(1) through $SolutionPath($iteration).
-
-Select the best candidate based on $validator criteria.
-
-Update the work package with your findings and recommendation.
-`,
-        "simplify.mdz": `---
-name: simplify
-description: When a solution needs to be simplified, use this skill with orchestrate-map-reduce to find its essence.
-uses:
-  - orchestrate-map-reduce
----
-
-## Types
-
-$Target: /the artifact to simplify (code, architecture, docs, etc.)/
-$Essence: /what must be preserved for the solution to remain viable/
-$Heuristic: "subtractive" | "constraint" | "caveman" | "audit" | "rewrite" | "darlings"
-$Strategy: "accumulate" | "independent"
-$ValidationResult: "progress" | "regression" | "plateau"
-
-## Input
-
-- $target: $Target                       <!-- what to simplify -->
-- $essence: $Essence                     <!-- what must be preserved -->
-- $heuristics: $Heuristic[] = ["subtractive", "audit"]
-- $strategy: $Strategy = "accumulate"
-
-## Context
-
-- $validator: $String                    <!-- function that determines if essence is intact -->
-- $transforms: ($Heuristic, $Strategy)[] <!-- heuristic-strategy pairs -->
-
-## Workflow
-
-### Scope
-
-1. Identify $target precisely
-2. Define $essence--/what breaks if removed/
-3. Define $validator to test if solution remains viable
-4. Select $heuristics based on target type:
-   - Code: "subtractive", "audit", "rewrite"
-   - Architecture: "constraint", "caveman"
-   - Docs: "caveman", "darlings"
-5. Determine $strategy for each heuristic
-
-### Confirm
-
-Present plan to user:
-- Target: $target
-- Essence: $essence
-- Heuristics: $heuristics
-- Strategy: $strategy
-
-IF /user rejects plan/ THEN:
-  - Revise based on feedback
-  - Return to [[#scope]]
-
-### Execute
-
-Execute [[orchestrate-map-reduce]] WITH:
-  - $transforms = $transforms
-  - $validator = $validator
-  - $return = "Present findings to user"
-
-## Heuristics
-
-### Subtractive Iteration
-
-> Remove one element/layer/abstraction. The solution must still satisfy $essence. What single thing can be removed?
-
-### Constraint Forcing
-
-> Reimplement using only {N} {units}. What would you keep? What creative alternatives replace what you removed?
-
-### The Caveman Test
-
-> Explain this to someone with no context. What parts can't be explained simply? Those are candidates for removal.
-
-### Reverse Complexity Audit
-
-> List every abstraction, indirection, and layer. For each, name the catastrophe it prevents. If no catastrophe, mark for removal.
-
-### The Rewrite Bet
-
-> You have 2 hours to rewrite from scratch. What do you keep? What do you abandon? Implement that version.
-
-### Kill Your Darlings
-
-> Identify the clever/elegant/sophisticated parts. These are often unnecessary. Propose a naive alternative for each.
-
-## Validation
-
-After each iteration, determine $result: $ValidationResult:
-
-- **progress**: /simpler AND essence intact/
-- **regression**: /essence broken/
-- **plateau**: /no meaningful change/
-
-IF $result = "regression" THEN:
-  - Revert changes
-  - Try different heuristic
-
-IF $result = "plateau" THEN:
-  - Consider target already minimal
-  - Or try more aggressive heuristic
-`,
-      },
-    },
-  };
+  // Load projects from build-time data
+  const projects = window.__PLAYGROUND_PROJECTS__;
 
   let editor = null;
   let worker = null;
@@ -924,7 +391,7 @@ IF $result = "plateau" THEN:
   let validateTimeout = null;
   
   // Project state
-  let currentProject = "compiler-examples";
+  let currentProject = null;
   let currentProjectFiles = {};
   let currentFile = null;
   let projectValidationResult = null;
@@ -1255,13 +722,9 @@ IF $result = "plateau" THEN:
 
   function updateInsight(diagnostics) {
     const insightEl = document.getElementById("insight");
-    
-    // Get file-specific insight if available
-    const projectInfo = projectDescriptions[currentProject];
-    const fileInsight = projectInfo?.fileInsights?.[currentFile];
 
     if (diagnostics.length === 0) {
-      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">${fileInsight || "💡 <strong>All checks passed!</strong> Your skill definition is valid."}</p>`;
+      insightEl.innerHTML = `<p class="text-sm text-indigo-600 dark:text-indigo-400">💡 <strong>All checks passed!</strong> Your skill definition is valid.</p>`;
     } else {
       const errors = diagnostics.filter((d) => d.severity === "error");
       const warnings = diagnostics.filter((d) => d.severity === "warning");
@@ -1429,19 +892,161 @@ IF $result = "plateau" THEN:
 
   function renderProjectList() {
     const listEl = document.getElementById("project-list");
+    const mobileSelect = document.getElementById("scenario-mobile");
     const projectIds = Object.keys(projects);
+    
+    // Project icon (open folder style)
+    const projectIcon = `<svg class="project-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>`;
     
     listEl.innerHTML = projectIds.map(projectId => {
       const project = projects[projectId];
       const isActive = projectId === currentProject;
-      return `<button class="project-item ${isActive ? "active" : ""}" onclick="switchToProject('${projectId}')" title="${project.description}">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-        </svg>
-        <span>${project.name}</span>
-      </button>`;
+      return `<button class="project-item ${isActive ? "active" : ""}" onclick="switchToProject('${projectId}')" title="${project.description}">${projectIcon}<span class="project-name">${project.name}</span></button>`;
     }).join("");
+    
+    // Update mobile select
+    mobileSelect.innerHTML = projectIds.map(projectId => {
+      const project = projects[projectId];
+      return `<option value="project:${projectId}">${project.name}</option>`;
+    }).join("");
+    
+    if (currentProject) {
+      mobileSelect.value = `project:${currentProject}`;
+    }
   }
+
+  // Track expanded state for folders
+  const expandedFolders = new Set();
+  
+  /**
+   * Build a tree structure from flat file paths
+   * Returns: { name, path, type: 'file' | 'folder', children: [] }
+   */
+  function buildFileTree(filePaths) {
+    const root = { name: '', path: '', type: 'folder', children: [] };
+    
+    for (const filePath of filePaths) {
+      const parts = filePath.split('/');
+      let current = root;
+      let pathSoFar = '';
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        pathSoFar = pathSoFar ? `${pathSoFar}/${part}` : part;
+        const isFile = i === parts.length - 1;
+        
+        let child = current.children.find(c => c.name === part);
+        
+        if (!child) {
+          child = {
+            name: part,
+            path: pathSoFar,
+            type: isFile ? 'file' : 'folder',
+            children: []
+          };
+          current.children.push(child);
+        }
+        
+        current = child;
+      }
+    }
+    
+    // Sort children: folders first, then files, both alphabetically
+    function sortTree(node) {
+      node.children.sort((a, b) => {
+        if (a.type !== b.type) {
+          return a.type === 'folder' ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+      node.children.forEach(sortTree);
+    }
+    sortTree(root);
+    
+    return root;
+  }
+  
+  /**
+   * Render a single tree node (file or folder)
+   */
+  function renderTreeNode(node, depth = 0) {
+    const isFolder = node.type === 'folder';
+    const isExpanded = expandedFolders.has(node.path);
+    const isActive = !isFolder && node.path === currentFile;
+    const displayName = isFolder ? node.name : node.name.replace(/\.mdz$/, '');
+    
+    // Calculate indentation (14px per level)
+    const indent = depth * 14;
+    
+    // SVG icons inline (chevron, folder, file)
+    const chevronIcon = `<svg class="tree-chevron ${isExpanded ? 'expanded' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>`;
+    
+    const folderIcon = `<svg class="tree-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+    
+    const fileIcon = `<svg class="tree-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>`;
+    
+    // Build the item
+    let html = '';
+    
+    if (isFolder) {
+      html = `
+        <li class="tree-item tree-folder ${isExpanded ? 'expanded' : ''}" 
+            style="padding-left: ${indent}px"
+            onclick="event.stopPropagation(); toggleFolder('${node.path}')">
+          ${chevronIcon}
+          ${folderIcon}
+          <span class="tree-name">${displayName}</span>
+        </li>`;
+      
+      // Render children if expanded
+      if (isExpanded && node.children.length > 0) {
+        for (const child of node.children) {
+          html += renderTreeNode(child, depth + 1);
+        }
+      }
+    } else {
+      // Files need extra indent to align with folder names (chevron width = 14px)
+      const fileIndent = indent + 17;
+      html = `
+        <li class="tree-item tree-file ${isActive ? 'active' : ''}"
+            style="padding-left: ${fileIndent}px"
+            onclick="event.stopPropagation(); switchToFile('${node.path}')">
+          ${fileIcon}
+          <span class="tree-name">${displayName}</span>
+        </li>`;
+    }
+    
+    return html;
+  }
+  
+  /**
+   * Toggle folder expansion state
+   */
+  function toggleFolder(path) {
+    if (expandedFolders.has(path)) {
+      expandedFolders.delete(path);
+    } else {
+      expandedFolders.add(path);
+    }
+    renderFileTree();
+  }
+  
+  /**
+   * Expand all parent folders of a file path
+   */
+  function expandParentFolders(filePath) {
+    const parts = filePath.split('/');
+    let pathSoFar = '';
+    
+    // Expand all folders in the path (except the file itself)
+    for (let i = 0; i < parts.length - 1; i++) {
+      pathSoFar = pathSoFar ? `${pathSoFar}/${parts[i]}` : parts[i];
+      expandedFolders.add(pathSoFar);
+    }
+  }
+  
+  // Make toggleFolder available globally
+  window.toggleFolder = toggleFolder;
 
   function renderFileTree() {
     const container = document.getElementById("file-tree-container");
@@ -1454,18 +1059,20 @@ IF $result = "plateau" THEN:
     
     container.classList.remove("hidden");
     
-    const fileNames = Object.keys(currentProjectFiles);
-    treeEl.innerHTML = fileNames.map(fileName => {
-      const isActive = fileName === currentFile;
-      // Remove .mdz extension for display
-      const displayName = fileName.replace(/\.mdz$/, "");
-      return `<button class="file-tree-item ${isActive ? "active" : ""}" onclick="switchToFile('${fileName}')" title="${fileName}">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <span>${displayName}</span>
-      </button>`;
-    }).join("");
+    if (currentFile) {
+      expandParentFolders(currentFile);
+    }
+    
+    const filePaths = Object.keys(currentProjectFiles);
+    const tree = buildFileTree(filePaths);
+    
+    let html = '<ul class="tree-list">';
+    for (const child of tree.children) {
+      html += renderTreeNode(child);
+    }
+    html += '</ul>';
+    
+    treeEl.innerHTML = html;
   }
 
   function switchToFile(fileName) {
@@ -1479,7 +1086,9 @@ IF $result = "plateau" THEN:
     // Switch to new file
     currentFile = fileName;
     editor.setValue(currentProjectFiles[fileName]);
-    document.getElementById("file-indicator").textContent = fileName;
+    // Show just the filename in the indicator
+    const displayName = fileName.split('/').pop();
+    document.getElementById("file-indicator").textContent = displayName;
     
     // Update file tree
     renderFileTree();
@@ -1503,6 +1112,9 @@ IF $result = "plateau" THEN:
       currentProjectFiles[currentFile] = editor.getValue();
     }
     
+    // Clear expanded folders for the new project
+    expandedFolders.clear();
+    
     // Switch to new project
     currentProject = projectId;
     currentProjectFiles = { ...project.files };
@@ -1511,7 +1123,9 @@ IF $result = "plateau" THEN:
     const fileNames = Object.keys(currentProjectFiles);
     currentFile = fileNames[0];
     editor.setValue(currentProjectFiles[currentFile]);
-    document.getElementById("file-indicator").textContent = currentFile;
+    // Show just the filename in the indicator
+    const displayName = currentFile.split('/').pop();
+    document.getElementById("file-indicator").textContent = displayName;
     
     // Update UI
     renderProjectList();
@@ -1549,7 +1163,7 @@ IF $result = "plateau" THEN:
           ],
           [/\/(?=[^\/\n]+\/)/, { token: "delimiter.semantic", next: "@semantic" }],
           [/\$\/[^\/]+\//, "variable.inferred"],
-          [/\[\[/, { token: "delimiter.reference", next: "@reference" }],
+          [/\([@~#]/, { token: "delimiter.reference", next: "@reference" }],
           [/\$[A-Z][a-zA-Z0-9]*/, "type"],
           [/\$[a-z][a-zA-Z0-9-]*/, "variable"],
           [/"[^"]*"/, "string"],
@@ -1561,8 +1175,8 @@ IF $result = "plateau" THEN:
           [/\//, { token: "delimiter.semantic", next: "@pop" }],
         ],
         reference: [
-          [/[^\]]+/, "entity.reference"],
-          [/\]\]/, { token: "delimiter.reference", next: "@pop" }],
+          [/[^\)]+/, "entity.reference"],
+          [/\)/, { token: "delimiter.reference", next: "@pop" }],
         ],
       },
     });
@@ -1618,7 +1232,7 @@ IF $result = "plateau" THEN:
 
     // Autocomplete provider for zen language
     monaco.languages.registerCompletionItemProvider("zen", {
-      triggerCharacters: ["$", "["],
+      triggerCharacters: ["$", "("],
 
       provideCompletionItems: (model, position) => {
         const textUntilPosition = model.getValueInRange({
@@ -1686,61 +1300,64 @@ IF $result = "plateau" THEN:
           }
         }
 
-        // Check if we're completing after [[ (references)
-        if (lineUntilPosition.match(/\[\[[^\]]*$/)) {
-          const isLocalRef = lineUntilPosition.match(/\[\[#[^\]]*$/);
-
-          if (isLocalRef) {
-            // Suggest local sections (## headings)
-            const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
-            for (const match of sectionMatches) {
-              const sectionName = match[1].trim();
-              const sectionId = sectionName
-                .toLowerCase()
-                .replace(/\s+/g, "-")
-                .replace(/[^a-z0-9-]/g, "");
+        // Check if we're completing a link path (after ~/)
+        const linkMatch = lineUntilPosition.match(/~\/([a-z\/]*)$/);
+        if (linkMatch) {
+          const partial = linkMatch[1];
+          // Suggest agent/skill/tool paths
+          const paths = ["agent/", "skill/", "tool/"];
+          for (const p of paths) {
+            if (p.startsWith(partial) || partial.startsWith(p.slice(0, -1))) {
               suggestions.push({
-                label: "[[#" + sectionId + "]]",
-                kind: monaco.languages.CompletionItemKind.Reference,
-                insertText: "#" + sectionId + "]]",
-                detail: "Section: " + sectionName,
-                documentation: "Reference to local section",
+                label: "~/" + p,
+                kind: monaco.languages.CompletionItemKind.Folder,
+                insertText: p.slice(partial.length),
+                detail:
+                  p.slice(0, -1).charAt(0).toUpperCase() +
+                  p.slice(0, -1).slice(1) +
+                  " path",
               });
             }
-          } else {
-            // Suggest skills from uses: declarations
-            const usesMatch = fullText.match(
-              /uses:\s*\n((?:\s+-\s+\S+\s*\n?)*)/,
-            );
-            if (usesMatch) {
-              const skillMatches = usesMatch[1].matchAll(/-\s+(\S+)/g);
-              for (const match of skillMatches) {
+          }
+
+          // Also suggest declared dependencies as full paths
+          const usesMatch = fullText.match(
+            /uses:\s*\n((?:\s+-\s+\S+\s*\n?)*)/,
+          );
+          if (usesMatch) {
+            const depMatches = usesMatch[1].matchAll(/-\s+~\/(\S+)/g);
+            for (const match of depMatches) {
+              const depPath = match[1];
+              if (depPath.startsWith(partial)) {
                 suggestions.push({
-                  label: "[[" + match[1] + "]]",
+                  label: "~/" + depPath,
                   kind: monaco.languages.CompletionItemKind.Module,
-                  insertText: match[1] + "]]",
-                  detail: "Skill dependency",
+                  insertText: depPath.slice(partial.length),
+                  detail: "Declared dependency",
                   documentation: "Declared in uses:",
                 });
               }
             }
+          }
+        }
 
-            // Also suggest local sections with #
-            const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
-            for (const match of sectionMatches) {
-              const sectionName = match[1].trim();
-              const sectionId = sectionName
-                .toLowerCase()
-                .replace(/\s+/g, "-")
-                .replace(/[^a-z0-9-]/g, "");
-              suggestions.push({
-                label: "[[#" + sectionId + "]]",
-                kind: monaco.languages.CompletionItemKind.Reference,
-                insertText: "#" + sectionId + "]]",
-                detail: "Section: " + sectionName,
-                documentation: "Reference to local section",
-              });
-            }
+        // Check if we're completing an anchor (after #)
+        const anchorMatch = lineUntilPosition.match(/#([a-z-]*)$/);
+        if (anchorMatch && !lineUntilPosition.match(/~\/[^\s]*#/)) {
+          // Same-file section completion
+          const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
+          for (const match of sectionMatches) {
+            const sectionName = match[1].trim();
+            const sectionId = sectionName
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+              .replace(/[^a-z0-9-]/g, "");
+            suggestions.push({
+              label: "#" + sectionId,
+              kind: monaco.languages.CompletionItemKind.Reference,
+              insertText: sectionId,
+              detail: "Section: " + sectionName,
+            });
           }
         }
 
@@ -1750,8 +1367,11 @@ IF $result = "plateau" THEN:
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    // Initialize with default project (compiler-examples)
-    const defaultProject = projects["compiler-examples"];
+    // Initialize with first available project
+    const projectIds = Object.keys(projects);
+    const defaultProjectId = projectIds[0];
+    const defaultProject = projects[defaultProjectId];
+    currentProject = defaultProjectId;
     currentProjectFiles = { ...defaultProject.files };
     const fileNames = Object.keys(currentProjectFiles);
     currentFile = fileNames[0];
@@ -1795,7 +1415,7 @@ IF $result = "plateau" THEN:
 
     // Initialize worker and run initial validation
     initWorker();
-    document.getElementById("file-indicator").textContent = currentFile;
+    document.getElementById("file-indicator").textContent = currentFile.split('/').pop();
     
     // Render project list and file tree
     renderProjectList();

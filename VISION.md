@@ -89,14 +89,14 @@ We're targeting frontier models. The assumption is they work better with concise
 Checks that what's written is logically coherent:
 
 - **Syntax correctness** - Valid MDZ constructs
-- **Reference validation** - `[[skill]]` and `[[skill#section]]` targets exist
+- **Reference validation** - `(~skill)` and `(~skill#section)` targets exist
 - **Contract compatibility** - Types match across skill boundaries
 - **Dependency validation** - No cycles, required skills available
 - **Scope checking** - Variables defined before use
 
 ### Dependency Graph
 
-Built from `uses:` declarations and `[[references]]`:
+Built from `uses:` declarations and `(~references)`:
 
 - **Validation** - Cycles detected, missing deps flagged
 - **Visualization** - Understand complex agent systems as a graph
@@ -135,7 +135,7 @@ Both produce valid input for the LLM. Mode A is terser; Mode B requires no gramm
 
 **Reference handling (open question - which is better?):**
 
-`[[skill#section]]` could be:
+`(~skill#section)` could be:
 - Left as-is (with grammar preamble explaining the syntax)
 - Transformed to natural language ("refer to the validation section")
 - Inlined (pull section content into the document)
@@ -168,10 +168,10 @@ Signals to LLM: this is a named value/concept.
 
 Whether this is enforced or uses explicit keywords (`type $Task`) needs exploration. The compiler needs some way to distinguish types from variables for contract checking.
 
-### `[[reference]]` - Skill Dependencies
+### `(~reference)` - Skill Dependencies
 
 ```markdown
-Execute [[work-packages]] WITH:
+Execute (~work-packages) WITH:
   - $task = "create experiment log"
 ```
 
@@ -284,7 +284,7 @@ The playground demonstrates MDZ's value proposition. This requires separate expl
 
 **Preprocessing modes:**
 - Toggle between grammar preamble vs natural language transformation
-- See how `{~~}` and `[[refs]]` are handled in each mode
+- See how `{~~}` and `(~refs)` are handled in each mode
 
 **Macro expansion:**
 - Show how `{{IF}}` macros split into module variants
@@ -311,7 +311,7 @@ This creates tension between readability and parseability. Each syntax choice ne
 
 - **Control flow keywords** - CAPS (`FOR EACH`) vs lowercase (`for each`) vs sigils (`@for each`). How do we distinguish from prose?
 - **Types vs variables** - Case convention (`$Task` vs `$task`) vs explicit keyword (`type $Task`). What enables contract checking?
-- **References** - `[[skill]]` vs prose that tooling infers. What level of explicitness is needed?
+- **References** - `(~skill)` vs prose that tooling infers. What level of explicitness is needed?
 - **Macros vs runtime** - `{{IF}}` vs `IF THEN`. Must be syntactically distinct.
 - **Semantic markers** - `{~~content}` vs unmarked prose. Does the compiler need to identify these?
 
@@ -327,7 +327,7 @@ Syntax choices aren't just aesthetic - they determine what the compiler can do d
 
 ### Syntax
 
-4. Is `[[reference]]` the right syntax, or should references be prose that tooling infers?
+4. Is `(~reference)` the right syntax, or should references be prose that tooling infers?
 5. Is `{~~}` worth the syntax, or should semantic points be unmarked prose?
 6. CAPS vs lowercase vs sigils for control flow - what enables deterministic parsing while remaining readable?
 7. Case convention vs `type` keyword for distinguishing types from variables?

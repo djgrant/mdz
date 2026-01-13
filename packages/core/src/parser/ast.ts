@@ -47,7 +47,10 @@ export interface Frontmatter extends BaseNode {
   kind: 'Frontmatter';
   name: string;
   description: string;
-  uses: string[];
+  skills: string[];    // Declared skill dependencies
+  agents: string[];    // Declared subagents for DELEGATE
+  tools: string[];     // External tools
+  uses: string[];      // Deprecated, kept for backward compatibility (alias for skills)
   imports: ImportDeclaration[];
   raw: Record<string, unknown>;
 }
@@ -81,6 +84,10 @@ export type Block =
   | IfStatement
   | BreakStatement            // v0.2
   | ContinueStatement         // v0.2
+  | DelegateStatement         // v0.8: DELEGATE /task/ TO ~/agent/x
+  | UseStatement              // v0.8: USE ~/skill/x TO /task/
+  | ExecuteStatement          // v0.8: EXECUTE ~/tool/x TO /action/
+  | GotoStatement             // v0.8: GOTO #section
   | Delegation
   | Paragraph
   | CodeBlock
@@ -162,8 +169,8 @@ export type Expression =
   | TemplateLiteral
   | VariableReference
   | FunctionCall
-  | SkillReference
-  | SectionReference
+  | LinkNode         // v0.8: ~/path/to/file or ~/path/to/file#anchor
+  | AnchorNode       // v0.8: #section (same-file reference)
   | SemanticMarker
   | InferredVariable
   | BinaryExpression
@@ -213,15 +220,18 @@ export interface FunctionCall extends BaseNode {
   args: Expression[];
 }
 
-export interface SkillReference extends BaseNode {
-  kind: 'SkillReference';
-  skill: string;
+// v0.8: Link reference (~/path/to/file or ~/path/to/file#anchor)
+export interface LinkNode extends BaseNode {
+  kind: 'Link';
+  path: string[];           // e.g., ['agent', 'architect'] from ~/agent/architect
+  anchor: string | null;    // e.g., 'section' from ~/skill/x#section, null otherwise
+  raw: string;              // Original syntax: '~/agent/architect' or '~/skill/x#section'
 }
 
-export interface SectionReference extends BaseNode {
-  kind: 'SectionReference';
-  skill: string | null;
-  section: string;
+// v0.8: Anchor reference (#section - same-file reference)
+export interface AnchorNode extends BaseNode {
+  kind: 'Anchor';
+  name: string;  // e.g., "methodology" from #methodology
 }
 
 export interface SemanticMarker extends BaseNode {
@@ -319,6 +329,46 @@ export interface ContinueStatement extends BaseNode {
   kind: 'ContinueStatement';
 }
 
+// v0.8: DELEGATE statement for agent delegation
+// Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+export interface DelegateStatement extends BaseNode {
+  kind: 'DelegateStatement';
+  task: SemanticMarker;              // Task being delegated: /do something/
+  target: LinkNode;                   // Target agent: ~/agent/architect
+  withAnchor?: AnchorNode;           // Optional template: WITH #template
+  parameters?: ParameterBlock;        // Optional parameters block
+}
+
+// v0.8: USE statement for skill activation
+// Syntax: USE ~/skill/x TO /task/
+export interface UseStatement extends BaseNode {
+  kind: 'UseStatement';
+  link: LinkNode;                     // Skill to use: ~/skill/work-packages
+  task: SemanticMarker;              // Task description: /manage work/
+  parameters?: ParameterBlock;        // Optional parameters block
+}
+
+// v0.8: EXECUTE statement for tool invocation
+// Syntax: EXECUTE ~/tool/x TO /action/
+export interface ExecuteStatement extends BaseNode {
+  kind: 'ExecuteStatement';
+  link: LinkNode;                     // Tool to execute: ~/tool/browser
+  task: SemanticMarker;              // Action description: /take screenshot/
+}
+
+// v0.8: GOTO statement for same-file navigation
+// Syntax: GOTO #section
+export interface GotoStatement extends BaseNode {
+  kind: 'GotoStatement';
+  anchor: AnchorNode;                 // Section to navigate to: #methodology
+}
+
+// v0.8: Parameter block for structured parameters
+export interface ParameterBlock extends BaseNode {
+  kind: 'ParameterBlock';
+  parameters: VariableDeclaration[];
+}
+
 export type Pattern = SimplePattern | DestructuringPattern;
 
 export interface SimplePattern extends BaseNode {
@@ -360,7 +410,7 @@ export interface CompoundCondition extends BaseNode {
 export interface Delegation extends BaseNode {
   kind: 'Delegation';
   verb: string;
-  target: SkillReference | SectionReference;
+  target: LinkNode | AnchorNode;  // v0.8: Changed from SkillReference | SectionReference
   parameters: VariableDeclaration[];
 }
 
@@ -376,8 +426,8 @@ export interface Paragraph extends BaseNode {
 export type InlineContent =
   | InlineText
   | VariableReference
-  | SkillReference
-  | SectionReference
+  | LinkNode         // v0.8
+  | AnchorNode       // v0.8
   | SemanticMarker
   | InferredVariable
   | Emphasis
@@ -494,6 +544,25 @@ export function isLoopStatement(node: BaseNode): node is ForEachStatement | Para
          node.kind === 'WhileStatement';
 }
 
-export function isReference(node: BaseNode): node is SkillReference | SectionReference {
-  return node.kind === 'SkillReference' || node.kind === 'SectionReference';
+// v0.8: Type guards for link-based references
+export function isLink(node: BaseNode): node is LinkNode {
+  return node.kind === 'Link';
+}
+
+export function isAnchor(node: BaseNode): node is AnchorNode {
+  return node.kind === 'Anchor';
+}
+
+// v0.8: Helper to resolve link to file path
+export function resolveLinkPath(link: LinkNode): string {
+  return link.path.join('/') + '.mdz';
+}
+
+// v0.8: Get reference kind from path
+export function getLinkKind(link: LinkNode): 'agent' | 'skill' | 'tool' | 'unknown' {
+  const folder = link.path[0];
+  if (folder === 'agent' || folder === 'agents') return 'agent';
+  if (folder === 'skill' || folder === 'skills') return 'skill';
+  if (folder === 'tool' || folder === 'tools') return 'tool';
+  return 'unknown';
 }

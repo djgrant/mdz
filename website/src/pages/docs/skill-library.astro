@@ -78,9 +78,6 @@ description: A friendly greeting skill
    <pre><code class="mdz"><span class="zen-comment">---
 name: complex-task
 description: A multi-step task that composes other skills
-uses:
-  - basic-skill
-  - another-skill
 ---</span>
 
 <span class="zen-heading">## Input</span>
@@ -89,21 +86,24 @@ uses:
 
 <span class="zen-heading">## Workflow</span>
 
-1. Use <span class="zen-reference">[[basic-skill]]</span> to process <span class="zen-variable">$data</span>
-2. Then apply <span class="zen-reference">[[another-skill]]</span> to <span class="zen-semantic">/result from step 1/</span>
+1. <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/basic-skill</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/process data/</span>
+2. <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/another-skill</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/transform result/</span>
 3. Return final result</code></pre>
 
-   <p>Reference other skills to avoid duplication.</p>
+   <p>Link to other skills to avoid duplication. Dependencies are inferred automatically.</p>
 
    <h2>Dependency Management</h2>
 
-   <p>Skills can depend on others for reuse:</p>
+   <p>Skills link to other skills using link syntax. Dependencies are inferred automatically from the links in your document:</p>
 
-   <pre><code class="language-yaml">---
+   <pre><code class="mdz"><span class="zen-comment">---
 name: dependent-skill
-uses:
-  - base-skill
----</code></pre>
+description: When processing with base functionality
+---</span>
+
+<span class="zen-heading">## Workflow</span>
+
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/base-skill</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/perform base operation/</span></code></pre>
 
    <p>Check dependency graphs:</p>
 
@@ -157,7 +157,7 @@ jobs:
       <li>Copy skill to shared directory</li>
       <li>Update frontmatter (add version, description)</li>
       <li>Commit to shared repo</li>
-      <li>Update <code>uses:</code> in dependent files</li>
+      <li>Update links in dependent files</li>
     </ol>
 
    <p>For team to organization-wide, repeat with broader access.</p>

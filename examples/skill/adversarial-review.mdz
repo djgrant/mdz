@@ -1,0 +1,63 @@
+---
+name: adversarial-review
+description: When evaluating a proposal, use this skill to stress-test it through attack-defend rounds until it breaks or proves robust.
+---
+
+## Types
+
+$Proposal: a claim, design, or plan to evaluate
+$AttackVector: "logical" | "empirical" | "practical" | "edge-case" | "adversarial"
+
+## Input
+
+- $proposal: $Proposal
+- $maxRounds: $Number = 5
+
+## Context
+
+- $round = 0
+- $reviewPath = ".review"
+
+## Workflow
+
+### 1. Initialize
+
+Create `$reviewPath/proposal.md` with $proposal and evaluation criteria.
+
+### 2. Attack-Defend Rounds
+
+WHILE $round < $maxRounds DO:
+  
+  **Attack Phase**
+  
+  PARALLEL FOR EACH $vector IN ["logical", "empirical", "practical", "edge-case", "adversarial"]:
+    DELEGATE /find genuine flaws through $vector lens, given $proposal and prior rounds/ TO ~/agent/attacker
+  
+  Collect attacks to `$reviewPath/round-$round-attacks.md`
+  
+  IF /attacks are superficial or repeat prior rounds/ THEN:
+    BREAK
+  
+  **Defense Phase**
+  
+  For each attack, respond honestly:
+  - Refute if invalid
+  - Mitigate if partially valid
+  - Acknowledge if the flaw is real
+  
+  Write findings to `$reviewPath/round-$round.md`
+  
+  IF /proposal fundamentally undermined/ THEN:
+    BREAK
+  
+  IF /stalemate reached/ THEN:
+    BREAK
+  
+  $round = $round + 1
+
+### 3. Synthesize
+
+From `$reviewPath/round-*.md`, assess:
+
+- Unresolved issues
+- Proposal strength: robust, viable with caveats, or requires revision

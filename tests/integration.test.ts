@@ -54,11 +54,10 @@ function describe(name: string, fn: () => void): void {
 // Simple Skill Test Cases
 // ============================================================================
 
+// v0.8: Link-based references
 const simpleSkill = `---
 name: simple-skill
 description: A simple test skill
-uses:
-  - base-skill
 ---
 
 ## Types
@@ -73,7 +72,7 @@ $Status: "pending" | "done"
 
 ## Workflow
 
-1. Execute $target with [[base-skill]]
+1. Execute $target with ~/skill/base-skill
 2. Update $status
 
 ## Helper Section
@@ -128,7 +127,7 @@ describe('Simple Skill Parsing', () => {
   test('extracts frontmatter correctly', () => {
     const doc = parse(simpleSkill);
     assertEqual(doc.frontmatter?.name, 'simple-skill');
-    assert(doc.frontmatter?.uses?.includes('base-skill') ?? false, 'Should use base-skill');
+    // v0.8: No uses: in frontmatter - dependencies inferred from links
   });
 
   test('identifies types', () => {
@@ -162,11 +161,11 @@ describe('Simple Skill Parsing', () => {
     assert(!result.output.includes('Task (any task'), 'No expansion');
   });
 
-  test('extracts metadata for references', () => {
+  test('extracts metadata for references (v0.8 link syntax)', () => {
     const result = compile(simpleSkill);
-    // Reference should be in metadata
+    // v0.8: Reference should be in metadata with full path
     const skillRefs = result.metadata.references.filter(r => r.kind === 'skill');
-    assert(skillRefs.some(r => r.target === 'base-skill'), 'Should find base-skill ref');
+    assert(skillRefs.some(r => r.target === '~/skill/base-skill'), 'Should find base-skill ref');
   });
 });
 
@@ -255,9 +254,10 @@ describe('Compilation Metadata', () => {
     assert(result.sourceMap.length > 0, 'Should have entries');
   });
 
-  test('builds dependency graph', () => {
+  test('builds dependency graph (v0.8 link syntax)', () => {
     const result = compile(simpleSkill);
-    assert(result.dependencies.nodes.includes('base-skill'), 'Should include base-skill');
+    // v0.8: Dependencies include full path
+    assert(result.dependencies.nodes.includes('skill/base-skill'), 'Should include skill/base-skill');
     assert(result.dependencies.edges.length > 0, 'Should have edges');
   });
 });
