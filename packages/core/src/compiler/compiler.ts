@@ -362,6 +362,15 @@ export class Compiler {
       case 'DelegateStatement':
         this.extractFromDelegateStatement(block);
         break;
+      case 'UseStatement':
+        this.extractFromUseStatement(block);
+        break;
+      case 'ExecuteStatement':
+        this.extractFromExecuteStatement(block);
+        break;
+      case 'GotoStatement':
+        this.extractFromGotoStatement(block);
+        break;
     }
   }
 
@@ -511,6 +520,66 @@ export class Compiler {
       source: deleg.span,
       type: 'control-flow',
       name: 'DelegateStatement',
+    });
+  }
+
+  // v0.8: Extract metadata from USE statement
+  private extractFromUseStatement(stmt: AST.UseStatement): void {
+    // Extract from skill link (~/skill/x)
+    this.extractLinkReference(stmt.link);
+    
+    // Extract from task semantic marker
+    this.sourceMap.push({
+      source: stmt.task.span,
+      type: 'semantic',
+      name: stmt.task.content,
+    });
+    
+    // Extract from parameters if present
+    if (stmt.parameters) {
+      for (const param of stmt.parameters.parameters) {
+        this.extractVariableDeclaration(param);
+      }
+    }
+    
+    // Add source map entry
+    this.sourceMap.push({
+      source: stmt.span,
+      type: 'control-flow',
+      name: 'UseStatement',
+    });
+  }
+
+  // v0.8: Extract metadata from EXECUTE statement
+  private extractFromExecuteStatement(stmt: AST.ExecuteStatement): void {
+    // Extract from tool link (~/tool/x)
+    this.extractLinkReference(stmt.link);
+    
+    // Extract from task semantic marker
+    this.sourceMap.push({
+      source: stmt.task.span,
+      type: 'semantic',
+      name: stmt.task.content,
+    });
+    
+    // Add source map entry
+    this.sourceMap.push({
+      source: stmt.span,
+      type: 'control-flow',
+      name: 'ExecuteStatement',
+    });
+  }
+
+  // v0.8: Extract metadata from GOTO statement
+  private extractFromGotoStatement(stmt: AST.GotoStatement): void {
+    // Extract anchor reference (#section)
+    this.extractAnchorReference(stmt.anchor);
+    
+    // Add source map entry
+    this.sourceMap.push({
+      source: stmt.span,
+      type: 'control-flow',
+      name: 'GotoStatement',
     });
   }
 
