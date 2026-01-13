@@ -1,17 +1,15 @@
 ---
 name: skill-composer
 description: Compose multiple skills into workflows
+
+types:
+  $SkillRef: /reference to another skill/
+  $CompositionMode: "sequential" | "parallel"
+
+input:
+  $skills: $SkillRef[]
+  $mode: $CompositionMode = "sequential"
 ---
-
-## Types
-
-$SkillRef: /reference to another skill/
-$CompositionMode: "sequential" | "parallel"
-
-## Input
-
-- $skills: $SkillRef[]
-- $mode: $CompositionMode = "sequential"
 
 ## Workflow
 

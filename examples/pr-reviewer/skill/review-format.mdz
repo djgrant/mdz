@@ -1,19 +1,17 @@
 ---
 name: review-format
 description: When formatting a PR review, use this skill to structure findings into a clear verdict.
+
+types:
+  $Severity: "critical" | "major" | "minor" | "trivial"
+  $Outcome: "approve" | "comment" | "request-changes"
+
+input:
+  $findings: ($String, $Severity, $String, $String)[] = []
+  $positives: $String[] = []
 ---
 
 Generate a formatted review from collected findings.
-
-## Types
-
-$Severity: "critical" | "major" | "minor" | "trivial"
-$Outcome: "approve" | "comment" | "request-changes"
-
-## Input
-
-- $findings: ($String, $Severity, $String, $String)[] = []
-- $positives: $String[] = []
 
 ## Workflow
 

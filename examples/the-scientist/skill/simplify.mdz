@@ -1,16 +1,14 @@
 ---
 name: simplify
 description: When a solution needs simplifying, use this skill to find its essence.
+
+input:
+  $target: /what to simplify/
+  $essence: /what must be preserved/
+
+context:
+  $relevantHeuristics: #heuristics[] = /a relevant set of heuristics/
 ---
-
-## Input
-
-- $target: /what to simplify/
-- $essence: /what must be preserved/
-
-## Context
-
-- $relevantHeuristics: #heuristics[] = /a relevant set of heuristics/
 
 ## Heuristics
 

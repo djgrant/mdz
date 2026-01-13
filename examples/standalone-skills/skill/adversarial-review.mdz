@@ -1,22 +1,19 @@
 ---
 name: adversarial-review
 description: When evaluating a proposal, use this skill to stress-test it through attack-defend rounds until it breaks or proves robust.
+
+types:
+  $Proposal: a claim, design, or plan to evaluate
+  $AttackVector: "logical" | "empirical" | "practical" | "edge-case" | "adversarial"
+
+input:
+  $proposal: $Proposal
+  $maxRounds: $Number = 5
+
+context:
+  $round: 0
+  $reviewPath: ".review"
 ---
-
-## Types
-
-$Proposal: a claim, design, or plan to evaluate
-$AttackVector: "logical" | "empirical" | "practical" | "edge-case" | "adversarial"
-
-## Input
-
-- $proposal: $Proposal
-- $maxRounds: $Number = 5
-
-## Context
-
-- $round = 0
-- $reviewPath = ".review"
 
 ## Workflow
 

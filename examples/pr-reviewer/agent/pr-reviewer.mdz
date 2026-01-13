@@ -1,19 +1,17 @@
 ---
 name: pr-reviewer
 description: When reviewing a pull request, use this skill to orchestrate parallel file analysis with persistent learnings.
+
+input:
+  $prUrl: $String
+
+context:
+  $files: []
+  $findings: []
+  $positives: []
 ---
 
 AI-powered code review that learns from feedback.
-
-## Input
-
-- $prUrl: $String
-
-## Context
-
-- $files = []
-- $findings = []
-- $positives = []
 
 ## Workflow
 

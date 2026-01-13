@@ -1,22 +1,19 @@
 ---
 name: steelmanning
 description: When evaluating an argument, use this skill to strengthen it before critiquing it.
+
+types:
+  $Argument: /a position with supporting reasoning/
+  $StrongVersion: /the most defensible form with evidence added and weak points removed/
+  $Critique: /a challenge that applies to the strong version, not the original/
+  $Verdict: "withstands" | "weakened" | "falls"
+
+input:
+  $argument: $Argument
+
+context:
+  $outputPath: ".steelman/analysis.md"
 ---
-
-## Types
-
-$Argument: /a position with supporting reasoning/
-$StrongVersion: /the most defensible form with evidence added and weak points removed/
-$Critique: /a challenge that applies to the strong version, not the original/
-$Verdict: "withstands" | "weakened" | "falls"
-
-## Input
-
-- $argument: $Argument
-
-## Context
-
-- $outputPath = ".steelman/analysis.md"
 
 ## Workflow
 

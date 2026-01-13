@@ -1,17 +1,15 @@
 ---
 name: data-processor
 description: Process some data
+
+types:
+  $DataSource: "api" | "file" | "database"
+
+input:
+  $source: $DataSorce
+  $count: $Numbr = 10
+  $validator: $Task
 ---
-
-## Types
-
-$DataSource: "api" | "file" | "database"
-
-## Input
-
-- $source: $DataSorce
-- $count: $Numbr = 10
-- $validator: $Task
 
 ## Workflow
 

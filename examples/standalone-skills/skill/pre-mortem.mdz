@@ -1,22 +1,19 @@
 ---
 name: pre-mortem
 description: When making a significant decision, use this skill to explore failure modes before committing.
+
+types:
+  $Decision: /a significant choice being considered/
+  $FailureCategory: "technical" | "organizational" | "external" | "human" | "resource"
+  $FailureMode: /a specific way the decision could fail/
+
+input:
+  $decision: $Decision
+  $timeHorizon: $String = "6 months"
+
+context:
+  $analysisPath: ".pre-mortem"
 ---
-
-## Types
-
-$Decision: /a significant choice being considered/
-$FailureCategory: "technical" | "organizational" | "external" | "human" | "resource"
-$FailureMode: /a specific way the decision could fail/
-
-## Input
-
-- $decision: $Decision
-- $timeHorizon: $String = "6 months"
-
-## Context
-
-- $analysisPath = ".pre-mortem"
 
 ## Workflow
 

@@ -1,23 +1,20 @@
 ---
 name: scientific-method
 description: When orchestrating hypothesis-driven iteration
+
+types:
+  $Hypothesis: /a testable prediction about what will solve the problem/
+  $Result: "confirmed" | "refuted" | "inconclusive"
+
+input:
+  $problem: $String
+  $maxIterations: $Number = 5
+
+context:
+  $hypothesis: $Hypothesis
+  $result: $Result
+  $iteration: 0
 ---
-
-## Types
-
-$Hypothesis: /a testable prediction about what will solve the problem/
-$Result: "confirmed" | "refuted" | "inconclusive"
-
-## Input
-
-- $problem: $String
-- $maxIterations: $Number = 5
-
-## Context
-
-- $hypothesis: $Hypothesis
-- $result: $Result
-- $iteration = 0
 
 ## Workflow
 

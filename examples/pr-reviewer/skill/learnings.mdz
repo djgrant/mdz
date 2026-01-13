@@ -1,24 +1,21 @@
 ---
 name: learnings
 description: When learning or applying review preferences, use this skill to persist and recall them.
+
+types:
+  $Learning: natural language preference with scope
+
+input:
+  $action: "learn" | "apply"
+  $feedback: $String = ""
+  $file: $String = ""
+  $paths: $String[] = []
+
+context:
+  $learnings: $Learning[] = []
 ---
 
 Persistent learning system for review preferences.
-
-## Types
-
-$Learning: natural language preference with scope
-
-## Input
-
-- $action: "learn" | "apply"
-- $feedback: $String = ""
-- $file: $String = ""
-- $paths: $String[] = []
-
-## Context
-
-- $learnings: $Learning[] = []
 
 ## Workflow
 

@@ -1,22 +1,19 @@
 ---
 name: doc-freshness-checker
 description: When documentation may be stale, use this skill to identify docs needing updates.
+
+types:
+  $Signal: an indicator of staleness (broken example, deprecated API, old version)
+  $Assessment: judgment of doc health based on signals found
+
+input:
+  $docPaths: $String[]
+  $codebasePath: $String
+
+context:
+  $findings: []
+  $reportPath: ".opencode/docs/freshness-report.md"
 ---
-
-## Types
-
-$Signal: an indicator of staleness (broken example, deprecated API, old version)
-$Assessment: judgment of doc health based on signals found
-
-## Input
-
-- $docPaths: $String[]
-- $codebasePath: $String
-
-## Context
-
-- $findings = []
-- $reportPath = ".opencode/docs/freshness-report.md"
 
 ## Workflow
 

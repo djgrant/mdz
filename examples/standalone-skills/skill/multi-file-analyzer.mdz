@@ -1,23 +1,20 @@
 ---
 name: multi-file-analyzer
 description: When analyzing multiple files, use this skill to delegate analysis and aggregate findings.
+
+types:
+  $Analysis: /structured findings for a single file/
+  $Finding: /an observation with severity and location/
+  $Severity: "critical" | "warning" | "info"
+
+input:
+  $files: $String[]
+  $concern: $String
+
+context:
+  $analyses: []
+  $reportPath: ".opencode/analysis/{slug($concern)}.md"
 ---
-
-## Types
-
-$Analysis: /structured findings for a single file/
-$Finding: /an observation with severity and location/
-$Severity: "critical" | "warning" | "info"
-
-## Input
-
-- $files: $String[]
-- $concern: $String
-
-## Context
-
-- $analyses = []
-- $reportPath = ".opencode/analysis/{slug($concern)}.md"
 
 ## Workflow
 

@@ -1,18 +1,16 @@
 ---
 name: code-analysis
 description: When analyzing a file diff, use this skill to find issues while respecting learned preferences.
+
+types:
+  $Finding: an issue with location and suggestion
+  $Severity: "critical" | "major" | "minor" | "trivial"
+
+input:
+  $filename: $String
+  $diff: $String
+  $learnings: $String[] = []
 ---
-
-## Types
-
-$Finding: an issue with location and suggestion
-$Severity: "critical" | "major" | "minor" | "trivial"
-
-## Input
-
-- $filename: $String
-- $diff: $String
-- $learnings: $String[] = []
 
 ## Guidelines
 
