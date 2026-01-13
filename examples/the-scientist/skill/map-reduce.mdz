@@ -1,0 +1,63 @@
+---
+name: map-reduce
+description: When you need multiple iterations to converge on a solution, use this skill to transform, validate, and iterate.
+
+types:
+  $Task: /instructions for a sub-agent to execute/
+  $Strategy: "accumulate" | "independent"
+
+input:
+  $transform: $Task
+  $validator: $Task
+  $strategy: $Strategy = "accumulate"
+  $maxIterations: $Number = 5
+
+context:
+  $statusQuo: $FilePath
+  $iteration: $Number = 0
+---
+
+## Workflow
+
+USE ~/skill/work-packages TO /create master work package/
+DO summarise status quo into $statusQuo
+
+IF $strategy = "accumulate" THEN:
+  DELEGATE WITH #accumulate-prompt
+ELSE:
+  DELEGATE WITH #independent-prompt
+
+RETURN $statusQuo
+
+## Accumulate Prompt
+
+```mdz
+WHILE $iteration < $maxIterations AND NOT /diminishing returns/ DO:
+  DELEGATE $transform WITH:
+    input: $statusQuo
+    output: /next candidate path/
+  DELEGATE $validator WITH:
+    candidate: /next candidate path/
+  IF /validation passed/ THEN:
+    $statusQuo = /next candidate path/
+  $iteration = $iteration + 1
+
+RETURN $statusQuo
+```
+
+## Independent Prompt
+
+```mdz
+$results = []
+
+WHILE $iteration < $maxIterations DO:
+  $results << ASYNC DELEGATE $transform WITH:
+    iteration: $iteration
+    output: /candidate path/
+  $iteration = $iteration + 1
+
+DELEGATE $validator WITH:
+  candidates: $results
+
+RETURN /winning candidate/
+```
