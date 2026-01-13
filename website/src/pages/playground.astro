@@ -1090,6 +1090,9 @@ const projectsJson = JSON.stringify(examplesData.projects);
     const displayName = fileName.split('/').pop();
     document.getElementById("file-indicator").textContent = displayName;
     
+    // Update URL with current file
+    updateURL(currentProject, fileName);
+    
     // Update file tree
     renderFileTree();
     
@@ -1103,7 +1106,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
     }
   }
 
-  function switchToProject(projectId) {
+  function switchToProject(projectId, initialFile = null) {
     const project = projects[projectId];
     if (!project) return;
     
@@ -1119,13 +1122,16 @@ const projectsJson = JSON.stringify(examplesData.projects);
     currentProject = projectId;
     currentProjectFiles = { ...project.files };
     
-    // Load first file
+    // Load specified file or first file
     const fileNames = Object.keys(currentProjectFiles);
-    currentFile = fileNames[0];
+    currentFile = (initialFile && currentProjectFiles[initialFile]) ? initialFile : fileNames[0];
     editor.setValue(currentProjectFiles[currentFile]);
     // Show just the filename in the indicator
     const displayName = currentFile.split('/').pop();
     document.getElementById("file-indicator").textContent = displayName;
+    
+    // Update URL with project and file
+    updateURL(projectId, currentFile);
     
     // Update UI
     renderProjectList();
@@ -1142,6 +1148,28 @@ const projectsJson = JSON.stringify(examplesData.projects);
   // Make switchToFile and switchToProject available globally for onclick handlers
   window.switchToFile = switchToFile;
   window.switchToProject = switchToProject;
+
+  // URL state management for permalinks
+  function getURLParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      project: params.get('project'),
+      file: params.get('file'),
+    };
+  }
+
+  function updateURL(projectId, fileName) {
+    const url = new URL(window.location.href);
+    if (projectId) {
+      url.searchParams.set('project', projectId);
+    }
+    if (fileName) {
+      url.searchParams.set('file', fileName);
+    } else {
+      url.searchParams.delete('file');
+    }
+    history.replaceState({}, '', url);
+  }
 
   // Monaco setup
   require.config({
@@ -1364,14 +1392,27 @@ const projectsJson = JSON.stringify(examplesData.projects);
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-    // Initialize with first available project that has files
+    // Read URL parameters for permalink support
+    const urlParams = getURLParams();
     const projectIds = Object.keys(projects);
-    const defaultProjectId = projectIds.find(id => Object.keys(projects[id].files).length > 0) || projectIds[0];
-    const defaultProject = projects[defaultProjectId];
-    currentProject = defaultProjectId;
-    currentProjectFiles = { ...defaultProject.files };
+    
+    // Determine which project to load (from URL or default)
+    let initialProjectId = urlParams.project && projects[urlParams.project] 
+      ? urlParams.project 
+      : projectIds.find(id => Object.keys(projects[id].files).length > 0) || projectIds[0];
+    
+    const initialProject = projects[initialProjectId];
+    currentProject = initialProjectId;
+    currentProjectFiles = { ...initialProject.files };
+    
+    // Determine which file to load (from URL or default)
     const fileNames = Object.keys(currentProjectFiles);
-    currentFile = fileNames[0];
+    currentFile = (urlParams.file && currentProjectFiles[urlParams.file]) 
+      ? urlParams.file 
+      : fileNames[0];
+    
+    // Update URL to reflect actual loaded state (normalizes URL)
+    updateURL(currentProject, currentFile);
 
     editor = monaco.editor.create(document.getElementById("editor"), {
       value: currentProjectFiles[currentFile],
