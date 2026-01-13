@@ -5,20 +5,17 @@ description: When evaluating an argument, use this skill to strengthen it before
 
 ## Types
 
-$Argument: a position with supporting reasoning
-$StrongVersion: the most defensible form with evidence added and weak points removed
-$Critique: a challenge that applies to the strong version, not the original
+$Argument: /a position with supporting reasoning/
+$StrongVersion: /the most defensible form with evidence added and weak points removed/
+$Critique: /a challenge that applies to the strong version, not the original/
 $Verdict: "withstands" | "weakened" | "falls"
 
 ## Input
 
 - $argument: $Argument
-- $context: $String
 
 ## Context
 
-- $currentSteelman: $StrongVersion
-- $critiques: $Critique[] = []
 - $outputPath = ".steelman/analysis.md"
 
 ## Workflow
@@ -29,7 +26,7 @@ Identify the core claim, evidence, and assumptions.
 
 ### 2. Advocate
 
-$currentSteelman = strongest version a proponent would make:
+Construct the strongest version a proponent would make:
 - Add evidence the author omitted
 - Address obvious objections preemptively
 - Remove weak points that undermine the core
@@ -37,26 +34,24 @@ $currentSteelman = strongest version a proponent would make:
 ### Gate
 
 IF /just the original restated/ THEN:
-  $currentSteelman = genuinely strengthened version
-  Return to gate until satisfied.
+  Try again with genuine strengthening.
+  GOTO #gate
 
 ### 3. Critique
 
-Challenge $currentSteelman:
+Challenge the steelmanned version:
 - What assumptions remain questionable?
 - What evidence is still weak?
 - What counterarguments survive?
 
-Collect into $critiques.
-
 ### 4. Judge
 
-$verdict: $Verdict
+Determine verdict: withstands, weakened, or falls.
 
 ### 5. Report
 
 Write to $outputPath:
 - Original argument
-- Steelmanned version  
+- Steelmanned version
 - Key critiques
 - Verdict

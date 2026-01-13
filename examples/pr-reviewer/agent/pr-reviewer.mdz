@@ -11,9 +11,9 @@ AI-powered code review that learns from feedback.
 
 ## Context
 
-- $files: ($String, $String)[] = []
-- $findings: $String[] = []
-- $positives: $String[] = []
+- $files = []
+- $findings = []
+- $positives = []
 
 ## Workflow
 
@@ -31,12 +31,8 @@ USE ~/skill/learnings#apply TO /load applicable learnings/ WITH:
 ### 3. Analyze Changes
 
 PARALLEL FOR EACH ($filename, $diff) IN $files:
-  
-  DELEGATE /analyze file for issues/ TO ~/agent/code-analyzer:
-    - $filename = $filename
-    - $diff = $diff
-    - $learnings = applicable learnings
-  
+  DELEGATE /analyze $filename for issues, respecting learned preferences/ TO ~/agent/code-analyzer
+
   Collect results into $findings
 
 ### 4. Note Positives
@@ -58,10 +54,9 @@ Post the formatted review to the PR.
 
 When a user responds to a review comment:
 
-1. IF /feedback expresses a preference/ THEN:
-   
-   USE ~/skill/learnings#learn TO /record preference/ WITH:
-     - $feedback = the feedback text
-     - $file = relevant file path
+IF /feedback expresses a preference/ THEN:
+  USE ~/skill/learnings#learn TO /record preference/ WITH:
+    - $feedback = the feedback text
+    - $file = relevant file path
 
-2. Acknowledge and update review if needed
+Acknowledge and update review if needed.

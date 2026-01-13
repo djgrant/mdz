@@ -5,35 +5,31 @@ description: When analyzing multiple files, use this skill to delegate analysis 
 
 ## Types
 
-$Analysis: structured findings for a single file
-$Finding: an observation with severity and location
+$Analysis: /structured findings for a single file/
+$Finding: /an observation with severity and location/
 $Severity: "critical" | "warning" | "info"
 
 ## Input
 
-- $files: $FilePath[]
+- $files: $String[]
 - $concern: $String
 
 ## Context
 
-- $analyses: $Analysis[] = []
-- $reportPath = ".opencode/analysis/${$concern.slug}.md"
+- $analyses = []
+- $reportPath = ".opencode/analysis/{slug($concern)}.md"
 
 ## Workflow
 
 ### 1. Analyze Files
 
 PARALLEL FOR EACH $file IN $files:
-  
   IF /file not accessible/ THEN:
     Record error
     CONTINUE
-  
-  DELEGATE /analyze file for concern/ TO ~/agent/analyzer:
-    - $task = /analyze $file for $concern/
-    - $file = $file
-    - $concern = $concern
-  
+
+  DELEGATE /analyze $file for $concern/ TO ~/agent/analyzer
+
   Add result to $analyses
 
 ### 2. Aggregate
@@ -47,6 +43,7 @@ Cross-reference $analyses:
 
 Write to $reportPath:
 
+```md
 #### Critical Findings
 
 List findings where severity = "critical"
@@ -58,3 +55,4 @@ Cross-file patterns discovered
 #### Recommendations
 
 Prioritized next steps based on findings
+```

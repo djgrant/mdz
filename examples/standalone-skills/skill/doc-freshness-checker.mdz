@@ -10,12 +10,12 @@ $Assessment: judgment of doc health based on signals found
 
 ## Input
 
-- $docPaths: $FilePath[]
-- $codebasePath: $FilePath
+- $docPaths: $String[]
+- $codebasePath: $String
 
 ## Context
 
-- $findings: ($FilePath, $Signal[], $Assessment)[] = []
+- $findings = []
 - $reportPath = ".opencode/docs/freshness-report.md"
 
 ## Workflow
@@ -23,12 +23,15 @@ $Assessment: judgment of doc health based on signals found
 ### 1. Scan for Signals
 
 PARALLEL FOR EACH $doc IN $docPaths:
-  DELEGATE /scan for staleness signals/ TO ~/agent/doc-scanner:
-    - $task = /scan for staleness signals/
-    - $doc = $doc
-    - $codebase = $codebasePath
-    - $signals = /APIs that no longer exist, version mismatches, broken examples, 404 links/
-  
+  DELEGATE TO ~/agent/doc-scanner WITH:
+    ```md
+    scan $doc for staleness:
+    - missing APIs
+    - version mismatches
+    - broken examples
+    - dead links
+    ```
+
   Add result to $findings
 
 ### 2. Prioritize
@@ -42,6 +45,7 @@ Sort $findings by impact on users:
 
 Write to $reportPath:
 
+```md
 #### Needs Immediate Attention
 
 FOR EACH ($doc, $signals, $assessment) IN $findings:
@@ -57,3 +61,4 @@ FOR EACH ($doc, $signals, $assessment) IN $findings:
 #### Healthy
 
 Count of docs with no concerning signals
+```

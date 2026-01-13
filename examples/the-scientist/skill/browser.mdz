@@ -1,0 +1,35 @@
+---
+name: browser
+description: When testing web UI, use this skill to take screenshots and interact with elements.
+---
+
+## Setup
+
+```bash
+npm run dev
+python .opencode/skill/browser/screenshot.py start &
+```
+
+## Commands
+
+```bash
+python .opencode/skill/browser/screenshot.py <command>
+```
+
+- `screenshot` - capture current state
+- `click <selector>` - click element
+- `type <selector> <text>` - type into input
+- `list <selector>` - list matching elements
+
+## Workflow
+
+1. Screenshot to see current state
+2. List elements to find selectors
+3. Interact with elements
+4. Screenshot to verify result
+
+## Teardown
+
+```bash
+python .opencode/skill/browser/screenshot.py stop
+```

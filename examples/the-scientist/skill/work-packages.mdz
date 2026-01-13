@@ -1,66 +1,31 @@
 ---
 name: work-packages
-description: When asked to create a work package (aka WP), or are using a skill that depends on work packages, or are given a work package to complete, use this skill to understand the correct methodology.
+description: When creating or completing a work package, use this skill for the correct structure.
 ---
 
-## Types
+Work packages persist task state between agent sessions.
 
-$WorkPackage: a structured document tracking a discrete unit of work
-$Lifecycle: "create" | "read" | "move" | "act" | "record" | "report"
-$Directory: "todo" | "in-progress" | "completed" | "backlog"
+## Structure
 
-## Context
+```markdown
+# {Title}
 
-- $basePath = ".opencode/work"
-- $wpPath = ($dir, $name) => `${$basePath}/${$dir}/wp-${$name}.md`
+## Goal
+{What needs to be solved}
 
-## Work Package Template
+## Approach
+{How to do it}
 
-A $WorkPackage contains these sections:
+## Hypothesis
+{Why you think this will work}
 
-1. **Title** - Descriptive name for the work
-2. **Goal/Problem** - What needs to be solved
-3. **Scope** - Which files/packages this touches
-4. **Approach** - How to do it
-5. **Hypothesis** - Why you think this will work
-6. **Results** - Filled upon completion (can contain multiple iterations)
-7. **Evaluation** - What you learned, was hypothesis correct?
+## Results
+{Filled out upon completion}
+```
 
-## Lifecycle
+## Workflow
 
-Work packages enable large tasks to be handled by multiple agents. The state persists between agent sessions. Each stage does not necessarily need to be handled by a single agent.
-
-### 1. Create
-
-Create the work package at $wpPath("todo", /date-name/)
-
-### 2. Read
-
-Read the document to understand the task fully before acting.
-
-### 3. Move
-
-Move from `todo/` to `in-progress/` to claim ownership.
-
-### 4. Act
-
-Act on the work package within the scope defined in the package.
-
-### 5. Record
-
-Record results and findings in the Results section.
-
-### 6. Report
-
-Report the status of the work package to the delegator.
-
-## Post-Completion
-
-The delegator may then ask you to:
-
-- Move the work package to `completed/`
-- Revise the hypothesis and run another iteration
-- Commit your changes
-
-IF /not sure how to proceed/ THEN:
-  Yield control back to the delegator.
+1. Create in `.opencode/work/todo/wp-{name}.md`
+2. Move to `in-progress/` when starting
+3. Record results
+4. Move to `completed/` when done

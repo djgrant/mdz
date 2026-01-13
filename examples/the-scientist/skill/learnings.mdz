@@ -1,0 +1,30 @@
+---
+name: learnings
+description: When you learn something notable, use this skill to record it for future reference.
+---
+
+Record notable learnings in `.opencode/learnings/`.
+
+## Filename
+
+`{date}-(package:{pkg})-({title})-(tags:{tags}).md`
+
+## Content
+
+```markdown
+---
+date: yyyy-mm-dd
+package: core
+tags: [tag1, tag2]
+---
+
+# {Title}
+
+{One or two sentences. No more.}
+```
+
+## When to Record
+
+- Project-specific insights (not general knowledge)
+- Mistakes to avoid
+- Patterns that worked

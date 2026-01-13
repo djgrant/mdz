@@ -5,15 +5,14 @@ description: When making a significant decision, use this skill to explore failu
 
 ## Types
 
-$Decision: a significant choice being considered
+$Decision: /a significant choice being considered/
 $FailureCategory: "technical" | "organizational" | "external" | "human" | "resource"
-$FailureMode: a specific way the decision could fail
+$FailureMode: /a specific way the decision could fail/
 
 ## Input
 
 - $decision: $Decision
 - $timeHorizon: $String = "6 months"
-- $context: $String
 
 ## Context
 
@@ -23,21 +22,21 @@ $FailureMode: a specific way the decision could fail
 
 ### 1. Set the Scene
 
-Create `$analysisPath/scenario.md`:
+Create `{$analysisPath}/scenario.md`:
 
 It is $timeHorizon from now. The decision has failed. We are conducting a post-mortem.
 
 ### 2. Explore Failures
 
 PARALLEL FOR EACH $category IN ["technical", "organizational", "external", "human", "resource"]:
-  
+
   Imagine the decision failed. What went wrong in the $category domain?
-  
+
   For each failure mode:
   - What specifically failed
   - The chain of events
   - Likelihood and impact
-  
+
   Write to `$analysisPath/$category.md`
 
 ### 3. Assess Risk
@@ -45,23 +44,22 @@ PARALLEL FOR EACH $category IN ["technical", "organizational", "external", "huma
 FOR EACH $mode IN /identified failure modes/:
   Assess severity based on likelihood and impact.
 
-Write to `$analysisPath/risks.md`
+Write to `{$analysisPath}/risks.md`
 
 ### 4. Plan Mitigations
 
 FOR EACH $failure IN /risks requiring mitigation/:
   IF /risk is acceptable/ THEN:
     CONTINUE
-  
+
   Design mitigation to reduce likelihood, impact, or both.
   Cost should be proportional to risk.
-  
+
   Append to `$analysisPath/mitigations.md`
 
 ### 5. Final Assessment
 
-From `$analysisPath/`, determine:
-
+Read $analysisPath and determine:
 - Critical unmitigated risks
 - Recommendation: proceed, proceed with caution, or reconsider
 - Leading indicators to watch

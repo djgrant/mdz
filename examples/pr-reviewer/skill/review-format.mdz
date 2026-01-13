@@ -28,10 +28,9 @@ ELSE IF /any findings/ THEN:
 ELSE:
   $outcome = "approve"
 
-### 2. Format Review
+### 2. Return Review
 
-Structure:
-
+```md
 ## Summary
 1-2 sentence overview
 
@@ -54,5 +53,4 @@ List minor/trivial as optional improvements
 $outcome with brief rationale
 
 ## Output
-
-Return formatted review text.
+```

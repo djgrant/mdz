@@ -15,7 +15,7 @@ $Insight: an idea that emerges from collision between perspectives
 
 ## Context
 
-- $outputPath = ".opencode/brainstorm/${$problem.slug}.md"
+- $outputPath = `.opencode/brainstorm/{slug($problem)}.md`
 - $ideas: $Insight[] = []
 
 ## Workflow
@@ -27,11 +27,8 @@ Restate $problem to ensure shared understanding.
 ### 2. Explore
 
 PARALLEL FOR EACH $perspective IN $perspectives:
-  DELEGATE /adopt perspective and generate ideas/ TO ~/agent/divergent:
-    - $task = /adopt $perspective fully and generate ideas/
-    - $problem = $problem
-    - $focus = /what does this viewpoint prioritize? what would it try first? what does it see that others miss?/
-  
+  DELEGATE /generate ideas for $problem from the $perspective viewpoint/ TO ~/agent/divergent
+
   Collect ideas into $ideas.
 
 ### 3. Synthesize

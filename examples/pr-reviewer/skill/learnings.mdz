@@ -30,7 +30,7 @@ IF $action = "learn" THEN:
 2. Determine scope (file pattern or repo-wide)
 3. Formulate: "In [scope]: [preference] because [reason]"
 4. Append to `.review/learnings.md`:
-   ```
+   ```md
    - **Scope**: [pattern]
    - **Learning**: [statement]
    ```
@@ -41,9 +41,9 @@ IF $action = "apply" THEN:
 
 1. Read `.review/learnings.md` if exists
 2. FOR EACH $learning IN $learnings:
-   FOR EACH $path IN $paths:
-     IF /scope matches path/ THEN:
-       Add to applicable learnings
+    FOR EACH $path IN $paths:
+      IF /scope matches path/ THEN:
+        Add to applicable learnings
 3. Return applicable learnings
 
 ## Bootstrap
