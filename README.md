@@ -1,5 +1,7 @@
 # MDZ (Zen Markdown)
 
+[![Experimental](https://img.shields.io/badge/status-experimental-orange.svg)](https://github.com/anomalyco/ai)
+
 > A language for the world's most powerful runtime
 
 MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. It's designed to be:
@@ -43,7 +45,7 @@ MDZ skills are markdown files with a `.mdz` extension:
 name: my-skill
 description: When you need to accomplish something specific
 uses:
-  - helper-skill
+  - ~helper-skill
 ---
 
 ## Types
@@ -63,7 +65,7 @@ $Strategy = "fast" | "thorough"
 2. FOR EACH $step IN $task.steps:
    - Execute $step
    - IF $step.failed THEN:
-     - Retry with [[helper-skill]]
+     - Retry with (~helper-skill)
 
 3. Report results at /appropriate location/
 ```
@@ -91,9 +93,9 @@ $Enum = "option1" | "option2" | "option3"
 
 **References** - Links to skills and sections:
 ```markdown
-[[skill-name]]           # Reference another skill
-[[skill-name#section]]   # Reference a section in another skill
-[[#section-name]]        # Reference a section in current skill
+(~skill-name)            # Reference another skill
+(~skill-name#section)    # Reference a section in another skill
+(#section-name)          # Reference a section in current skill
 ```
 
 **Semantic Markers** - LLM-interpreted content:
@@ -205,7 +207,7 @@ Install the MDZ extension for:
 - Syntax highlighting for `.mdz` files
 - Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)
 - Variable and type highlighting
-- Skill references ([[links]])
+- Skill references with sigils
 - Semantic markers (/content/)
 
 The extension is located in `editors/vscode/`. To install locally:
@@ -247,20 +249,19 @@ See the `examples/` directory for real-world skills:
 
 ## Roadmap
 
-### v0.2 ✓
-- PARALLEL FOR EACH - Concurrent iteration
-- Import system - Explicit skill loading
-- Typed parameters - Type annotations in WITH clauses
-- BREAK/CONTINUE - Loop control
-
-### v0.3 (Current)
+### v0.3 ✓
 - Validator-first architecture
 - Source = Output (no transformation)
 - Dependency graph extraction
 - Error codes for validation diagnostics
 - Built-in primitive types ($String, $Number, $Boolean)
 
-### v0.4 (Planned)
+### v0.7 (Current)
+- Sigil-based reference syntax: `(~skill)`, `(#section)`, `(@agent)`
+- Unified `uses:` frontmatter field with typed references
+- Removal of `[[wiki-link]]` syntax
+
+### v0.8 (Planned)
 - Registry-based skill resolution
 - Cross-file validation
 - Cycle detection across skill graph
