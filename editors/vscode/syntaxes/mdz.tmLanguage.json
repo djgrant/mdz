@@ -83,21 +83,19 @@
     "reference": {
       "patterns": [
         {
-          "match": "\\[\\[([a-z][a-z0-9-]*)(#[a-z][a-z0-9-]*)?\\]\\]",
-          "name": "meta.reference.skill.mdz",
+          "comment": "Link reference: ~/path/to/file or ~/path/to/file#section",
+          "match": "(~/)([a-z][a-z0-9/-]*)(#[a-z][a-z0-9-]*)?",
+          "name": "meta.reference.link.mdz",
           "captures": {
-            "0": { "name": "string.link.mdz" },
-            "1": { "name": "entity.name.type.skill.mdz" },
-            "2": { "name": "entity.name.type.section.mdz" }
+            "1": { "name": "punctuation.definition.link.mdz" },
+            "2": { "name": "entity.name.type.skill.mdz" },
+            "3": { "name": "entity.name.type.section.mdz" }
           }
         },
         {
-          "match": "\\[\\[(#[a-z][a-z0-9-]*)\\]\\]",
-          "name": "meta.reference.section.mdz",
-          "captures": {
-            "0": { "name": "string.link.mdz" },
-            "1": { "name": "entity.name.type.section.mdz" }
-          }
+          "comment": "Standalone anchor reference: #section",
+          "match": "(?<!~/)#[a-z][a-z0-9-]*",
+          "name": "entity.name.type.section.mdz"
         }
       ]
     },

@@ -1163,7 +1163,8 @@ const projectsJson = JSON.stringify(examplesData.projects);
           ],
           [/\/(?=[^\/\n]+\/)/, { token: "delimiter.semantic", next: "@semantic" }],
           [/\$\/[^\/]+\//, "variable.inferred"],
-          [/\([@~#]/, { token: "delimiter.reference", next: "@reference" }],
+          [/~\/[a-zA-Z0-9\/_-]+/, "entity.reference"],
+          [/#[a-zA-Z][a-zA-Z0-9_-]*/, "entity.reference"],
           [/\$[A-Z][a-zA-Z0-9]*/, "type"],
           [/\$[a-z][a-zA-Z0-9-]*/, "variable"],
           [/"[^"]*"/, "string"],
@@ -1173,10 +1174,6 @@ const projectsJson = JSON.stringify(examplesData.projects);
         semantic: [
           [/[^\/]+/, "string.semantic"],
           [/\//, { token: "delimiter.semantic", next: "@pop" }],
-        ],
-        reference: [
-          [/[^\)]+/, "entity.reference"],
-          [/\)/, { token: "delimiter.reference", next: "@pop" }],
         ],
       },
     });
@@ -1232,7 +1229,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
 
     // Autocomplete provider for zen language
     monaco.languages.registerCompletionItemProvider("zen", {
-      triggerCharacters: ["$", "("],
+      triggerCharacters: ["$", "~", "#", "/"],
 
       provideCompletionItems: (model, position) => {
         const textUntilPosition = model.getValueInRange({
