@@ -39,6 +39,9 @@
       exports.isVariableDeclaration = isVariableDeclaration;
       exports.isControlFlow = isControlFlow;
       exports.isLoopStatement = isLoopStatement;
+      exports.isReturnStatement = isReturnStatement;
+      exports.isPushStatement = isPushStatement;
+      exports.isDoStatement = isDoStatement;
       exports.isLink = isLink;
       exports.isAnchor = isAnchor;
       exports.resolveLinkPath = resolveLinkPath;
@@ -62,10 +65,19 @@
         return node.kind === "VariableDeclaration";
       }
       function isControlFlow(node) {
-        return node.kind === "ForEachStatement" || node.kind === "ParallelForEachStatement" || node.kind === "WhileStatement" || node.kind === "IfStatement";
+        return node.kind === "ForEachStatement" || node.kind === "WhileStatement" || node.kind === "IfStatement";
       }
       function isLoopStatement(node) {
-        return node.kind === "ForEachStatement" || node.kind === "ParallelForEachStatement" || node.kind === "WhileStatement";
+        return node.kind === "ForEachStatement" || node.kind === "WhileStatement";
+      }
+      function isReturnStatement(node) {
+        return node.kind === "ReturnStatement";
+      }
+      function isPushStatement(node) {
+        return node.kind === "PushStatement";
+      }
+      function isDoStatement(node) {
+        return node.kind === "DoStatement";
       }
       function isLink(node) {
         return node.kind === "Link";
@@ -213,6 +225,11 @@
           if (this.lookAhead(">=")) {
             this.consumeChars(2);
             this.addToken("GTE", ">=");
+            return;
+          }
+          if (this.lookAhead("<<")) {
+            this.consumeChars(2);
+            this.addToken("PUSH", "<<");
             return;
           }
           const singleOps = {
@@ -679,11 +696,13 @@
             "OR": "OR",
             "NOT": "NOT",
             "WITH": "WITH",
-            "PARALLEL": "PARALLEL",
             "BREAK": "BREAK",
             "CONTINUE": "CONTINUE",
             "DELEGATE": "DELEGATE",
             "TO": "TO",
+            "RETURN": "RETURN",
+            "ASYNC": "ASYNC",
+            "AWAIT": "AWAIT",
             "true": "TRUE",
             "false": "FALSE"
           };
@@ -852,6 +871,12 @@
             kind: "Frontmatter",
             name: parsed.name || "",
             description: parsed.description || "",
+            types: this.parseFrontmatterTypes(parsed.types),
+            // v0.9
+            input: this.parseFrontmatterInput(parsed.input),
+            // v0.9
+            context: this.parseFrontmatterContext(parsed.context),
+            // v0.9
             skills,
             agents,
             tools,
@@ -926,6 +951,7 @@
           let currentKey = "";
           let inArray = false;
           let inImports = false;
+          let inNestedObject = false;
           let currentImport = null;
           for (const line of lines) {
             const kvMatch = line.match(/^(\w+):\s*(.*)$/);
@@ -936,12 +962,26 @@
                 result[currentKey] = value;
                 inArray = false;
                 inImports = false;
+                inNestedObject = false;
               } else {
-                result[currentKey] = [];
-                inArray = true;
+                if (currentKey === "types" || currentKey === "input" || currentKey === "context") {
+                  result[currentKey] = {};
+                  inNestedObject = true;
+                  inArray = false;
+                } else {
+                  result[currentKey] = [];
+                  inArray = true;
+                }
                 inImports = currentKey === "imports";
               }
               continue;
+            }
+            if (inNestedObject && currentKey) {
+              const nestedMatch = line.match(/^\s+(\$?\w+):\s*(.*)$/);
+              if (nestedMatch) {
+                result[currentKey][nestedMatch[1]] = nestedMatch[2].trim();
+                continue;
+              }
             }
             if (inImports) {
               const pathMatch = line.match(/^\s+-\s+path:\s*(.+)$/);
@@ -990,6 +1030,80 @@
             aliases: new Map(Object.entries(imp.alias || {})),
             span: AST2.createSpan(1, 0, 0, 1, 0, 0)
           }));
+        }
+        // v0.9: Parse types from frontmatter
+        parseFrontmatterTypes(typesYaml) {
+          if (!typesYaml || typeof typesYaml !== "object")
+            return [];
+          return Object.entries(typesYaml).map(([name, def]) => ({
+            kind: "FrontmatterTypeDecl",
+            name: name.replace(/^\$/, ""),
+            typeExpr: this.parseTypeExprFromString(String(def)),
+            span: AST2.createSpan(1, 0, 0, 1, 0, 0)
+          }));
+        }
+        // v0.9: Parse input params from frontmatter
+        parseFrontmatterInput(inputYaml) {
+          if (!inputYaml || typeof inputYaml !== "object")
+            return [];
+          return Object.entries(inputYaml).map(([name, def]) => {
+            const defStr = String(def);
+            const hasDefault = defStr.includes("=");
+            const [typeStr, defaultStr] = hasDefault ? defStr.split("=").map((s) => s.trim()) : [defStr.trim(), void 0];
+            return {
+              kind: "FrontmatterInputDecl",
+              name: name.replace(/^\$/, ""),
+              type: typeStr ? this.parseTypeExprFromString(typeStr) : void 0,
+              defaultValue: defaultStr ? this.parseValueFromString(defaultStr) : void 0,
+              required: !hasDefault,
+              span: AST2.createSpan(1, 0, 0, 1, 0, 0)
+            };
+          });
+        }
+        // v0.9: Parse context vars from frontmatter
+        parseFrontmatterContext(contextYaml) {
+          if (!contextYaml || typeof contextYaml !== "object")
+            return [];
+          return Object.entries(contextYaml).map(([name, def]) => {
+            const defStr = String(def);
+            const hasInit = defStr.includes("=");
+            const [typeStr, initStr] = hasInit ? defStr.split("=").map((s) => s.trim()) : [defStr.trim(), void 0];
+            return {
+              kind: "FrontmatterContextDecl",
+              name: name.replace(/^\$/, ""),
+              type: typeStr ? this.parseTypeExprFromString(typeStr) : void 0,
+              initialValue: initStr ? this.parseValueFromString(initStr) : void 0,
+              span: AST2.createSpan(1, 0, 0, 1, 0, 0)
+            };
+          });
+        }
+        parseTypeExprFromString(str) {
+          const name = str.replace(/^\$/, "").replace(/\[\]$/, "");
+          const isArray = str.endsWith("[]");
+          const typeRef = {
+            kind: "TypeReference",
+            name,
+            span: AST2.createSpan(1, 0, 0, 1, 0, 0)
+          };
+          if (isArray) {
+            return { kind: "ArrayType", elementType: typeRef, span: typeRef.span };
+          }
+          return typeRef;
+        }
+        parseValueFromString(str) {
+          if (str.startsWith('"') && str.endsWith('"')) {
+            return { kind: "StringLiteral", value: str.slice(1, -1), span: AST2.createSpan(1, 0, 0, 1, 0, 0) };
+          }
+          if (!isNaN(Number(str))) {
+            return { kind: "NumberLiteral", value: Number(str), span: AST2.createSpan(1, 0, 0, 1, 0, 0) };
+          }
+          if (str === "true" || str === "false") {
+            return { kind: "BooleanLiteral", value: str === "true", span: AST2.createSpan(1, 0, 0, 1, 0, 0) };
+          }
+          if (str === "[]") {
+            return { kind: "ArrayLiteral", elements: [], span: AST2.createSpan(1, 0, 0, 1, 0, 0) };
+          }
+          return { kind: "InlineText", text: str, span: AST2.createSpan(1, 0, 0, 1, 0, 0) };
         }
         // ==========================================================================
         // Sections
@@ -1079,10 +1193,11 @@
             return this.parseListItem();
           }
           if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
+            const lookahead = this.peek(1);
+            if (lookahead?.type === "PUSH") {
+              return this.parsePushStatement();
+            }
             return this.parseVariableOrType();
-          }
-          if (this.check("PARALLEL")) {
-            return this.parseParallelForEach();
           }
           if (this.check("FOR")) {
             return this.parseForEach();
@@ -1098,6 +1213,18 @@
           }
           if (this.check("CONTINUE")) {
             return this.parseContinue();
+          }
+          if (this.check("RETURN")) {
+            return this.parseReturnStatement();
+          }
+          if (this.check("ASYNC") || this.check("AWAIT")) {
+            return this.parseDelegateStatement();
+          }
+          if (this.check("DO")) {
+            const next = this.peek(1);
+            if (next?.type === "SEMANTIC_MARKER") {
+              return this.parseDoStatement();
+            }
           }
           if (this.check("DELEGATE")) {
             return this.parseDelegateStatement();
@@ -1330,10 +1457,11 @@
         parseListItem() {
           this.advance();
           if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
+            const lookahead = this.peek(1);
+            if (lookahead?.type === "PUSH") {
+              return this.parsePushStatement();
+            }
             return this.parseVariableDeclaration();
-          }
-          if (this.check("PARALLEL")) {
-            return this.parseParallelForEach();
           }
           if (this.check("FOR")) {
             return this.parseForEach();
@@ -1349,6 +1477,18 @@
           }
           if (this.check("CONTINUE")) {
             return this.parseContinue();
+          }
+          if (this.check("RETURN")) {
+            return this.parseReturnStatement();
+          }
+          if (this.check("ASYNC") || this.check("AWAIT")) {
+            return this.parseDelegateStatement();
+          }
+          if (this.check("DO")) {
+            const next = this.peek(1);
+            if (next?.type === "SEMANTIC_MARKER") {
+              return this.parseDoStatement();
+            }
           }
           if (this.check("DELEGATE")) {
             return this.parseDelegateStatement();
@@ -1607,8 +1747,9 @@
             const token = this.advance();
             const content2 = token.value.slice(1, -1);
             const interpolations2 = [];
-            const varMatches = content2.matchAll(/\$([a-zA-Z][a-zA-Z0-9_-]*)/g);
-            for (const match of varMatches) {
+            const varRegex = /\$([a-zA-Z][a-zA-Z0-9_-]*)/g;
+            let match;
+            while ((match = varRegex.exec(content2)) !== null) {
               interpolations2.push({
                 kind: "VariableReference",
                 name: match[1],
@@ -1734,29 +1875,6 @@
             span: AST2.mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span)
           };
         }
-        // v0.2: PARALLEL FOR EACH
-        parseParallelForEach() {
-          const start = this.advance();
-          this.expect("FOR");
-          this.expect("EACH");
-          const pattern = this.parsePattern();
-          this.expect("IN");
-          const collection = this.parseExpression();
-          this.expect("COLON");
-          this.skipNewlines();
-          this.loopDepth++;
-          const body = this.parseIndentedBlocks();
-          this.loopDepth--;
-          return {
-            kind: "ParallelForEachStatement",
-            pattern,
-            collection,
-            body,
-            mergeStrategy: "collect",
-            // Default strategy
-            span: AST2.mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span)
-          };
-        }
         parseWhile() {
           const start = this.advance();
           const condition = this.parseCondition();
@@ -1843,24 +1961,71 @@
             span: token.span
           };
         }
-        // v0.8: DELEGATE statement for agent delegation
-        // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
-        //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
+        // v0.9: RETURN statement
+        parseReturnStatement() {
+          const token = this.advance();
+          let value;
+          if (!this.check("NEWLINE") && !this.isAtEnd() && !this.check("DEDENT")) {
+            value = this.parseExpression();
+          }
+          return {
+            kind: "ReturnStatement",
+            value,
+            span: value ? AST2.mergeSpans(token.span, value.span) : token.span
+          };
+        }
+        // v0.9: Push statement ($array << value)
+        parsePushStatement() {
+          const target = this.parseVariableReference();
+          this.expect("PUSH");
+          const value = this.parseExpression();
+          return {
+            kind: "PushStatement",
+            target,
+            value,
+            span: AST2.mergeSpans(target.span, value.span)
+          };
+        }
+        // v0.9: DO instruction (standalone prose instruction)
+        parseDoStatement() {
+          const token = this.advance();
+          const instruction = this.parseSemanticMarker();
+          return {
+            kind: "DoStatement",
+            instruction,
+            span: AST2.mergeSpans(token.span, instruction.span)
+          };
+        }
+        // v0.9: DELEGATE statement for agent delegation
+        // Syntax: [ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/x] [WITH #template | WITH: params]
         parseDelegateStatement() {
-          const start = this.advance();
+          const start = this.current();
+          let async = false;
+          let awaited = false;
+          if (this.check("ASYNC")) {
+            async = true;
+            this.advance();
+          } else if (this.check("AWAIT")) {
+            awaited = true;
+            this.advance();
+          }
+          this.expect("DELEGATE");
           let task;
-          if (!this.check("TO")) {
+          if (this.check("SEMANTIC_MARKER")) {
             task = this.parseSemanticMarker();
           }
-          this.expect("TO");
-          const target = this.parseLink();
+          let target;
+          if (this.check("TO")) {
+            this.advance();
+            target = this.parseLink();
+          }
           let withAnchor;
           let parameters;
           if (this.check("WITH")) {
             this.advance();
             if (this.check("COLON")) {
               parameters = this.parseParameterBlock();
-            } else {
+            } else if (this.check("ANCHOR")) {
               withAnchor = this.parseAnchor();
             }
           } else if (this.check("COLON")) {
@@ -1872,6 +2037,8 @@
             target,
             withAnchor,
             parameters,
+            async,
+            awaited,
             span: AST2.mergeSpans(start.span, this.previous().span)
           };
         }
@@ -2382,6 +2549,7 @@
             this.validateContracts(ast);
           }
           this.validateDelegateStatements(ast);
+          this.validateReturnStatements(ast);
           let output = source;
           if (this.options.includeHeader) {
             const header = `<!-- MDZ Validated: ${this.metadata.name || "unnamed"} -->
@@ -2428,6 +2596,34 @@
                 this.declaredDeps.add(skill);
               }
             }
+            for (const typeDecl of ast.frontmatter.types) {
+              this.definedTypes.add(typeDecl.name);
+              this.metadata.types.push({
+                name: typeDecl.name,
+                definition: this.typeExprToString(typeDecl.typeExpr),
+                span: typeDecl.span
+              });
+            }
+            for (const inputDecl of ast.frontmatter.input) {
+              this.definedVariables.add(inputDecl.name);
+              this.metadata.parameters.push({
+                name: inputDecl.name,
+                type: inputDecl.type ? this.typeExprToString(inputDecl.type) : null,
+                hasDefault: inputDecl.defaultValue !== void 0,
+                isRequired: inputDecl.required,
+                span: inputDecl.span
+              });
+            }
+            for (const contextDecl of ast.frontmatter.context) {
+              this.definedVariables.add(contextDecl.name);
+              this.metadata.variables.push({
+                name: contextDecl.name,
+                type: contextDecl.type ? this.typeExprToString(contextDecl.type) : null,
+                hasDefault: contextDecl.initialValue !== void 0,
+                isRequired: false,
+                span: contextDecl.span
+              });
+            }
           }
           for (const section of ast.sections) {
             if (section.title) {
@@ -2458,8 +2654,21 @@
               this.extractVariableDeclaration(block);
               break;
             case "ForEachStatement":
-            case "ParallelForEachStatement":
               this.extractFromControlFlow(block);
+              break;
+            case "ReturnStatement":
+              if (block.value) {
+                this.extractFromExpression(block.value);
+              }
+              break;
+            case "PushStatement":
+              this.extractFromExpression(block.target);
+              this.extractFromExpression(block.value);
+              break;
+            case "DoStatement":
+              if (block.instruction) {
+                this.extractFromExpression(block.instruction);
+              }
               break;
             case "WhileStatement":
               this.extractFromBlocks(block.body);
@@ -2589,8 +2798,11 @@
           }
         }
         // v0.8: Extract metadata from DELEGATE statement
+        // v0.9: target is now optional (for AWAIT statements)
         extractFromDelegateStatement(deleg) {
-          this.extractLinkReference(deleg.target);
+          if (deleg.target) {
+            this.extractLinkReference(deleg.target);
+          }
           if (deleg.task) {
             this.sourceMap.push({
               source: deleg.task.span,
@@ -2803,7 +3015,7 @@
               if (block.value) {
                 this.checkExpressionScope(block.value, usedBeforeDefined);
               }
-            } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+            } else if (block.kind === "ForEachStatement") {
               this.checkExpressionScope(block.collection, usedBeforeDefined);
               if (block.pattern.kind === "SimplePattern") {
                 this.definedVariables.add(block.pattern.name);
@@ -2847,6 +3059,21 @@
                   if (param.value) {
                     this.checkExpressionScope(param.value, usedBeforeDefined);
                   }
+                }
+              }
+            } else if (block.kind === "ReturnStatement") {
+              if (block.value) {
+                this.checkExpressionScope(block.value, usedBeforeDefined);
+              }
+            } else if (block.kind === "PushStatement") {
+              if (!this.definedVariables.has(block.target.name)) {
+                usedBeforeDefined.add(block.target.name);
+              }
+              this.checkExpressionScope(block.value, usedBeforeDefined);
+            } else if (block.kind === "DoStatement") {
+              for (const interpolation of block.instruction.interpolations) {
+                if (!this.definedVariables.has(interpolation.name)) {
+                  usedBeforeDefined.add(interpolation.name);
                 }
               }
             }
@@ -2933,7 +3160,7 @@
           for (const block of blocks) {
             if (block.kind === "DelegateStatement") {
               statements.push(block);
-            } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+            } else if (block.kind === "ForEachStatement") {
               this.findDelegateStatementsInBlocks(block.body, statements);
             } else if (block.kind === "WhileStatement") {
               this.findDelegateStatementsInBlocks(block.body, statements);
@@ -2949,6 +3176,9 @@
           }
         }
         validateDelegateAgent(deleg) {
+          if (!deleg.target) {
+            return;
+          }
           const linkKind = AST2.getLinkKind(deleg.target);
           if (linkKind !== "agent") {
             this.diagnostics.push({
@@ -2958,6 +3188,41 @@
               span: deleg.target.span
             });
           }
+        }
+        // v0.9: Validate RETURN statement placement
+        validateReturnStatements(ast) {
+          for (const section of ast.sections) {
+            this.validateReturnInBlocks(section.content, section.content.length);
+          }
+        }
+        validateReturnInBlocks(blocks, parentLength) {
+          for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            if (block.kind === "ReturnStatement") {
+              const isLast = i === parentLength - 1;
+              if (!isLast) {
+                this.addDiagnostic({
+                  severity: "error",
+                  code: "E018",
+                  message: "RETURN must be at end of section or loop iteration",
+                  span: block.span
+                });
+              }
+            } else if (block.kind === "ForEachStatement" || block.kind === "WhileStatement") {
+              this.validateReturnInBlocks(block.body, block.body.length);
+            } else if (block.kind === "IfStatement") {
+              this.validateReturnInBlocks(block.thenBody, block.thenBody.length);
+              for (const elseIf of block.elseIf) {
+                this.validateReturnInBlocks(elseIf.body, elseIf.body.length);
+              }
+              if (block.elseBody) {
+                this.validateReturnInBlocks(block.elseBody, block.elseBody.length);
+              }
+            }
+          }
+        }
+        addDiagnostic(diagnostic) {
+          this.diagnostics.push(diagnostic);
         }
         validateContracts(ast) {
           const delegations = [];
@@ -2977,7 +3242,7 @@
           for (const block of blocks) {
             if (block.kind === "Delegation") {
               delegations.push(block);
-            } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+            } else if (block.kind === "ForEachStatement") {
               this.findDelegationsInBlocks(block.body, delegations);
             } else if (block.kind === "WhileStatement") {
               this.findDelegationsInBlocks(block.body, delegations);
@@ -3309,6 +3574,11 @@
       if (this.lookAhead(">=")) {
         this.consumeChars(2);
         this.addToken("GTE", ">=");
+        return;
+      }
+      if (this.lookAhead("<<")) {
+        this.consumeChars(2);
+        this.addToken("PUSH", "<<");
         return;
       }
       const singleOps = {
@@ -3758,11 +4028,13 @@
         "OR": "OR",
         "NOT": "NOT",
         "WITH": "WITH",
-        "PARALLEL": "PARALLEL",
         "BREAK": "BREAK",
         "CONTINUE": "CONTINUE",
         "DELEGATE": "DELEGATE",
         "TO": "TO",
+        "RETURN": "RETURN",
+        "ASYNC": "ASYNC",
+        "AWAIT": "AWAIT",
         "true": "TRUE",
         "false": "FALSE"
       };
@@ -3884,6 +4156,12 @@
         kind: "Frontmatter",
         name: parsed.name || "",
         description: parsed.description || "",
+        types: this.parseFrontmatterTypes(parsed.types),
+        // v0.9
+        input: this.parseFrontmatterInput(parsed.input),
+        // v0.9
+        context: this.parseFrontmatterContext(parsed.context),
+        // v0.9
         skills,
         agents,
         tools,
@@ -3957,6 +4235,7 @@
       let currentKey = "";
       let inArray = false;
       let inImports = false;
+      let inNestedObject = false;
       let currentImport = null;
       for (const line of lines) {
         const kvMatch = line.match(/^(\w+):\s*(.*)$/);
@@ -3967,12 +4246,26 @@
             result[currentKey] = value;
             inArray = false;
             inImports = false;
+            inNestedObject = false;
           } else {
-            result[currentKey] = [];
-            inArray = true;
+            if (currentKey === "types" || currentKey === "input" || currentKey === "context") {
+              result[currentKey] = {};
+              inNestedObject = true;
+              inArray = false;
+            } else {
+              result[currentKey] = [];
+              inArray = true;
+            }
             inImports = currentKey === "imports";
           }
           continue;
+        }
+        if (inNestedObject && currentKey) {
+          const nestedMatch = line.match(/^\s+(\$?\w+):\s*(.*)$/);
+          if (nestedMatch) {
+            result[currentKey][nestedMatch[1]] = nestedMatch[2].trim();
+            continue;
+          }
         }
         if (inImports) {
           const pathMatch = line.match(/^\s+-\s+path:\s*(.+)$/);
@@ -4021,6 +4314,77 @@
         aliases: new Map(Object.entries(imp.alias || {})),
         span: createSpan(1, 0, 0, 1, 0, 0)
       }));
+    }
+    // v0.9: Parse types from frontmatter
+    parseFrontmatterTypes(typesYaml) {
+      if (!typesYaml || typeof typesYaml !== "object") return [];
+      return Object.entries(typesYaml).map(([name, def]) => ({
+        kind: "FrontmatterTypeDecl",
+        name: name.replace(/^\$/, ""),
+        typeExpr: this.parseTypeExprFromString(String(def)),
+        span: createSpan(1, 0, 0, 1, 0, 0)
+      }));
+    }
+    // v0.9: Parse input params from frontmatter
+    parseFrontmatterInput(inputYaml) {
+      if (!inputYaml || typeof inputYaml !== "object") return [];
+      return Object.entries(inputYaml).map(([name, def]) => {
+        const defStr = String(def);
+        const hasDefault = defStr.includes("=");
+        const [typeStr, defaultStr] = hasDefault ? defStr.split("=").map((s) => s.trim()) : [defStr.trim(), void 0];
+        return {
+          kind: "FrontmatterInputDecl",
+          name: name.replace(/^\$/, ""),
+          type: typeStr ? this.parseTypeExprFromString(typeStr) : void 0,
+          defaultValue: defaultStr ? this.parseValueFromString(defaultStr) : void 0,
+          required: !hasDefault,
+          span: createSpan(1, 0, 0, 1, 0, 0)
+        };
+      });
+    }
+    // v0.9: Parse context vars from frontmatter
+    parseFrontmatterContext(contextYaml) {
+      if (!contextYaml || typeof contextYaml !== "object") return [];
+      return Object.entries(contextYaml).map(([name, def]) => {
+        const defStr = String(def);
+        const hasInit = defStr.includes("=");
+        const [typeStr, initStr] = hasInit ? defStr.split("=").map((s) => s.trim()) : [defStr.trim(), void 0];
+        return {
+          kind: "FrontmatterContextDecl",
+          name: name.replace(/^\$/, ""),
+          type: typeStr ? this.parseTypeExprFromString(typeStr) : void 0,
+          initialValue: initStr ? this.parseValueFromString(initStr) : void 0,
+          span: createSpan(1, 0, 0, 1, 0, 0)
+        };
+      });
+    }
+    parseTypeExprFromString(str) {
+      const name = str.replace(/^\$/, "").replace(/\[\]$/, "");
+      const isArray = str.endsWith("[]");
+      const typeRef = {
+        kind: "TypeReference",
+        name,
+        span: createSpan(1, 0, 0, 1, 0, 0)
+      };
+      if (isArray) {
+        return { kind: "ArrayType", elementType: typeRef, span: typeRef.span };
+      }
+      return typeRef;
+    }
+    parseValueFromString(str) {
+      if (str.startsWith('"') && str.endsWith('"')) {
+        return { kind: "StringLiteral", value: str.slice(1, -1), span: createSpan(1, 0, 0, 1, 0, 0) };
+      }
+      if (!isNaN(Number(str))) {
+        return { kind: "NumberLiteral", value: Number(str), span: createSpan(1, 0, 0, 1, 0, 0) };
+      }
+      if (str === "true" || str === "false") {
+        return { kind: "BooleanLiteral", value: str === "true", span: createSpan(1, 0, 0, 1, 0, 0) };
+      }
+      if (str === "[]") {
+        return { kind: "ArrayLiteral", elements: [], span: createSpan(1, 0, 0, 1, 0, 0) };
+      }
+      return { kind: "InlineText", text: str, span: createSpan(1, 0, 0, 1, 0, 0) };
     }
     // ==========================================================================
     // Sections
@@ -4109,10 +4473,11 @@
         return this.parseListItem();
       }
       if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
+        const lookahead = this.peek(1);
+        if (lookahead?.type === "PUSH") {
+          return this.parsePushStatement();
+        }
         return this.parseVariableOrType();
-      }
-      if (this.check("PARALLEL")) {
-        return this.parseParallelForEach();
       }
       if (this.check("FOR")) {
         return this.parseForEach();
@@ -4128,6 +4493,18 @@
       }
       if (this.check("CONTINUE")) {
         return this.parseContinue();
+      }
+      if (this.check("RETURN")) {
+        return this.parseReturnStatement();
+      }
+      if (this.check("ASYNC") || this.check("AWAIT")) {
+        return this.parseDelegateStatement();
+      }
+      if (this.check("DO")) {
+        const next = this.peek(1);
+        if (next?.type === "SEMANTIC_MARKER") {
+          return this.parseDoStatement();
+        }
       }
       if (this.check("DELEGATE")) {
         return this.parseDelegateStatement();
@@ -4354,10 +4731,11 @@
     parseListItem() {
       this.advance();
       if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
+        const lookahead = this.peek(1);
+        if (lookahead?.type === "PUSH") {
+          return this.parsePushStatement();
+        }
         return this.parseVariableDeclaration();
-      }
-      if (this.check("PARALLEL")) {
-        return this.parseParallelForEach();
       }
       if (this.check("FOR")) {
         return this.parseForEach();
@@ -4373,6 +4751,18 @@
       }
       if (this.check("CONTINUE")) {
         return this.parseContinue();
+      }
+      if (this.check("RETURN")) {
+        return this.parseReturnStatement();
+      }
+      if (this.check("ASYNC") || this.check("AWAIT")) {
+        return this.parseDelegateStatement();
+      }
+      if (this.check("DO")) {
+        const next = this.peek(1);
+        if (next?.type === "SEMANTIC_MARKER") {
+          return this.parseDoStatement();
+        }
       }
       if (this.check("DELEGATE")) {
         return this.parseDelegateStatement();
@@ -4631,8 +5021,9 @@
         const token = this.advance();
         const content2 = token.value.slice(1, -1);
         const interpolations2 = [];
-        const varMatches = content2.matchAll(/\$([a-zA-Z][a-zA-Z0-9_-]*)/g);
-        for (const match of varMatches) {
+        const varRegex = /\$([a-zA-Z][a-zA-Z0-9_-]*)/g;
+        let match;
+        while ((match = varRegex.exec(content2)) !== null) {
           interpolations2.push({
             kind: "VariableReference",
             name: match[1],
@@ -4757,29 +5148,6 @@
         span: mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span)
       };
     }
-    // v0.2: PARALLEL FOR EACH
-    parseParallelForEach() {
-      const start = this.advance();
-      this.expect("FOR");
-      this.expect("EACH");
-      const pattern = this.parsePattern();
-      this.expect("IN");
-      const collection = this.parseExpression();
-      this.expect("COLON");
-      this.skipNewlines();
-      this.loopDepth++;
-      const body = this.parseIndentedBlocks();
-      this.loopDepth--;
-      return {
-        kind: "ParallelForEachStatement",
-        pattern,
-        collection,
-        body,
-        mergeStrategy: "collect",
-        // Default strategy
-        span: mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span)
-      };
-    }
     parseWhile() {
       const start = this.advance();
       const condition = this.parseCondition();
@@ -4869,24 +5237,71 @@
         span: token.span
       };
     }
-    // v0.8: DELEGATE statement for agent delegation
-    // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
-    //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
+    // v0.9: RETURN statement
+    parseReturnStatement() {
+      const token = this.advance();
+      let value;
+      if (!this.check("NEWLINE") && !this.isAtEnd() && !this.check("DEDENT")) {
+        value = this.parseExpression();
+      }
+      return {
+        kind: "ReturnStatement",
+        value,
+        span: value ? mergeSpans(token.span, value.span) : token.span
+      };
+    }
+    // v0.9: Push statement ($array << value)
+    parsePushStatement() {
+      const target = this.parseVariableReference();
+      this.expect("PUSH");
+      const value = this.parseExpression();
+      return {
+        kind: "PushStatement",
+        target,
+        value,
+        span: mergeSpans(target.span, value.span)
+      };
+    }
+    // v0.9: DO instruction (standalone prose instruction)
+    parseDoStatement() {
+      const token = this.advance();
+      const instruction = this.parseSemanticMarker();
+      return {
+        kind: "DoStatement",
+        instruction,
+        span: mergeSpans(token.span, instruction.span)
+      };
+    }
+    // v0.9: DELEGATE statement for agent delegation
+    // Syntax: [ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/x] [WITH #template | WITH: params]
     parseDelegateStatement() {
-      const start = this.advance();
+      const start = this.current();
+      let async = false;
+      let awaited = false;
+      if (this.check("ASYNC")) {
+        async = true;
+        this.advance();
+      } else if (this.check("AWAIT")) {
+        awaited = true;
+        this.advance();
+      }
+      this.expect("DELEGATE");
       let task;
-      if (!this.check("TO")) {
+      if (this.check("SEMANTIC_MARKER")) {
         task = this.parseSemanticMarker();
       }
-      this.expect("TO");
-      const target = this.parseLink();
+      let target;
+      if (this.check("TO")) {
+        this.advance();
+        target = this.parseLink();
+      }
       let withAnchor;
       let parameters;
       if (this.check("WITH")) {
         this.advance();
         if (this.check("COLON")) {
           parameters = this.parseParameterBlock();
-        } else {
+        } else if (this.check("ANCHOR")) {
           withAnchor = this.parseAnchor();
         }
       } else if (this.check("COLON")) {
@@ -4898,6 +5313,8 @@
         target,
         withAnchor,
         parameters,
+        async,
+        awaited,
         span: mergeSpans(start.span, this.previous().span)
       };
     }
@@ -5356,6 +5773,7 @@
         this.validateContracts(ast);
       }
       this.validateDelegateStatements(ast);
+      this.validateReturnStatements(ast);
       let output = source;
       if (this.options.includeHeader) {
         const header = `<!-- MDZ Validated: ${this.metadata.name || "unnamed"} -->
@@ -5402,6 +5820,34 @@
             this.declaredDeps.add(skill);
           }
         }
+        for (const typeDecl of ast.frontmatter.types) {
+          this.definedTypes.add(typeDecl.name);
+          this.metadata.types.push({
+            name: typeDecl.name,
+            definition: this.typeExprToString(typeDecl.typeExpr),
+            span: typeDecl.span
+          });
+        }
+        for (const inputDecl of ast.frontmatter.input) {
+          this.definedVariables.add(inputDecl.name);
+          this.metadata.parameters.push({
+            name: inputDecl.name,
+            type: inputDecl.type ? this.typeExprToString(inputDecl.type) : null,
+            hasDefault: inputDecl.defaultValue !== void 0,
+            isRequired: inputDecl.required,
+            span: inputDecl.span
+          });
+        }
+        for (const contextDecl of ast.frontmatter.context) {
+          this.definedVariables.add(contextDecl.name);
+          this.metadata.variables.push({
+            name: contextDecl.name,
+            type: contextDecl.type ? this.typeExprToString(contextDecl.type) : null,
+            hasDefault: contextDecl.initialValue !== void 0,
+            isRequired: false,
+            span: contextDecl.span
+          });
+        }
       }
       for (const section of ast.sections) {
         if (section.title) {
@@ -5432,8 +5878,21 @@
           this.extractVariableDeclaration(block);
           break;
         case "ForEachStatement":
-        case "ParallelForEachStatement":
           this.extractFromControlFlow(block);
+          break;
+        case "ReturnStatement":
+          if (block.value) {
+            this.extractFromExpression(block.value);
+          }
+          break;
+        case "PushStatement":
+          this.extractFromExpression(block.target);
+          this.extractFromExpression(block.value);
+          break;
+        case "DoStatement":
+          if (block.instruction) {
+            this.extractFromExpression(block.instruction);
+          }
           break;
         case "WhileStatement":
           this.extractFromBlocks(block.body);
@@ -5563,8 +6022,11 @@
       }
     }
     // v0.8: Extract metadata from DELEGATE statement
+    // v0.9: target is now optional (for AWAIT statements)
     extractFromDelegateStatement(deleg) {
-      this.extractLinkReference(deleg.target);
+      if (deleg.target) {
+        this.extractLinkReference(deleg.target);
+      }
       if (deleg.task) {
         this.sourceMap.push({
           source: deleg.task.span,
@@ -5776,7 +6238,7 @@
           if (block.value) {
             this.checkExpressionScope(block.value, usedBeforeDefined);
           }
-        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+        } else if (block.kind === "ForEachStatement") {
           this.checkExpressionScope(block.collection, usedBeforeDefined);
           if (block.pattern.kind === "SimplePattern") {
             this.definedVariables.add(block.pattern.name);
@@ -5820,6 +6282,21 @@
               if (param.value) {
                 this.checkExpressionScope(param.value, usedBeforeDefined);
               }
+            }
+          }
+        } else if (block.kind === "ReturnStatement") {
+          if (block.value) {
+            this.checkExpressionScope(block.value, usedBeforeDefined);
+          }
+        } else if (block.kind === "PushStatement") {
+          if (!this.definedVariables.has(block.target.name)) {
+            usedBeforeDefined.add(block.target.name);
+          }
+          this.checkExpressionScope(block.value, usedBeforeDefined);
+        } else if (block.kind === "DoStatement") {
+          for (const interpolation of block.instruction.interpolations) {
+            if (!this.definedVariables.has(interpolation.name)) {
+              usedBeforeDefined.add(interpolation.name);
             }
           }
         }
@@ -5906,7 +6383,7 @@
       for (const block of blocks) {
         if (block.kind === "DelegateStatement") {
           statements.push(block);
-        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+        } else if (block.kind === "ForEachStatement") {
           this.findDelegateStatementsInBlocks(block.body, statements);
         } else if (block.kind === "WhileStatement") {
           this.findDelegateStatementsInBlocks(block.body, statements);
@@ -5922,6 +6399,9 @@
       }
     }
     validateDelegateAgent(deleg) {
+      if (!deleg.target) {
+        return;
+      }
       const linkKind = getLinkKind(deleg.target);
       if (linkKind !== "agent") {
         this.diagnostics.push({
@@ -5931,6 +6411,41 @@
           span: deleg.target.span
         });
       }
+    }
+    // v0.9: Validate RETURN statement placement
+    validateReturnStatements(ast) {
+      for (const section of ast.sections) {
+        this.validateReturnInBlocks(section.content, section.content.length);
+      }
+    }
+    validateReturnInBlocks(blocks, parentLength) {
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        if (block.kind === "ReturnStatement") {
+          const isLast = i === parentLength - 1;
+          if (!isLast) {
+            this.addDiagnostic({
+              severity: "error",
+              code: "E018",
+              message: "RETURN must be at end of section or loop iteration",
+              span: block.span
+            });
+          }
+        } else if (block.kind === "ForEachStatement" || block.kind === "WhileStatement") {
+          this.validateReturnInBlocks(block.body, block.body.length);
+        } else if (block.kind === "IfStatement") {
+          this.validateReturnInBlocks(block.thenBody, block.thenBody.length);
+          for (const elseIf of block.elseIf) {
+            this.validateReturnInBlocks(elseIf.body, elseIf.body.length);
+          }
+          if (block.elseBody) {
+            this.validateReturnInBlocks(block.elseBody, block.elseBody.length);
+          }
+        }
+      }
+    }
+    addDiagnostic(diagnostic) {
+      this.diagnostics.push(diagnostic);
     }
     validateContracts(ast) {
       const delegations = [];
@@ -5950,7 +6465,7 @@
       for (const block of blocks) {
         if (block.kind === "Delegation") {
           delegations.push(block);
-        } else if (block.kind === "ForEachStatement" || block.kind === "ParallelForEachStatement") {
+        } else if (block.kind === "ForEachStatement") {
           this.findDelegationsInBlocks(block.body, delegations);
         } else if (block.kind === "WhileStatement") {
           this.findDelegationsInBlocks(block.body, delegations);

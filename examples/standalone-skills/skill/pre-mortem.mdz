@@ -28,16 +28,15 @@ It is $timeHorizon from now. The decision has failed. We are conducting a post-m
 
 ### 2. Explore Failures
 
-PARALLEL FOR EACH $category IN ["technical", "organizational", "external", "human", "resource"]:
+FOR EACH $category IN ["technical", "organizational", "external", "human", "resource"]:
+  ASYNC DELEGATE /imagine failure in $category domain for $decision/ TO ~/agent/failure-analyst WITH:
+    ```md
+    What specifically failed?
+    What was the chain of events?
+    What is the likelihood and impact?
+    ```
 
-  Imagine the decision failed. What went wrong in the $category domain?
-
-  For each failure mode:
-  - What specifically failed
-  - The chain of events
-  - Likelihood and impact
-
-  Write to `$analysisPath/$category.md`
+  Write results to `$analysisPath/$category.md`
 
 ### 3. Assess Risk
 

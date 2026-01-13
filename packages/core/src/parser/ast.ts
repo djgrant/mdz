@@ -2,7 +2,12 @@
  * MDZ AST Types
  * 
  * Complete type definitions for the Abstract Syntax Tree
- * Aligned with grammar.md and language-spec.md v0.2
+ * Aligned with grammar.md and language-spec.md
+ * 
+ * v0.2: Import declarations, PARALLEL FOR EACH, BREAK/CONTINUE
+ * v0.8: Link-based references (~/path), DELEGATE/USE/EXECUTE/GOTO statements
+ * v0.9: RETURN/PUSH/DO statements, frontmatter type/input/context declarations,
+ *       async/await delegate support, removed PARALLEL FOR EACH
  */
 
 // ============================================================================
@@ -52,6 +57,9 @@ export interface Frontmatter extends BaseNode {
   tools: string[];     // External tools
   uses: string[];      // Deprecated, kept for backward compatibility (alias for skills)
   imports: ImportDeclaration[];
+  types: FrontmatterTypeDecl[];      // v0.9: Type declarations
+  input: FrontmatterInputDecl[];     // v0.9: Input parameters
+  context: FrontmatterContextDecl[]; // v0.9: Context variables
   raw: Record<string, unknown>;
 }
 
@@ -61,6 +69,30 @@ export interface ImportDeclaration extends BaseNode {
   path: string;
   skills: string[];
   aliases: Map<string, string>;
+}
+
+// v0.9: Type declaration in frontmatter
+export interface FrontmatterTypeDecl extends BaseNode {
+  kind: 'FrontmatterTypeDecl';
+  name: string;
+  typeExpr: TypeExpr;
+}
+
+// v0.9: Input parameter in frontmatter
+export interface FrontmatterInputDecl extends BaseNode {
+  kind: 'FrontmatterInputDecl';
+  name: string;
+  type?: TypeExpr;
+  defaultValue?: Expression;
+  required: boolean;
+}
+
+// v0.9: Context variable in frontmatter
+export interface FrontmatterContextDecl extends BaseNode {
+  kind: 'FrontmatterContextDecl';
+  name: string;
+  type?: TypeExpr;
+  initialValue?: Expression;
 }
 
 export interface Section extends BaseNode {
@@ -79,11 +111,13 @@ export type Block =
   | TypeDefinition
   | VariableDeclaration
   | ForEachStatement
-  | ParallelForEachStatement  // v0.2
   | WhileStatement
   | IfStatement
   | BreakStatement            // v0.2
   | ContinueStatement         // v0.2
+  | ReturnStatement           // v0.9
+  | PushStatement             // v0.9
+  | DoStatement               // v0.9
   | DelegateStatement         // v0.8: DELEGATE /task/ TO ~/agent/x
   | UseStatement              // v0.8: USE ~/skill/x TO /task/
   | ExecuteStatement          // v0.8: EXECUTE ~/tool/x TO /action/
@@ -290,15 +324,6 @@ export interface ForEachStatement extends BaseNode {
   body: Block[];
 }
 
-// v0.2: PARALLEL FOR EACH
-export interface ParallelForEachStatement extends BaseNode {
-  kind: 'ParallelForEachStatement';
-  pattern: Pattern;
-  collection: Expression;
-  body: Block[];
-  mergeStrategy?: 'collect' | 'first' | 'last';  // How to merge results
-}
-
 export interface WhileStatement extends BaseNode {
   kind: 'WhileStatement';
   condition: Condition;
@@ -329,15 +354,39 @@ export interface ContinueStatement extends BaseNode {
   kind: 'ContinueStatement';
 }
 
+// v0.9: RETURN statement
+export interface ReturnStatement extends BaseNode {
+  kind: 'ReturnStatement';
+  value?: Expression;
+}
+
+// v0.9: Push statement
+export interface PushStatement extends BaseNode {
+  kind: 'PushStatement';
+  target: VariableReference;
+  value: Expression;
+}
+
+// v0.9: DO instruction (standalone prose instruction)
+export interface DoStatement extends BaseNode {
+  kind: 'DoStatement';
+  instruction: SemanticMarker;
+}
+
 // v0.8: DELEGATE statement for agent delegation
+// v0.9: Added async/awaited flags, made target optional
 // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
 //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
+//         ASYNC DELEGATE /task/ TO ~/agent/x  (v0.9: fire and forget)
+//         AWAIT $handle                        (v0.9: await async delegate)
 export interface DelegateStatement extends BaseNode {
   kind: 'DelegateStatement';
   task?: SemanticMarker;             // Task being delegated: /do something/ (optional in v0.8.1)
-  target: LinkNode;                   // Target agent: ~/agent/architect
+  target?: LinkNode;                 // Target agent: ~/agent/architect (v0.9: optional for AWAIT)
   withAnchor?: AnchorNode;           // Optional template: WITH #template
-  parameters?: ParameterBlock;        // Optional parameters block
+  parameters?: ParameterBlock;       // Optional parameters block
+  async?: boolean;                   // v0.9: Fire-and-forget delegation
+  awaited?: boolean;                 // v0.9: Awaiting a previous async delegation
 }
 
 // v0.8: USE statement for skill activation
@@ -500,7 +549,9 @@ export type ErrorCode =
   | 'E014' // Missing required field
   | 'E015' // Syntax error
   | 'E016' // BREAK outside loop (v0.2)
-  | 'E017'; // CONTINUE outside loop (v0.2)
+  | 'E017' // CONTINUE outside loop (v0.2)
+  | 'E018' // RETURN not at end of section/loop (v0.9)
+  | 'E019'; // Push target not array (v0.9)
 
 // ============================================================================
 // Utilities
@@ -535,14 +586,25 @@ export function isVariableDeclaration(node: BaseNode): node is VariableDeclarati
   return node.kind === 'VariableDeclaration';
 }
 
-export function isControlFlow(node: BaseNode): node is ForEachStatement | ParallelForEachStatement | WhileStatement | IfStatement {
-  return node.kind === 'ForEachStatement' || node.kind === 'ParallelForEachStatement' || 
-         node.kind === 'WhileStatement' || node.kind === 'IfStatement';
+export function isControlFlow(node: BaseNode): node is ForEachStatement | WhileStatement | IfStatement {
+  return node.kind === 'ForEachStatement' || node.kind === 'WhileStatement' || node.kind === 'IfStatement';
 }
 
-export function isLoopStatement(node: BaseNode): node is ForEachStatement | ParallelForEachStatement | WhileStatement {
-  return node.kind === 'ForEachStatement' || node.kind === 'ParallelForEachStatement' || 
-         node.kind === 'WhileStatement';
+export function isLoopStatement(node: BaseNode): node is ForEachStatement | WhileStatement {
+  return node.kind === 'ForEachStatement' || node.kind === 'WhileStatement';
+}
+
+// v0.9: Type guards for new statements
+export function isReturnStatement(node: BaseNode): node is ReturnStatement {
+  return node.kind === 'ReturnStatement';
+}
+
+export function isPushStatement(node: BaseNode): node is PushStatement {
+  return node.kind === 'PushStatement';
+}
+
+export function isDoStatement(node: BaseNode): node is DoStatement {
+  return node.kind === 'DoStatement';
 }
 
 // v0.8: Type guards for link-based references

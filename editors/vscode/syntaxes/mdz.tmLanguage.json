@@ -47,7 +47,7 @@
     "control-flow": {
       "patterns": [
         {
-          "match": "\\b(PARALLEL\\s+FOR\\s+EACH|FOR\\s+EACH|WHILE|IF|THEN|ELSE|BREAK|CONTINUE|DO)\\b",
+          "match": "\\b(FOR\\s+EACH|WHILE|IF|THEN|ELSE|BREAK|CONTINUE|RETURN|ASYNC|AWAIT|DO)\\b",
           "name": "keyword.control.mdz"
         },
         {
@@ -153,6 +153,10 @@
         {
           "match": "\\|",
           "name": "keyword.operator.type.union.mdz"
+        },
+        {
+          "match": "<<",
+          "name": "keyword.operator.push.mdz"
         },
         {
           "match": "\\.",

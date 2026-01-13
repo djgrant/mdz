@@ -2,7 +2,8 @@
  * MDZ Lexer
  * 
  * Tokenizes MDZ source into a stream of tokens.
- * v0.2: Added PARALLEL, BREAK, CONTINUE keywords
+ * v0.2: Added BREAK, CONTINUE keywords
+ * v0.9: Added RETURN, ASYNC, AWAIT keywords; PUSH operator; removed PARALLEL
  */
 
 import { Position, Span, createSpan } from './ast';
@@ -17,11 +18,13 @@ export type TokenType =
   // Control flow keywords
   | 'FOR' | 'EACH' | 'IN' | 'WHILE' | 'DO' | 'IF' | 'THEN' | 'ELSE'
   | 'AND' | 'OR' | 'NOT' | 'WITH'
-  | 'PARALLEL'  // v0.2
   | 'BREAK'     // v0.2
   | 'CONTINUE'  // v0.2
   | 'DELEGATE'  // v0.3
   | 'TO'        // v0.3
+  | 'RETURN'    // v0.9
+  | 'ASYNC'     // v0.9
+  | 'AWAIT'     // v0.9
   // Literals
   | 'STRING' | 'NUMBER' | 'TRUE' | 'FALSE'
   | 'TEMPLATE_START' | 'TEMPLATE_PART' | 'TEMPLATE_END'
@@ -30,6 +33,7 @@ export type TokenType =
   // Operators
   | 'ASSIGN' | 'COLON' | 'ARROW' | 'PIPE' | 'DOT' | 'COMMA' | 'SEMICOLON'
   | 'EQ' | 'NEQ' | 'LT' | 'GT' | 'LTE' | 'GTE'
+  | 'PUSH'      // v0.9: << operator
   // Brackets
   | 'LPAREN' | 'RPAREN' | 'LBRACKET' | 'RBRACKET' | 'LBRACE' | 'RBRACE'
   // v0.8: Link-based references (replaces sigil-based refs)
@@ -208,6 +212,13 @@ export class Lexer {
     if (this.lookAhead('>=')) {
       this.consumeChars(2);
       this.addToken('GTE', '>=');
+      return;
+    }
+
+    // Push operator (v0.9) - must come before single '<'
+    if (this.lookAhead('<<')) {
+      this.consumeChars(2);
+      this.addToken('PUSH', '<<');
       return;
     }
 
@@ -693,18 +704,21 @@ export class Lexer {
       ident += this.advance();
     }
 
-    // v0.2: Added PARALLEL, BREAK, CONTINUE
+    // v0.2: Added BREAK, CONTINUE
     // v0.3: Added DO for WHILE...DO syntax, DELEGATE and TO for agent delegation
+    // v0.9: Added RETURN, ASYNC, AWAIT; removed PARALLEL
     const keywords: Record<string, TokenType> = {
       'FOR': 'FOR', 'EACH': 'EACH', 'IN': 'IN', 'WHILE': 'WHILE',
       'DO': 'DO',
       'IF': 'IF', 'THEN': 'THEN', 'ELSE': 'ELSE',
       'AND': 'AND', 'OR': 'OR', 'NOT': 'NOT', 'WITH': 'WITH',
-      'PARALLEL': 'PARALLEL',
       'BREAK': 'BREAK',
       'CONTINUE': 'CONTINUE',
       'DELEGATE': 'DELEGATE',
       'TO': 'TO',
+      'RETURN': 'RETURN',
+      'ASYNC': 'ASYNC',
+      'AWAIT': 'AWAIT',
       'true': 'TRUE', 'false': 'FALSE',
     };
 

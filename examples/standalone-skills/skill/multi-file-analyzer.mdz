@@ -23,14 +23,14 @@ $Severity: "critical" | "warning" | "info"
 
 ### 1. Analyze Files
 
-PARALLEL FOR EACH $file IN $files:
+FOR EACH $file IN $files:
   IF /file not accessible/ THEN:
     Record error
     CONTINUE
 
-  DELEGATE /analyze $file for $concern/ TO ~/agent/analyzer
+  ASYNC DELEGATE /analyze $file for $concern/ TO ~/agent/analyzer
 
-  Add result to $analyses
+Collect results into $analyses
 
 ### 2. Aggregate
 

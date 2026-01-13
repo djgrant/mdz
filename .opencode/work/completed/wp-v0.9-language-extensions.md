@@ -485,3 +485,60 @@ RETURN /winning candidate/
 - Renamed $current to $statusQuo for clarity
 - Updated map-reduce.mdz example to v0.9 syntax
 - Created separate wp-v0.10-type-constraints.md for type system investigation
+
+### 2026-01-13 (Impact Assessment)
+
+**Decisions resolved:**
+- RETURN valid only at end of section or loop iteration
+- Implicit return allowed (no RETURN = natural completion)
+- Type inference deferred to v0.10 (DELEGATE targets must be literals)
+- `## Types`, `## Input`, `## Context` sections REMOVED entirely (not deprecated)
+
+**Sub-packages created with detailed scope:**
+- `wp-v0.9-spec.md` - 15-21 hours
+- `wp-v0.9-lexer.md` - 1 hour
+- `wp-v0.9-ast.md` - 3-4 hours
+- `wp-v0.9-parser.md` - 40-50 hours (largest)
+- `wp-v0.9-compiler.md` - 16-24 hours
+- `wp-v0.9-examples.md` - 4-6 hours
+- `wp-v0.9-tests.md` - 19-24 hours
+- `wp-v0.9-website.md` - 16-24 hours
+
+**Total estimated effort:** 115-155 hours
+
+**Execution sequence:**
+1. Spec (ground truth)
+2. Lexer + AST (parallel)
+3. Parser
+4. Compiler
+5. Tests (alongside each change)
+6. Examples
+7. Website
+
+### 2026-01-13 (Implementation Complete)
+
+**All sub-packages completed:**
+
+| Package | Status | Key Changes |
+|---------|--------|-------------|
+| wp-v0.9-spec | ✅ Complete | grammar.md + language-spec.md updated to v0.9 |
+| wp-v0.9-lexer | ✅ Complete | RETURN, ASYNC, AWAIT tokens + << operator added |
+| wp-v0.9-ast | ✅ Complete | New node types, DelegateStatement modified |
+| wp-v0.9-parser | ✅ Complete | All v0.9 syntax parsed, PARALLEL removed |
+| wp-v0.9-compiler | ✅ Complete | Validation for new constructs, frontmatter extraction |
+| wp-v0.9-tests | ✅ Complete | PARALLEL tests removed, v0.9 feature tests added |
+| wp-v0.9-examples | ✅ Complete | 6 files migrated from PARALLEL to ASYNC DELEGATE |
+| wp-v0.9-website | ✅ Complete | Monaco + VS Code highlighting, bundles rebuilt |
+
+**Test results:**
+- Parser: 55 passed
+- Compiler: 34 passed  
+- Integration: 22 passed
+- Edge cases: 39 passed
+- v0.2 features: 30 passed
+- Examples: 27 passed
+- **Total: 207 tests passing, 0 failures**
+
+**Remaining work:**
+- Update CHANGELOG.md with v0.9 release notes
+- Consider migration guide for users

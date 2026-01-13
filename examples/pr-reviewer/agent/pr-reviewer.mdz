@@ -30,10 +30,10 @@ USE ~/skill/learnings#apply TO /load applicable learnings/ WITH:
 
 ### 3. Analyze Changes
 
-PARALLEL FOR EACH ($filename, $diff) IN $files:
-  DELEGATE /analyze $filename for issues, respecting learned preferences/ TO ~/agent/code-analyzer
+FOR EACH ($filename, $diff) IN $files:
+  ASYNC DELEGATE /analyze $filename for issues, respecting learned preferences/ TO ~/agent/code-analyzer
 
-  Collect results into $findings
+Collect all results into $findings.
 
 ### 4. Note Positives
 

@@ -26,10 +26,10 @@ Restate $problem to ensure shared understanding.
 
 ### 2. Explore
 
-PARALLEL FOR EACH $perspective IN $perspectives:
-  DELEGATE /generate ideas for $problem from the $perspective viewpoint/ TO ~/agent/divergent
+FOR EACH $perspective IN $perspectives:
+  ASYNC DELEGATE /generate ideas for $problem from the $perspective viewpoint/ TO ~/agent/divergent
 
-  Collect ideas into $ideas.
+Collect all results into $ideas.
 
 ### 3. Synthesize
 

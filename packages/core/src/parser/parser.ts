@@ -3,6 +3,8 @@
  * 
  * Recursive descent parser for MDZ documents.
  * v0.2: Added PARALLEL FOR EACH, BREAK, CONTINUE, typed parameters
+ * v0.9: Added RETURN, ASYNC/AWAIT DELEGATE, push operator, DO instruction;
+ *       removed PARALLEL FOR EACH; frontmatter types/input/context
  */
 
 import { Token, TokenType, tokenize } from './lexer';
@@ -84,6 +86,9 @@ export class Parser {
       kind: 'Frontmatter',
       name: parsed.name || '',
       description: parsed.description || '',
+      types: this.parseFrontmatterTypes(parsed.types),      // v0.9
+      input: this.parseFrontmatterInput(parsed.input),      // v0.9
+      context: this.parseFrontmatterContext(parsed.context), // v0.9
       skills,
       agents,
       tools,
@@ -173,6 +178,7 @@ export class Parser {
     let currentKey = '';
     let inArray = false;
     let inImports = false;
+    let inNestedObject = false;
     let currentImport: any = null;
 
     for (const line of lines) {
@@ -184,12 +190,29 @@ export class Parser {
           result[currentKey] = value;
           inArray = false;
           inImports = false;
+          inNestedObject = false;
         } else {
-          result[currentKey] = [];
-          inArray = true;
+          // v0.9: types, input, context are objects, not arrays
+          if (currentKey === 'types' || currentKey === 'input' || currentKey === 'context') {
+            result[currentKey] = {};
+            inNestedObject = true;
+            inArray = false;
+          } else {
+            result[currentKey] = [];
+            inArray = true;
+          }
           inImports = currentKey === 'imports';
         }
         continue;
+      }
+
+      // v0.9: Handle nested object entries (key: value indented)
+      if (inNestedObject && currentKey) {
+        const nestedMatch = line.match(/^\s+(\$?\w+):\s*(.*)$/);
+        if (nestedMatch) {
+          result[currentKey][nestedMatch[1]] = nestedMatch[2].trim();
+          continue;
+        }
       }
 
       // v0.2: Handle imports array with objects
@@ -249,6 +272,84 @@ export class Parser {
       aliases: new Map(Object.entries(imp.alias || {})),
       span: AST.createSpan(1, 0, 0, 1, 0, 0),
     }));
+  }
+
+  // v0.9: Parse types from frontmatter
+  private parseFrontmatterTypes(typesYaml: Record<string, any> | undefined): AST.FrontmatterTypeDecl[] {
+    if (!typesYaml || typeof typesYaml !== 'object') return [];
+    return Object.entries(typesYaml).map(([name, def]) => ({
+      kind: 'FrontmatterTypeDecl' as const,
+      name: name.replace(/^\$/, ''),
+      typeExpr: this.parseTypeExprFromString(String(def)),
+      span: AST.createSpan(1, 0, 0, 1, 0, 0),
+    }));
+  }
+
+  // v0.9: Parse input params from frontmatter
+  private parseFrontmatterInput(inputYaml: Record<string, any> | undefined): AST.FrontmatterInputDecl[] {
+    if (!inputYaml || typeof inputYaml !== 'object') return [];
+    return Object.entries(inputYaml).map(([name, def]) => {
+      const defStr = String(def);
+      const hasDefault = defStr.includes('=');
+      const [typeStr, defaultStr] = hasDefault ? defStr.split('=').map(s => s.trim()) : [defStr.trim(), undefined];
+      return {
+        kind: 'FrontmatterInputDecl' as const,
+        name: name.replace(/^\$/, ''),
+        type: typeStr ? this.parseTypeExprFromString(typeStr) : undefined,
+        defaultValue: defaultStr ? this.parseValueFromString(defaultStr) : undefined,
+        required: !hasDefault,
+        span: AST.createSpan(1, 0, 0, 1, 0, 0),
+      };
+    });
+  }
+
+  // v0.9: Parse context vars from frontmatter
+  private parseFrontmatterContext(contextYaml: Record<string, any> | undefined): AST.FrontmatterContextDecl[] {
+    if (!contextYaml || typeof contextYaml !== 'object') return [];
+    return Object.entries(contextYaml).map(([name, def]) => {
+      const defStr = String(def);
+      const hasInit = defStr.includes('=');
+      const [typeStr, initStr] = hasInit ? defStr.split('=').map(s => s.trim()) : [defStr.trim(), undefined];
+      return {
+        kind: 'FrontmatterContextDecl' as const,
+        name: name.replace(/^\$/, ''),
+        type: typeStr ? this.parseTypeExprFromString(typeStr) : undefined,
+        initialValue: initStr ? this.parseValueFromString(initStr) : undefined,
+        span: AST.createSpan(1, 0, 0, 1, 0, 0),
+      };
+    });
+  }
+
+  private parseTypeExprFromString(str: string): AST.TypeExpr {
+    // Simple type reference: $Type or Type
+    const name = str.replace(/^\$/, '').replace(/\[\]$/, '');
+    const isArray = str.endsWith('[]');
+    const typeRef: AST.TypeReference = {
+      kind: 'TypeReference',
+      name,
+      span: AST.createSpan(1, 0, 0, 1, 0, 0),
+    };
+    if (isArray) {
+      return { kind: 'ArrayType', elementType: typeRef, span: typeRef.span };
+    }
+    return typeRef;
+  }
+
+  private parseValueFromString(str: string): AST.Expression {
+    // Simple literal parsing
+    if (str.startsWith('"') && str.endsWith('"')) {
+      return { kind: 'StringLiteral', value: str.slice(1, -1), span: AST.createSpan(1, 0, 0, 1, 0, 0) };
+    }
+    if (!isNaN(Number(str))) {
+      return { kind: 'NumberLiteral', value: Number(str), span: AST.createSpan(1, 0, 0, 1, 0, 0) };
+    }
+    if (str === 'true' || str === 'false') {
+      return { kind: 'BooleanLiteral', value: str === 'true', span: AST.createSpan(1, 0, 0, 1, 0, 0) };
+    }
+    if (str === '[]') {
+      return { kind: 'ArrayLiteral', elements: [], span: AST.createSpan(1, 0, 0, 1, 0, 0) };
+    }
+    return { kind: 'InlineText', text: str, span: AST.createSpan(1, 0, 0, 1, 0, 0) };
   }
 
   // ==========================================================================
@@ -365,12 +466,12 @@ export class Parser {
     }
 
     if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
+      // v0.9: Check for push operator <<
+      const lookahead = this.peek(1);
+      if (lookahead?.type === 'PUSH') {
+        return this.parsePushStatement();
+      }
       return this.parseVariableOrType();
-    }
-
-    // v0.2: PARALLEL FOR EACH
-    if (this.check('PARALLEL')) {
-      return this.parseParallelForEach();
     }
 
     // Control flow
@@ -394,6 +495,25 @@ export class Parser {
     // v0.2: CONTINUE
     if (this.check('CONTINUE')) {
       return this.parseContinue();
+    }
+
+    // v0.9: RETURN statement
+    if (this.check('RETURN')) {
+      return this.parseReturnStatement();
+    }
+
+    // v0.9: ASYNC/AWAIT before DELEGATE
+    if (this.check('ASYNC') || this.check('AWAIT')) {
+      return this.parseDelegateStatement();
+    }
+
+    // v0.9: DO instruction (standalone, not WHILE...DO)
+    if (this.check('DO')) {
+      // Lookahead to distinguish DO /instruction/ from stray DO
+      const next = this.peek(1);
+      if (next?.type === 'SEMANTIC_MARKER') {
+        return this.parseDoStatement();
+      }
     }
 
     // v0.3: DELEGATE statement
@@ -685,14 +805,15 @@ export class Parser {
 
     // Variable declaration
     if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
+      // v0.9: Check for push operator <<
+      const lookahead = this.peek(1);
+      if (lookahead?.type === 'PUSH') {
+        return this.parsePushStatement();
+      }
       return this.parseVariableDeclaration();
     }
 
     // v0.2: Control flow inside list items
-    if (this.check('PARALLEL')) {
-      return this.parseParallelForEach();
-    }
-
     if (this.check('FOR')) {
       return this.parseForEach();
     }
@@ -711,6 +832,24 @@ export class Parser {
 
     if (this.check('CONTINUE')) {
       return this.parseContinue();
+    }
+
+    // v0.9: RETURN in list items
+    if (this.check('RETURN')) {
+      return this.parseReturnStatement();
+    }
+
+    // v0.9: ASYNC/AWAIT DELEGATE
+    if (this.check('ASYNC') || this.check('AWAIT')) {
+      return this.parseDelegateStatement();
+    }
+
+    // v0.9: DO instruction
+    if (this.check('DO')) {
+      const next = this.peek(1);
+      if (next?.type === 'SEMANTIC_MARKER') {
+        return this.parseDoStatement();
+      }
     }
 
     // v0.3: DELEGATE inside list items
@@ -1018,8 +1157,9 @@ export class Parser {
       
       // Extract any embedded $variables from the content
       const interpolations: AST.VariableReference[] = [];
-      const varMatches = content.matchAll(/\$([a-zA-Z][a-zA-Z0-9_-]*)/g);
-      for (const match of varMatches) {
+      const varRegex = /\$([a-zA-Z][a-zA-Z0-9_-]*)/g;
+      let match;
+      while ((match = varRegex.exec(content)) !== null) {
         interpolations.push({
           kind: 'VariableReference',
           name: match[1],
@@ -1176,32 +1316,6 @@ export class Parser {
     };
   }
 
-  // v0.2: PARALLEL FOR EACH
-  private parseParallelForEach(): AST.ParallelForEachStatement {
-    const start = this.advance();  // PARALLEL
-    this.expect('FOR');
-    this.expect('EACH');
-    
-    const pattern = this.parsePattern();
-    this.expect('IN');
-    const collection = this.parseExpression();
-    this.expect('COLON');
-    this.skipNewlines();
-
-    this.loopDepth++;
-    const body = this.parseIndentedBlocks();
-    this.loopDepth--;
-
-    return {
-      kind: 'ParallelForEachStatement',
-      pattern,
-      collection,
-      body,
-      mergeStrategy: 'collect',  // Default strategy
-      span: AST.mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span),
-    };
-  }
-
   private parseWhile(): AST.WhileStatement {
     const start = this.advance();
     const condition = this.parseCondition();
@@ -1312,39 +1426,92 @@ export class Parser {
     };
   }
 
-  // v0.8: DELEGATE statement for agent delegation
-  // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
-  //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
-  private parseDelegateStatement(): AST.DelegateStatement {
-    const start = this.advance();  // consume DELEGATE
+  // v0.9: RETURN statement
+  private parseReturnStatement(): AST.ReturnStatement {
+    const token = this.advance();  // consume RETURN
     
-    // v0.8.1: Check if TO comes immediately (no semantic marker)
+    let value: AST.Expression | undefined;
+    // Check if there's an expression to return (not at newline/end)
+    if (!this.check('NEWLINE') && !this.isAtEnd() && !this.check('DEDENT')) {
+      value = this.parseExpression();
+    }
+    
+    return {
+      kind: 'ReturnStatement',
+      value,
+      span: value ? AST.mergeSpans(token.span, value.span) : token.span,
+    };
+  }
+
+  // v0.9: Push statement ($array << value)
+  private parsePushStatement(): AST.PushStatement {
+    const target = this.parseVariableReference() as AST.VariableReference;
+    this.expect('PUSH');  // consume <<
+    const value = this.parseExpression();
+    
+    return {
+      kind: 'PushStatement',
+      target,
+      value,
+      span: AST.mergeSpans(target.span, value.span),
+    };
+  }
+
+  // v0.9: DO instruction (standalone prose instruction)
+  private parseDoStatement(): AST.DoStatement {
+    const token = this.advance();  // consume DO
+    const instruction = this.parseSemanticMarker();
+    
+    return {
+      kind: 'DoStatement',
+      instruction,
+      span: AST.mergeSpans(token.span, instruction.span),
+    };
+  }
+
+  // v0.9: DELEGATE statement for agent delegation
+  // Syntax: [ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/x] [WITH #template | WITH: params]
+  private parseDelegateStatement(): AST.DelegateStatement {
+    const start = this.current();
+    
+    // v0.9: Check for ASYNC/AWAIT modifiers
+    let async = false;
+    let awaited = false;
+    
+    if (this.check('ASYNC')) {
+      async = true;
+      this.advance();
+    } else if (this.check('AWAIT')) {
+      awaited = true;
+      this.advance();
+    }
+    
+    this.expect('DELEGATE');
+    
+    // Task is optional: /semantic marker/
     let task: AST.SemanticMarker | undefined;
-    if (!this.check('TO')) {
-      // Parse task: /semantic marker/
+    if (this.check('SEMANTIC_MARKER')) {
       task = this.parseSemanticMarker();
     }
     
-    // Expect TO keyword
-    this.expect('TO');
+    // v0.9: TO is optional
+    let target: AST.LinkNode | undefined;
+    if (this.check('TO')) {
+      this.advance();
+      target = this.parseLink();
+    }
     
-    // Parse target: ~/agent/x
-    const target = this.parseLink();
-    
-    // Optional WITH: either #anchor or :params (v0.8.1)
+    // Optional WITH: either #anchor or :params
     let withAnchor: AST.AnchorNode | undefined;
     let parameters: AST.ParameterBlock | undefined;
     if (this.check('WITH')) {
       this.advance();  // consume WITH
       if (this.check('COLON')) {
-        // v0.8.1: WITH: followed by parameter block
         parameters = this.parseParameterBlock();
-      } else {
-        // v0.8: WITH #anchor
+      } else if (this.check('ANCHOR')) {
         withAnchor = this.parseAnchor();
       }
     } else if (this.check('COLON')) {
-      // Direct colon without WITH (legacy support)
       parameters = this.parseParameterBlock();
     }
     
@@ -1354,6 +1521,8 @@ export class Parser {
       target,
       withAnchor,
       parameters,
+      async,
+      awaited,
       span: AST.mergeSpans(start.span, this.previous().span),
     };
   }

@@ -1,5 +1,5 @@
 /**
- * MDZ Compiler - v0.8 Link-Based References
+ * MDZ Compiler - v0.9 Language Extensions
  * 
  * The compiler validates MDZ source and extracts metadata.
  * It does NOT transform source - the LLM sees MDZ as authored.
@@ -13,6 +13,14 @@
  * - AnchorNode: #section (same-file reference)
  * - Dependencies inferred from links, not frontmatter uses:
  * - Type inferred from folder: ~/agent/x → agent, ~/skill/x → skill, ~/tool/x → tool
+ * 
+ * v0.9 changes:
+ * - New block types: ReturnStatement, PushStatement, DoStatement
+ * - Frontmatter declarations: types, input, context
+ * - Async/await support for DELEGATE statements
+ * - PARALLEL FOR EACH removed (use async delegates instead)
+ * - RETURN placement validation (must be at end of section/loop)
+ * - DelegateStatement.target is now optional (for AWAIT)
  */
 
 import { parse } from '../parser/parser';
@@ -64,11 +72,11 @@ export interface DocumentMetadata {
   tools: string[];      // v0.7: extracted from uses: with ! sigil
   uses: string[];       // v0.7: raw uses array (for backward compat)
   imports: ImportInfo[];
-  types: TypeInfo[];
-  variables: VariableInfo[];
+  types: TypeInfo[];    // v0.9: also includes frontmatter type: declarations
+  variables: VariableInfo[];  // v0.9: also includes frontmatter context: declarations
   references: ReferenceInfo[];
   sections: SectionInfo[];
-  parameters: VariableInfo[];
+  parameters: VariableInfo[];  // v0.9: also includes frontmatter input: declarations
 }
 
 export interface ImportInfo {
@@ -244,6 +252,9 @@ export class Compiler {
     
     // v0.3: Validate DELEGATE statements
     this.validateDelegateStatements(ast);
+    
+    // v0.9: Validate RETURN statement placement
+    this.validateReturnStatements(ast);
 
     // Output is the original source, unchanged
     // We only prepend a header if requested (for debugging)
@@ -303,6 +314,40 @@ export class Compiler {
           this.declaredDeps.add(skill);
         }
       }
+
+      // v0.9: Extract types from frontmatter
+      for (const typeDecl of ast.frontmatter.types) {
+        this.definedTypes.add(typeDecl.name);
+        this.metadata.types.push({
+          name: typeDecl.name,
+          definition: this.typeExprToString(typeDecl.typeExpr),
+          span: typeDecl.span,
+        });
+      }
+
+      // v0.9: Extract input parameters from frontmatter
+      for (const inputDecl of ast.frontmatter.input) {
+        this.definedVariables.add(inputDecl.name);
+        this.metadata.parameters.push({
+          name: inputDecl.name,
+          type: inputDecl.type ? this.typeExprToString(inputDecl.type) : null,
+          hasDefault: inputDecl.defaultValue !== undefined,
+          isRequired: inputDecl.required,
+          span: inputDecl.span,
+        });
+      }
+
+      // v0.9: Extract context variables from frontmatter
+      for (const contextDecl of ast.frontmatter.context) {
+        this.definedVariables.add(contextDecl.name);
+        this.metadata.variables.push({
+          name: contextDecl.name,
+          type: contextDecl.type ? this.typeExprToString(contextDecl.type) : null,
+          hasDefault: contextDecl.initialValue !== undefined,
+          isRequired: false,
+          span: contextDecl.span,
+        });
+      }
     }
 
     // Extract sections
@@ -341,8 +386,24 @@ export class Compiler {
         this.extractVariableDeclaration(block);
         break;
       case 'ForEachStatement':
-      case 'ParallelForEachStatement':
         this.extractFromControlFlow(block);
+        break;
+      case 'ReturnStatement':
+        // v0.9: Extract return value if present
+        if (block.value) {
+          this.extractFromExpression(block.value);
+        }
+        break;
+      case 'PushStatement':
+        // v0.9: Extract target and value
+        this.extractFromExpression(block.target);
+        this.extractFromExpression(block.value);
+        break;
+      case 'DoStatement':
+        // v0.9: Extract instruction content
+        if (block.instruction) {
+          this.extractFromExpression(block.instruction);
+        }
         break;
       case 'WhileStatement':
         this.extractFromBlocks(block.body);
@@ -432,7 +493,7 @@ export class Compiler {
     }
   }
 
-  private extractFromControlFlow(stmt: AST.ForEachStatement | AST.ParallelForEachStatement): void {
+  private extractFromControlFlow(stmt: AST.ForEachStatement): void {
     // Track loop variable
     if (stmt.pattern.kind === 'SimplePattern') {
       this.definedVariables.add(stmt.pattern.name);
@@ -492,9 +553,12 @@ export class Compiler {
   }
 
   // v0.8: Extract metadata from DELEGATE statement
+  // v0.9: target is now optional (for AWAIT statements)
   private extractFromDelegateStatement(deleg: AST.DelegateStatement): void {
-    // v0.8: Extract from target link (~/agent/x)
-    this.extractLinkReference(deleg.target);
+    // v0.9: Target is optional (AWAIT statements don't have targets)
+    if (deleg.target) {
+      this.extractLinkReference(deleg.target);
+    }
     
     // Extract from task semantic marker (optional in v0.8.1)
     if (deleg.task) {
@@ -764,7 +828,7 @@ export class Compiler {
         if (block.value) {
           this.checkExpressionScope(block.value, usedBeforeDefined);
         }
-      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+      } else if (block.kind === 'ForEachStatement') {
         // Check collection expression
         this.checkExpressionScope(block.collection, usedBeforeDefined);
         // Loop variable is defined for body
@@ -815,6 +879,25 @@ export class Compiler {
             if (param.value) {
               this.checkExpressionScope(param.value, usedBeforeDefined);
             }
+          }
+        }
+      } else if (block.kind === 'ReturnStatement') {
+        // v0.9: Check scope in RETURN statement
+        if (block.value) {
+          this.checkExpressionScope(block.value, usedBeforeDefined);
+        }
+      } else if (block.kind === 'PushStatement') {
+        // v0.9: Check target variable is defined
+        if (!this.definedVariables.has(block.target.name)) {
+          usedBeforeDefined.add(block.target.name);
+        }
+        this.checkExpressionScope(block.value, usedBeforeDefined);
+      } else if (block.kind === 'DoStatement') {
+        // v0.9: DO instructions are prose - no scope checking needed
+        // But check any variable interpolations in the instruction
+        for (const interpolation of block.instruction.interpolations) {
+          if (!this.definedVariables.has(interpolation.name)) {
+            usedBeforeDefined.add(interpolation.name);
           }
         }
       }
@@ -921,7 +1004,7 @@ export class Compiler {
     for (const block of blocks) {
       if (block.kind === 'DelegateStatement') {
         statements.push(block);
-      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+      } else if (block.kind === 'ForEachStatement') {
         this.findDelegateStatementsInBlocks(block.body, statements);
       } else if (block.kind === 'WhileStatement') {
         this.findDelegateStatementsInBlocks(block.body, statements);
@@ -934,10 +1017,17 @@ export class Compiler {
           this.findDelegateStatementsInBlocks(block.elseBody, statements);
         }
       }
+      // v0.9: ReturnStatement, PushStatement, DoStatement don't contain delegates
     }
   }
   
   private validateDelegateAgent(deleg: AST.DelegateStatement): void {
+    // v0.9: Target is optional (for AWAIT statements)
+    if (!deleg.target) {
+      // No validation needed when target is omitted (AWAIT statement)
+      return;
+    }
+    
     // v0.8: Validate that DELEGATE target is an agent (based on path)
     const linkKind = AST.getLinkKind(deleg.target);
     
@@ -949,6 +1039,46 @@ export class Compiler {
         span: deleg.target.span,
       });
     }
+  }
+
+  // v0.9: Validate RETURN statement placement
+  private validateReturnStatements(ast: AST.Document): void {
+    for (const section of ast.sections) {
+      this.validateReturnInBlocks(section.content, section.content.length);
+    }
+  }
+
+  private validateReturnInBlocks(blocks: AST.Block[], parentLength: number): void {
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      
+      if (block.kind === 'ReturnStatement') {
+        // RETURN must be last in its block (end of section or loop iteration)
+        const isLast = i === parentLength - 1;
+        if (!isLast) {
+          this.addDiagnostic({
+            severity: 'error',
+            code: 'E018',
+            message: 'RETURN must be at end of section or loop iteration',
+            span: block.span,
+          });
+        }
+      } else if (block.kind === 'ForEachStatement' || block.kind === 'WhileStatement') {
+        this.validateReturnInBlocks(block.body, block.body.length);
+      } else if (block.kind === 'IfStatement') {
+        this.validateReturnInBlocks(block.thenBody, block.thenBody.length);
+        for (const elseIf of block.elseIf) {
+          this.validateReturnInBlocks(elseIf.body, elseIf.body.length);
+        }
+        if (block.elseBody) {
+          this.validateReturnInBlocks(block.elseBody, block.elseBody.length);
+        }
+      }
+    }
+  }
+
+  private addDiagnostic(diagnostic: Diagnostic): void {
+    this.diagnostics.push(diagnostic);
   }
 
   private validateContracts(ast: AST.Document): void {
@@ -975,7 +1105,7 @@ export class Compiler {
     for (const block of blocks) {
       if (block.kind === 'Delegation') {
         delegations.push(block);
-      } else if (block.kind === 'ForEachStatement' || block.kind === 'ParallelForEachStatement') {
+      } else if (block.kind === 'ForEachStatement') {
         this.findDelegationsInBlocks(block.body, delegations);
       } else if (block.kind === 'WhileStatement') {
         this.findDelegationsInBlocks(block.body, delegations);
@@ -985,6 +1115,7 @@ export class Compiler {
           this.findDelegationsInBlocks(block.elseBody, delegations);
         }
       }
+      // v0.9: ReturnStatement, PushStatement, DoStatement don't contain delegations
     }
   }
 

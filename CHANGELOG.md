@@ -5,6 +5,138 @@ All notable changes to MDZ will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-13
+
+### Added - Language Extensions for Agent Orchestration
+
+v0.9 introduces several language features designed for multi-agent orchestration patterns, particularly map-reduce workflows.
+
+#### RETURN Statement
+- Explicit return from skills with optional value
+- Valid at end of section or loop iteration
+- Implicit return (no RETURN keyword) means natural completion
+- Example:
+  ```mdz
+  ## Workflow
+  
+  DO /analyze the problem/
+  RETURN $solution
+  ```
+
+#### ASYNC/AWAIT DELEGATE
+- `ASYNC DELEGATE` for fire-and-forget parallel delegation
+- `AWAIT DELEGATE` for synchronous wait on result
+- No modifier = LLM decides based on context
+- Example:
+  ```mdz
+  FOR EACH $task IN $tasks:
+    ASYNC DELEGATE /execute $task/ TO ~/agent/worker
+  
+  AWAIT DELEGATE /collect results/ TO ~/agent/aggregator
+  ```
+
+#### Optional TO in DELEGATE
+- Target agent is now optional in DELEGATE statements
+- Omitting TO means the runtime/LLM selects appropriate agent
+- Example:
+  ```mdz
+  DELEGATE /analyze code/ WITH #analysis-template
+  ```
+
+#### Push Operator `<<`
+- Collect values into arrays with `$array << value`
+- Useful for aggregating results in loops
+- Example:
+  ```mdz
+  $results = []
+  FOR EACH $item IN $items:
+    $results << /processed $item/
+  ```
+
+#### DO Instruction
+- Standalone prose instruction keyword
+- Distinct from `WHILE...DO` syntax (DO as delimiter)
+- Example:
+  ```mdz
+  DO /summarize the findings into bullet points/
+  ```
+
+#### Frontmatter Declarations
+- Types, input parameters, and context variables now declared in YAML frontmatter
+- Cleaner separation between declarations and executable workflow
+- Example:
+  ```yaml
+  ---
+  name: my-skill
+  description: When you need to process items
+  
+  types:
+    $Task: /executable instruction/
+    $Strategy: "parallel" | "sequential"
+  
+  input:
+    $items: $Task[]
+    $strategy: $Strategy = "parallel"
+  
+  context:
+    $results: $Task[] = []
+    $iteration: $Number = 0
+  ---
+  ```
+
+#### WITH Parameter Syntax Change
+- Parameters now use colon syntax: `param: value`
+- No `$` prefix on parameter names in WITH blocks
+- Example:
+  ```mdz
+  USE ~/skill/analyzer TO /analyze/:
+    target: $codebase
+    depth: 3
+  ```
+
+### Removed
+
+#### PARALLEL FOR EACH
+- **Breaking change**: `PARALLEL FOR EACH` construct removed
+- Use `FOR EACH` with `ASYNC DELEGATE` instead
+- Migration:
+  ```mdz
+  # Old (v0.8)
+  PARALLEL FOR EACH $item IN $items:
+    DELEGATE /process/ TO ~/agent/worker
+  
+  # New (v0.9)
+  FOR EACH $item IN $items:
+    ASYNC DELEGATE /process/ TO ~/agent/worker
+  ```
+
+#### ## Types, ## Input, ## Context Sections
+- **Breaking change**: Dedicated sections for declarations removed
+- All declarations now live in YAML frontmatter
+- Body contains only executable workflow
+
+### Changed
+
+- Spec and grammar updated to v0.9
+- Lexer: Added RETURN, ASYNC, AWAIT tokens; added PUSH operator; removed PARALLEL
+- AST: Added ReturnStatement, PushStatement, DoStatement nodes
+- Parser: Full v0.9 syntax support
+- Compiler: RETURN placement validation, frontmatter declaration extraction
+- Website: Updated Monaco and VS Code syntax highlighting
+
+### Migration from v0.8
+
+1. Replace `PARALLEL FOR EACH` with `FOR EACH` + `ASYNC DELEGATE`
+2. Move `## Types`, `## Input`, `## Context` sections into frontmatter
+3. Update WITH clause syntax: `$param = value` → `param: value`
+4. Test with `mdz check` to verify syntax
+
+### Tests
+
+- Added v0.9 feature tests (RETURN, ASYNC/AWAIT, push, DO)
+- Removed PARALLEL FOR EACH tests
+- Total: 207 tests passing
+
 ## [0.7.0] - 2026-01-13
 
 ### Changed - Sigil-Based Reference Syntax

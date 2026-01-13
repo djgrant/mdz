@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the formal grammar for MDZ v0.8 in Extended Backus-Naur Form (EBNF).
+This document defines the formal grammar for MDZ v0.9 in Extended Backus-Naur Form (EBNF).
 
 **Core principle:** The source document is the execution format. The grammar defines what tooling can validate—not what gets transformed.
 
@@ -62,7 +62,7 @@ FOR             = "FOR" ;
 EACH            = "EACH" ;
 IN              = "IN" ;
 WHILE           = "WHILE" ;
-DO              = "DO" ;           /* v0.3: WHILE...DO syntax */
+DO              = "DO" ;           /* v0.3: WHILE...DO syntax; v0.9: standalone prose instruction */
 IF              = "IF" ;
 THEN            = "THEN" ;
 ELSE            = "ELSE" ;
@@ -70,11 +70,13 @@ AND             = "AND" ;
 OR              = "OR" ;
 NOT             = "NOT" ;
 WITH            = "WITH" ;
-PARALLEL        = "PARALLEL" ;     /* v0.2 */
 BREAK           = "BREAK" ;        /* v0.2 */
 CONTINUE        = "CONTINUE" ;     /* v0.2 */
+RETURN          = "RETURN" ;       /* v0.9 */
 DELEGATE        = "DELEGATE" ;     /* v0.6 */
 TO              = "TO" ;           /* v0.6 */
+ASYNC           = "ASYNC" ;        /* v0.9 */
+AWAIT           = "AWAIT" ;        /* v0.9 */
 USE             = "USE" ;          /* v0.8 */
 EXECUTE         = "EXECUTE" ;      /* v0.8 */
 GOTO            = "GOTO" ;         /* v0.8 */
@@ -92,6 +94,7 @@ hash            = '#' ;
 dot             = '.' ;
 comma           = ',' ;
 semicolon       = ';' ;
+push_op         = "<<" ;           /* v0.9: Push operator for array collection */
 
 lparen          = '(' ;
 rparen          = ')' ;
@@ -136,12 +139,35 @@ block           = type_definition
 ### Frontmatter Schema
 
 ```ebnf
-/* Frontmatter fields for skill metadata */
-frontmatter_fields = name_field description_field ;
+/* v0.9: Frontmatter fields for skill metadata and declarations */
+frontmatter_fields = name_field
+                   | description_field
+                   | types_field          /* v0.9: moved from ## Types section */
+                   | input_field          /* v0.9: moved from ## Input section */
+                   | context_field        /* v0.9: moved from ## Context section */
+                   ;
 
-/* v0.8: No uses: field - dependencies are inferred from link statements */
 /* name_field: kebab-case identifier */
 /* description_field: "When..." trigger description */
+/* types_field: map of type names to type expressions */
+/* input_field: map of param names to type/default specs */
+/* context_field: map of var names to initial values */
+
+/* Example frontmatter (v0.9):
+---
+name: my-skill
+description: When you need to process items
+types:
+  Task: any executable instruction
+  Strategy: fast | thorough
+input:
+  task: Task
+  strategy: Strategy = "fast"
+context:
+  iterations: Number = 0
+  complete: Boolean = false
+---
+*/
 ```
 
 ### Type Definitions
@@ -228,7 +254,7 @@ function_call   = var_name lparen [ expression { comma expression } ] rparen ;
 
 ### Input Parameters
 
-In the conventional `## Input` section, parameters follow interface semantics:
+In the conventional `## Input` section (or `input:` frontmatter in v0.9), parameters follow interface semantics:
 
 ```ebnf
 input_param     = list_marker var_name type_annotation [ assign_op literal ] [ comment ] ;
@@ -287,20 +313,20 @@ MDZ distinguishes between **runtime control flow** (CAPS keywords executed by th
 ```ebnf
 /* Runtime control flow - LLM interprets at execution time */
 control_flow      = for_each_stmt
-                  | parallel_for_each_stmt
                   | while_stmt
                   | if_then_stmt
                   | break_stmt
                   | continue_stmt
-                  | delegate_stmt           /* v0.8 */
+                  | return_stmt             /* v0.9 */
+                  | do_stmt                 /* v0.9 */
+                  | push_stmt               /* v0.9 */
+                  | delegate_stmt           /* v0.8, updated v0.9 */
                   | use_stmt                /* v0.8 */
                   | execute_stmt            /* v0.8 */
                   | goto_stmt               /* v0.8 */
                   ;
 
 for_each_stmt     = FOR EACH pattern IN collection colon newline block_body ;
-
-parallel_for_each_stmt = PARALLEL FOR EACH pattern IN collection colon newline block_body ;
 
 pattern           = var_name
                   | lparen var_name { comma var_name } rparen
@@ -318,18 +344,32 @@ else_clause       = ELSE colon newline block_body ;
 break_stmt        = [ list_marker ] BREAK newline ;
 continue_stmt     = [ list_marker ] CONTINUE newline ;
 
-/* v0.8: Link-based statements */
+/* v0.9: Return statement - valid only at end of section or loop iteration */
+return_stmt       = [ list_marker ] RETURN [ expression ] newline ;
 
-/* DELEGATE - spawn agent with task (v0.8.1: WITH: params, optional task) */
-delegate_stmt     = DELEGATE [ semantic_marker ] TO link [ WITH ( anchor | colon with_params ) ] newline
+/* v0.9: DO statement - standalone prose instruction (distinct from WHILE...DO) */
+do_stmt           = DO semantic_marker newline ;
+
+/* v0.9: Push statement - collect values into arrays */
+push_stmt         = var_reference push_op expression newline ;
+
+/* v0.8/v0.9: Link-based statements */
+
+/* v0.9: DELEGATE - spawn agent with task
+   - TO target is now optional (uses default/inferred target)
+   - ASYNC modifier = fire-and-forget
+   - AWAIT modifier = wait for result (default behavior)
+*/
+delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_marker ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline
                   ;
 /* Examples:
    DELEGATE /task/ TO ~/agent/x                    -- inline, no params
    DELEGATE /task/ TO ~/agent/x WITH #template     -- inline with anchor
-   DELEGATE /task/ TO ~/agent/x WITH:              -- inline with params (v0.8.1)
-     - $param = value
-   DELEGATE TO ~/agent/x WITH:                     -- task in params (v0.8.1)
-     - $task = /description/
+   DELEGATE /task/ TO ~/agent/x WITH:              -- inline with params
+     param: value
+   DELEGATE /task/                                 -- no target (v0.9)
+   ASYNC DELEGATE /task/ TO ~/agent/x              -- fire-and-forget (v0.9)
+   AWAIT DELEGATE /task/ TO ~/agent/x              -- wait for result (v0.9)
 */
 
 /* USE - follow skill instructions */
@@ -379,11 +419,20 @@ indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
 use_stmt          = USE link TO semantic_marker [ colon newline with_params ] ;
 
 with_clause       = WITH colon newline { with_param } ;
-with_param        = list_marker ( var_decl | required_param ) [ comment ] newline ;
+
+/* v0.9: WITH param syntax uses colon instead of equals, no $ prefix */
+with_param        = whitespace whitespace ident colon expression [ comment ] newline ;
 with_params       = { with_param } ;
+
+/* Old syntax (v0.8):
+   - $param = value
+   
+   New syntax (v0.9):
+     param: value
+*/
 ```
 
-### Agent Delegation (v0.8)
+### Agent Delegation (v0.9)
 
 Agent delegation spawns a subagent with a task. This is distinct from skill composition:
 - **Skill composition** (`USE ~/skill/x TO /task/`) follows skill logic in the current context
@@ -391,13 +440,22 @@ Agent delegation spawns a subagent with a task. This is distinct from skill comp
 - **Tool execution** (`EXECUTE ~/tool/x TO /action/`) invokes an external tool
 
 ```ebnf
-/* Agent delegation - spawning subagents */
-delegate_stmt     = DELEGATE semantic_marker TO link [ WITH anchor ] newline  /* Inline with optional template */
-                  | DELEGATE TO link colon newline with_params                /* Full form with params */
-                  ;
+/* v0.9: Agent delegation - spawning subagents
+   - ASYNC modifier: fire-and-forget (don't wait for result)
+   - AWAIT modifier: wait for result (default behavior)
+   - TO target is optional (uses default/inferred target)
+*/
+delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_marker ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline ;
 
-/* The WITH clause passes an anchor (section template) to the delegate */
-/* Example: DELEGATE /task/ TO ~/agent/x WITH #context-template */
+/* Examples:
+   DELEGATE /task/ TO ~/agent/explorer              -- spawn and wait (default)
+   ASYNC DELEGATE /task/ TO ~/agent/explorer        -- fire-and-forget
+   AWAIT DELEGATE /task/ TO ~/agent/explorer        -- explicit wait
+   DELEGATE /task/                                  -- inferred target
+   DELEGATE /task/ TO ~/agent/x WITH #template      -- with context template
+   DELEGATE /task/ TO ~/agent/x WITH:               -- with inline params
+     param: value
+*/
 ```
 
 ### Prose Content
@@ -434,11 +492,12 @@ nested_list       = { whitespace whitespace list_item } ;
 1. **Grouping**: `( )` - Parenthesized expressions
 2. **Member access**: `.` - Property/member access
 3. **Function call**: `()` - Function invocation
-4. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=`
-5. **Logical NOT**: `NOT`
-6. **Logical AND**: `AND`
-7. **Logical OR**: `OR`
-8. **Lambda**: `=>` - Binds loosest for expression body
+4. **Push**: `<<` - Array push operator (v0.9)
+5. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=`
+6. **Logical NOT**: `NOT`
+7. **Logical AND**: `AND`
+8. **Logical OR**: `OR`
+9. **Lambda**: `=>` - Binds loosest for expression body
 
 ### Disambiguation Rules
 
@@ -507,38 +566,94 @@ Done with loop              ← Outside block
 `#` at word boundary starts an anchor (same-file section):
 - `#section` - Section reference in current document
 
-#### Rule 6: BREAK/CONTINUE Scope
+#### Rule 6: BREAK/CONTINUE/RETURN Scope
 
 BREAK and CONTINUE are only valid within loops:
 - FOR EACH loops
-- PARALLEL FOR EACH loops
 - WHILE loops
+
+RETURN is only valid at the end of:
+- A section (last statement)
+- A loop iteration (last statement in loop body)
 
 ```
 FOR EACH $item IN $items:
   - IF $done THEN:
     - BREAK                 ← Valid: inside FOR EACH
+  - $results << $item       ← Push to array
+  - RETURN $item            ← Valid: end of loop iteration
   
 BREAK                       ← Error: outside loop
+RETURN $value               ← Valid: end of section
 ```
 
-#### Rule 8: DELEGATE vs USE vs EXECUTE
+#### Rule 7: Colon Rule (v0.9)
+
+A colon at the end of a line indicates that an indented block follows:
+
+```
+FOR EACH $x IN $items:      ← Colon signals block follows
+  - Process $x
+
+DELEGATE /task/ TO ~/agent/x WITH:   ← Colon signals params follow
+  param: value
+
+IF $condition THEN:         ← Colon signals block follows
+  - Do something
+```
+
+This applies to:
+- Control flow statements (FOR EACH, WHILE, IF/THEN, ELSE)
+- WITH clauses
+- Any construct expecting a nested block
+
+#### Rule 8: Keyword Placement Rule (v0.9)
+
+CAPS keywords must appear at line start or indented position:
+
+```
+FOR EACH $x IN $items:      ← Valid: line start
+  - IF $x THEN:             ← Valid: indented position
+    - BREAK                 ← Valid: indented position
+
+The FOR loop runs...        ← Error: keyword mid-line (use lowercase)
+```
+
+Keywords affected: FOR, EACH, IN, WHILE, DO, IF, THEN, ELSE, AND, OR, NOT, WITH, BREAK, CONTINUE, RETURN, DELEGATE, TO, ASYNC, AWAIT, USE, EXECUTE, GOTO
+
+#### Rule 9: DO Disambiguation (v0.9)
+
+`DO` has two forms:
+- After `WHILE`: part of while-do construct
+- At line start: standalone prose instruction
+
+```
+WHILE $x < 5 DO:            ← Part of WHILE...DO construct
+  - Process
+
+DO /analyze the situation/  ← Standalone DO instruction
+```
+
+#### Rule 10: DELEGATE vs USE vs EXECUTE
 
 Each keyword has a distinct purpose:
 
 ```
 DELEGATE /task/ TO ~/agent/explorer      ← Spawns subagent
+ASYNC DELEGATE /task/ TO ~/agent/x       ← Fire-and-forget subagent
+AWAIT DELEGATE /task/ TO ~/agent/x       ← Wait for subagent result
+DELEGATE /task/                          ← Inferred target
 USE ~/skill/validator TO /validate/      ← Follows skill instructions
 EXECUTE ~/tool/browser TO /screenshot/   ← Invokes external tool
 GOTO #section                            ← Control flow to section
 ```
 
-- DELEGATE spawns an independent agent
+- DELEGATE spawns an independent agent (ASYNC = fire-and-forget, AWAIT = wait)
 - USE loads and follows skill instructions in current context
 - EXECUTE invokes an external tool
 - GOTO jumps to a section in the current document
 
-#### Rule 7: Parentheses Requirements
+#### Rule 11: Parentheses Requirements
 
 Parentheses are required in some contexts and optional in others:
 
@@ -577,11 +692,13 @@ For error recovery, the parser recognizes these malformed constructs:
 error_unclosed_link      = '~/' { any_char } ( newline | EOF ) ;   /* Malformed link */
 error_unclosed_semantic  = '/' { any_char } ( newline | EOF ) ;
 error_invalid_type_name  = dollar lower_ident assign_op { any_char } newline ;
-error_malformed_control  = ( FOR | WHILE | IF | PARALLEL | DELEGATE | USE | EXECUTE | GOTO ) { any_char } ( newline | EOF ) ;
+error_malformed_control  = ( FOR | WHILE | IF | DELEGATE | USE | EXECUTE | GOTO | DO | RETURN | ASYNC | AWAIT ) { any_char } ( newline | EOF ) ;
 error_break_outside_loop = BREAK ; /* When not inside a loop */
 error_continue_outside_loop = CONTINUE ; /* When not inside a loop */
+error_return_not_at_end  = RETURN ; /* When not at end of section or loop iteration */
 error_invalid_link_path  = link_prefix { any_char } ; /* Link path doesn't resolve to valid resource */
 error_invalid_anchor     = '#' kebab_ident ; /* Anchor references non-existent section */
+error_keyword_mid_line   = ? CAPS keyword appearing mid-line ? ; /* v0.9 */
 ```
 
 ## Whitespace Handling
@@ -609,8 +726,10 @@ The grammar enables deterministic validation:
 | Link path resolves | File system / registry | E009 (error) |
 | Anchor reference valid | Heading extraction | E010 (error) |
 | BREAK/CONTINUE in loop | Loop depth tracking | E011 (error) |
+| RETURN at end position | Block analysis | E015 (error) |
 | Dependency cycles | Graph analysis | E012 (error) |
 | Link folder convention | Path prefix check | W002 (warning) |
+| Keyword placement | Line position check | E016 (error) |
 
 ## What Tooling Does NOT Do
 
@@ -627,39 +746,33 @@ The grammar describes validation, not transformation:
 
 ```mdz
 ---
-name: parallel-processor
-description: When you need to process items concurrently
+name: task-processor
+description: When you need to process items with delegation
+types:
+  Task: any executable instruction
+  Strategy: fast | thorough
+  Result: outcome of executing a task
+input:
+  task: Task
+  strategy: Strategy = "fast"
+  items: Task[]
+context:
+  path: $n => `output-${n}.md`
+  current: FilePath = $path(0)
+  iterations: Number = 0
+  results: Result[] = []
+  complete: Boolean = false
 ---
-
-## Types
-
-$Task: any executable instruction
-$Strategy: "fast" | "thorough"
-$Result: outcome of executing a task
-
-## Input
-
-- $task: $Task                       <!-- the task to execute -->
-- $strategy: $Strategy = "fast"      <!-- execution strategy -->
-- $items: $Task[]                    <!-- items to process -->
-
-## Context
-
-- $path = $n => `output-${n}.md`
-- $current: $FilePath = $path(0)
-- $iterations: $Number = 0
-- $prioritized: ($Task, $String)[] = []
-- $complete: $Boolean = false
-- $result: $Result
 
 ## Workflow
 
 1. Setup at /appropriate location/
 
-2. PARALLEL FOR EACH $item IN $items:
+2. FOR EACH $item IN $items:
    - IF $item.invalid THEN:
      - CONTINUE
-   - Process $item
+   - DO /process $item according to $strategy/
+   - $results << $item
    - IF $item.triggers_stop THEN:
      - BREAK
 
@@ -673,31 +786,61 @@ $Result: outcome of executing a task
    - GOTO #process-step
    - USE ~/skill/item-validator TO /validate current state/
 
-5. DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
+5. ASYNC DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
 
-6. DELEGATE /analyze the findings/ TO ~/agent/analyzer
+6. AWAIT DELEGATE /analyze the findings/ TO ~/agent/analyzer
 
-7. EXECUTE ~/tool/browser TO /capture final screenshot/
+7. DELEGATE /background task/
 
-8. Return $result
+8. EXECUTE ~/tool/browser TO /capture final screenshot/
+
+9. RETURN $results
 
 ## Process Step
 
 USE ~/skill/omr TO /apply transforms/:
-  - $transforms = [("Apply heuristic", "accumulate")]
-  - $validator: $Task              <!-- Required parameter -->
+  transforms: [("Apply heuristic", "accumulate")]
+  validator: $Task              <!-- Required parameter -->
 
 ## Context Template
 
 Provide context for the explorer:
-- Current result: $result
+- Current results: $results
 - Strategy: $strategy
 ```
 
 ## Version
 
-Grammar version: 0.8
-Aligned with: language-spec.md v0.8
+Grammar version: 0.9
+Aligned with: language-spec.md v0.9
+
+### Changes from v0.8
+
+- **New keywords**: `RETURN`, `ASYNC`, `AWAIT`
+- **Removed keywords**: `PARALLEL`
+- **New operators**: `<<` (push operator for array collection)
+- **New statements**:
+  - `RETURN [expression]` - Return from section or loop iteration
+  - `DO /prose instruction/` - Standalone prose instruction
+  - `$array << value` - Push value to array
+- **Updated DELEGATE syntax**:
+  - `TO target` is now optional
+  - `ASYNC DELEGATE` - Fire-and-forget (don't wait)
+  - `AWAIT DELEGATE` - Wait for result (default behavior)
+- **Updated WITH param syntax**:
+  - Old: `- $param = value`
+  - New: `  param: value` (colon instead of equals, no $ prefix)
+- **Removed `PARALLEL FOR EACH`** - Replaced by `ASYNC DELEGATE` pattern
+- **Frontmatter declarations**: `types:`, `input:`, `context:` fields in frontmatter
+  - `## Types`, `## Input`, `## Context` sections are deprecated
+- **New disambiguation rules**:
+  - Colon rule: colon at line end signals indented block
+  - Keyword placement rule: CAPS keywords at line start or indented
+  - DO disambiguation: WHILE...DO vs standalone DO
+  - RETURN scope: only at end of section or loop iteration
+- **New error codes**:
+  - E015: RETURN not at end position
+  - E016: Keyword placement violation
 
 ### Changes from v0.7
 

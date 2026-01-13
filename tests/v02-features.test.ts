@@ -1,13 +1,13 @@
 /**
- * v0.2 Feature Tests - Updated for v0.4 (imports removed)
+ * v0.2 Feature Tests - Updated for v0.9 (PARALLEL FOR EACH removed)
  * 
- * Comprehensive tests for v0.2 language features:
- * - PARALLEL FOR EACH
+ * Comprehensive tests for v0.2+ language features:
  * - Typed parameters in WITH clause
  * - BREAK and CONTINUE
  * 
  * Updated: No longer tests transformation (source = output)
  * v0.4: Removed imports tests (imports: syntax removed from language)
+ * v0.9: Removed PARALLEL FOR EACH tests (use async delegates instead)
  */
 
 import { parse } from '../packages/core/src/parser/parser';
@@ -61,144 +61,117 @@ function describe(name: string, fn: () => void): void {
 }
 
 // ============================================================================
-// PARALLEL FOR EACH Tests
+// v0.9 Features
 // ============================================================================
 
-describe('PARALLEL FOR EACH - Parsing', () => {
-  test('parses basic PARALLEL FOR EACH', () => {
-    const doc = parse(`---
+describe('v0.9 Features', () => {
+  describe('RETURN Statement', () => {
+    test('parses basic RETURN', () => {
+      const source = `---
 name: test
-description: test
+description: Test
 ---
 
-PARALLEL FOR EACH $item IN $items:
-  - Process $item
-`);
-    const parallels = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.ParallelForEachStatement => b.kind === 'ParallelForEachStatement')
-    );
-    assertEqual(parallels.length, 1);
-    assert(parallels[0].pattern.kind === 'SimplePattern', 'Should have simple pattern');
-    if (parallels[0].pattern.kind === 'SimplePattern') {
-      assertEqual(parallels[0].pattern.name, 'item');
-    }
-  });
+## Workflow
 
-  test('parses PARALLEL FOR EACH with destructuring', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-
-PARALLEL FOR EACH ($task, $priority) IN $jobs:
-  - Execute $task with $priority
-`);
-    const parallels = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.ParallelForEachStatement => b.kind === 'ParallelForEachStatement')
-    );
-    assertEqual(parallels.length, 1);
-    assert(parallels[0].pattern.kind === 'DestructuringPattern', 'Should have destructuring');
-    if (parallels[0].pattern.kind === 'DestructuringPattern') {
-      assertEqual(parallels[0].pattern.names, ['task', 'priority']);
-    }
-  });
-
-  test('parses PARALLEL FOR EACH with complex collection', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-
-PARALLEL FOR EACH $agent IN $agents.available:
-  - Spawn $agent
-`);
-    const parallels = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.ParallelForEachStatement => b.kind === 'ParallelForEachStatement')
-    );
-    assertEqual(parallels.length, 1);
-    assert(parallels[0].collection.kind === 'MemberAccess', 'Should have member access');
-  });
-
-  test('parses nested control flow inside PARALLEL FOR EACH', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-
-PARALLEL FOR EACH $item IN $items:
-  - IF $item.ready THEN:
-    - Process $item
-`);
-    const parallels = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.ParallelForEachStatement => b.kind === 'ParallelForEachStatement')
-    );
-    assertEqual(parallels.length, 1);
-    assert(parallels[0].body.length > 0, 'Should have body');
-  });
-
-  test('parses multiple PARALLEL FOR EACH', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-
-PARALLEL FOR EACH $a IN $as:
-  - Process $a
-
-PARALLEL FOR EACH $b IN $bs:
-  - Process $b
-`);
-    const parallels = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.ParallelForEachStatement => b.kind === 'ParallelForEachStatement')
-    );
-    assertEqual(parallels.length, 2);
-  });
-});
-
-describe('PARALLEL FOR EACH - Compilation (Validator-First)', () => {
-  test('preserves PARALLEL FOR EACH in output', () => {
-    const source = `---
-name: test
-description: test
----
-
-PARALLEL FOR EACH $item IN $items:
-  - Process $item
+RETURN
 `;
-    const result = compile(source, { includeHeader: false });
-    assertEqual(result.output, source, 'Source should be preserved');
-    assertIncludes(result.output, 'PARALLEL FOR EACH');
-    assertIncludes(result.output, '$item');
-    assertIncludes(result.output, '$items');
-  });
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const returnStmt = blocks.find(b => b.kind === 'ReturnStatement');
+      assert(returnStmt !== undefined, 'Should parse RETURN statement');
+    });
 
-  test('tracks PARALLEL FOR EACH in source map', () => {
-    const result = compile(`---
+    test('parses RETURN with variable', () => {
+      const source = `---
 name: test
-description: test
+description: Test
 ---
 
-PARALLEL FOR EACH $task IN $tasks:
-  - Execute $task
-`);
-    const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
-    assert(cfEntries.length > 0, 'Should track in source map');
+## Workflow
+
+RETURN $result
+`;
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const returnStmt = blocks.find(b => b.kind === 'ReturnStatement') as any;
+      assert(returnStmt !== undefined, 'Should parse RETURN statement');
+      assert(returnStmt.value?.kind === 'VariableReference', 'Should have variable value');
+    });
   });
 
-  test('extracts multiple control flow constructs', () => {
-    const result = compile(`---
+  describe('ASYNC/AWAIT DELEGATE', () => {
+    test('parses ASYNC DELEGATE', () => {
+      const source = `---
 name: test
-description: test
+description: Test
 ---
 
-PARALLEL FOR EACH $a IN $as:
-  - Process $a
+## Workflow
 
-FOR EACH $b IN $bs:
-  - Process $b
-`);
-    const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
-    assert(cfEntries.length >= 2, 'Should track both loops');
+ASYNC DELEGATE /task/ TO ~/agent/worker
+`;
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const deleg = blocks.find(b => b.kind === 'DelegateStatement') as any;
+      assert(deleg !== undefined, 'Should parse DELEGATE');
+      assertEqual(deleg.async, true, 'Should be async');
+    });
+
+    test('parses DELEGATE without TO (optional target)', () => {
+      const source = `---
+name: test
+description: Test
+---
+
+## Workflow
+
+DELEGATE /task/ WITH #template
+`;
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const deleg = blocks.find(b => b.kind === 'DelegateStatement') as any;
+      assert(deleg !== undefined, 'Should parse DELEGATE');
+      assert(deleg.target === undefined, 'Target should be optional');
+    });
+  });
+
+  describe('Push Operator <<', () => {
+    test('parses push statement', () => {
+      const source = `---
+name: test
+description: Test
+---
+
+## Workflow
+
+$results << $item
+`;
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const push = blocks.find(b => b.kind === 'PushStatement') as any;
+      assert(push !== undefined, 'Should parse push statement');
+      assertEqual(push.target.name, 'results', 'Should have target');
+    });
+  });
+
+  describe('DO Instruction', () => {
+    test('parses DO instruction', () => {
+      const source = `---
+name: test
+description: Test
+---
+
+## Workflow
+
+DO /analyze the content/
+`;
+      const doc = parse(source);
+      const blocks = doc.sections[0].content;
+      const doStmt = blocks.find(b => b.kind === 'DoStatement') as any;
+      assert(doStmt !== undefined, 'Should parse DO statement');
+      assert(doStmt.instruction?.content, 'Should have instruction content');
+    });
   });
 });
 
@@ -238,13 +211,14 @@ WHILE $count < 10 DO:
     assertEqual(doc.errors.length, 0);
   });
 
-  test('parses BREAK inside PARALLEL FOR EACH', () => {
+  // v0.9: PARALLEL FOR EACH removed - BREAK in FOR EACH is still valid
+  test('parses BREAK inside nested FOR EACH', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-PARALLEL FOR EACH $item IN $items:
+FOR EACH $item IN $items:
   - IF $item.stop THEN:
     - BREAK
 `);
@@ -293,13 +267,14 @@ WHILE $processing DO:
     assertEqual(doc.errors.length, 0);
   });
 
-  test('parses CONTINUE inside PARALLEL FOR EACH', () => {
+  // v0.9: PARALLEL FOR EACH removed - CONTINUE in FOR EACH is still valid
+  test('parses CONTINUE inside nested FOR EACH', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-PARALLEL FOR EACH $task IN $tasks:
+FOR EACH $task IN $tasks:
   - IF $task.invalid THEN:
     - CONTINUE
   - Execute $task
@@ -450,10 +425,11 @@ $Task: any task
 // ============================================================================
 
 describe('v0.2 Integration', () => {
-  test('complex skill with all v0.2 features', () => {
+  // v0.9: Updated to use FOR EACH instead of PARALLEL FOR EACH
+  test('complex skill with v0.2+ features', () => {
     const source = `---
-name: parallel-processor
-description: Process items in parallel with early exit
+name: async-processor
+description: Process items with early exit
 uses:
   - ~validator
 ---
@@ -470,7 +446,7 @@ $Result: "success" | "failure"
 
 ## Workflow
 
-PARALLEL FOR EACH $item IN $items:
+FOR EACH $item IN $items:
   - IF $item.invalid THEN:
     - CONTINUE
   - Process $item
@@ -483,7 +459,7 @@ PARALLEL FOR EACH $item IN $items:
     
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source preserved');
-    assertIncludes(result.output, 'PARALLEL FOR EACH');
+    assertIncludes(result.output, 'FOR EACH');
     assertIncludes(result.output, 'CONTINUE');
     assertIncludes(result.output, 'BREAK');
   });
@@ -518,14 +494,15 @@ WHILE NOT complete AND $iterations < 5 DO:
     assert(result.diagnostics.filter(d => d.severity === 'error').length === 0, 'Should compile without errors');
   });
 
-  test('nested PARALLEL FOR EACH inside regular FOR EACH', () => {
+  // v0.9: Nested FOR EACH loops still work
+  test('nested FOR EACH loops', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
 FOR EACH $batch IN $batches:
-  - PARALLEL FOR EACH $item IN $batch:
+  - FOR EACH $item IN $batch:
     - Process $item
 `);
     assertEqual(doc.errors.length, 0);
@@ -590,21 +567,22 @@ WHILE $round < $maxRounds DO:
 // Edge Cases
 // ============================================================================
 
-describe('v0.2 Edge Cases', () => {
-  test('empty PARALLEL FOR EACH body', () => {
+describe('v0.2+ Edge Cases', () => {
+  // v0.9: PARALLEL FOR EACH removed - test empty FOR EACH instead
+  test('empty FOR EACH body', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-PARALLEL FOR EACH $item IN $items:
+FOR EACH $item IN $items:
 
 ## Next Section
 `);
     assert(doc.sections.length >= 1, 'Should parse');
   });
 
-  test('PARALLEL keyword as variable name (should work differently)', () => {
+  test('parallel as variable name', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -616,7 +594,6 @@ description: test
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
     );
-    // Note: $parallel is lowercase, so it's a variable, not the keyword
     assertEqual(vars.length, 1);
   });
 

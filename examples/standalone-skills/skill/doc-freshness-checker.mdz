@@ -22,17 +22,17 @@ $Assessment: judgment of doc health based on signals found
 
 ### 1. Scan for Signals
 
-PARALLEL FOR EACH $doc IN $docPaths:
-  DELEGATE TO ~/agent/doc-scanner WITH:
+FOR EACH $doc IN $docPaths:
+  ASYNC DELEGATE /scan $doc for staleness/ TO ~/agent/doc-scanner WITH:
     ```md
-    scan $doc for staleness:
+    Check for:
     - missing APIs
     - version mismatches
     - broken examples
     - dead links
     ```
 
-  Add result to $findings
+Collect all results into $findings.
 
 ### 2. Prioritize
 

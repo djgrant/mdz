@@ -27,31 +27,19 @@ Create `$reviewPath/proposal.md` with $proposal and evaluation criteria.
 ### 2. Attack-Defend Rounds
 
 WHILE $round < $maxRounds DO:
-
-  <!-- Attack Phase -->
-  PARALLEL FOR EACH $vector IN ["logical", "empirical", "practical", "edge-case", "adversarial"]:
-    DELEGATE TO ~/agent/attacker WITH:
-      - $proposal
-      - $vector
-      - $task = /find genuine flaws/
-
-  Collect attacks to `$reviewPath/round-$round-attacks.md`
-
-  IF /attacks are superficial or repeat prior rounds/ THEN:
-    BREAK
-
-  <!-- Defense Phase -->
-  FOR EACH $attack IN `$reviewPath/round-$round-attacks.md`:
-  - Refute if invalid
-  - Mitigate if partially valid
-  - Acknowledge if the flaw is real
-
-  Write findings to `$reviewPath/round-$round.md`
-
-  IF /proposal fundamentally undermined/ OR /stalemate reached/ THEN:
-    BREAK
-
-  $round = $round + 1
+  - FOR EACH $vector IN ["logical", "empirical", "practical", "edge-case", "adversarial"]:
+    - ASYNC DELEGATE /find genuine flaws for $vector on $proposal/ TO ~/agent/attacker
+  - Collect attacks to `$reviewPath/round-$round-attacks.md`
+  - IF /attacks are superficial or repeat prior rounds/ THEN:
+    - BREAK
+  - FOR EACH $attack IN `$reviewPath/round-$round-attacks.md`:
+    - Refute if invalid
+    - Mitigate if partially valid
+    - Acknowledge if the flaw is real
+  - Write findings to `$reviewPath/round-$round.md`
+  - IF /proposal fundamentally undermined/ OR /stalemate reached/ THEN:
+    - BREAK
+  - $round = $round + 1
 
 ### 3. Synthesize
 

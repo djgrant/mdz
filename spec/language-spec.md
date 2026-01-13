@@ -1,4 +1,4 @@
-# MDZ Language Specification v0.8
+# MDZ Language Specification v0.9
 
 > A markdown extension language for multi-agent systems
 
@@ -42,31 +42,96 @@ The `description` field follows the pattern:
 - **When**: trigger condition
 - **Does**: what the skill accomplishes
 
-**v0.8 Change**: Dependencies are no longer declared in frontmatter. They are inferred from link statements (`DELEGATE`, `USE`, `EXECUTE`) in the document body.
+**v0.9 Change**: Types, input parameters, and context declarations now live in frontmatter rather than dedicated document sections.
+
+Optional declaration fields (v0.9):
+
+```yaml
+---
+name: skill-name
+description: When triggered, does X
+
+types:
+  Task: any task that an agent can execute
+  Strategy: "accumulate" | "independent"
+  ValidationResult: "progress" | "regression" | "plateau"
+
+input:
+  problem: $String                    # Required parameter
+  maxIterations: $Number = 5          # Optional with default
+  strategy: $Strategy = "accumulate"  # Optional with enum default
+
+context:
+  currentFile: $FilePath              # Context variable
+  workPackage: /relevant work package path/
+---
+```
+
+**v0.8 Note**: Dependencies are inferred from link statements (`DELEGATE`, `USE`, `EXECUTE`) in the document body.
+
+### Frontmatter Declaration Fields (v0.9)
+
+#### types
+
+Type definitions that were previously in `## Types` sections:
+
+```yaml
+types:
+  Task: any task that an agent can execute      # Semantic type
+  Strategy: "accumulate" | "independent"        # Enum type
+  Pair: ($Task, $Strategy)                      # Compound type
+```
+
+Type names are declared without `$` prefix in frontmatter. They are referenced with `$` prefix in the document body.
+
+#### input
+
+Input parameter declarations that were previously in `## Input` sections:
+
+```yaml
+input:
+  problem: $String                    # Required (no default)
+  maxIterations: $Number = 5          # Optional with literal default
+  items: $Task[] = []                 # Optional with array default
+```
+
+Parameter rules:
+- **Required**: `name: $Type` (no `=`)
+- **Optional**: `name: $Type = literal_value`
+
+#### context
+
+Context variable declarations that were previously in `## Context` sections:
+
+```yaml
+context:
+  currentFile: $FilePath
+  workPackage: /relevant work package/
+```
+
+Context variables are populated by the runtime environment.
 
 ## Types
 
 ### Type Definitions
 
-Types provide semantic hints about values. They are defined at the top of a skill, typically in a `## Types` section:
+Types provide semantic hints about values. In v0.9, they are defined in frontmatter:
 
-```
-$TypeName: natural language description of what this type represents
+```yaml
+types:
+  Task: any task that an agent can execute
+  Strategy: "accumulate" | "independent"
+  ValidationResult: "progress" | "regression" | "plateau"
 ```
 
-Examples:
-```
-$Task: any task that an agent can execute
-$Strategy: "accumulate" | "independent"
-$ValidationResult: "progress" | "regression" | "plateau"
-```
+**v0.9 Change**: Type definitions moved from `## Types` document sections to frontmatter `types:` field. This keeps all declarations in one place and separates metadata from executable content.
 
 ### Type Syntax
 
 Types can be:
 
-- **Semantic**: `$Task: any task that an agent can execute`
-- **Enum**: `$Strategy: "accumulate" | "independent"`
+- **Semantic**: `Task: any task that an agent can execute`
+- **Enum**: `Strategy: "accumulate" | "independent"`
 - **Compound**: `($Task, $Strategy)` - a tuple
 - **Array**: `$Task[]` or `($Task, $Strategy)[]`
 - **Function**: `$Fn = $x => expression`
@@ -121,8 +186,8 @@ In WITH clauses, typed parameters without a default value are considered require
 
 ```
 USE ~/skill/x TO /task/:
-  - $param: $Type = value     # Optional with default
-  - $required: $Task          # Required (no default)
+  param: $Type = value     # Optional with default
+  required: $Task          # Required (no default)
 ```
 
 ### Variable References
@@ -155,6 +220,28 @@ $SolutionPath = $n => `/relevant wp path/-candidate-${n}.md`
 ```
 
 Lambdas can include semantic markers and template literals.
+
+### Push Operator (v0.9)
+
+The `<<` operator appends a value to an array:
+
+```
+$array << value
+```
+
+Examples:
+```
+- $results << $currentResult
+- $candidates << /the winning solution/
+- $errors << $error
+```
+
+The push operator is used to collect values during iteration:
+
+```
+FOR EACH $item IN $items:
+  - $processed << /process $item/
+```
 
 ## Links and Anchors
 
@@ -345,22 +432,6 @@ FOR EACH ($task, $strategy) IN $transforms:
   - Execute $task with $strategy
 ```
 
-### PARALLEL FOR EACH (v0.2)
-
-Iterate with concurrent execution:
-
-```
-PARALLEL FOR EACH $item IN $items:
-  - Process $item independently
-  - Results collected when all complete
-```
-
-Semantics:
-- All iterations can execute concurrently
-- Order of completion is not guaranteed
-- Results are collected when all iterations complete
-- Each iteration has its own scope
-
 ### WHILE
 
 Loop with condition. The `DO` keyword acts as the condition delimiter:
@@ -406,17 +477,81 @@ FOR EACH $item IN $items:
   - Process normally
 ```
 
-## Statements (v0.8)
+### RETURN (v0.9)
+
+Exit a section or loop iteration with an optional value:
+
+```
+RETURN [expression]
+```
+
+RETURN is valid only at the end of a section or as the last statement in a loop iteration:
+
+```
+## Validate Input
+
+- IF $input.empty THEN:
+  - RETURN "invalid"
+- Process $input
+- RETURN "valid"
+```
+
+In loops, RETURN exits the current iteration (similar to yielding a value):
+
+```
+FOR EACH $item IN $items:
+  - Process $item
+  - RETURN $item.result    # Yield result for this iteration
+```
+
+**Implicit return**: A section without an explicit RETURN completes naturally. The absence of RETURN means natural completion, not an error.
+
+### DO Statement (v0.9)
+
+The `DO` keyword as a standalone statement introduces a prose instruction:
+
+```
+DO /prose instruction/
+```
+
+Examples:
+```
+DO /analyze the current state and determine next steps/
+DO /summarize findings into a report/
+```
+
+**Note**: This is distinct from `WHILE...DO` where `DO` acts as a condition delimiter. Standalone `DO` at the start of a line introduces an instruction for the LLM to execute.
+
+## Statements (v0.8, v0.9)
 
 MDZ v0.8 introduces four key statement types for working with external resources: `DELEGATE`, `USE`, `EXECUTE`, and `GOTO`.
 
-### DELEGATE - Spawn Agent
+### DELEGATE - Spawn Agent (v0.9)
 
-The `DELEGATE` keyword spawns a subagent to handle a task:
+The `DELEGATE` keyword spawns a subagent to handle a task. In v0.9, the `TO` target is optional and `ASYNC`/`AWAIT` modifiers control execution:
+
+```
+[ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/name] [WITH context]
+```
+
+Basic forms:
 
 ```
 DELEGATE /task description/ TO ~/agent/name
+DELEGATE /task description/                    # Target inferred from context (v0.9)
+DELEGATE TO ~/agent/name                       # Task in WITH block
 ```
+
+With modifiers (v0.9):
+
+```
+ASYNC DELEGATE /explore the codebase/ TO ~/agent/explorer   # Fire-and-forget
+AWAIT DELEGATE /analyze findings/ TO ~/agent/analyzer       # Wait for result
+```
+
+- **ASYNC**: Fire-and-forget. The delegation starts but execution continues immediately without waiting.
+- **AWAIT**: Wait for result. Execution pauses until the delegated task completes and returns.
+- **No modifier**: Default behavior determined by runtime (typically AWAIT for explicit TO, ASYNC for inferred).
 
 With a context template (passes a section as context):
 
@@ -424,22 +559,22 @@ With a context template (passes a section as context):
 DELEGATE /explore the codebase/ TO ~/agent/explorer WITH #context-template
 ```
 
-With inline parameters (v0.8.1):
+With inline parameters (v0.9 syntax):
 
 ```
 DELEGATE /analyze file for issues/ TO ~/agent/code-analyzer WITH:
-  - $filename = $filename
-  - $diff = $diff
-  - $learnings = applicable learnings
+  filename: $filename
+  diff: $diff
+  learnings: applicable learnings
 ```
 
-With task in parameters (v0.8.1):
+With task in parameters:
 
 ```
 DELEGATE TO ~/agent/attacker WITH:
-  - $proposal
-  - $vector
-  - $task = /find genuine flaws/
+  proposal: $proposal
+  vector: $vector
+  task: /find genuine flaws/
 ```
 
 ### USE - Follow Skill
@@ -472,7 +607,7 @@ GOTO #error-handler
 
 | Statement | Purpose | Target | Execution |
 |-----------|---------|--------|-----------|
-| `DELEGATE` | Spawn agent | `~/agent/x` | Independent |
+| `DELEGATE` | Spawn agent | `~/agent/x` (optional v0.9) | Independent (ASYNC/AWAIT) |
 | `USE` | Follow skill | `~/skill/x` | In context |
 | `EXECUTE` | Invoke tool | `~/tool/x` | External |
 | `GOTO` | Jump to section | `#section` | Current doc |
@@ -487,20 +622,22 @@ Skills compose through the `USE` statement:
 
 ```
 USE ~/skill/orchestrate-map-reduce TO /apply transforms/:
-  - $transforms = [("Apply heuristic", "accumulate")]
-  - $validator = #validate-essence
-  - $return = "Report findings"
+  transforms: [("Apply heuristic", "accumulate")]
+  validator: #validate-essence
+  return: "Report findings"
 ```
 
-### Parameter Passing
+### Parameter Passing (v0.9)
 
-Parameters are passed using the colon-newline syntax:
+Parameters are passed using colon syntax without `$` prefix or `-` list marker:
 
 ```
 USE ~/skill/name TO /task/:
-  - $param1 = value1
-  - $param2 = value2
+  param1: value1
+  param2: value2
 ```
+
+**v0.9 Change**: Parameter syntax simplified from `- $param = value` to `param: value`. The colon-based syntax is cleaner and aligns with YAML conventions.
 
 ### Section Inclusion
 
@@ -516,18 +653,9 @@ The section content becomes part of the agent's instructions.
 
 ### Conventional Sections
 
-While not required, these sections are conventional:
+The following sections are conventional for organizing skill content:
 
 ```markdown
-## Types
-Type definitions
-
-## Input
-Input parameter declarations
-
-## Context
-Contextual variable declarations
-
 ## Workflow
 Main execution steps
 
@@ -535,36 +663,7 @@ Main execution steps
 Reusable prompts/sub-sections
 ```
 
-### Input Section Semantics
-
-The Input section declares skill interface parameters. Parameters use `=` ONLY for literal default values:
-
-```mdz
-## Input
-
-- $problem: $String                    <!-- required parameter (no default) -->
-- $maxIterations: $Number = 5          <!-- optional with default -->
-- $strategy: $Strategy = "accumulate"  <!-- optional with enum default -->
-- $items: $Task[] = []                 <!-- optional with empty array default -->
-```
-
-Parameter rules:
-- **Required**: `$name: $Type` (no `=`)
-- **Optional**: `$name: $Type = literal_value`
-- **Descriptions**: Use `<!-- -->` comments for documentation
-
-The `=` sign indicates a **literal default value**, not a description. Use comments for descriptions to avoid confusion with assignment semantics.
-
-Valid default values:
-- String literals: `"value"`
-- Number literals: `5`, `3.14`
-- Boolean literals: `true`, `false`
-- Array literals: `[]`, `["a", "b"]`
-- Enum values: `"accumulate"` (when type is enum)
-
-Invalid as defaults (use comments instead):
-- Prose descriptions: ~~`= the problem to solve`~~
-- Semantic markers: ~~`= /appropriate value/`~~
+**v0.9 Change**: The `## Types`, `## Input`, and `## Context` sections are no longer used. These declarations have moved to frontmatter fields (`types:`, `input:`, `context:`). This separates metadata from executable content.
 
 ### Workflow Structure
 
@@ -572,6 +671,39 @@ Workflows typically follow:
 1. Setup phase (create work packages, initialize state)
 2. Execution phase (loops, delegations, transformations)
 3. Completion phase (collect results, report)
+
+## Structural Rules (v0.9)
+
+### Colon Rule
+
+A colon at the end of a line indicates an indented block follows:
+
+```
+FOR EACH $item IN $items:
+  - Process $item
+  - Next step
+```
+
+This applies to:
+- Control flow statements (`FOR EACH`, `WHILE`, `IF`, `ELSE`)
+- Composition statements with parameters (`USE ... TO ...:`, `DELEGATE ... WITH:`)
+- Section-like structures
+
+### Keyword Placement Rule
+
+CAPS keywords must appear at the start of a line or after indentation:
+
+```
+FOR EACH $item IN $items:        # Valid: line start
+  - IF $condition THEN:          # Valid: after indentation
+    - BREAK                      # Valid: after indentation
+```
+
+Keywords embedded in prose are not recognized as control structures:
+
+```
+The FOR keyword is used for iteration.    # "FOR" is prose, not a keyword
+```
 
 ## Validation
 
@@ -587,25 +719,30 @@ MDZ tooling validates source documents without transforming them. The compiler:
 
 ### What Tooling Checks
 
-1. **Type references** - Warns when a type annotation references an undefined type
-2. **Link resolution** - Errors when link path doesn't resolve to valid resource
-3. **Anchor references** - Errors when `#section` references a non-existent section
-4. **Syntax errors** - Errors for malformed control flow, unterminated constructs, etc.
-5. **Scope** - Tracks variable definitions (informational)
-6. **Dependency cycles** - Detects circular dependencies across skills
-7. **Link conventions** - Warns when link doesn't follow folder conventions (agent/, skill/, tool/)
+1. **Frontmatter declarations** - Validates types, input, context fields (v0.9)
+2. **Type references** - Warns when a type annotation references an undefined type
+3. **Link resolution** - Errors when link path doesn't resolve to valid resource
+4. **Anchor references** - Errors when `#section` references a non-existent section
+5. **Syntax errors** - Errors for malformed control flow, unterminated constructs, etc.
+6. **Scope** - Tracks variable definitions (informational)
+7. **Dependency cycles** - Detects circular dependencies across skills
+8. **Link conventions** - Warns when link doesn't follow folder conventions (agent/, skill/, tool/)
+9. **RETURN placement** - Errors when RETURN is not at end of section/iteration (v0.9)
+10. **Keyword placement** - Warns when keywords not at line start or indented (v0.9)
 
 ### Error Codes
 
 | Code | Severity | Description |
 |------|----------|-------------|
 | E001-E007 | Error | Parse errors (syntax) |
-| E008 | Warning | Type not defined in document |
+| E008 | Warning | Type not defined in document or frontmatter |
 | E009 | Error | Link path doesn't resolve |
 | E010 | Error | Anchor reference broken |
 | E011 | Error | BREAK/CONTINUE outside loop |
 | E012 | Error | Dependency cycle detected |
+| E013 | Error | RETURN not at end of section/iteration (v0.9) |
 | W002 | Warning | Link doesn't follow folder conventions |
+| W003 | Warning | Keyword not at line start or indented (v0.9) |
 
 ### Dependency Graph
 
@@ -643,37 +780,40 @@ Errors in MDZ are handled through:
 2. Semantic resilience: LLMs adapt to unexpected states
 3. Work package logging: State is persisted for debugging
 
-v0.6 does not define exception mechanisms.
+v0.9 does not define exception mechanisms.
 
 ## Tooling Requirements
 
 ### Parser Requirements
 
 A compliant parser must extract:
-- Frontmatter fields (name, description)
-- Type definitions
+- Frontmatter fields (name, description, types, input, context)
+- Type definitions (from frontmatter)
 - Variable declarations
 - Links (`~/path/to/resource`) and anchors (`#section`)
 - Semantic markers
-- Control flow constructs (including PARALLEL, BREAK, CONTINUE, DELEGATE, USE, EXECUTE, GOTO)
+- Control flow constructs (including BREAK, CONTINUE, RETURN, DELEGATE, USE, EXECUTE, GOTO, DO)
 
 ### Validator Requirements
 
 A compliant validator must:
 - Report syntax errors with location
+- Validate frontmatter declaration fields (types, input, context)
 - Check type reference validity
 - Check link path resolution
 - Check anchor reference validity
 - Build dependency graph from link statements
 - Detect dependency cycles
+- Validate RETURN placement (end of section/iteration only)
+- Validate keyword placement (line start or indented)
 
 ### LSP Features
 
 The syntax supports:
 - **Go-to-definition**: For `~/links`, `#anchors`, `$variables`
-- **Autocomplete**: After `~/`, `#`, `$`, `/`, `DELEGATE ... TO`, `USE`, `EXECUTE`, `GOTO`
+- **Autocomplete**: After `~/`, `#`, `$`, `/`, `DELEGATE ... TO`, `USE`, `EXECUTE`, `GOTO`, `ASYNC`, `AWAIT`
 - **Hover**: Show type definitions, link targets, section content
-- **Diagnostics**: Unresolved links, broken anchors, unused variables, BREAK/CONTINUE outside loops
+- **Diagnostics**: Unresolved links, broken anchors, unused variables, BREAK/CONTINUE outside loops, invalid RETURN placement
 
 ### Highlighting
 
@@ -686,7 +826,8 @@ Syntax highlighting should distinguish:
 - Anchors (`#section`)
 - Semantic markers (`/.../`)
 - Inferred variables (`$/name/`)
-- Control flow keywords (`FOR EACH`, `PARALLEL FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`)
+- Control flow keywords (`FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`, `RETURN`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`, `ASYNC`, `AWAIT`)
+- Operators (`<<`)
 
 ## Grouping and Braces
 
@@ -812,6 +953,14 @@ $target: /file to modify/ = "out.md"  # Describes what the value should be
 $context: /background info/           # Semantic type instead of $Type
 ```
 
+### Double Angle Brackets `<<` (v0.9)
+
+The push operator appends values to arrays:
+
+```
+$results << $value                    # Append value to results array
+```
+
 ### Operator Precedence
 
 From highest to lowest:
@@ -823,7 +972,8 @@ From highest to lowest:
 5. **Logical NOT**: `NOT` — unary negation
 6. **Logical AND**: `AND` — conjunction
 7. **Logical OR**: `OR` — disjunction
-8. **Lambda arrow**: `=>` — binds loosest
+8. **Push**: `<<` — array append (v0.9)
+9. **Lambda arrow**: `=>` — binds loosest
 
 #### Precedence Examples
 
@@ -860,28 +1010,34 @@ IF ($x = 1) AND ($y = 2) THEN:        # Same meaning
 
 ```
 FRONTMATTER     = '---\n' YAML '\n---'
+FM_TYPES        = 'types:' YAML_BLOCK                          <!-- v0.9 -->
+FM_INPUT        = 'input:' YAML_BLOCK                          <!-- v0.9 -->
+FM_CONTEXT      = 'context:' YAML_BLOCK                        <!-- v0.9 -->
 TYPE_DEF        = '$' UPPER_IDENT ':' /.+/
 VAR_DECL        = '$' IDENT (':' TYPE)? '=' EXPR
 VAR_REF         = '$' IDENT
-LINK            = '~/' PATH ('#' IDENT)?                      <!-- v0.8 -->
-ANCHOR          = '#' IDENT                                   <!-- v0.8 -->
-PATH            = IDENT ('/' IDENT)*                          <!-- v0.8 -->
+PUSH            = '$' IDENT '<<' EXPR                          <!-- v0.9 -->
+LINK            = '~/' PATH ('#' IDENT)?
+ANCHOR          = '#' IDENT
+PATH            = IDENT ('/' IDENT)*
 SEMANTIC        = '/' /[^\/\n]+/ '/'
-INFERRED_VAR    = '$/' /[^\/\n]+/ '/'                         <!-- v0.4 -->
-SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'                      <!-- v0.4 -->
+INFERRED_VAR    = '$/' /[^\/\n]+/ '/'
+SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'
 FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
-PARALLEL_FOR    = 'PARALLEL FOR EACH' PATTERN 'IN' EXPR ':'   <!-- v0.2 -->
-WHILE           = 'WHILE' CONDITION 'DO:'                     <!-- DO delimits -->
-IF_THEN         = 'IF' CONDITION 'THEN:'                      <!-- THEN delimits -->
-ELSE_IF         = 'ELSE IF' CONDITION 'THEN:'                 <!-- v0.6 -->
+WHILE           = 'WHILE' CONDITION 'DO:'
+IF_THEN         = 'IF' CONDITION 'THEN:'
+ELSE_IF         = 'ELSE IF' CONDITION 'THEN:'
 ELSE            = 'ELSE:'
-BREAK           = 'BREAK'                                     <!-- v0.2 -->
-CONTINUE        = 'CONTINUE'                                  <!-- v0.2 -->
-DELEGATE        = 'DELEGATE' [SEMANTIC] 'TO' LINK ('WITH' (ANCHOR | ':' PARAMS))?  <!-- v0.8.1 -->
-USE             = 'USE' LINK 'TO' SEMANTIC                    <!-- v0.8 -->
-EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC                <!-- v0.8 -->
-GOTO            = 'GOTO' ANCHOR                               <!-- v0.8 -->
+BREAK           = 'BREAK'
+CONTINUE        = 'CONTINUE'
+RETURN          = 'RETURN' EXPR?                               <!-- v0.9 -->
+DO_STMT         = 'DO' SEMANTIC                                <!-- v0.9 standalone -->
+DELEGATE        = ['ASYNC'|'AWAIT'] 'DELEGATE' [SEMANTIC] ['TO' LINK] ['WITH' (ANCHOR | ':' PARAMS)]  <!-- v0.9 -->
+USE             = 'USE' LINK 'TO' SEMANTIC (':' PARAMS)?
+EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC
+GOTO            = 'GOTO' ANCHOR
 LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
+WITH_PARAM      = IDENT ':' EXPR                               <!-- v0.9 -->
 ```
 
 ### Identifier Patterns
@@ -889,7 +1045,7 @@ LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
 ```
 UPPER_IDENT     = /[A-Z][a-zA-Z0-9]*/
 IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
-PATH            = /[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)*/       <!-- v0.8 -->
+PATH            = /[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)*/
 ```
 
 ## Appendix: Design Decisions
@@ -951,12 +1107,20 @@ The explicit declaration approach required maintaining two sources of truth. Inf
 - Like SQL: you write it, the engine runs it
 - Tooling validates but doesn't transform (like dbt for SQL)
 
-### Why PARALLEL FOR EACH? (v0.2)
+### Why Remove PARALLEL FOR EACH? (v0.9)
 
-- Multi-agent orchestration requires concurrency
-- Simple syntax extension (PARALLEL prefix)
-- Clear semantics (independent iterations)
-- Enables fan-out patterns
+The `PARALLEL FOR EACH` construct was removed in favor of the `ASYNC DELEGATE` pattern:
+
+- **Clearer semantics**: ASYNC DELEGATE explicitly spawns independent agents
+- **More flexible**: Can mix ASYNC and AWAIT delegations in the same loop
+- **Better composition**: Works naturally with the existing DELEGATE infrastructure
+- **Simpler grammar**: One less control flow construct to parse and validate
+
+**Migration path**: Replace `PARALLEL FOR EACH $item IN $items:` with:
+```
+FOR EACH $item IN $items:
+  - ASYNC DELEGATE /process $item/ TO ~/agent/worker
+```
 
 ### Why BREAK/CONTINUE? (v0.2)
 
@@ -964,6 +1128,83 @@ The explicit declaration approach required maintaining two sources of truth. Inf
 - Useful for efficiency (early exit)
 - Clear control flow intent
 - Reduces nesting depth
+
+### Why RETURN? (v0.9)
+
+The RETURN keyword was added to provide explicit control over section completion:
+
+- **Explicit exit**: Clear signal that a section is complete
+- **Value passing**: Can return a value from a section
+- **Loop iteration**: Can yield values during iteration
+- **Implicit allowed**: No RETURN means natural completion (not an error)
+
+The restriction to "end of section/iteration only" prevents complex control flow that would be hard for LLMs to follow.
+
+### Why ASYNC/AWAIT DELEGATE? (v0.9)
+
+The modifiers provide explicit control over delegation behavior:
+
+- **ASYNC**: Fire-and-forget for parallel work that doesn't need immediate results
+- **AWAIT**: Explicit wait when results are needed before continuing
+- **Default**: Runtime decides based on context (typically AWAIT)
+- **Familiar**: Async/await is a well-understood concurrency pattern
+
+### Why Push Operator <<? (v0.9)
+
+The push operator provides a clean way to collect values:
+
+- **Familiar syntax**: `<<` is used in Ruby, C++ streams, shell redirection
+- **Concise**: `$results << $value` vs `$results = $results + [$value]`
+- **Loop-friendly**: Natural for collecting results during iteration
+- **Readable**: Direction of data flow is visually clear
+
+### Why Frontmatter Declarations? (v0.9)
+
+Moving types, input, and context to frontmatter provides:
+
+- **Separation of concerns**: Metadata separate from executable content
+- **Single location**: All declarations in one place at the top
+- **YAML familiarity**: Uses standard YAML syntax
+- **Tooling benefits**: Easier to extract and validate declarations
+- **Cleaner body**: Document body focuses on workflow, not declarations
+
+**Previous approach (v0.8)**: `## Types`, `## Input`, `## Context` sections in document body
+
+### Why Colon-Based Parameter Syntax? (v0.9)
+
+Parameters changed from `- $param = value` to `param: value`:
+
+- **Cleaner**: No `$` prefix or `-` marker needed
+- **YAML-like**: Consistent with frontmatter syntax
+- **Less noise**: Easier to read parameter lists
+- **Unambiguous**: Colon clearly separates name from value
+
+### Why DO Statement? (v0.9)
+
+The standalone DO statement provides explicit prose instructions:
+
+- **Clarity**: Distinguishes instruction from description
+- **Familiar**: "Do X" is natural English imperative
+- **Parseable**: Clear syntax for tooling to identify instructions
+- **Distinct**: Different from WHILE...DO where DO is a delimiter
+
+### Why Keyword Placement Rule? (v0.9)
+
+Requiring keywords at line start or after indentation:
+
+- **Unambiguous parsing**: Keywords in prose don't trigger control flow
+- **Natural prose**: Can write "The FOR keyword..." without conflict
+- **Clear structure**: Indentation shows nesting
+- **Simpler grammar**: Reduces parser ambiguity
+
+### Why Colon Rule? (v0.9)
+
+Colon at line end indicating an indented block:
+
+- **Python familiarity**: Well-established convention
+- **Visual cue**: Clearly signals "more content follows"
+- **Consistent**: Same pattern for all block structures
+- **Parseable**: Easy to detect block starts
 
 ### Why DELEGATE? (v0.6)
 
@@ -1017,28 +1258,33 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 ### Keywords
 
 - **For-each loop** (`FOR EACH $x IN $y:`) — Iteration over a collection.
-- **Parallel loop** (`PARALLEL FOR EACH $x IN $y:`) — Concurrent iteration.
 - **While loop** (`WHILE cond DO:`) — Conditional loop.
 - **Conditional** (`IF cond THEN:`) — Conditional branching.
 - **Else if clause** (`ELSE IF cond THEN:`) — Chained conditional branch.
 - **Else clause** (`ELSE:`) — Alternative branch of a conditional.
-- **With clause** (`WITH #anchor`) — Passes section template to delegate (v0.8).
+- **With clause** (`WITH #anchor` or `WITH:`) — Passes context to delegate.
 - **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.
 - **Loop control** (`BREAK`, `CONTINUE`) — Early exit or skip within loops.
+- **Return statement** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
+- **Do statement** (`DO /instruction/`) — Standalone prose instruction (v0.9).
 - **Collection operator** (`IN`) — Specifies the collection in a loop.
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawns a subagent with task (v0.8).
-- **Skill usage** (`USE ~/skill/x TO /task/`) — Follows skill instructions (v0.8).
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invokes external tool (v0.8).
-- **Section jump** (`GOTO #section`) — Control flow to section (v0.8).
-- **Target specifier** (`TO`) — Specifies target in DELEGATE/USE/EXECUTE statements.
+- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawns a subagent with task.
+- **Async delegation** (`ASYNC DELEGATE`) — Fire-and-forget agent spawn (v0.9).
+- **Await delegation** (`AWAIT DELEGATE`) — Wait-for-result agent spawn (v0.9).
+- **Skill usage** (`USE ~/skill/x TO /task/`) — Follows skill instructions.
+- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invokes external tool.
+- **Section jump** (`GOTO #section`) — Control flow to section.
+- **Target specifier** (`TO`) — Specifies target in DELEGATE/USE/EXECUTE statements (optional for DELEGATE in v0.9).
 
 ### Operators
 
 - **Assignment** (`=`) — Assigns a value to a variable or defines a type.
 - **Type annotation** (`:`) — Separates a variable from its type. `$x: $Type`
+- **Parameter separator** (`:`) — Separates parameter name from value in WITH blocks (v0.9). `param: value`
 - **Arrow** (`=>`) — Defines a lambda expression. `$x => expr`
 - **Union** (`|`) — Separates enum variants in types. `"a" | "b"`
 - **Member access** (`.`) — Accesses a property. `$item.name`
+- **Push** (`<<`) — Appends value to array. `$arr << $val` (v0.9)
 
 ### Comparison Operators
 
@@ -1051,15 +1297,15 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ### Document Structure
 
-- **Frontmatter** — Skill metadata in YAML between `---` fences: name, description.
+- **Frontmatter** — Skill metadata in YAML between `---` fences: name, description, types, input, context.
 - **Section heading** (`##`) — Markdown heading that defines a referenceable section.
 - **List item** (`-`) — Markdown list marker for steps and declarations.
 - **Code block** (` ``` `) — Fenced code block (standard markdown).
 
 ### Type Forms
 
-- **Semantic type** (`$Task: any executable instruction`) — Natural language type description.
-- **Enum type** (`$Status: "active" | "done"`) — Fixed set of string values.
+- **Semantic type** (`Task: any executable instruction`) — Natural language type description.
+- **Enum type** (`Status: "active" | "done"`) — Fixed set of string values.
 - **Tuple type** (`($Task, $Priority)`) — Compound type of ordered values.
 - **Array type** (`$Task[]`) — Collection of a single type.
 - **Function type** (`$fn = $x => expr`) — Lambda/callable type.
@@ -1069,9 +1315,10 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 - **Variable declaration** (`$name = value`) — Creates a variable with a value.
 - **Typed declaration** (`$name: $Type = value`) — Declaration with type annotation.
-- **Required parameter** (`$name: $Type`) — In WITH clause, parameter without default (required).
+- **Required parameter** (`name: $Type`) — In WITH clause, parameter without default (required).
 - **Variable reference** (`$name`) — Use of a defined variable.
 - **Lambda expression** (`$fn = $x => expr`) — Anonymous function definition.
+- **Push expression** (`$arr << value`) — Append value to array (v0.9).
 
 ### Control Flow
 
@@ -1080,18 +1327,22 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **Semantic condition** (`NOT diminishing returns`) — Natural language condition interpreted by LLM.
 - **Deterministic condition** (`$x < 5`) — Computable boolean expression.
 - **Destructuring** (`($a, $b) IN $tuples`) — Unpacking tuple elements in iteration.
+- **Return** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
 
 ### Composition
 
-- **Skill usage** (`USE ~/skill/x TO /task/`) — Running skill logic in current context (v0.8).
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawning independent subagent (v0.8).
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invoking external tool (v0.8).
-- **Section jump** (`GOTO #section`) — Control flow to section in current document (v0.8).
-- **Context template** (`WITH #anchor`) — Passing section as context to delegate (v0.8).
-- **Dependency inference** — Dependencies extracted from link statements, not frontmatter (v0.8).
+- **Skill usage** (`USE ~/skill/x TO /task/`) — Running skill logic in current context.
+- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawning independent subagent.
+- **Async delegation** (`ASYNC DELEGATE`) — Fire-and-forget delegation (v0.9).
+- **Await delegation** (`AWAIT DELEGATE`) — Blocking delegation (v0.9).
+- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invoking external tool.
+- **Section jump** (`GOTO #section`) — Control flow to section in current document.
+- **Context template** (`WITH #anchor` or `WITH:`) — Passing section or parameters as context.
+- **Dependency inference** — Dependencies extracted from link statements, not frontmatter.
 
 ## Version History
 
+- **v0.9** (2026-01-13): RETURN keyword (end of section/iteration only); ASYNC/AWAIT modifiers for DELEGATE; optional TO target in DELEGATE; push operator `<<` for array collection; WITH parameter syntax changed to `param: value`; removed PARALLEL FOR EACH (use ASYNC DELEGATE pattern); DO as standalone prose instruction; frontmatter declarations (types/input/context move from sections to YAML); colon rule (line-ending colon = indented block); keyword placement rule (CAPS at line start or indented)
 - **v0.8** (2026-01-13): Breaking change: Link-based references `~/path` replacing sigil-based `(reference)` syntax; removed `uses:` frontmatter (dependencies inferred from statements); new keywords `USE`, `EXECUTE`, `GOTO`; `WITH #anchor` for passing context templates; folder conventions (`agent/`, `skill/`, `tool/`)
 - **v0.7** (2026-01-12): Breaking change: Sigil-based reference syntax `(@agent)`, `(~skill)`, `(#section)`, `(!tool)`; unified `uses:` frontmatter field with sigil-prefixed identifiers; removed separate `skills:`/`agents:`/`tools:` fields
 - **v0.6** (2026-01-12): Added DELEGATE keyword for subagent spawning, `skills:`/`agents:`/`tools:` frontmatter fields
