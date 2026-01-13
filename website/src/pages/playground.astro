@@ -779,8 +779,73 @@ const projectsJson = JSON.stringify(examplesData.projects);
       return;
     }
 
+    // Find the current skill name from the current file
+    const currentSkill = unifiedGraph.nodes.find(n => n.file === currentFile)?.id;
+    
+    // Filter graph to center around the selected module
+    let filteredNodes = unifiedGraph.nodes;
+    let filteredEdges = unifiedGraph.edges;
+    
+    if (currentSkill) {
+      // Build adjacency maps for traversal
+      const dependencies = new Map(); // skill -> skills it depends on
+      const dependents = new Map();   // skill -> skills that depend on it
+      
+      for (const node of unifiedGraph.nodes) {
+        dependencies.set(node.id, new Set());
+        dependents.set(node.id, new Set());
+      }
+      
+      for (const edge of unifiedGraph.edges) {
+        if (dependencies.has(edge.source)) {
+          dependencies.get(edge.source).add(edge.target);
+        }
+        if (dependents.has(edge.target)) {
+          dependents.get(edge.target).add(edge.source);
+        }
+      }
+      
+      // Collect all connected nodes (transitive dependencies and dependents)
+      const connectedNodes = new Set([currentSkill]);
+      
+      // Traverse dependencies (what this skill uses)
+      const depsQueue = [currentSkill];
+      while (depsQueue.length > 0) {
+        const node = depsQueue.shift();
+        for (const dep of dependencies.get(node) || []) {
+          if (!connectedNodes.has(dep)) {
+            connectedNodes.add(dep);
+            depsQueue.push(dep);
+          }
+        }
+      }
+      
+      // Traverse dependents (what uses this skill)
+      const deptsQueue = [currentSkill];
+      while (deptsQueue.length > 0) {
+        const node = deptsQueue.shift();
+        for (const dept of dependents.get(node) || []) {
+          if (!connectedNodes.has(dept)) {
+            connectedNodes.add(dept);
+            deptsQueue.push(dept);
+          }
+        }
+      }
+      
+      // Filter to only connected nodes and their edges
+      filteredNodes = unifiedGraph.nodes.filter(n => connectedNodes.has(n.id));
+      filteredEdges = unifiedGraph.edges.filter(e => 
+        connectedNodes.has(e.source) && connectedNodes.has(e.target)
+      );
+    }
+
+    if (filteredNodes.length === 0) {
+      svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="currentColor" class="text-sm text-[var(--color-muted)] dark:text-[var(--color-muted-dark)]">No dependencies</text>`;
+      return;
+    }
+
     // Position nodes in a hierarchical layout
-    const nodes = unifiedGraph.nodes.map((n, i) => ({
+    const nodes = filteredNodes.map((n, i) => ({
       ...n,
       x: 0,
       y: 0,
@@ -791,7 +856,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
     const inDegree = new Array(nodes.length).fill(0);
     const children = nodes.map(() => []);
     
-    for (const edge of unifiedGraph.edges) {
+    for (const edge of filteredEdges) {
       const sourceIdx = nodeIndex.get(edge.source);
       const targetIdx = nodeIndex.get(edge.target);
       if (sourceIdx !== undefined && targetIdx !== undefined) {
@@ -849,7 +914,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
     `;
 
     // Draw edges
-    for (const edge of unifiedGraph.edges) {
+    for (const edge of filteredEdges) {
       const sourceIdx = nodeIndex.get(edge.source);
       const targetIdx = nodeIndex.get(edge.target);
       if (sourceIdx === undefined || targetIdx === undefined) continue;

@@ -5386,6 +5386,15 @@
         case "DelegateStatement":
           this.extractFromDelegateStatement(block);
           break;
+        case "UseStatement":
+          this.extractFromUseStatement(block);
+          break;
+        case "ExecuteStatement":
+          this.extractFromExecuteStatement(block);
+          break;
+        case "GotoStatement":
+          this.extractFromGotoStatement(block);
+          break;
       }
     }
     extractTypeDefinition(def) {
@@ -5506,6 +5515,48 @@
         source: deleg.span,
         type: "control-flow",
         name: "DelegateStatement"
+      });
+    }
+    // v0.8: Extract metadata from USE statement
+    extractFromUseStatement(stmt) {
+      this.extractLinkReference(stmt.link);
+      this.sourceMap.push({
+        source: stmt.task.span,
+        type: "semantic",
+        name: stmt.task.content
+      });
+      if (stmt.parameters) {
+        for (const param of stmt.parameters.parameters) {
+          this.extractVariableDeclaration(param);
+        }
+      }
+      this.sourceMap.push({
+        source: stmt.span,
+        type: "control-flow",
+        name: "UseStatement"
+      });
+    }
+    // v0.8: Extract metadata from EXECUTE statement
+    extractFromExecuteStatement(stmt) {
+      this.extractLinkReference(stmt.link);
+      this.sourceMap.push({
+        source: stmt.task.span,
+        type: "semantic",
+        name: stmt.task.content
+      });
+      this.sourceMap.push({
+        source: stmt.span,
+        type: "control-flow",
+        name: "ExecuteStatement"
+      });
+    }
+    // v0.8: Extract metadata from GOTO statement
+    extractFromGotoStatement(stmt) {
+      this.extractAnchorReference(stmt.anchor);
+      this.sourceMap.push({
+        source: stmt.span,
+        type: "control-flow",
+        name: "GotoStatement"
       });
     }
     extractParameters(blocks) {
