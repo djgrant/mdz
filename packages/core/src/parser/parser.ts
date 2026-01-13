@@ -1313,12 +1313,17 @@ export class Parser {
   }
 
   // v0.8: DELEGATE statement for agent delegation
-  // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+  // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template | WITH: params]
+  //         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
   private parseDelegateStatement(): AST.DelegateStatement {
     const start = this.advance();  // consume DELEGATE
     
-    // Parse task: /semantic marker/
-    const task = this.parseSemanticMarker();
+    // v0.8.1: Check if TO comes immediately (no semantic marker)
+    let task: AST.SemanticMarker | undefined;
+    if (!this.check('TO')) {
+      // Parse task: /semantic marker/
+      task = this.parseSemanticMarker();
+    }
     
     // Expect TO keyword
     this.expect('TO');
@@ -1326,16 +1331,20 @@ export class Parser {
     // Parse target: ~/agent/x
     const target = this.parseLink();
     
-    // Optional WITH #anchor
+    // Optional WITH: either #anchor or :params (v0.8.1)
     let withAnchor: AST.AnchorNode | undefined;
+    let parameters: AST.ParameterBlock | undefined;
     if (this.check('WITH')) {
       this.advance();  // consume WITH
-      withAnchor = this.parseAnchor();
-    }
-    
-    // Optional parameter block with colon
-    let parameters: AST.ParameterBlock | undefined;
-    if (this.check('COLON')) {
+      if (this.check('COLON')) {
+        // v0.8.1: WITH: followed by parameter block
+        parameters = this.parseParameterBlock();
+      } else {
+        // v0.8: WITH #anchor
+        withAnchor = this.parseAnchor();
+      }
+    } else if (this.check('COLON')) {
+      // Direct colon without WITH (legacy support)
       parameters = this.parseParameterBlock();
     }
     

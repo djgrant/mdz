@@ -320,10 +320,17 @@ continue_stmt     = [ list_marker ] CONTINUE newline ;
 
 /* v0.8: Link-based statements */
 
-/* DELEGATE - spawn agent with task */
-delegate_stmt     = DELEGATE semantic_marker TO link [ WITH anchor ] newline  /* Inline: DELEGATE /task/ TO ~/agent/x */
-                  | DELEGATE TO link colon newline with_params                /* Full form with params */
+/* DELEGATE - spawn agent with task (v0.8.1: WITH: params, optional task) */
+delegate_stmt     = DELEGATE [ semantic_marker ] TO link [ WITH ( anchor | colon with_params ) ] newline
                   ;
+/* Examples:
+   DELEGATE /task/ TO ~/agent/x                    -- inline, no params
+   DELEGATE /task/ TO ~/agent/x WITH #template     -- inline with anchor
+   DELEGATE /task/ TO ~/agent/x WITH:              -- inline with params (v0.8.1)
+     - $param = value
+   DELEGATE TO ~/agent/x WITH:                     -- task in params (v0.8.1)
+     - $task = /description/
+*/
 
 /* USE - follow skill instructions */
 use_stmt          = USE link TO semantic_marker newline ;                     /* USE ~/skill/x TO /task/ */

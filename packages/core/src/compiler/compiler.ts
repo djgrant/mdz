@@ -496,12 +496,14 @@ export class Compiler {
     // v0.8: Extract from target link (~/agent/x)
     this.extractLinkReference(deleg.target);
     
-    // Extract from task semantic marker
-    this.sourceMap.push({
-      source: deleg.task.span,
-      type: 'semantic',
-      name: deleg.task.content,
-    });
+    // Extract from task semantic marker (optional in v0.8.1)
+    if (deleg.task) {
+      this.sourceMap.push({
+        source: deleg.task.span,
+        type: 'semantic',
+        name: deleg.task.content,
+      });
+    }
     
     // Extract from withAnchor if present
     if (deleg.withAnchor) {

@@ -331,9 +331,10 @@ export interface ContinueStatement extends BaseNode {
 
 // v0.8: DELEGATE statement for agent delegation
 // Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
+//         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
 export interface DelegateStatement extends BaseNode {
   kind: 'DelegateStatement';
-  task: SemanticMarker;              // Task being delegated: /do something/
+  task?: SemanticMarker;             // Task being delegated: /do something/ (optional in v0.8.1)
   target: LinkNode;                   // Target agent: ~/agent/architect
   withAnchor?: AnchorNode;           // Optional template: WITH #template
   parameters?: ParameterBlock;        // Optional parameters block

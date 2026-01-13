@@ -424,6 +424,24 @@ With a context template (passes a section as context):
 DELEGATE /explore the codebase/ TO ~/agent/explorer WITH #context-template
 ```
 
+With inline parameters (v0.8.1):
+
+```
+DELEGATE /analyze file for issues/ TO ~/agent/code-analyzer WITH:
+  - $filename = $filename
+  - $diff = $diff
+  - $learnings = applicable learnings
+```
+
+With task in parameters (v0.8.1):
+
+```
+DELEGATE TO ~/agent/attacker WITH:
+  - $proposal
+  - $vector
+  - $task = /find genuine flaws/
+```
+
 ### USE - Follow Skill
 
 The `USE` keyword loads and follows a skill's instructions:
@@ -859,7 +877,7 @@ ELSE_IF         = 'ELSE IF' CONDITION 'THEN:'                 <!-- v0.6 -->
 ELSE            = 'ELSE:'
 BREAK           = 'BREAK'                                     <!-- v0.2 -->
 CONTINUE        = 'CONTINUE'                                  <!-- v0.2 -->
-DELEGATE        = 'DELEGATE' SEMANTIC 'TO' LINK ('WITH' ANCHOR)?  <!-- v0.8 -->
+DELEGATE        = 'DELEGATE' [SEMANTIC] 'TO' LINK ('WITH' (ANCHOR | ':' PARAMS))?  <!-- v0.8.1 -->
 USE             = 'USE' LINK 'TO' SEMANTIC                    <!-- v0.8 -->
 EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC                <!-- v0.8 -->
 GOTO            = 'GOTO' ANCHOR                               <!-- v0.8 -->
