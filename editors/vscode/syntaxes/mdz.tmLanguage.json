@@ -51,7 +51,11 @@
           "name": "keyword.control.mdz"
         },
         {
-          "match": "\\b(IN|AND|OR|NOT|WITH)\\b",
+          "match": "\\b(DELEGATE|USE|EXECUTE|GOTO)\\b",
+          "name": "keyword.control.mdz"
+        },
+        {
+          "match": "\\b(IN|AND|OR|NOT|WITH|TO)\\b",
           "name": "keyword.operator.word.mdz"
         }
       ]
