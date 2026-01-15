@@ -1,0 +1,160 @@
+---
+import { highlightLsp, highlightMonarch, highlightTextmate } from "../lib/highlight";
+
+const { source } = Astro.props;
+const textmateHtml = highlightTextmate(source);
+const monarchHtml = highlightMonarch(source);
+const lspHtml = highlightLsp(source);
+
+let hash = 0;
+for (let i = 0; i < source.length; i += 1) {
+  hash = (hash * 31 + source.charCodeAt(i)) | 0;
+}
+const blockId = `mdz-${Math.abs(hash)}`;
+---
+
+<div class="mdz-code-block" data-mdz-block data-mdz-id={blockId}>
+  <div class="mdz-code-toolbar">
+    <div class="mdz-tabs" role="tablist" aria-label="Highlight mode">
+      <button class="mdz-tab is-active" type="button" data-mdz-tab="textmate">TextMate</button>
+      <button class="mdz-tab" type="button" data-mdz-tab="monarch">Monarch</button>
+      <button class="mdz-tab" type="button" data-mdz-tab="lsp">LSP</button>
+    </div>
+    <div class="mdz-actions">
+      <button type="button" data-mdz-compare>Compare</button>
+    </div>
+  </div>
+  <div class="mdz-code-panel mdz-mode-textmate is-active" data-mdz-panel="textmate">
+    <pre><code set:html={textmateHtml} /></pre>
+  </div>
+  <div class="mdz-code-panel mdz-mode-monarch" data-mdz-panel="monarch">
+    <pre><code set:html={monarchHtml} /></pre>
+  </div>
+  <div class="mdz-code-panel mdz-mode-lsp" data-mdz-panel="lsp">
+    <pre><code set:html={lspHtml} /></pre>
+  </div>
+
+  <div class="mdz-modal" data-mdz-modal>
+    <div class="mdz-modal-content">
+      <div class="mdz-modal-header">
+        <strong>Compare Highlighting</strong>
+        <div class="mdz-modal-controls">
+          <button type="button" data-mdz-layout="two">2-up</button>
+          <button type="button" data-mdz-layout="three">3-up</button>
+          <button type="button" data-mdz-close>Close</button>
+        </div>
+      </div>
+      <div class="mdz-modal-body three-up" data-mdz-modal-body>
+        <div>
+          <div class="mdz-modal-label">TextMate</div>
+          <div class="mdz-modal-panel mdz-mode-textmate">
+          <pre><code set:html={textmateHtml} /></pre>
+          </div>
+        </div>
+        <div>
+          <div class="mdz-modal-label">Monarch</div>
+          <div class="mdz-modal-panel mdz-mode-monarch">
+          <pre><code set:html={monarchHtml} /></pre>
+          </div>
+        </div>
+        <div data-mdz-modal-panel="lsp">
+          <div class="mdz-modal-label">LSP</div>
+          <div class="mdz-modal-panel mdz-mode-lsp">
+          <pre><code set:html={lspHtml} /></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const script = document.currentScript;
+    const block =
+      script?.previousElementSibling?.matches("[data-mdz-block]")
+        ? script.previousElementSibling
+        : script?.closest("[data-mdz-block]");
+    if (!block) return;
+
+    const tabs = Array.from(block.querySelectorAll("[data-mdz-tab]"));
+    const panels = Array.from(block.querySelectorAll("[data-mdz-panel]"));
+    const compareButton = block.querySelector("[data-mdz-compare]");
+    const modal = block.querySelector("[data-mdz-modal]");
+    const modalBody = block.querySelector("[data-mdz-modal-body]");
+    const lspPanel = block.querySelector("[data-mdz-modal-panel=\"lsp\"]");
+    const layoutButtons = Array.from(block.querySelectorAll("[data-mdz-layout]"));
+    const closeButton = block.querySelector("[data-mdz-close]");
+
+    const storageKey = "mdz-highlight-mode";
+    const layoutKey = "mdz-highlight-compare";
+
+    const setMode = (mode) => {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.mdzTab === mode;
+        tab.classList.toggle("is-active", isActive);
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle("is-active", panel.dataset.mdzPanel === mode);
+      });
+    };
+
+    const setLayout = (layout) => {
+      if (!modalBody) return;
+      modalBody.classList.toggle("two-up", layout === "two");
+      modalBody.classList.toggle("three-up", layout === "three");
+      if (lspPanel) {
+        lspPanel.style.display = layout === "two" ? "none" : "block";
+      }
+      layoutButtons.forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.mdzLayout === layout);
+      });
+    };
+
+    const stored = localStorage.getItem(storageKey) || "textmate";
+    setMode(stored);
+
+    const storedLayout = localStorage.getItem(layoutKey) || "three";
+    setLayout(storedLayout);
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const mode = tab.dataset.mdzTab;
+        if (!mode) return;
+        localStorage.setItem(storageKey, mode);
+        setMode(mode);
+        window.dispatchEvent(new CustomEvent("mdz-highlight-change", { detail: mode }));
+      });
+    });
+
+    window.addEventListener("mdz-highlight-change", (event) => {
+      const mode = event.detail;
+      if (typeof mode === "string") {
+        setMode(mode);
+      }
+    });
+
+    compareButton?.addEventListener("click", () => {
+      modal?.classList.add("is-open");
+    });
+
+    closeButton?.addEventListener("click", () => {
+      modal?.classList.remove("is-open");
+    });
+
+    modal?.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        modal.classList.remove("is-open");
+      }
+    });
+
+    layoutButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const layout = button.dataset.mdzLayout;
+        if (!layout) return;
+        localStorage.setItem(layoutKey, layout);
+        setLayout(layout);
+      });
+    });
+  })();
+</script>

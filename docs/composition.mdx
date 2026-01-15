@@ -1,3 +1,18 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_composition_link_examples_mdz from "./snippets/composition/link-examples.mdz?raw";
+import snippet_docs_snippets_composition_link_in_prose_mdz from "./snippets/composition/link-in-prose.mdz?raw";
+import snippet_docs_snippets_composition_anchor_current_mdz from "./snippets/composition/anchor-current.mdz?raw";
+import snippet_docs_snippets_composition_anchor_external_mdz from "./snippets/composition/anchor-external.mdz?raw";
+import snippet_docs_snippets_composition_section_anchors_mdz from "./snippets/composition/section-anchors.mdz?raw";
+import snippet_docs_snippets_composition_use_mdz from "./snippets/composition/use.mdz?raw";
+import snippet_docs_snippets_composition_with_clause_mdz from "./snippets/composition/with-clause.mdz?raw";
+import snippet_docs_snippets_composition_delegate_mdz from "./snippets/composition/delegate.mdz?raw";
+import snippet_docs_snippets_composition_execute_mdz from "./snippets/composition/execute.mdz?raw";
+import snippet_docs_snippets_composition_goto_mdz from "./snippets/composition/goto.mdz?raw";
+import snippet_docs_snippets_composition_pattern_delegate_mdz from "./snippets/composition/pattern-delegate.mdz?raw";
+import snippet_docs_snippets_composition_pattern_conditional_mdz from "./snippets/composition/pattern-conditional.mdz?raw";
+import snippet_docs_snippets_composition_pattern_iterative_mdz from "./snippets/composition/pattern-iterative.mdz?raw";
+
 # Composition
 
 Skills in MDZ compose through links and delegation, enabling complex behaviors from simple, validated components.
@@ -6,11 +21,11 @@ Skills in MDZ compose through links and delegation, enabling complex behaviors f
 
 Links reference other files using path syntax:
 
-<!-- mdz-snippet: docs/snippets/composition/link-examples.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_link_examples_mdz} />
 
 In prose:
 
-<!-- mdz-snippet: docs/snippets/composition/link-in-prose.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_link_in_prose_mdz} />
 
 Tooling validates that linked files exist. You won't discover a missing dependency at runtime.
 
@@ -20,13 +35,13 @@ Tooling validates that linked files exist. You won't discover a missing dependen
 
 Use `#` to reference a section in the current document:
 
-<!-- mdz-snippet: docs/snippets/composition/anchor-current.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_anchor_current_mdz} />
 
 ### In Another Skill
 
 Combine links and anchors:
 
-<!-- mdz-snippet: docs/snippets/composition/anchor-external.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_anchor_external_mdz} />
 
 ### Section Names
 
@@ -36,13 +51,13 @@ Section names are derived from headings by:
 2. Replacing spaces with hyphens
 3. Removing special characters
 
-<!-- mdz-snippet: docs/snippets/composition/section-anchors.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_section_anchors_mdz} />
 
 ## Skill Invocation with USE
 
 Invoke a skill to perform a task using the **USE** keyword:
 
-<!-- mdz-snippet: docs/snippets/composition/use.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_use_mdz} />
 
 Tooling validates that the linked skill exists.
 
@@ -50,7 +65,7 @@ Tooling validates that the linked skill exists.
 
 Pass a section template when invoking a skill:
 
-<!-- mdz-snippet: docs/snippets/composition/with-clause.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_with_clause_mdz} />
 
 The WITH clause passes an anchor to the invoked skill as a template parameter.
 
@@ -75,19 +90,19 @@ This replaces the old sigil-based syntax. The type is now inferred from the path
 
 For orchestrating autonomous subagents, use the **DELEGATE** keyword with an agent link:
 
-<!-- mdz-snippet: docs/snippets/composition/delegate.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_delegate_mdz} />
 
 ## Tool Execution with EXECUTE
 
 For executing external tools, use the **EXECUTE** keyword:
 
-<!-- mdz-snippet: docs/snippets/composition/execute.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_execute_mdz} />
 
 ## GOTO for Section Navigation
 
 Jump to a section anchor using **GOTO**:
 
-<!-- mdz-snippet: docs/snippets/composition/goto.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_goto_mdz} />
 
 ## Keyword Summary
 
@@ -101,15 +116,15 @@ Jump to a section anchor using **GOTO**:
 
 ### Sub-Agent Delegation
 
-<!-- mdz-snippet: docs/snippets/composition/pattern-delegate.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_pattern_delegate_mdz} />
 
 ### Conditional Execution
 
-<!-- mdz-snippet: docs/snippets/composition/pattern-conditional.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_pattern_conditional_mdz} />
 
 ### Iterative Composition
 
-<!-- mdz-snippet: docs/snippets/composition/pattern-iterative.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_composition_pattern_iterative_mdz} />
 
 ## Link Handling
 

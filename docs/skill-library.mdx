@@ -1,3 +1,7 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_skill_library_complex_task_mdz from "./snippets/skill-library/complex-task.mdz?raw";
+import snippet_docs_snippets_skill_library_dependent_skill_mdz from "./snippets/skill-library/dependent-skill.mdz?raw";
+
 # Skill Library
 
 Organize, version, and share your MDZ skills effectively to build reusable skill libraries.
@@ -72,7 +76,7 @@ git subtree add --prefix skills/shared https://github.com/user/shared-skills.git
 
 Build complex skills by composing simpler ones:
 
-<!-- mdz-snippet: docs/snippets/skill-library/complex-task.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_skill_library_complex_task_mdz} />
 
 Link to other skills to avoid duplication. Dependencies can be declared in `uses:` or inferred from links.
 
@@ -80,7 +84,7 @@ Link to other skills to avoid duplication. Dependencies can be declared in `uses
 
 Skills link to other skills using link syntax. Dependencies can be inferred from links or declared explicitly:
 
-<!-- mdz-snippet: docs/snippets/skill-library/dependent-skill.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_skill_library_dependent_skill_mdz} />
 
 Check dependency graphs:
 

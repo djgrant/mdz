@@ -1,3 +1,6 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_getting_started_greeting_mdz from "./snippets/getting-started/greeting.mdz?raw";
+
 # Getting Started
 
 Install MDZ and write your first skill in under 5 minutes.
@@ -19,7 +22,7 @@ yarn add zenmarkdown
 
 Create a file named `greeting.mdz`:
 
-<!-- mdz-snippet: docs/snippets/getting-started/greeting.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_getting_started_greeting_mdz} />
 
 ## Validate Your Skill
 

@@ -1,3 +1,12 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_higher_order_map_reduce_mdz from "./snippets/higher-order/map-reduce.mdz?raw";
+import snippet_docs_snippets_higher_order_hypothesis_loop_mdz from "./snippets/higher-order/hypothesis-loop.mdz?raw";
+import snippet_docs_snippets_higher_order_pipeline_mdz from "./snippets/higher-order/pipeline.mdz?raw";
+import snippet_docs_snippets_higher_order_scientific_method_frontmatter_mdz from "./snippets/higher-order/scientific-method-frontmatter.mdz?raw";
+import snippet_docs_snippets_higher_order_work_package_path_mdz from "./snippets/higher-order/work-package-path.mdz?raw";
+import snippet_docs_snippets_higher_order_scientific_loop_mdz from "./snippets/higher-order/scientific-loop.mdz?raw";
+import snippet_docs_snippets_higher_order_higher_order_structure_mdz from "./snippets/higher-order/higher-order-structure.mdz?raw";
+
 # Higher-Order Skills
 
 Skills that compose and orchestrate other skills--like higher-order functions, but for agent workflows.
@@ -19,7 +28,7 @@ These skills typically:
 
 Fan out work to multiple agents, collect results, and synthesize a final output:
 
-<!-- mdz-snippet: docs/snippets/higher-order/map-reduce.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_map_reduce_mdz} />
 
 This pattern excels when work can be parallelized and results need aggregation.
 
@@ -27,7 +36,7 @@ This pattern excels when work can be parallelized and results need aggregation.
 
 Loop until a condition is met, refining approach based on observations:
 
-<!-- mdz-snippet: docs/snippets/higher-order/hypothesis-loop.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_hypothesis_loop_mdz} />
 
 This pattern is ideal for problems requiring exploration and adaptation.
 
@@ -35,7 +44,7 @@ This pattern is ideal for problems requiring exploration and adaptation.
 
 Sequential skill chaining where output flows from one stage to the next:
 
-<!-- mdz-snippet: docs/snippets/higher-order/pipeline.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_pipeline_mdz} />
 
 Use this when each step transforms data for the next stage.
 
@@ -45,7 +54,7 @@ The `scientific-method.mdz` skill demonstrates a sophisticated higher-order patt
 
 ### Structure
 
-<!-- mdz-snippet: docs/snippets/higher-order/scientific-method-frontmatter.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_scientific_method_frontmatter_mdz} />
 
 ### State Persistence with Work Packages
 
@@ -55,13 +64,13 @@ The scientist uses `~/skill/work-packages` to persist state across iterations:
 - Each experiment gets its own work package at a computed path
 - Results are recorded for later synthesis
 
-<!-- mdz-snippet: docs/snippets/higher-order/work-package-path.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_work_package_path_mdz} />
 
 ### The WHILE Loop
 
 The core iteration continues until diminishing returns or max iterations:
 
-<!-- mdz-snippet: docs/snippets/higher-order/scientific-loop.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_scientific_loop_mdz} />
 
 ### Result Accumulation
 
@@ -76,7 +85,7 @@ The final conclusion synthesizes all findings, documenting what worked and what 
 
 A typical higher-order skill follows this structure:
 
-<!-- mdz-snippet: docs/snippets/higher-order/higher-order-structure.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_higher_order_higher_order_structure_mdz} />
 
 ## Key Techniques
 

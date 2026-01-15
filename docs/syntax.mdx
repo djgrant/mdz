@@ -1,0 +1,216 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_syntax_document_structure_mdz from "./snippets/syntax/document-structure.mdz?raw";
+import snippet_docs_snippets_syntax_frontmatter_mdz from "./snippets/syntax/frontmatter.mdz?raw";
+import snippet_docs_snippets_syntax_type_definitions_mdz from "./snippets/syntax/type-definitions.mdz?raw";
+import snippet_docs_snippets_syntax_variable_declaration_mdz from "./snippets/syntax/variable-declaration.mdz?raw";
+import snippet_docs_snippets_syntax_variable_examples_mdz from "./snippets/syntax/variable-examples.mdz?raw";
+import snippet_docs_snippets_syntax_lambda_expressions_mdz from "./snippets/syntax/lambda-expressions.mdz?raw";
+import snippet_docs_snippets_syntax_semantic_type_annotations_mdz from "./snippets/syntax/semantic-type-annotations.mdz?raw";
+import snippet_docs_snippets_syntax_link_examples_mdz from "./snippets/syntax/link-examples.mdz?raw";
+import snippet_docs_snippets_syntax_section_anchors_mdz from "./snippets/syntax/section-anchors.mdz?raw";
+import snippet_docs_snippets_syntax_semantic_inline_mdz from "./snippets/syntax/semantic-inline.mdz?raw";
+import snippet_docs_snippets_syntax_semantic_interpolation_mdz from "./snippets/syntax/semantic-interpolation.mdz?raw";
+import snippet_docs_snippets_syntax_inferred_variables_mdz from "./snippets/syntax/inferred-variables.mdz?raw";
+import snippet_docs_snippets_syntax_semantic_annotation_short_mdz from "./snippets/syntax/semantic-annotation-short.mdz?raw";
+import snippet_docs_snippets_syntax_for_loop_mdz from "./snippets/syntax/for-loop.mdz?raw";
+import snippet_docs_snippets_syntax_for_loop_destructuring_mdz from "./snippets/syntax/for-loop-destructuring.mdz?raw";
+import snippet_docs_snippets_syntax_while_loop_mdz from "./snippets/syntax/while-loop.mdz?raw";
+import snippet_docs_snippets_syntax_conditional_mdz from "./snippets/syntax/conditional.mdz?raw";
+import snippet_docs_snippets_syntax_goto_mdz from "./snippets/syntax/goto.mdz?raw";
+import snippet_docs_snippets_syntax_use_mdz from "./snippets/syntax/use.mdz?raw";
+import snippet_docs_snippets_syntax_with_clause_mdz from "./snippets/syntax/with-clause.mdz?raw";
+import snippet_docs_snippets_syntax_execute_mdz from "./snippets/syntax/execute.mdz?raw";
+import snippet_docs_snippets_syntax_delegate_mdz from "./snippets/syntax/delegate.mdz?raw";
+import snippet_docs_snippets_syntax_conventional_sections_mdz from "./snippets/syntax/conventional-sections.mdz?raw";
+
+# Syntax Reference
+
+Complete reference for MDZ syntax, from document structure to control flow.
+
+## Document Structure
+
+An MDZ document is a valid markdown file with these extensions:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_document_structure_mdz} />
+
+### Frontmatter
+
+Required and optional fields in YAML frontmatter:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_frontmatter_mdz} />
+
+**Note:** Dependencies can be declared in `uses:` or inferred from links in your document.
+
+## Types
+
+### Type Definitions
+
+Types provide semantic hints about values:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_type_definitions_mdz} />
+
+### Type Forms
+
+- **Semantic type**: `$Task: /any executable instruction/`
+- **Enum type**: `$Strategy: "fast" | "thorough"` (variants separated by **union** operator `|`)
+- **Tuple type**: `($Task, $Strategy)`
+- **Array type**: `$Task[]` (uses **array suffix**)
+- **Function type**: `$fn = $x => expression` (uses **arrow** operator)
+
+## Variables
+
+Variables use the **dollar sigil** (`$`) prefix. The **type annotation** (`:`) is optional:
+
+### Variable Declaration
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_variable_declaration_mdz} />
+
+### Examples
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_variable_examples_mdz} />
+
+### Lambda Expressions
+
+Functions use the **arrow** operator (`=>`):
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_lambda_expressions_mdz} />
+
+### Semantic Type Annotations
+
+When a variable needs a semantic description rather than a named type, use the **semantic type** syntax:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_type_annotations_mdz} />
+
+This pattern makes semantic transformations explicit and avoids confusion about where properties come from.
+
+## Links
+
+Links reference other files using path syntax. The type is inferred from the folder:
+
+### Link Syntax
+
+- `~/skill/name` -- Link to a skill in the `skill/` folder
+- `~/agent/name` -- Link to an agent in the `agent/` folder
+- `~/tool/name` -- Link to a tool in the `tool/` folder
+- `#section` -- Anchor to a section in the current file
+- `~/skill/name#section` -- Link with anchor to a specific section
+
+### Folder Conventions
+
+The folder in the path determines the reference type:
+
+- `agent/` -- Agents for delegation
+- `skill/` -- Reusable skill modules
+- `tool/` -- Tool integrations
+
+### Examples
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_link_examples_mdz} />
+
+### Section Anchors
+
+Section names are derived from headings by:
+
+1. Converting to lowercase
+2. Replacing spaces with hyphens
+3. Removing special characters
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_section_anchors_mdz} />
+
+## Semantic Markers
+
+The `/content/` syntax marks content for LLM interpretation. There are three forms:
+
+### Inline Semantic Markers
+
+Mark inline content that the LLM should interpret contextually:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_inline_mdz} />
+
+Variables are expanded before interpretation:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_interpolation_mdz} />
+
+### Inferred Variables
+
+Use `$/name/` for variables the LLM infers and tracks without explicit declaration:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_inferred_variables_mdz} />
+
+The LLM maintains these values implicitly based on context.
+
+### Semantic Type Annotations
+
+Use `/description/` as a type annotation for variables that need semantic descriptions:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_annotation_short_mdz} />
+
+## Control Flow
+
+### For Loop
+
+Iterate over a collection using the **collection operator** (`IN`):
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_for_loop_mdz} />
+
+With **destructuring**:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_for_loop_destructuring_mdz} />
+
+### While Loop
+
+Loop with a **condition**. The `DO` keyword delimits the condition:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_while_loop_mdz} />
+
+### Conditional
+
+Branch with `IF`/`THEN` and optional **else clause**:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_conditional_mdz} />
+
+### GOTO
+
+Jump to a section anchor:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_goto_mdz} />
+
+## Composition
+
+### USE (Skill Invocation)
+
+Invoke a skill to perform a task:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_use_mdz} />
+
+### WITH Clause (Passing Templates)
+
+Pass a section template when invoking:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_with_clause_mdz} />
+
+### EXECUTE (Tool Invocation)
+
+Execute a tool to perform an action:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_execute_mdz} />
+
+### DELEGATE (Agent Delegation)
+
+Delegate to an agent for autonomous work:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_delegate_mdz} />
+
+### Pattern Summary
+
+- **USE** -- Invoke skills for reusable workflows
+- **EXECUTE** -- Run tools for external actions
+- **DELEGATE** -- Spawn autonomous agents
+- **GOTO** -- Jump to section anchors
+- **WITH** -- Pass template sections
+
+## Conventional Sections
+
+While not required, these sections are conventional:
+
+<MdzCodeBlock source={snippet_docs_snippets_syntax_conventional_sections_mdz} />

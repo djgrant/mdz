@@ -1,3 +1,7 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_internals_ast_lexer_example_mdz from "../snippets/internals/ast/lexer-example.mdz?raw";
+import snippet_docs_snippets_internals_ast_ast_example_mdz from "../snippets/internals/ast/ast-example.mdz?raw";
+
 # AST Structure
 
 MDZ uses a two-phase parsing approach: lexical analysis followed by recursive descent parsing. This page covers the lexer, parser, and AST node types.
@@ -15,7 +19,7 @@ The **lexer** tokenizes source text into a stream of tokens. It handles:
 
 Here's how the lexer tokenizes a simple MDZ snippet:
 
-<!-- mdz-snippet: docs/snippets/internals/ast/lexer-example.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_ast_lexer_example_mdz} />
 
 This produces the following token stream (simplified):
 
@@ -111,7 +115,7 @@ Key document properties:
 
 For this MDZ input:
 
-<!-- mdz-snippet: docs/snippets/internals/ast/ast-example.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_ast_ast_example_mdz} />
 
 The parser produces this AST structure (simplified):
 

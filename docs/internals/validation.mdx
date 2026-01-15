@@ -1,3 +1,9 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_internals_validation_parse_error_mdz from "../snippets/internals/validation/parse-error.mdz?raw";
+import snippet_docs_snippets_internals_validation_type_error_mdz from "../snippets/internals/validation/type-error.mdz?raw";
+import snippet_docs_snippets_internals_validation_scope_error_mdz from "../snippets/internals/validation/scope-error.mdz?raw";
+import snippet_docs_snippets_internals_validation_link_error_mdz from "../snippets/internals/validation/link-error.mdz?raw";
+
 # Validation
 
 MDZ uses a multi-stage validation pipeline to catch issues before runtime. The pipeline runs after parsing and includes concrete diagnostic examples.
@@ -27,7 +33,7 @@ Parse errors are recoverable--the parser continues and attaches errors to the AS
 
 For malformed frontmatter like:
 
-<!-- mdz-snippet: docs/snippets/internals/validation/parse-error.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_validation_parse_error_mdz} />
 
 The parser produces:
 
@@ -47,7 +53,7 @@ The compiler checks that all type references resolve:
 
 For undefined type reference:
 
-<!-- mdz-snippet: docs/snippets/internals/validation/type-error.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_validation_type_error_mdz} />
 
 Produces warning:
 
@@ -66,7 +72,7 @@ Variables must be defined before use:
 
 ### Example Scope Error
 
-<!-- mdz-snippet: docs/snippets/internals/validation/scope-error.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_validation_scope_error_mdz} />
 
 Produces error:
 
@@ -84,7 +90,7 @@ Links and anchors must resolve:
 
 ### Example Link Error
 
-<!-- mdz-snippet: docs/snippets/internals/validation/link-error.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_internals_validation_link_error_mdz} />
 
 If 'skill/advanced-math.mdz' doesn't exist, produces error:
 

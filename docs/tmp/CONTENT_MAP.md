@@ -4,25 +4,25 @@ This is the migration map from the legacy website docs to markdown files in `doc
 
 ## Source Pages
 
-- `website/src/pages/index.astro` -> `docs/landing.md`
-- `website/src/pages/docs/index.astro` -> `docs/index.md`
-- `website/src/pages/docs/getting-started.astro` -> `docs/getting-started.md`
-- `website/src/pages/docs/syntax.astro` -> `docs/syntax.md`
-- `website/src/pages/docs/control-flow.astro` -> `docs/control-flow.md`
-- `website/src/pages/docs/composition.astro` -> `docs/composition.md`
-- `website/src/pages/docs/types.astro` -> `docs/types.md`
-- `website/src/pages/docs/higher-order.astro` -> `docs/higher-order.md`
-- `website/src/pages/docs/concepts.astro` -> `docs/concepts.md`
-- `website/src/pages/docs/skill-library.astro` -> `docs/skill-library.md`
-- `website/src/pages/docs/cli.astro` -> `docs/cli.md`
-- `website/src/pages/docs/api.astro` -> `docs/api.md`
-- `website/src/pages/docs/ide.astro` -> `docs/ide.md`
-- `website/src/pages/docs/using-in-project.astro` -> `docs/using-in-project.md`
-- `website/src/pages/docs/internals/index.astro` -> `docs/internals/index.md`
-- `website/src/pages/docs/internals/terminology.astro` -> `docs/internals/terminology.md`
-- `website/src/pages/docs/internals/ast.astro` -> `docs/internals/ast.md`
-- `website/src/pages/docs/internals/validation.astro` -> `docs/internals/validation.md`
-- `website/src/pages/docs/internals/compilation.astro` -> `docs/internals/compilation.md`
+- `website/src/pages/index.astro` -> `docs/landing.mdx`
+- `website/src/pages/docs/index.astro` -> `docs/index.mdx`
+- `website/src/pages/docs/getting-started.astro` -> `docs/getting-started.mdx`
+- `website/src/pages/docs/syntax.astro` -> `docs/syntax.mdx`
+- `website/src/pages/docs/control-flow.astro` -> `docs/control-flow.mdx`
+- `website/src/pages/docs/composition.astro` -> `docs/composition.mdx`
+- `website/src/pages/docs/types.astro` -> `docs/types.mdx`
+- `website/src/pages/docs/higher-order.astro` -> `docs/higher-order.mdx`
+- `website/src/pages/docs/concepts.astro` -> `docs/concepts.mdx`
+- `website/src/pages/docs/skill-library.astro` -> `docs/skill-library.mdx`
+- `website/src/pages/docs/cli.astro` -> `docs/cli.mdx`
+- `website/src/pages/docs/api.astro` -> `docs/api.mdx`
+- `website/src/pages/docs/ide.astro` -> `docs/ide.mdx`
+- `website/src/pages/docs/using-in-project.astro` -> `docs/using-in-project.mdx`
+- `website/src/pages/docs/internals/index.astro` -> `docs/internals/index.mdx`
+- `website/src/pages/docs/internals/terminology.astro` -> `docs/internals/terminology.mdx`
+- `website/src/pages/docs/internals/ast.astro` -> `docs/internals/ast.mdx`
+- `website/src/pages/docs/internals/validation.astro` -> `docs/internals/validation.mdx`
+- `website/src/pages/docs/internals/compilation.astro` -> `docs/internals/compilation.mdx`
 
 ## Snippet Storage
 

@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const examples = Object.keys(import.meta.glob("../../../docs/examples/**/*.mdz"))
+  .map((path) => path.replace("../../../docs/examples/", "").replace(/\.mdz$/, ""))
+  .sort();
+
+const grouped = new Map<string, string[]>();
+for (const slug of examples) {
+  const [group, ...rest] = slug.split("/");
+  if (!group) continue;
+  if (!grouped.has(group)) grouped.set(group, []);
+  grouped.get(group)?.push(rest.join("/"));
+}
+---
+
+<BaseLayout title="MDZ Examples">
+  <h1>Examples</h1>
+  <p>Browse MDZ skills and agents.</p>
+
+  {Array.from(grouped.entries()).map(([group, items]) => (
+    <section>
+      <h2>{group}</h2>
+      <ul>
+        {items.map((item) => (
+          <li>
+            <a href={`/examples/${group}/${item}`}>{item}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

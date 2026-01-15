@@ -1,3 +1,6 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_concepts_keywords_mdz from "./snippets/concepts/keywords.mdz?raw";
+
 # Core Concepts
 
 Understanding the fundamental ideas behind MDZ.
@@ -79,7 +82,7 @@ A skill is an MDZ document that defines agent behavior. Skills are:
 
 Control flow and composition use uppercase keywords for visibility:
 
-<!-- mdz-snippet: docs/snippets/concepts/keywords.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_concepts_keywords_mdz} />
 
 This makes structure scannable and avoids conflicts with prose. The LLM interprets and executes these at runtime.
 

@@ -22,6 +22,7 @@
     "cli": "pnpm build && node dist/src/cli/index.js",
     "web": "pnpm -F zen-website --",
     "deploy": "pnpm -F zen-website push",
+    "web2": "pnpm -C web2",
     "benchmark": "cd benchmark && bun run",
     "benchmark:dev": "cd benchmark && bun dev"
   },

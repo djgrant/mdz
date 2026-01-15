@@ -1,3 +1,12 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_types_type_contracts_mdz from "./snippets/types/type-contracts.mdz?raw";
+import snippet_docs_snippets_types_semantic_types_mdz from "./snippets/types/semantic-types.mdz?raw";
+import snippet_docs_snippets_types_enum_types_mdz from "./snippets/types/enum-types.mdz?raw";
+import snippet_docs_snippets_types_tuple_types_mdz from "./snippets/types/tuple-types.mdz?raw";
+import snippet_docs_snippets_types_array_types_mdz from "./snippets/types/array-types.mdz?raw";
+import snippet_docs_snippets_types_function_types_mdz from "./snippets/types/function-types.mdz?raw";
+import snippet_docs_snippets_types_typed_declarations_mdz from "./snippets/types/typed-declarations.mdz?raw";
+
 # Type System
 
 Types in MDZ are contracts for tooling and semantic hints for LLMs--not runtime enforcement.
@@ -15,7 +24,7 @@ Unlike traditional programming languages, MDZ types are:
 
 Types enable tooling to check that modules fit together correctly:
 
-<!-- mdz-snippet: docs/snippets/types/type-contracts.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_type_contracts_mdz} />
 
 This mismatch is caught at build time--before the LLM ever sees it. Without MDZ, you'd discover it at runtime with a confused LLM.
 
@@ -25,31 +34,31 @@ This mismatch is caught at build time--before the LLM ever sees it. Without MDZ,
 
 Natural language descriptions that help LLMs understand values:
 
-<!-- mdz-snippet: docs/snippets/types/semantic-types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_semantic_types_mdz} />
 
 ### Enum Types
 
 Constrained sets of string values using the **union** operator (`|`):
 
-<!-- mdz-snippet: docs/snippets/types/enum-types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_enum_types_mdz} />
 
 ### Tuple Types
 
 **Tuples** combine multiple types:
 
-<!-- mdz-snippet: docs/snippets/types/tuple-types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_tuple_types_mdz} />
 
 ### Array Types
 
 Collections using the **array suffix** (`[]`):
 
-<!-- mdz-snippet: docs/snippets/types/array-types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_array_types_mdz} />
 
 ### Function Types
 
 **Lambda expressions** using the **arrow** operator (`=>`):
 
-<!-- mdz-snippet: docs/snippets/types/function-types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_function_types_mdz} />
 
 ## Using Types
 
@@ -57,7 +66,7 @@ Collections using the **array suffix** (`[]`):
 
 Use the **type annotation** (`:`) to declare variable types:
 
-<!-- mdz-snippet: docs/snippets/types/typed-declarations.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_types_typed_declarations_mdz} />
 
 ### What Tooling Checks
 

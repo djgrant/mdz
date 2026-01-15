@@ -1,3 +1,12 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_landing_hero_example_mdz from "./snippets/landing/hero-example.mdz?raw";
+import snippet_docs_snippets_landing_types_mdz from "./snippets/landing/types.mdz?raw";
+import snippet_docs_snippets_landing_variables_mdz from "./snippets/landing/variables.mdz?raw";
+import snippet_docs_snippets_landing_links_mdz from "./snippets/landing/links.mdz?raw";
+import snippet_docs_snippets_landing_semantic_markers_mdz from "./snippets/landing/semantic-markers.mdz?raw";
+import snippet_docs_snippets_landing_control_flow_mdz from "./snippets/landing/control-flow.mdz?raw";
+import snippet_docs_snippets_landing_composition_mdz from "./snippets/landing/composition.mdz?raw";
+
 # Landing Page Content
 
 A language for the world's most powerful runtime.
@@ -9,7 +18,7 @@ MDZ is a superset of markdown designed around LLMs' inherent ability to evaluate
 
 ## Hero Code Example
 
-<!-- mdz-snippet: docs/snippets/landing/hero-example.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_hero_example_mdz} />
 
 ## Key Ideas
 
@@ -45,37 +54,37 @@ MDZ extends markdown. Every construct is a signal to both an ecosystem of tools,
 
 Contracts for tooling to check.
 
-<!-- mdz-snippet: docs/snippets/landing/types.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_types_mdz} />
 
 ### Variables
 
 Named values with type annotations.
 
-<!-- mdz-snippet: docs/snippets/landing/variables.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_variables_mdz} />
 
 ### Links
 
 Dependencies the tooling validates.
 
-<!-- mdz-snippet: docs/snippets/landing/links.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_links_mdz} />
 
 ### Semantic Markers
 
 LLM determines from context.
 
-<!-- mdz-snippet: docs/snippets/landing/semantic-markers.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_semantic_markers_mdz} />
 
 ### Control Flow
 
 The LLM executes at runtime.
 
-<!-- mdz-snippet: docs/snippets/landing/control-flow.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_control_flow_mdz} />
 
 ### Composition
 
 Skills and agent delegation.
 
-<!-- mdz-snippet: docs/snippets/landing/composition.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_landing_composition_mdz} />
 
 ## Quick Start
 

@@ -118,6 +118,15 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  web2:
+    dependencies:
+      '@astrojs/mdx':
+        specifier: ^4.3.13
+        version: 4.3.13(astro@5.16.6(@azure/identity@4.13.0)(@types/node@20.19.27)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.54.0)(tsx@4.21.0)(typescript@5.9.3))
+      astro:
+        specifier: ^5.16.6
+        version: 5.16.6(@azure/identity@4.13.0)(@types/node@20.19.27)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.54.0)(tsx@4.21.0)(typescript@5.9.3)
+
   website:
     dependencies:
       '@astrojs/mdx':

@@ -1,3 +1,10 @@
+import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
+import snippet_docs_snippets_using_in_project_task_processor_mdz from "./snippets/using-in-project/task-processor.mdz?raw";
+import snippet_docs_snippets_using_in_project_task_processor_prompt_mdz from "./snippets/using-in-project/task-processor-prompt.mdz?raw";
+import snippet_docs_snippets_using_in_project_code_review_skill_mdz from "./snippets/using-in-project/code-review-skill.mdz?raw";
+import snippet_docs_snippets_using_in_project_code_review_prompt_mdz from "./snippets/using-in-project/code-review-prompt.mdz?raw";
+import snippet_docs_snippets_using_in_project_template_mdz from "./snippets/using-in-project/template.mdz?raw";
+
 # Using MDZ in Your Project
 
 Bridge the gap from playground examples to real-world adoption. Learn how to structure, validate, and integrate MDZ skills into your agent workflows.
@@ -43,7 +50,7 @@ mkdir skills
 
 Create `skills/task-processor.mdz` with this content (see [syntax reference](/docs/syntax) for details):
 
-<!-- mdz-snippet: docs/snippets/using-in-project/task-processor.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_using_in_project_task_processor_mdz} />
 
 ### 3. Validate Your Skill
 
@@ -79,7 +86,7 @@ mdz compile skills/task-processor.mdz -o skills/task-processor.compiled.mdz
 
 Copy the workflow section and use it in your LLM prompts. For example, in Claude Desktop:
 
-<!-- mdz-snippet: docs/snippets/using-in-project/task-processor-prompt.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_using_in_project_task_processor_prompt_mdz} />
 
 ## Project Structure
 
@@ -107,7 +114,7 @@ Skills are loaded by referencing their file paths. For programmatic integration,
 
 Create skills for common patterns in your project:
 
-<!-- mdz-snippet: docs/snippets/using-in-project/code-review-skill.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_using_in_project_code_review_skill_mdz} />
 
 Validate your skills to catch issues early:
 
@@ -142,7 +149,7 @@ mdz parse code-review.mdz > code-review.ast.json
 
 Use MDZ skills by copying their workflow sections into Claude prompts:
 
-<!-- mdz-snippet: docs/snippets/using-in-project/code-review-prompt.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_using_in_project_code_review_prompt_mdz} />
 
 ### Custom Agent Frameworks
 
@@ -158,7 +165,7 @@ Use the `compile` function to validate and process skills. See [API docs](/docs/
 
 Use this template to create your first project skill:
 
-<!-- mdz-snippet: docs/snippets/using-in-project/template.mdz -->
+<MdzCodeBlock source={snippet_docs_snippets_using_in_project_template_mdz} />
 
 ## Best Practices
 
