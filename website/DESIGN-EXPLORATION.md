@@ -88,8 +88,9 @@ Zen is about clarity, intention, and the space between things. The website shoul
 │     and interpretable by LLMs.                  │
 │                                                 │
 │     $Task = any executable instruction          │
-│     FOR EACH $step IN $workflow:                │
-│       - Execute with [[helper-skill]]           │
+│     FOR $step IN $workflow                      │
+│       USE ~/skill/helper-skill TO /execute step/│
+│     END                                         │
 │                                                 │
 │                  [ Enter Playground ]           │
 │                                                 │
@@ -146,8 +147,9 @@ Zen is about clarity, intention, and the space between things. The website shoul
 │  │                                                  │  │
 │  │ ## Workflow                                      │  │
 │  │                                                  │  │
-│  │ FOR EACH $task IN $tasks:                        │  │
-│  │   - Execute with [[helper]]                      │  │
+│  │ FOR $task IN $tasks                              │  │
+│  │   USE ~/skill/helper TO /execute task/           │  │
+│  │ END                                              │  │
 │  └──────────────────────────────────────────────────┘  │
 │                                                        │
 │  [ Documentation ]  [ Playground ]  [ GitHub ]         │
@@ -207,10 +209,12 @@ Zen is about clarity, intention, and the space between things. The website shoul
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐  │
 │  │ ```zen                                             │  │
-│  │ FOR EACH $task IN $tasks:                          │  │
-│  │   - Execute with {~~appropriate strategy}          │  │
-│  │   - IF $task.failed THEN:                          │  │
-│  │     - Retry with [[fallback-skill]]                │  │
+│  │ FOR $task IN $tasks                                │  │
+│  │   Execute with /appropriate strategy/              │  │
+│  │   IF $task.failed THEN                             │  │
+│  │     USE ~/skill/fallback-skill TO /retry/          │  │
+│  │   END                                              │  │
+│  │ END                                                │  │
 │  │ ```                                                │  │
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
@@ -273,7 +277,7 @@ Zen is about clarity, intention, and the space between things. The website shoul
 │  ---                                    │
 │                                         │
 │  ## Workflow                            │
-│  Execute [[skill]]                      │
+│  USE ~/skill/skill TO /execute/         │
 │                                         │
 ├─────────────────────────────────────────┤
 │  [ Source ]  [ Compiled ]  [ AST ]      │
@@ -300,7 +304,7 @@ Zen is about clarity, intention, and the space between things. The website shoul
 │  ---                                    │
 │                                         │
 │  ## Workflow                            │
-│  Execute [[skill]]                      │
+│  USE ~/skill/skill TO /execute/         │
 │                                         │
 │                                         │
 │                                         │
@@ -393,4 +397,3 @@ After exploring these options, I recommend:
 5. Set up documentation structure
 6. Build playground with Monaco
 7. Optimize and test
-

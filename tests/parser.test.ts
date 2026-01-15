@@ -156,7 +156,7 @@ name: test
 description: test
 ---
 
-- $count = 0
+$count = 0
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -172,7 +172,7 @@ name: test
 description: test
 ---
 
-- $path: $FilePath = "output.md"
+$path: $FilePath = "output.md"
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -190,7 +190,7 @@ name: test
 description: test
 ---
 
-- $fn = $x => x + 1
+$fn = $x => x + 1
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -206,7 +206,7 @@ name: test
 description: test
 ---
 
-- $fn = ($a, $b) => a + b
+$fn = ($a, $b) => a + b
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -251,8 +251,8 @@ description: test
 ---
 
 Execute ~/skill/process-data WITH:
-- $input: $String
-- $format = "json"
+  input: $data
+  format: "json"
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -260,9 +260,6 @@ Execute ~/skill/process-data WITH:
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters.length, 2);
     assertEqual(delegs[0].parameters[0].name, 'input');
-    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
-    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'String');
-    assertEqual(delegs[0].parameters[0].isRequired, true);
     assertEqual(delegs[0].parameters[1].name, 'format');
     assertEqual(delegs[0].parameters[1].value!.kind, 'StringLiteral');
     assertEqual((delegs[0].parameters[1].value as AST.StringLiteral).value, 'json');
@@ -445,7 +442,7 @@ name: test
 description: test
 ---
 
-- $path: /file path for output/ = "output.md"
+$path: /file path for output/ = "output.md"
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -480,14 +477,15 @@ Write to {~~appropriate location}
 // ============================================================================
 
 describe('Control Flow', () => {
-  test('parses FOR EACH', () => {
+  test('parses FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - Process $item
+FOR $item IN $items
+  Process $item
+END
 `);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
@@ -499,14 +497,15 @@ FOR EACH $item IN $items:
     }
   });
 
-  test('parses FOR EACH with destructuring', () => {
+  test('parses FOR with destructuring', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH ($task, $strategy) IN $transforms:
-  - Execute $task
+FOR ($task, $strategy) IN $transforms
+  Execute $task
+END
 `);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
@@ -524,8 +523,9 @@ name: test
 description: test
 ---
 
-WHILE $count < 5 DO:
-  - Iterate
+WHILE $count < 5 DO
+  Iterate
+END
 `);
     const whiles = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.WhileStatement => b.kind === 'WhileStatement')
@@ -540,8 +540,9 @@ name: test
 description: test
 ---
 
-WHILE NOT diminishing returns DO:
-  - Continue
+WHILE NOT /diminishing returns/ DO
+  Continue
+END
 `);
     const whiles = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.WhileStatement => b.kind === 'WhileStatement')
@@ -556,8 +557,9 @@ name: test
 description: test
 ---
 
-WHILE NOT complete AND $count < 5 DO:
-  - Process
+WHILE NOT /complete/ AND $count < 5 DO
+  Process
+END
 `);
     const whiles = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.WhileStatement => b.kind === 'WhileStatement')
@@ -572,8 +574,9 @@ name: test
 description: test
 ---
 
-IF $result = "progress" THEN:
-  - Update state
+IF $result = "progress" THEN
+  Update state
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -588,10 +591,11 @@ name: test
 description: test
 ---
 
-IF $result = "progress" THEN:
-  - Update
-ELSE:
-  - Retry
+IF $result = "progress" THEN
+  Update
+ELSE
+  Retry
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -606,12 +610,13 @@ name: test
 description: test
 ---
 
-IF $x = 1 THEN:
-  - First
-ELSE IF $x = 2 THEN:
-  - Second
-ELSE:
-  - Default
+IF $x = 1 THEN
+  First
+ELSE IF $x = 2 THEN
+  Second
+ELSE
+  Default
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -628,14 +633,15 @@ name: test
 description: test
 ---
 
-IF $x = 1 THEN:
-  - One
-ELSE IF $x = 2 THEN:
-  - Two
-ELSE IF $x = 3 THEN:
-  - Three
-ELSE:
-  - Default
+IF $x = 1 THEN
+  One
+ELSE IF $x = 2 THEN
+  Two
+ELSE IF $x = 3 THEN
+  Three
+ELSE
+  Default
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -651,10 +657,11 @@ name: test
 description: test
 ---
 
-IF $x = 1 THEN:
-  - One
-ELSE IF $x = 2 THEN:
-  - Two
+IF $x = 1 THEN
+  One
+ELSE IF $x = 2 THEN
+  Two
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -670,14 +677,15 @@ name: test
 description: test
 ---
 
-IF /any critical findings/ THEN:
+IF /any critical findings/ THEN
   $outcome = "request-changes"
-ELSE IF /major findings > 3/ THEN:
+ELSE IF /major findings > 3/ THEN
   $outcome = "request-changes"
-ELSE IF /any findings/ THEN:
+ELSE IF /any findings/ THEN
   $outcome = "comment"
-ELSE:
+ELSE
   $outcome = "approve"
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -773,7 +781,7 @@ name: test
 description: test
 ---
 
-FOR EACH without colon
+FOR without END
 Next line
 `);
     // Should recover
@@ -823,10 +831,13 @@ name: test
 description: test
 ---
 
-FOR EACH $a IN $as:
-  - FOR EACH $b IN $bs:
-    - IF $b = $a THEN:
-      - Match found
+FOR $a IN $as
+  FOR $b IN $bs
+IF $b = $a THEN
+      Match found
+    END
+  END
+END
 `);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
@@ -904,14 +915,14 @@ Use ~/skill/utility-skill
     assertEqual(delegs[0].verb, 'Use');
   });
 
-  test('parses WITH clause with typed required parameter', () => {
+  test('parses WITH clause with required parameter', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
 Execute ~/skill/process WITH:
-- $task: $Task
+  task:
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -919,8 +930,6 @@ Execute ~/skill/process WITH:
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters.length, 1);
     assertEqual(delegs[0].parameters[0].name, 'task');
-    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
-    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'Task');
     assertEqual(delegs[0].parameters[0].isRequired, true);
     assertEqual(delegs[0].parameters[0].value, null);
   });
@@ -932,7 +941,7 @@ description: test
 ---
 
 Execute ~/skill/process WITH:
-- $mode = "fast"
+  mode: "fast"
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -944,22 +953,20 @@ Execute ~/skill/process WITH:
     assert(delegs[0].parameters[0].value!.kind === 'StringLiteral', 'Should have string value');
   });
 
-  test('parses WITH clause with typed default value', () => {
+  test('parses WITH clause with number default value', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
 Execute ~/skill/process WITH:
-- $count: $Number = 10
+  count: 10
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
     );
     assertEqual(delegs.length, 1);
     assertEqual(delegs[0].parameters[0].name, 'count');
-    assert(delegs[0].parameters[0].typeAnnotation?.kind === 'TypeReference', 'Type annotation should be TypeReference');
-    assertEqual((delegs[0].parameters[0].typeAnnotation as AST.TypeReference).name, 'Number');
     assertEqual(delegs[0].parameters[0].isRequired, false);
     assert(delegs[0].parameters[0].value!.kind === 'NumberLiteral', 'Should have number value');
   });
@@ -971,9 +978,9 @@ description: test
 ---
 
 Execute ~/skill/orchestrate WITH:
-- $plan = $plan
-- $mode = $mode
-- $results = $results
+  plan: $plan
+  mode: $mode
+  results: $results
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -992,7 +999,7 @@ description: test
 ---
 
 Execute #iteration-manager WITH:
-- $iteration = 1
+  iteration: 1
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -1009,7 +1016,7 @@ description: test
 ---
 
 Execute ~/skill/process WITH:
-- $input = $data
+  input: $data
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -1026,7 +1033,7 @@ description: test
 ---
 
 Execute ~/skill/process WITH:
-- $items = ["a", "b", "c"]
+  items: ["a", "b", "c"]
 `);
     const delegs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
@@ -1035,15 +1042,16 @@ Execute ~/skill/process WITH:
     assert(delegs[0].parameters[0].value!.kind === 'ArrayLiteral', 'Should have array value');
   });
 
-  test('delegation inside FOR EACH', () => {
+  test('delegation inside FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $task IN $tasks:
+FOR $task IN $tasks
   Execute ~/skill/sub-processor WITH:
-  - $current = $task
+    current: $task
+END
 `);
     const forEachs = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')

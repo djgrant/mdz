@@ -6,6 +6,17 @@ schema_version = 1
 authors = ["djgrant <djgrant@users.noreply.github.com>"]
 repository = "https://github.com/djgrant/mdz"
 
+[language_servers.mdz]
+name = "MDZ Language Server"
+command = "mdz-lsp"
+args = []
+
+[languages.mdz]
+name = "MDZ"
+grammar = "markdown"
+file_extensions = ["mdz"]
+language_servers = ["mdz"]
+
 [grammars.markdown]
 repository = "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
 rev = "be3e08acfd85bd87d85f41fde74fdcec25f76dbe"

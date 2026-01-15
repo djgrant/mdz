@@ -31,10 +31,10 @@ MDZ extends markdown with:
 
 - **Variables**: `$varName`
 - **Types**: `$TypeName`
-- **Skill references**: `[[skill-name]]`
-- **Section references**: `[[#section-name]]`
+- **Skill references**: `~/skill/skill-name`
+- **Section references**: `#section-name`
 - **Semantic markers**: `/interpret this/`, `$/inferred-var/`
-- **Control flow**: `FOR EACH`, `WHILE`, `IF THEN ELSE`
+- **Control flow**: `FOR`, `WHILE`, `IF THEN ELSE`, `END`
 
 Note: Full MDZ syntax highlighting requires a custom Tree-sitter grammar.
 This extension provides basic markdown highlighting as a foundation.

@@ -1,8 +1,47 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind,
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('MDZ language extension is now active');
+
+  const serverModule = path.join(
+    context.extensionPath,
+    '..',
+    '..',
+    'packages',
+    'lsp',
+    'dist',
+    'stdio.js'
+  );
+
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.stdio },
+    debug: { module: serverModule, transport: TransportKind.stdio },
+  };
+
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [
+      { scheme: 'file', language: 'mdz' },
+      { scheme: 'untitled', language: 'mdz' },
+    ],
+  };
+
+  client = new LanguageClient(
+    'mdzLanguageServer',
+    'MDZ Language Server',
+    serverOptions,
+    clientOptions
+  );
+
+  context.subscriptions.push(client.start());
 
   // Register compile command
   const compileCommand = vscode.commands.registerCommand('mdz.compile', async () => {
@@ -49,5 +88,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(): any | undefined {
-  return undefined;
+  return client?.stop();
 }

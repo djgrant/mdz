@@ -19,27 +19,30 @@ context:
 
 ### 1. Initialize
 
-Create `$reviewPath/proposal.md` with $proposal and evaluation criteria.
+DO /create proposal.md in $reviewPath with $proposal and evaluation criteria/
 
 ### 2. Attack-Defend Rounds
 
-WHILE $round < $maxRounds DO:
-  - FOR EACH $vector IN ["logical", "empirical", "practical", "edge-case", "adversarial"]:
-    - ASYNC DELEGATE /find genuine flaws for $vector on $proposal/ TO ~/agent/attacker
-  - Collect attacks to `$reviewPath/round-$round-attacks.md`
-  - IF /attacks are superficial or repeat prior rounds/ THEN:
-    - BREAK
-  - FOR EACH $attack IN `$reviewPath/round-$round-attacks.md`:
-    - Refute if invalid
-    - Mitigate if partially valid
-    - Acknowledge if the flaw is real
-  - Write findings to `$reviewPath/round-$round.md`
-  - IF /proposal fundamentally undermined/ OR /stalemate reached/ THEN:
-    - BREAK
-  - $round = $round + 1
+WHILE $round < $maxRounds DO
+  FOR $vector IN ["logical", "empirical", "practical", "edge-case", "adversarial"]
+    ASYNC DELEGATE /find genuine flaws for $vector on $proposal/ TO ~/agent/attacker
+  END
+  Collect attacks to $reviewPath/round-$round-attacks.md
+  IF /attacks are superficial or repeat prior rounds/ THEN
+    BREAK
+  END
+  FOR $attack IN `$reviewPath/round-$round-attacks.md`
+    Refute if invalid
+    Mitigate if partially valid
+    Acknowledge if the flaw is real
+  END
+  Write findings to $reviewPath/round-$round.md
+  IF /proposal fundamentally undermined/ OR /stalemate reached/ THEN
+    BREAK
+  END
+  $round = $round + 1
+END
 
 ### 3. Synthesize
 
-Read `$reviewPath/round-*.md` and assess:
-- Unresolved issues
-- Proposal strength: robust, viable with caveats, or requires revision
+DO /read round-*.md in $reviewPath and assess unresolved issues and proposal strength (robust, viable with caveats, or requires revision)/

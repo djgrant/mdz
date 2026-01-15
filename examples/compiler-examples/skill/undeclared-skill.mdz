@@ -5,6 +5,6 @@ description: A skill that uses undeclared dependencies
 
 ## Workflow
 
-1. First USE ~/skill/orchestrate TO /run orchestration/
-2. Then USE ~/skill/work-packages TO /create packages/
-3. Finally USE ~/skill/simplify TO /reduce complexity/
+USE ~/skill/orchestrate TO /run orchestration/
+USE ~/skill/work-packages TO /create packages/
+USE ~/skill/simplify TO /reduce complexity/

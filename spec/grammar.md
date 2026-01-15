@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the formal grammar for MDZ v0.9 in Extended Backus-Naur Form (EBNF).
+This document defines the formal grammar for MDZ v0.10 in Extended Backus-Naur Form (EBNF).
 
 **Core principle:** The source document is the execution format. The grammar defines what tooling can validate—not what gets transformed.
 
@@ -59,13 +59,13 @@ template_expr   = '${' expression '}' | semantic_marker ;
 ```ebnf
 /* Runtime control flow - executed by the LLM */
 FOR             = "FOR" ;
-EACH            = "EACH" ;
 IN              = "IN" ;
 WHILE           = "WHILE" ;
-DO              = "DO" ;           /* v0.3: WHILE...DO syntax; v0.9: standalone prose instruction */
+DO              = "DO" ;           /* v0.3: WHILE...DO syntax; v0.9: standalone prose; v0.10: block delimiter */
 IF              = "IF" ;
 THEN            = "THEN" ;
 ELSE            = "ELSE" ;
+END             = "END" ;          /* v0.10: block terminator */
 AND             = "AND" ;
 OR              = "OR" ;
 NOT             = "NOT" ;
@@ -203,7 +203,7 @@ type_reference  = dollar upper_ident ;
 ### Variable Declarations
 
 ```ebnf
-variable_declaration = [ list_marker ] var_decl [ comment ] newline ;
+variable_declaration = var_decl [ comment ] newline ;
 
 var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
 
@@ -257,14 +257,14 @@ function_call   = var_name lparen [ expression { comma expression } ] rparen ;
 In the conventional `## Input` section (or `input:` frontmatter in v0.9), parameters follow interface semantics:
 
 ```ebnf
-input_param     = list_marker var_name type_annotation [ assign_op literal ] [ comment ] ;
+input_param     = var_name type_annotation [ assign_op literal ] [ comment ] ;
 ```
 
 Examples:
 ```mdz
-- $problem: $String                    <!-- required (no default) -->
-- $maxIterations: $Number = 5          <!-- optional with default -->
-- $strategy: $Strategy = "accumulate"  <!-- optional with enum default -->
+$problem: $String                    <!-- required (no default) -->
+$maxIterations: $Number = 5          <!-- optional with default -->
+$strategy: $Strategy = "accumulate"  <!-- optional with enum default -->
 ```
 
 Note: The `=` sign is reserved for **literal default values only**. Prose descriptions belong in comments (`<!-- -->`), not after `=`.
@@ -312,13 +312,13 @@ MDZ distinguishes between **runtime control flow** (CAPS keywords executed by th
 
 ```ebnf
 /* Runtime control flow - LLM interprets at execution time */
-control_flow      = for_each_stmt
+control_flow      = for_stmt
                   | while_stmt
-                  | if_then_stmt
+                  | if_stmt
                   | break_stmt
                   | continue_stmt
                   | return_stmt             /* v0.9 */
-                  | do_stmt                 /* v0.9 */
+                  | do_stmt                 /* v0.9, v0.10 */
                   | push_stmt               /* v0.9 */
                   | delegate_stmt           /* v0.8, updated v0.9 */
                   | use_stmt                /* v0.8 */
@@ -326,7 +326,7 @@ control_flow      = for_each_stmt
                   | goto_stmt               /* v0.8 */
                   ;
 
-for_each_stmt     = FOR EACH pattern IN collection colon newline block_body ;
+for_stmt          = FOR pattern IN collection [ DO ] newline block_body END newline ;
 
 pattern           = var_name
                   | lparen var_name { comma var_name } rparen
@@ -334,21 +334,23 @@ pattern           = var_name
 
 collection        = var_reference | array_literal ;
 
-while_stmt        = WHILE condition DO colon newline block_body ;
+while_stmt        = WHILE condition [ DO ] newline block_body END newline ;
 
-/* IF uses THEN as delimiter - parentheses are optional (not required) */
-if_then_stmt      = IF condition THEN colon newline block_body { else_if_clause } [ else_clause ] ;
-else_if_clause    = ELSE IF condition THEN colon newline block_body ;
-else_clause       = ELSE colon newline block_body ;
+/* IF uses optional THEN delimiter - parentheses are optional (not required) */
+if_stmt           = IF condition [ THEN ] newline block_body { else_if_clause } [ else_clause ] END newline ;
+else_if_clause    = ELSE IF condition [ THEN ] newline block_body ;
+else_clause       = ELSE newline block_body ;
 
-break_stmt        = [ list_marker ] BREAK newline ;
-continue_stmt     = [ list_marker ] CONTINUE newline ;
+break_stmt        = BREAK newline ;
+continue_stmt     = CONTINUE newline ;
 
 /* v0.9: Return statement - valid only at end of section or loop iteration */
-return_stmt       = [ list_marker ] RETURN [ expression ] newline ;
+return_stmt       = RETURN [ expression ] newline ;
 
-/* v0.9: DO statement - standalone prose instruction (distinct from WHILE...DO) */
-do_stmt           = DO semantic_marker newline ;
+/* v0.9/v0.10: DO statement - standalone or block instruction */
+do_stmt           = DO semantic_marker newline
+                  | DO newline block_body END newline
+                  ;
 
 /* v0.9: Push statement - collect values into arrays */
 push_stmt         = var_reference push_op expression newline ;
@@ -387,8 +389,8 @@ condition         = comparison_expr { logical_op comparison_expr } ;
 comparison_expr   = simple_condition | lparen condition rparen ;
 simple_condition  = semantic_condition | deterministic_condition ;
 
-/* Semantic conditions: LLM interprets the meaning */
-semantic_condition = NOT? { word } ;  /* e.g., "diminishing returns" */
+/* Semantic conditions: LLM interprets the meaning (must use semantic markers) */
+semantic_condition = [ NOT ] semantic_marker ;  /* e.g., /diminishing returns/ */
 
 /* Deterministic conditions: compiler can validate */
 deterministic_condition = var_reference comparison_op value_expr ;
@@ -396,19 +398,19 @@ deterministic_condition = var_reference comparison_op value_expr ;
 comparison_op     = '=' | "!=" | '<' | '>' | "<=" | ">=" ;
 logical_op        = AND | OR ;
 
-block_body        = { indented_line } ;
-indented_line     = whitespace whitespace block newline ;  /* 2+ space indent */
+block_body        = { block_line } ;
+block_line        = block newline ;
 ```
 
 ### Control Flow vs Macros
 
 | Construct | Syntax | When Resolved | Who Resolves |
 |-----------|--------|---------------|--------------|
-| Runtime IF | `IF condition THEN:` | Runtime | LLM |
-| Runtime ELSE IF | `ELSE IF condition THEN:` | Runtime | LLM |
+| Runtime IF | `IF condition THEN` | Runtime | LLM |
+| Runtime ELSE IF | `ELSE IF condition THEN` | Runtime | LLM |
 | Build-time IF | `{{IF (x)}}` | Build time | Tooling |
-| Runtime WHILE | `WHILE condition DO:` | Runtime | LLM |
-| Runtime FOR EACH | `FOR EACH $x IN $y:` | Runtime | LLM |
+| Runtime WHILE | `WHILE condition DO` | Runtime | LLM |
+| Runtime FOR | `FOR $x IN $y` | Runtime | LLM |
 
 **Note:** The `{{macro}}` syntax is specified here for completeness but is not yet implemented in the parser or compiler.
 
@@ -504,14 +506,14 @@ nested_list       = { whitespace whitespace list_item } ;
 #### Rule 1: Type Definition vs Variable Declaration
 
 A line starting with `$` followed by an uppercase letter is a **type definition** if:
-- It's at the start of a line (ignoring leading list markers)
+- It's at the start of a line
 - The identifier starts with uppercase
 - Followed by `:` and a type expression (not a type reference)
 
 ```
 $Task: description           → Type definition
 $task = value                → Variable declaration
-- $task: $Task = value       → Variable declaration (: followed by $Type)
+$task: $Task = value         → Variable declaration (: followed by $Type)
 ```
 
 #### Rule 2: Lambda vs Assignment
@@ -541,17 +543,19 @@ $var: /description/ = value  → Semantic type annotation
 
 #### Rule 4: Control Flow Blocks
 
-Indentation determines block membership:
-- Content indented beyond the control flow keyword belongs to the block
-- First non-indented line ends the block
-- Nested control flow must be further indented
+END determines block membership:
+- Content between the opening keyword and `END` belongs to the block
+- `ELSE IF` and `ELSE` belong to the most recent `IF`
+- Nested control flow is allowed without extra indentation
 
 ```
-FOR EACH $x IN $items:
-  - Process $x              ← Part of FOR EACH block
-  - IF $x = "special" THEN: ← Nested control flow
-    - Handle special        ← Part of IF block
-  - Continue processing     ← Back to FOR EACH block
+FOR $x IN $items
+  DO /process $x/           ← Part of FOR block
+  IF $x = "special" THEN    ← Nested control flow
+    DO /handle special/     ← Part of IF block
+  END
+  DO /continue processing/  ← Back to FOR block
+END
 Done with loop              ← Outside block
 ```
 
@@ -569,7 +573,7 @@ Done with loop              ← Outside block
 #### Rule 6: BREAK/CONTINUE/RETURN Scope
 
 BREAK and CONTINUE are only valid within loops:
-- FOR EACH loops
+- FOR loops
 - WHILE loops
 
 RETURN is only valid at the end of:
@@ -577,64 +581,65 @@ RETURN is only valid at the end of:
 - A loop iteration (last statement in loop body)
 
 ```
-FOR EACH $item IN $items:
-  - IF $done THEN:
-    - BREAK                 ← Valid: inside FOR EACH
-  - $results << $item       ← Push to array
-  - RETURN $item            ← Valid: end of loop iteration
-  
+FOR $item IN $items
+  IF $done THEN
+    BREAK                   ← Valid: inside FOR
+  END
+  $results << $item         ← Push to array
+  RETURN $item              ← Valid: end of loop iteration
+END
+
 BREAK                       ← Error: outside loop
 RETURN $value               ← Valid: end of section
 ```
 
-#### Rule 7: Colon Rule (v0.9)
+#### Rule 7: Keyword Placement Rule (v0.10)
 
-A colon at the end of a line indicates that an indented block follows:
-
-```
-FOR EACH $x IN $items:      ← Colon signals block follows
-  - Process $x
-
-DELEGATE /task/ TO ~/agent/x WITH:   ← Colon signals params follow
-  param: value
-
-IF $condition THEN:         ← Colon signals block follows
-  - Do something
-```
-
-This applies to:
-- Control flow statements (FOR EACH, WHILE, IF/THEN, ELSE)
-- WITH clauses
-- Any construct expecting a nested block
-
-#### Rule 8: Keyword Placement Rule (v0.9)
-
-CAPS keywords must appear at line start or indented position:
+CAPS keywords must appear at line start (optionally with leading whitespace):
 
 ```
-FOR EACH $x IN $items:      ← Valid: line start
-  - IF $x THEN:             ← Valid: indented position
-    - BREAK                 ← Valid: indented position
+FOR $x IN $items            ← Valid: line start
+  IF $x THEN                ← Valid: indented position
+    BREAK                   ← Valid: indented position
+  END
+END
 
-The FOR loop runs...        ← Error: keyword mid-line (use lowercase)
+The FOR loop runs...        ← Prose, not parsed as control flow
 ```
 
-Keywords affected: FOR, EACH, IN, WHILE, DO, IF, THEN, ELSE, AND, OR, NOT, WITH, BREAK, CONTINUE, RETURN, DELEGATE, TO, ASYNC, AWAIT, USE, EXECUTE, GOTO
+Keywords affected: FOR, IN, WHILE, DO, IF, THEN, ELSE, END, AND, OR, NOT, WITH, BREAK, CONTINUE, RETURN, DELEGATE, TO, ASYNC, AWAIT, USE, EXECUTE, GOTO
 
-#### Rule 9: DO Disambiguation (v0.9)
+#### Rule 8: DO Disambiguation (v0.10)
 
-`DO` has two forms:
-- After `WHILE`: part of while-do construct
-- At line start: standalone prose instruction
+`DO` has three forms:
+- After `WHILE`: optional delimiter for the condition
+- After `FOR`: optional delimiter for the collection
+- At line start: standalone instruction (single-line or block)
 
 ```
-WHILE $x < 5 DO:            ← Part of WHILE...DO construct
-  - Process
+WHILE $x < 5 DO
+  DO /process/
+END
 
-DO /analyze the situation/  ← Standalone DO instruction
+FOR $item IN $items DO
+  DO /process $item/
+END
+
+DO /analyze the situation/  ← Standalone single-line DO (top-level only)
+
+DO
+  /summarize findings/
+END
 ```
 
-#### Rule 10: DELEGATE vs USE vs EXECUTE
+Invalid (single-line DO inside a fence):
+````md
+```md
+DO /summarize findings/
+```
+````
+
+#### Rule 9: DELEGATE vs USE vs EXECUTE
 
 Each keyword has a distinct purpose:
 
@@ -653,16 +658,16 @@ GOTO #section                            ← Control flow to section
 - EXECUTE invokes an external tool
 - GOTO jumps to a section in the current document
 
-#### Rule 11: Parentheses Requirements
+#### Rule 10: Parentheses Requirements
 
 Parentheses are required in some contexts and optional in others:
 
 | Context | Required? | Reason |
 |---------|-----------|--------|
-| `WHILE condition DO:` | No | `DO` keyword delimits condition (like `THEN` for `IF`) |
-| `IF condition THEN:` | No | Conditions may be semantic (prose) |
-| `FOR EACH $x IN ...` | No | Single variable pattern |
-| `FOR EACH ($a, $b) IN ...` | **Yes** | Destructuring pattern |
+| `WHILE condition DO` | No | `DO` keyword delimits condition (like `THEN` for `IF`) |
+| `IF condition THEN` | No | Conditions may be semantic (prose) |
+| `FOR $x IN ...` | No | Single variable pattern |
+| `FOR ($a, $b) IN ...` | **Yes** | Destructuring pattern |
 | `$x => expr` | No | Single lambda parameter |
 | `($a, $b) => expr` | **Yes** | Multiple lambda parameters |
 | `$fn($arg)` | **Yes** | Function call syntax |
@@ -670,18 +675,18 @@ Parentheses are required in some contexts and optional in others:
 
 ```
 <!-- WHILE uses DO delimiter (like IF uses THEN) -->
-WHILE $x < 5 DO:                 ← Valid
-WHILE NOT complete DO:           ← Valid (semantic condition)
-WHILE $x < 5 AND NOT done DO:    ← Valid (compound condition)
+WHILE $x < 5 DO                 ← Valid
+WHILE NOT /complete/ DO         ← Valid (semantic condition)
+WHILE $x < 5 AND NOT /done/ DO  ← Valid (compound condition)
 
 <!-- IF uses THEN delimiter -->
-IF $x = 5 THEN:              ← Valid
-IF ($x = 5) THEN:            ← Also valid (optional parens for grouping)
-IF diminishing returns THEN: ← Valid (semantic condition)
+IF $x = 5 THEN              ← Valid
+IF ($x = 5) THEN            ← Also valid (optional parens for grouping)
+IF /diminishing returns/ THEN ← Valid (semantic condition)
 
 <!-- Destructuring requires parens -->
-FOR EACH ($a, $b) IN $pairs: ← Valid
-FOR EACH $a, $b IN $pairs:   ← Parse error
+FOR ($a, $b) IN $pairs      ← Valid
+FOR $a, $b IN $pairs        ← Parse error
 ```
 
 ## Error Productions
@@ -698,19 +703,15 @@ error_continue_outside_loop = CONTINUE ; /* When not inside a loop */
 error_return_not_at_end  = RETURN ; /* When not at end of section or loop iteration */
 error_invalid_link_path  = link_prefix { any_char } ; /* Link path doesn't resolve to valid resource */
 error_invalid_anchor     = '#' kebab_ident ; /* Anchor references non-existent section */
-error_keyword_mid_line   = ? CAPS keyword appearing mid-line ? ; /* v0.9 */
 ```
 
 ## Whitespace Handling
 
-- **Significant**: Indentation in control flow blocks
+- **Cosmetic**: Indentation is optional and does not affect block membership
 - **Insignificant**: Around operators, within expressions
 - **Line-sensitive**: Type definitions, variable declarations, control flow
 
 ```ebnf
-/* Whitespace is significant for indentation */
-indent_level    = { whitespace whitespace } ;  /* Each level = 2 spaces */
-
 /* Whitespace is insignificant in these contexts */
 around_op       = { whitespace } operator { whitespace } ;
 ```
@@ -729,7 +730,7 @@ The grammar enables deterministic validation:
 | RETURN at end position | Block analysis | E015 (error) |
 | Dependency cycles | Graph analysis | E012 (error) |
 | Link folder convention | Path prefix check | W002 (warning) |
-| Keyword placement | Line position check | E016 (error) |
+| Keyword placement | Line position check | W003 (warning) |
 
 ## What Tooling Does NOT Do
 
@@ -766,35 +767,41 @@ context:
 
 ## Workflow
 
-1. Setup at /appropriate location/
+Setup at /appropriate location/
 
-2. FOR EACH $item IN $items:
-   - IF $item.invalid THEN:
-     - CONTINUE
-   - DO /process $item according to $strategy/
-   - $results << $item
-   - IF $item.triggers_stop THEN:
-     - BREAK
+FOR $item IN $items
+  IF $item.invalid THEN
+    CONTINUE
+  END
+  DO /process $item according to $strategy/
+  $results << $item
+  IF $item.triggers_stop THEN
+    BREAK
+  END
+END
 
-3. FOR EACH ($item, $priority) IN $prioritized:
-   - IF $priority = "high" THEN:
-     - Expedite processing
-   - ELSE:
-     - Queue for later
+FOR ($item, $priority) IN $prioritized
+  IF $priority = "high" THEN
+    DO /expedite processing/
+  ELSE
+    DO /queue for later/
+  END
+END
 
-4. WHILE NOT $complete AND $iterations < 5 DO:
-   - GOTO #process-step
-   - USE ~/skill/item-validator TO /validate current state/
+WHILE NOT $complete AND $iterations < 5 DO
+  GOTO #process-step
+  USE ~/skill/item-validator TO /validate current state/
+END
 
-5. ASYNC DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
+ASYNC DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
 
-6. AWAIT DELEGATE /analyze the findings/ TO ~/agent/analyzer
+AWAIT DELEGATE /analyze the findings/ TO ~/agent/analyzer
 
-7. DELEGATE /background task/
+DELEGATE /background task/
 
-8. EXECUTE ~/tool/browser TO /capture final screenshot/
+EXECUTE ~/tool/browser TO /capture final screenshot/
 
-9. RETURN $results
+RETURN $results
 
 ## Process Step
 
@@ -804,17 +811,30 @@ USE ~/skill/omr TO /apply transforms/:
 
 ## Context Template
 
-Provide context for the explorer:
-- Current results: $results
-- Strategy: $strategy
+Provide context for the explorer.
+Current results: $results
+Strategy: $strategy
 ```
 
 ## Version
 
-Grammar version: 0.9
-Aligned with: language-spec.md v0.9
+Grammar version: 0.10
+Aligned with: language-spec.md v0.10
 
-### Changes from v0.8
+### Changes from v0.10
+
+- **Breaking change**: END-delimited blocks replace indentation-based blocks
+- **Control flow**:
+  - `FOR EACH` replaced by `FOR $x IN $y`
+  - `END` closes `FOR`, `WHILE`, `IF/ELSE`, and multi-line `DO`
+  - `DO` optional after `FOR`/`WHILE`
+  - `THEN` optional after `IF`/`ELSE IF`
+- **Removed colon delimiters**: `THEN:` → `THEN`, `DO:` → `DO`
+- **Indentation cosmetic only**: no effect on block membership
+- **DO blocks**: single-line `DO /.../` and multi-line `DO ... END`
+- **Single-line DO restriction**: valid only at top-level (outside fences)
+
+### Changes from v0.9
 
 - **New keywords**: `RETURN`, `ASYNC`, `AWAIT`
 - **Removed keywords**: `PARALLEL`
@@ -840,7 +860,7 @@ Aligned with: language-spec.md v0.9
   - RETURN scope: only at end of section or loop iteration
 - **New error codes**:
   - E015: RETURN not at end position
-  - E016: Keyword placement violation
+  - W003: Keyword placement warning
 
 ### Changes from v0.7
 

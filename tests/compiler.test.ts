@@ -79,7 +79,7 @@ description: test
 
 $Task: any executable instruction
 
-- $current: $Task = do something
+$current: $Task = do something
 `;
     const result = compile(source, { includeHeader: false });
     assertIncludes(result.output, '$Task: any executable instruction');
@@ -158,8 +158,8 @@ name: test
 description: test
 ---
 
-- $count = 0
-- $path: $FilePath = "output.md"
+$count = 0
+$path: $FilePath = "output.md"
 `);
     assertEqual(result.metadata.variables.length, 2);
     assertEqual(result.metadata.variables[0].name, 'count');
@@ -291,7 +291,7 @@ name: test
 description: test
 ---
 
-- $x: $UndefinedType = value
+$x: $UndefinedType = value
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -307,7 +307,7 @@ description: test
 
 $Task: any task
 
-- $x: $Task = value
+$x: $Task = value
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -388,7 +388,7 @@ description: test
 
 ## Input
 
-- $requiredParam: $String
+$requiredParam: $String
 
 Execute ~/skill/test-skill
 `;
@@ -409,10 +409,10 @@ description: test
 
 ## Input
 
-- $requiredParam: $String
+$requiredParam: $String
 
 Execute ~/skill/test-skill WITH:
-- $requiredParam = "value"
+  requiredParam: "value"
 `;
 
     const result = compile(skillSource, { validateContracts: true });
@@ -428,7 +428,7 @@ description: test
 ---
 
 Execute ~/skill/test-skill WITH:
-- $extraParam = "value"
+  extraParam: "value"
 `;
 
     const result = compile(skillSource, { validateContracts: true });
@@ -465,8 +465,8 @@ name: test
 description: test
 ---
 
-- $x = value
-- $y = other
+$x = value
+$y = other
 `, { generateSourceMap: true });
     
     const varEntries = result.sourceMap.filter(e => e.type === 'variable');
@@ -626,7 +626,7 @@ name: test
 description: test
 ---
 
-FOR EACH without proper syntax
+FOR without proper syntax
 `);
     // Should compile without crashing, may have diagnostics
     assert(result.output.length > 0, 'Should produce output');
@@ -653,22 +653,25 @@ $Strategy: "accumulate" | "independent"
 
 ## Input
 
-- $transforms: ($Task, $Strategy)[]
-- $validator: $Task
+$transforms: ($Task, $Strategy)[]
+$validator: $Task
 
 ## Workflow
 
-1. Create master work package at /appropriate location/
+DO /create master work package at appropriate location/
 
-2. FOR EACH ($task, $strategy) IN $transforms:
-   - Delegate to #iteration-manager
+FOR ($task, $strategy) IN $transforms
+  DELEGATE /handle iteration/ TO ~/agent/iteration-manager
+END
    
-3. WHILE NOT diminishing returns AND $iterations < 5 DO:
-   - Execute iteration
-   - IF $result = "progress" THEN:
-     - Update $current
+WHILE NOT /diminishing returns/ AND $iterations < 5 DO
+  Execute iteration
+  IF $result = "progress" THEN
+    $current = $current
+  END
+END
 
-4. Return findings
+RETURN /findings/
 
 ## Iteration Manager
 
@@ -677,8 +680,8 @@ Handle a single iteration.
 
     // Source unchanged
     assertIncludes(result.output, '$Task: any task');
-    assertIncludes(result.output, '/appropriate location/');
-    assertIncludes(result.output, '#iteration-manager');
+    assertIncludes(result.output, '/create master work package at appropriate location/');
+    assertIncludes(result.output, '## Iteration Manager');
     
     // Metadata extracted
     assertEqual(result.metadata.name, 'orchestrate-map-reduce');
@@ -737,7 +740,7 @@ name: test
 description: test
 ---
 
-- $item = "test"
+$item = "test"
 
 Write to /path for $item/
 `, { validateReferences: true });
@@ -760,7 +763,7 @@ name: test
 description: test
 ---
 
-- $name: $String = "hello"
+$name: $String = "hello"
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -773,7 +776,7 @@ name: test
 description: test
 ---
 
-- $count: $Number = 42
+$count: $Number = 42
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -786,7 +789,7 @@ name: test
 description: test
 ---
 
-- $enabled: $Boolean = true
+$enabled: $Boolean = true
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -799,7 +802,7 @@ name: test
 description: test
 ---
 
-- $path: $FilePath = "/some/path"
+$path: $FilePath = "/some/path"
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');
@@ -813,10 +816,10 @@ name: test
 description: test
 ---
 
-- $name: $String = "test"
-- $count: $Number = 0
-- $enabled: $Boolean = true
-- $custom: $CustomType = value
+$name: $String = "test"
+$count: $Number = 0
+$enabled: $Boolean = true
+$custom: $CustomType = value
 `, { validateTypes: true });
     
     const typeWarnings = result.diagnostics.filter(d => d.code === 'E008');

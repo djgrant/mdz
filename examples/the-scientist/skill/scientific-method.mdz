@@ -5,12 +5,12 @@ description: When a task requires hypothesis-driven iteration, use this skill to
 
 ## Workflow
 
-1. **Evaluate** current state
-2. **Hypothesize** what will fix it
-3. **Predict** the expected result
-4. **Act** on your hypothesis
-5. **Observe** the actual result
-6. **Repeat** until goal achieved
+DO /evaluate current state/
+DO /hypothesize what will fix it/
+DO /predict the expected result/
+DO /act on your hypothesis/
+DO /observe the actual result/
+DO /repeat until goal achieved/
 
 ## Tracking
 
@@ -18,9 +18,9 @@ Record each iteration in the work package:
 
 ```markdown
 ### Iteration {n}
-- Hypothesis: {theory}
-- Action: {what you did}
-- Prediction: {expected result}
-- Observed: {actual result}
-- Conclusion: {validated or falsified}
+Hypothesis: {theory}
+Action: {what you did}
+Prediction: {expected result}
+Observed: {actual result}
+Conclusion: {validated or falsified}
 ```

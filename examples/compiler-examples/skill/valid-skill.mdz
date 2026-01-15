@@ -18,11 +18,13 @@ context:
 
 ## Workflow
 
-WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO:
-  - Formulate $hypothesis based on $problem
-  - Design experiment to test $hypothesis
-  - USE ~/skill/work-packages TO /execute experiment/
-  - Evaluate $result from experiment
-  - IF $result = "confirmed" THEN:
-    - Commit changes
-  - Increment $iteration
+WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO
+  Formulate $hypothesis based on $problem
+  Design experiment to test $hypothesis
+  USE ~/skill/work-packages TO /execute experiment/
+  Evaluate $result from experiment
+  IF $result = "confirmed" THEN
+    Commit changes
+  END
+  $iteration = $iteration + 1
+END

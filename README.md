@@ -45,7 +45,7 @@ MDZ skills are markdown files with a `.mdz` extension:
 name: my-skill
 description: When you need to accomplish something specific
 uses:
-  - ~helper-skill
+  - ~/skill/helper-skill
 ---
 
 ## Types
@@ -55,17 +55,19 @@ $Strategy = "fast" | "thorough"
 
 ## Input
 
-- $task: $Task
-- $strategy: $Strategy = "fast"
+$task: $Task
+$strategy: $Strategy = "fast"
 
 ## Workflow
 
 1. Analyze $task to determine /best approach/
 
-2. FOR EACH $step IN $task.steps:
-   - Execute $step
-   - IF $step.failed THEN:
-     - Retry with (~helper-skill)
+2. FOR $step IN $task.steps
+   Execute $step
+   IF $step.failed THEN
+     USE ~/skill/helper-skill TO /retry $step/
+   END
+END
 
 3. Report results at /appropriate location/
 ```
@@ -80,22 +82,22 @@ $Enum = "option1" | "option2" | "option3"
 
 **Built-in Primitives** - Common types that don't need definition:
 ```markdown
-- $name: $String = "value"
-- $count: $Number = 42
-- $enabled: $Boolean = true
+$name: $String = "value"
+$count: $Number = 42
+$enabled: $Boolean = true
 ```
 
 **Variables** - Named values with optional types:
 ```markdown
-- $name: $Type = value
-- $path = $n => `output-{$n}.mdz`
+$name: $Type = value
+$path = $n => `output-{$n}.mdz`
 ```
 
 **References** - Links to skills and sections:
 ```markdown
-(~skill-name)            # Reference another skill
-(~skill-name#section)    # Reference a section in another skill
-(#section-name)          # Reference a section in current skill
+~/skill/skill-name            # Reference another skill
+~/skill/skill-name#section    # Reference a section in another skill
+#section-name                 # Reference a section in current skill
 ```
 
 **Semantic Markers** - LLM-interpreted content:
@@ -109,16 +111,19 @@ $var: /description/       # Semantic type annotation
 
 **Control Flow** - CAPS keywords for visibility:
 ```markdown
-FOR EACH $item IN $collection:
-  - Process $item
+FOR $item IN $collection
+  Process $item
+END
 
-WHILE condition AND $count < 5 DO:
-  - Iterate
+WHILE $condition AND $count < 5 DO
+  Iterate
+END
 
-IF $result = "success" THEN:
-  - Continue
-ELSE:
-  - Handle failure
+IF $result = "success" THEN
+  Continue
+ELSE
+  Handle failure
+END
 ```
 
 ## CLI Reference
@@ -205,7 +210,7 @@ console.log(result.dependencies.edges);
 Install the MDZ extension for:
 
 - Syntax highlighting for `.mdz` files
-- Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)
+- Control flow keywords (FOR, WHILE, IF/THEN/ELSE, END)
 - Variable and type highlighting
 - Skill references with sigils
 - Semantic markers (/content/)
@@ -221,7 +226,7 @@ npm run compile
 
 ### TextMate Grammar
 
-The TextMate grammar is available at `editors/vscode/syntaxes/zen.tmLanguage.json` for use with other editors.
+The TextMate grammar is available at `editors/vscode/syntaxes/mdz.tmLanguage.json` for use with other editors.
 
 ## Language Specification
 
@@ -257,7 +262,7 @@ See the `examples/` directory for real-world skills:
 - Built-in primitive types ($String, $Number, $Boolean)
 
 ### v0.7 (Current)
-- Sigil-based reference syntax: `(~skill)`, `(#section)`, `(@agent)`
+- Link-based reference syntax: `~/skill/skill-name`, `#section`
 - Unified `uses:` frontmatter field with typed references
 - Removal of `[[wiki-link]]` syntax
 

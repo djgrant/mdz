@@ -370,7 +370,8 @@ export interface PushStatement extends BaseNode {
 // v0.9: DO instruction (standalone prose instruction)
 export interface DoStatement extends BaseNode {
   kind: 'DoStatement';
-  instruction: SemanticMarker;
+  instruction?: SemanticMarker;
+  body?: Block[];
 }
 
 // v0.8: DELEGATE statement for agent delegation

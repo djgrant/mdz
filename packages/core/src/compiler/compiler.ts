@@ -404,6 +404,9 @@ export class Compiler {
         if (block.instruction) {
           this.extractFromExpression(block.instruction);
         }
+        if (block.body) {
+          this.extractFromBlocks(block.body);
+        }
         break;
       case 'WhileStatement':
         this.extractFromBlocks(block.body);
@@ -895,10 +898,15 @@ export class Compiler {
       } else if (block.kind === 'DoStatement') {
         // v0.9: DO instructions are prose - no scope checking needed
         // But check any variable interpolations in the instruction
-        for (const interpolation of block.instruction.interpolations) {
-          if (!this.definedVariables.has(interpolation.name)) {
-            usedBeforeDefined.add(interpolation.name);
+        if (block.instruction) {
+          for (const interpolation of block.instruction.interpolations) {
+            if (!this.definedVariables.has(interpolation.name)) {
+              usedBeforeDefined.add(interpolation.name);
+            }
           }
+        }
+        if (block.body) {
+          this.checkScopeInBlocks(block.body, usedBeforeDefined);
         }
       }
     }

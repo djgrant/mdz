@@ -1,5 +1,65 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../..',
+);
+
+const highlighterSources = [
+  {
+    id: 'textmate',
+    label: 'TextMate Grammar',
+    path: 'editors/vscode/syntaxes/mdz.tmLanguage.json',
+  },
+  {
+    id: 'monarch',
+    label: 'Monaco Monarch',
+    path: 'website/src/pages/playground.astro',
+    startMarker: '// -- MDZ_MONARCH_START',
+    endMarker: '// -- MDZ_MONARCH_END',
+  },
+  {
+    id: 'lsp',
+    label: 'LSP Semantic Tokens',
+    path: 'packages/lsp/src/server.ts',
+    startMarker: '// -- MDZ_SEMANTIC_TOKENS_START',
+    endMarker: '// -- MDZ_SEMANTIC_TOKENS_END',
+  },
+];
+
+const readRepoFile = async (relativePath) =>
+  readFile(path.join(repoRoot, relativePath), 'utf8');
+
+const extractMarkedBlock = (content, startMarker, endMarker) => {
+  if (!startMarker || !endMarker) return content;
+  const startIndex = content.indexOf(startMarker);
+  if (startIndex === -1) return '';
+  const endIndex = content.indexOf(endMarker, startIndex + startMarker.length);
+  if (endIndex === -1) return '';
+  return content
+    .slice(startIndex + startMarker.length, endIndex)
+    .trim();
+};
+
+const highlighters = await Promise.all(
+  highlighterSources.map(async (source) => {
+    const content = await readRepoFile(source.path);
+    const extracted = extractMarkedBlock(
+      content,
+      source.startMarker,
+      source.endMarker,
+    );
+    return {
+      ...source,
+      content: extracted || content,
+      extracted: Boolean(extracted),
+    };
+  }),
+);
 ---
 
 <DocsLayout title="IDE Support">
@@ -17,7 +77,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <ul>
     <li>Syntax highlighting for <code>.mdz</code> files</li>
-    <li>Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)</li>
+    <li>Control flow keywords (FOR, WHILE, IF/THEN/ELSE, END)</li>
     <li>Composition keywords (USE, EXECUTE, DELEGATE, GOTO)</li>
     <li>Variable and type highlighting</li>
     <li>Link highlighting (<code>~/skill/name</code>, <code>~/agent/name</code>)</li>
@@ -35,7 +95,7 @@ npm run compile
   <h2>TextMate Grammar</h2>
   
   <p>
-    A standalone TextMate grammar is available at <code>editors/vscode/syntaxes/zen.tmLanguage.json</code> 
+    A standalone TextMate grammar is available at <code>editors/vscode/syntaxes/mdz.tmLanguage.json</code> 
     for use with other editors that support TextMate grammars:
   </p>
   
@@ -55,12 +115,57 @@ npm run compile
     <li><strong>Headings</strong> — Section markers</li>
     <li><strong>Types</strong> — <code>$TypeName</code> in cyan</li>
     <li><strong>Variables</strong> — <code>$varName</code> in yellow</li>
-    <li><strong>Keywords</strong> — FOR EACH, WHILE, USE, DELEGATE, etc. in purple</li>
+    <li><strong>Keywords</strong> — FOR, WHILE, USE, DELEGATE, etc. in purple</li>
     <li><strong>Links</strong> — <code>~/skill/name</code>, <code>~/agent/name</code> in blue</li>
     <li><strong>Anchors</strong> — <code>#section</code> in blue</li>
     <li><strong>Semantics</strong> — semantic markers in pink</li>
     <li><strong>Strings</strong> — "quoted" in green</li>
   </ul>
+
+  <p>
+    TextMate highlighting is best-effort. For precise, context-aware highlighting,
+    use the LSP semantic tokens below.
+  </p>
+
+  <h2>Highlighter Sources</h2>
+
+  <p>
+    Switch between the active grammar sources below. Each tab renders directly
+    from the source file so updates stay in sync.
+  </p>
+
+  <div class="highlighter-switcher" data-highlighter-tabs>
+    <div class="highlighter-tabs" role="tablist" aria-label="Syntax highlighters">
+      {highlighters.map((highlighter) => (
+        <button
+          class="highlighter-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          data-highlighter-tab={highlighter.id}
+        >
+          {highlighter.label}
+        </button>
+      ))}
+    </div>
+
+    {highlighters.map((highlighter) => (
+      <div
+        class="highlighter-pane"
+        role="tabpanel"
+        data-highlighter-pane={highlighter.id}
+        hidden
+      >
+        <div class="highlighter-meta">
+          <span class="highlighter-path">{highlighter.path}</span>
+          {!highlighter.extracted && highlighter.startMarker && (
+            <span class="highlighter-note">Showing full file (markers missing).</span>
+          )}
+        </div>
+        <pre><code>{highlighter.content}</code></pre>
+      </div>
+    ))}
+  </div>
 
   <h2>Language Server (LSP)</h2>
   
@@ -74,6 +179,7 @@ npm run compile
     <li>Go-to-definition for links and anchors</li>
     <li>Error diagnostics</li>
     <li>Document symbols</li>
+    <li>Semantic tokens for context-aware highlighting</li>
   </ul>
   
   <h3>Using the LSP</h3>
@@ -88,3 +194,104 @@ const server = createLanguageServer();
     See <code>editors/vscode/</code> for implementation details.
   </p>
 </DocsLayout>
+
+<script is:inline>
+  const container = document.querySelector("[data-highlighter-tabs]");
+  if (container) {
+    const tabs = Array.from(container.querySelectorAll("[data-highlighter-tab]"));
+    const panes = Array.from(container.querySelectorAll("[data-highlighter-pane]"));
+
+    const setActive = (id) => {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.highlighterTab === id;
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+        tab.classList.toggle("is-active", isActive);
+      });
+      panes.forEach((pane) => {
+        pane.hidden = pane.dataset.highlighterPane !== id;
+      });
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        setActive(tab.dataset.highlighterTab);
+      });
+    });
+
+    setActive("textmate");
+  }
+</script>
+
+<style>
+  .highlighter-switcher {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+  }
+
+  .highlighter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .highlighter-tab {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .highlighter-tab:hover {
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .highlighter-tab.is-active {
+    background: var(--color-accent);
+    border-color: transparent;
+    color: white;
+  }
+
+  .highlighter-pane {
+    padding: 16px;
+  }
+
+  .highlighter-pane pre {
+    max-height: 420px;
+    overflow: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  .highlighter-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--color-muted);
+    margin-bottom: 10px;
+  }
+
+  .highlighter-path {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  .highlighter-note {
+    font-style: italic;
+  }
+</style>

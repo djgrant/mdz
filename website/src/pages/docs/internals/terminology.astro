@@ -44,13 +44,13 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Control Flow Keywords</h2>
 
   <ul>
-    <li><strong>For-each loop</strong> (<code>FOR EACH $x IN $y:</code>) — Iteration over a collection.</li>
-    <li><strong>While loop</strong> (<code>WHILE (cond):</code>) — Conditional loop.</li>
+    <li><strong>For loop</strong> (<code>FOR $x IN $y ... END</code>) — Iteration over a collection.</li>
+    <li><strong>While loop</strong> (<code>WHILE cond ... END</code>) — Conditional loop.</li>
     <li><strong>Return statement</strong> (<code>RETURN $value</code>) — Exit and return a value.</li>
     <li><strong>Async delegate</strong> (<code>ASYNC DELEGATE /task/ TO ~/agent/x</code>) — Non-blocking agent delegation.</li>
     <li><strong>Await</strong> (<code>AWAIT $handle</code>) — Wait for async operation to complete.</li>
-    <li><strong>Conditional</strong> (<code>IF cond THEN:</code>) — Conditional branching.</li>
-    <li><strong>Else clause</strong> (<code>ELSE:</code>) — Alternative branch of a conditional.</li>
+    <li><strong>Conditional</strong> (<code>IF cond THEN ... END</code>) — Conditional branching.</li>
+    <li><strong>Else clause</strong> (<code>ELSE</code>) — Alternative branch of a conditional.</li>
     <li><strong>Logical operators</strong> (<code>AND</code>, <code>OR</code>, <code>NOT</code>) — Boolean logic in conditions.</li>
     <li><strong>Loop control</strong> (<code>BREAK</code>, <code>CONTINUE</code>) — Early exit or skip within loops.</li>
     <li><strong>Collection operator</strong> (<code>IN</code>) — Specifies the collection in a loop.</li>
@@ -124,7 +124,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li><strong>Block</strong> — Indented content after <code>:</code> belonging to a control flow statement.</li>
     <li><strong>Condition</strong> — Boolean expression in <code>WHILE</code>/<code>IF</code> (deterministic or semantic).</li>
-    <li><strong>Semantic condition</strong> (<code>NOT diminishing returns</code>) — Natural language condition interpreted by LLM.</li>
+    <li><strong>Semantic condition</strong> (<code>NOT /diminishing returns/</code>) — Natural language condition interpreted by LLM.</li>
     <li><strong>Deterministic condition</strong> (<code>$x &lt; 5</code>) — Computable boolean expression.</li>
     <li><strong>Destructuring</strong> (<code>($a, $b) IN $tuples</code>) — Unpacking tuple elements in iteration.</li>
   </ul>

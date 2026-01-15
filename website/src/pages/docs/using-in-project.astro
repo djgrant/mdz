@@ -70,31 +70,33 @@ $Result: /successful completion or error details/
 
 ## Input
 
-- $task: $Task
+$task: $Task
 
 ## Context
 
-- $attempts = 0
-- $maxAttempts = 3
+$attempts = 0
+$maxAttempts = 3
 
 ## Workflow
 
 1. Validate $task inputs and requirements
-2. WHILE $attempts &lt; $maxAttempts DO:
-   - Execute $task
-   - IF execution succeeded THEN:
-     - Return success result
-     - ELSE:
-       - Increment $attempts
-       - Log error and retry strategy
+2. WHILE $attempts &lt; $maxAttempts DO
+   Execute $task
+   IF /execution succeeded/ THEN
+     Return success result
+   ELSE
+     Increment $attempts
+     Log error and retry strategy
+   END
+END
 3. Return failure result with collected errors
 
 ## Error Handling
 
-Handle common failure modes:
-- Invalid inputs
-- Resource unavailability
-- Timeout conditions</code></pre>
+Handle common failure modes.
+Invalid inputs.
+Resource unavailability.
+Timeout conditions.</code></pre>
 
    <h3>3. Validate Your Skill</h3>
 
@@ -141,28 +143,30 @@ $Task: /a unit of work with inputs and expected outputs/
 $Result: /successful completion or error details/
 
 ## Input
-- $task: $Task
+$task: $Task
 
 ## Context
-- $attempts = 0
-- $maxAttempts = 3
+$attempts = 0
+$maxAttempts = 3
 
 ## Workflow
 1. Validate $task inputs and requirements
-2. WHILE $attempts &lt; $maxAttempts DO:
-   - Execute $task
-   - IF execution succeeded THEN:
-     - Return success result
-     - ELSE:
-       - Increment $attempts
-       - Log error and retry strategy
+2. WHILE $attempts &lt; $maxAttempts DO
+   Execute $task
+   IF /execution succeeded/ THEN
+     Return success result
+   ELSE
+     Increment $attempts
+     Log error and retry strategy
+   END
+END
 3. Return failure result with collected errors
 
 ## Error Handling
-Handle common failure modes:
-- Invalid inputs
-- Resource unavailability
-- Timeout conditions
+Handle common failure modes.
+Invalid inputs.
+Resource unavailability.
+Timeout conditions.
 
 Task to process: [PASTE YOUR TASK HERE]</code></pre>
 
@@ -209,19 +213,20 @@ description: When reviewing code changes for quality and correctness
 
 <span class="zen-heading">## Input</span>
 
-- <span class="zen-variable">$changes</span>: <span class="zen-type">$CodeChange</span>
-- <span class="zen-variable">$focus</span>: <span class="zen-type">$ReviewFocus</span>[] = ["correctness", "maintainability"]
+<span class="zen-variable">$changes</span>: <span class="zen-type">$CodeChange</span>
+<span class="zen-variable">$focus</span>: <span class="zen-type">$ReviewFocus</span>[] = ["correctness", "maintainability"]
 
 <span class="zen-heading">## Context</span>
 
-- <span class="zen-variable">$issues</span>: <span class="zen-type">$Issue</span>[] = []
+<span class="zen-variable">$issues</span>: <span class="zen-type">$Issue</span>[] = []
 
 <span class="zen-heading">## Workflow</span>
 
 1. Analyze <span class="zen-variable">$changes</span> for patterns and potential issues
-2. <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$area</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$focus</span>:
-   - Apply focused review for <span class="zen-variable">$area</span>
-   - Add identified issues to <span class="zen-variable">$issues</span>
+2. <span class="zen-keyword">FOR</span> <span class="zen-variable">$area</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$focus</span>
+   Apply focused review for <span class="zen-variable">$area</span>
+   Add identified issues to <span class="zen-variable">$issues</span>
+   <span class="zen-keyword">END</span>
 3. <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/reasoning</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/generate summary/</span></code></pre>
 
    <p>
@@ -267,14 +272,15 @@ $ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
 $Issue: /identified problem with severity and location/
 
 ## Input
-- $changes: $CodeChange (provided below)
-- $focus: $ReviewFocus[] = ["correctness", "maintainability"]
+$changes: $CodeChange (provided below)
+$focus: $ReviewFocus[] = ["correctness", "maintainability"]
 
 ## Workflow
 1. Analyze $changes for patterns and potential issues
-2. FOR EACH $area IN $focus:
-   - Apply focused review for $area
-   - Document identified issues
+2. FOR $area IN $focus
+   Apply focused review for $area
+   Document identified issues
+END
 3. Generate review summary with prioritized recommendations
 
 Code changes to review:
@@ -312,31 +318,33 @@ description: When processing tasks with validation and error handling
 
 <span class="zen-heading">## Input</span>
 
-- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
+<span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>
 
 <span class="zen-heading">## Context</span>
 
-- <span class="zen-variable">$attempts</span> = 0
-- <span class="zen-variable">$maxAttempts</span> = 3
+<span class="zen-variable">$attempts</span> = 0
+<span class="zen-variable">$maxAttempts</span> = 3
 
 <span class="zen-heading">## Workflow</span>
 
 1. Validate <span class="zen-variable">$task</span> inputs and requirements
-2. WHILE <span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span> DO:
-   - Execute <span class="zen-variable">$task</span>
-   - IF execution succeeded THEN:
-     - Return success result
-     - ELSE:
-       - Increment <span class="zen-variable">$attempts</span>
-       - Log error and retry strategy
+2. WHILE <span class="zen-variable">$attempts</span> &lt; <span class="zen-variable">$maxAttempts</span> DO
+   Execute <span class="zen-variable">$task</span>
+   IF <span class="zen-semantic">/execution succeeded/</span> THEN
+     Return success result
+   ELSE
+     Increment <span class="zen-variable">$attempts</span>
+     Log error and retry strategy
+   <span class="zen-keyword">END</span>
+<span class="zen-keyword">END</span>
 3. Return failure result with collected errors
 
 <span class="zen-heading">## Error Handling</span>
 
 Handle common failure modes:
-- Invalid inputs
-- Resource unavailability
-- Timeout conditions</code></pre>
+Invalid inputs.
+Resource unavailability.
+Timeout conditions.</code></pre>
 
    <h2>Best Practices</h2>
 

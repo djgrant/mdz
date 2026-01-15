@@ -16,17 +16,14 @@ python .opencode/skill/browser/screenshot.py start &
 python .opencode/skill/browser/screenshot.py <command>
 ```
 
-- `screenshot` - capture current state
-- `click <selector>` - click element
-- `type <selector> <text>` - type into input
-- `list <selector>` - list matching elements
+Commands: `screenshot` to capture current state, `click <selector>` to click an element, `type <selector> <text>` to type into input, `list <selector>` to list matching elements.
 
 ## Workflow
 
-1. Screenshot to see current state
-2. List elements to find selectors
-3. Interact with elements
-4. Screenshot to verify result
+DO /screenshot to see current state/
+DO /list elements to find selectors/
+DO /interact with elements/
+DO /screenshot to verify result/
 
 ## Teardown
 

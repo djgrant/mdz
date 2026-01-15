@@ -187,17 +187,20 @@ Write results to {~~appropriate location for this experiment}
 Signals to tooling: this is not a checkable value, skip validation.
 Signals to LLM: determine this from context at runtime.
 
-### `FOR EACH`, `WHILE`, `IF THEN` - Control Flow
+### `FOR`, `WHILE`, `IF THEN` - Control Flow
 
 ```markdown
-FOR EACH $item IN $items:
-  - Process $item
+FOR $item IN $items
+  Process $item
+END
   
-WHILE (NOT diminishing returns AND $iteration < 5):
-  - Continue iterating
+WHILE NOT /diminishing returns/ AND $iteration < 5 DO
+  Continue iterating
+END
 
-IF $result = "pass" THEN:
-  - Commit changes
+IF $result = "pass" THEN
+  Commit changes
+END
 ```
 
 Currently using CAPS keywords to distinguish from prose. See Design Constraint section for open questions about syntax choices.
@@ -309,9 +312,9 @@ A key constraint on syntax design: **anything the compiler needs to process must
 
 This creates tension between readability and parseability. Each syntax choice needs exploration:
 
-- **Control flow keywords** - CAPS (`FOR EACH`) vs lowercase (`for each`) vs sigils (`@for each`). How do we distinguish from prose?
+- **Control flow keywords** - CAPS (`FOR`) vs lowercase (`for`) vs sigils (`@for`). How do we distinguish from prose?
 - **Types vs variables** - Case convention (`$Task` vs `$task`) vs explicit keyword (`type $Task`). What enables contract checking?
-- **References** - `(~skill)` vs prose that tooling infers. What level of explicitness is needed?
+- **References** - `~/skill/name` vs prose that tooling infers. What level of explicitness is needed?
 - **Macros vs runtime** - `{{IF}}` vs `IF THEN`. Must be syntactically distinct.
 - **Semantic markers** - `{~~content}` vs unmarked prose. Does the compiler need to identify these?
 

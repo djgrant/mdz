@@ -31,8 +31,7 @@ description: When...          # Required: trigger description
 ---</span></code></pre>
 
   <p>
-    <strong>Note:</strong> Dependencies are now inferred automatically from links in your document.
-    No <code>uses:</code> block is needed.
+    <strong>Note:</strong> Dependencies can be declared in <code>uses:</code> or inferred from links in your document.
   </p>
 
   <h2>Types</h2>
@@ -68,9 +67,9 @@ description: When...          # Required: trigger description
 
   <h3>Examples</h3>
   
-  <pre><code>- <span class="zen-variable">$current</span>: <span class="zen-type">$FilePath</span> = <span class="zen-variable">$SolutionPath</span>(0)
-- <span class="zen-variable">$iterations</span> = 0
-- <span class="zen-variable">$result</span>: <span class="zen-type">$ValidationResult</span></code></pre>
+  <pre><code><span class="zen-variable">$current</span>: <span class="zen-type">$FilePath</span> = <span class="zen-variable">$SolutionPath</span>(0)
+<span class="zen-variable">$iterations</span> = 0
+<span class="zen-variable">$result</span>: <span class="zen-type">$ValidationResult</span></code></pre>
 
   <h3>Lambda Expressions</h3>
   
@@ -86,15 +85,17 @@ description: When...          # Required: trigger description
   <p>When a variable needs a semantic description rather than a named type, use the <strong>semantic type</strong> syntax:</p>
   
   <pre><code class="mdz"><span class="zen-heading">## Input</span>
-- <span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment">&lt;!-- path to the skill --&gt;</span>
+<span class="zen-variable">$skillPath</span>: <span class="zen-type">$String</span>  <span class="zen-comment">&lt;!-- path to the skill --&gt;</span>
 
 <span class="zen-heading">## Context</span>
-- <span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST from $skillPath/</span>
+<span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST from $skillPath/</span>
 
 <span class="zen-heading">## Workflow</span>
 1. Load skill source from <span class="zen-variable">$skillPath</span>
 2. Parse into <span class="zen-variable">$skill</span> AST
-3. <span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$statement</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skill</span>.statements:</code></pre>
+3. <span class="zen-keyword">FOR</span> <span class="zen-variable">$statement</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skill</span>.statements
+   Process <span class="zen-variable">$statement</span>
+   <span class="zen-keyword">END</span></code></pre>
 
   <p>This pattern makes semantic transformations explicit and avoids confusion about where properties come from.</p>
 
@@ -175,45 +176,50 @@ description: When...          # Required: trigger description
   
   <p>Use <code>/description/</code> as a type annotation for variables that need semantic descriptions:</p>
   
-  <pre><code>- <span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST/</span>
-- <span class="zen-variable">$result</span>: <span class="zen-semantic">/outcome of the validation step/</span></code></pre>
+  <pre><code><span class="zen-variable">$skill</span>: <span class="zen-semantic">/the loaded and parsed skill AST/</span>
+<span class="zen-variable">$result</span>: <span class="zen-semantic">/outcome of the validation step/</span></code></pre>
 
   <h2>Control Flow</h2>
   
-  <h3>For-Each Loop</h3>
+  <h3>For Loop</h3>
   
   <p>Iterate over a collection using the <strong>collection operator</strong> (<code>IN</code>):</p>
   
-  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
-  - Process <span class="zen-variable">$item</span>
-  - Next step</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">FOR</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>
+  Process <span class="zen-variable">$item</span>
+  Next step
+<span class="zen-keyword">END</span></code></pre>
 
   <p>With <strong>destructuring</strong>:</p>
 
-  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>:
-  - Execute <span class="zen-variable">$task</span> with <span class="zen-variable">$strategy</span></code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">FOR</span> (<span class="zen-variable">$task</span>, <span class="zen-variable">$strategy</span>) <span class="zen-keyword">IN</span> <span class="zen-variable">$transforms</span>
+  Execute <span class="zen-variable">$task</span> with <span class="zen-variable">$strategy</span>
+<span class="zen-keyword">END</span></code></pre>
 
   <h3>While Loop</h3>
   
   <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition:</p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>:
-  - Perform iteration
-  - Update state</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-semantic">/condition/</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>
+  Perform iteration
+  Update state
+<span class="zen-keyword">END</span></code></pre>
 
   <h3>Conditional</h3>
   
   <p>Branch with <code>IF</code>/<code>THEN</code> and optional <strong>else clause</strong>:</p>
   
-  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>:
-  - Do this
-<span class="zen-keyword">ELSE</span>:
-  - Do that
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$condition</span> <span class="zen-keyword">THEN</span>
+  Do this
+<span class="zen-keyword">ELSE</span>
+  Do that
+<span class="zen-keyword">END</span>
 
-<span class="zen-keyword">IF</span> <span class="zen-variable">$strategy</span> = <span class="zen-string">"accumulate"</span> <span class="zen-keyword">THEN</span>:
-  - Validate incrementally
-<span class="zen-keyword">ELSE</span>:
-  - Collect all candidates</code></pre>
+<span class="zen-keyword">IF</span> <span class="zen-variable">$strategy</span> = <span class="zen-string">"accumulate"</span> <span class="zen-keyword">THEN</span>
+  Validate incrementally
+<span class="zen-keyword">ELSE</span>
+  Collect all candidates
+<span class="zen-keyword">END</span></code></pre>
 
   <h3>GOTO</h3>
   

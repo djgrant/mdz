@@ -54,7 +54,7 @@ function describe(name: string, fn: () => void): void {
 // ============================================================================
 
 describe('Complex Nested Control Flow', () => {
-  test('FOR EACH inside WHILE inside IF', () => {
+  test('FOR inside WHILE inside IF', () => {
     const doc = parse(`---
 name: nested-test
 description: Test nested control flow
@@ -62,10 +62,13 @@ description: Test nested control flow
 
 ## Workflow
 
-IF $ready = true THEN:
-  - WHILE $count < 3 DO:
-    - FOR EACH $item IN $items:
-      - Process $item at level $count
+IF $ready = true THEN
+  WHILE $count < 3 DO
+    FOR $item IN $items
+      Process $item at level $count
+    END
+  END
+END
 `);
     const ifs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
@@ -73,37 +76,42 @@ IF $ready = true THEN:
     assert(ifs.length >= 1, 'Should have IF statement');
   });
 
-  test('Triple nested FOR EACH', () => {
+  test('Triple nested FOR', () => {
     const doc = parse(`---
 name: triple-nested
 description: Test triple nesting
 ---
 
-FOR EACH $a IN $as:
-  - FOR EACH $b IN $bs:
-    - FOR EACH $c IN $cs:
-      - Process ($a, $b, $c)
+FOR $a IN $as
+  FOR $b IN $bs
+    FOR $c IN $cs
+      Process ($a, $b, $c)
+    END
+  END
+END
 `);
     assert(doc.errors.length === 0, `Errors: ${doc.errors.map(e => e.message)}`);
   });
 
-  test('IF inside FOR EACH with ELSE', () => {
+  test('IF inside FOR with ELSE', () => {
     const doc = parse(`---
 name: if-in-foreach
-description: Test IF inside FOR EACH
+description: Test IF inside FOR
 ---
 
-FOR EACH $item IN $items:
-  - IF $item.priority = "high" THEN:
-    - Process immediately
-  - ELSE:
-    - Queue for later
-  - Continue to next
+FOR $item IN $items
+  IF $item.priority = "high" THEN
+    Process immediately
+  ELSE
+    Queue for later
+  END
+  Continue to next
+END
 `);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
     );
-    assert(forEachs.length >= 1, 'Should have FOR EACH');
+    assert(forEachs.length >= 1, 'Should have FOR');
   });
 
   test('Mixed semantic and deterministic conditions', () => {
@@ -112,8 +120,9 @@ name: mixed-conditions
 description: Mixed conditions
 ---
 
-WHILE NOT complete AND $iterations < 10 OR should retry DO:
-  - Continue processing
+WHILE NOT /complete/ AND $iterations < 10 OR /should retry/ DO
+  Continue processing
+END
 `);
     const whiles = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.WhileStatement => b.kind === 'WhileStatement')
@@ -239,14 +248,14 @@ description: ok
     assert(true, 'Should not crash');
   });
 
-  test('Handles control flow without colon', () => {
+  test('Handles control flow without END', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items
-  - Process
+FOR $item IN $items
+  Process
 `);
     // Should recover gracefully
     assert(doc.sections.length > 0, 'Should have sections');
@@ -271,7 +280,7 @@ name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
+FOR $item IN $items
 
 ## Next Section
 `);
@@ -307,7 +316,7 @@ ${types}
   test('Handles 100+ variables', () => {
     let vars = '';
     for (let i = 0; i < 100; i++) {
-      vars += `- $var${i} = ${i}\n`;
+      vars += `$var${i} = ${i}\n`;
     }
     const doc = parse(`---
 name: many-vars
@@ -407,7 +416,7 @@ name: test
 description: test
 ---
 
-- $path = \`output-/appropriate suffix/.md\`
+$path = \`output-/appropriate suffix/.md\`
 `);
     assert(doc.errors.length === 0, 'Should parse template with semantic');
   });
@@ -436,7 +445,7 @@ name: test
 description: test
 ---
 
-- $path = \`output-$/suffix/.md\`
+$path = \`output-$/suffix/.md\`
 `);
     assert(doc.errors.length === 0, 'Should parse template with inferred var');
   });
@@ -507,7 +516,7 @@ name: test
 description: test
 ---
 
-- $path = \`output-{~~appropriate suffix}.md\`
+$path = \`output-{~~appropriate suffix}.md\`
 `);
     assert(doc.errors.length === 0, 'Should parse template with semantic');
   });
@@ -524,10 +533,10 @@ name: test
 description: test
 ---
 
-- $a: $FilePath = "test.md"
-- $b: $String = "hello"
-- $c: $Number = 42
-- $d: $Boolean = true
+$a: $FilePath = "test.md"
+$b: $String = "hello"
+$c: $Number = 42
+$d: $Boolean = true
 `);
     assert(doc.errors.length === 0, 'Should parse all built-in types');
   });
@@ -538,7 +547,7 @@ name: test
 description: test
 ---
 
-- $fn = ($a, $b) => \`result-\${$a}-\${$b}.md\`
+$fn = ($a, $b) => \`result-\${$a}-\${$b}.md\`
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -566,8 +575,9 @@ name: test
 description: test
 ---
 
-IF $item.priority = "high" THEN:
-  - Process $item.data.value
+IF $item.priority = "high" THEN
+  Process $item.data.value
+END
 `);
     assert(doc.errors.length === 0, 'Should parse member access');
   });
@@ -578,7 +588,7 @@ name: test
 description: test
 ---
 
-- $result = $fn($a, $b, $c)
+$result = $fn($a, $b, $c)
 `);
     assert(doc.errors.length === 0, 'Should parse function call');
   });
@@ -608,14 +618,14 @@ description: test
 ---
 
 $Task: a task
-- $t: $Task = "test"
-Execute (~skill)
+$t: $Task = "test"
+Execute ~/skill/skill
 Write to {~~location}
 `;
     const result = compile(source, { includeHeader: false });
     // v0.3: Source = Output
     assert(result.output === source, 'Output should equal source');
-    assert(result.output.includes('(~skill)'), 'Should keep raw reference');
+    assert(result.output.includes('~/skill/skill'), 'Should keep raw reference');
     assert(result.output.includes('{~~'), 'Should keep raw semantic');
   });
 
@@ -626,8 +636,8 @@ description: test
 ---
 
 $Task: a task
-- $t: $Task = "test"
-Execute (~skill)
+$t: $Task = "test"
+Execute ~/skill/skill
 {~~determine this}
 `, { generateSourceMap: true });
     

@@ -1,5 +1,5 @@
 /**
- * v0.2 Feature Tests - Updated for v0.9 (PARALLEL FOR EACH removed)
+ * v0.2 Feature Tests - Updated for v0.10 (END blocks, FOR syntax)
  * 
  * Comprehensive tests for v0.2+ language features:
  * - Typed parameters in WITH clause
@@ -180,21 +180,23 @@ DO /analyze the content/
 // ============================================================================
 
 describe('BREAK - Parsing', () => {
-  test('parses BREAK inside FOR EACH', () => {
+  test('parses BREAK inside FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $found THEN:
-    - BREAK
+FOR $item IN $items
+  IF $found = true THEN
+    BREAK
+  END
+END
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
     );
-    assert(forEachs.length >= 1, 'Should have FOR EACH');
+    assert(forEachs.length >= 1, 'Should have FOR');
   });
 
   test('parses BREAK inside WHILE', () => {
@@ -203,24 +205,28 @@ name: test
 description: test
 ---
 
-WHILE $count < 10 DO:
-  - IF $done THEN:
-    - BREAK
-  - Increment
+WHILE $count < 10 DO
+  IF $done = true THEN
+    BREAK
+  END
+  Increment
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
 
-  // v0.9: PARALLEL FOR EACH removed - BREAK in FOR EACH is still valid
-  test('parses BREAK inside nested FOR EACH', () => {
+  // v0.9: PARALLEL FOR EACH removed - BREAK in FOR is still valid
+  test('parses BREAK inside nested FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $item.stop THEN:
-    - BREAK
+FOR $item IN $items
+  IF $item.stop = true THEN
+    BREAK
+  END
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -239,16 +245,18 @@ BREAK
 });
 
 describe('CONTINUE - Parsing', () => {
-  test('parses CONTINUE inside FOR EACH', () => {
+  test('parses CONTINUE inside FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $item.skip THEN:
-    - CONTINUE
-  - Process $item
+FOR $item IN $items
+  IF $item.skip = true THEN
+    CONTINUE
+  END
+  Process $item
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -259,25 +267,29 @@ name: test
 description: test
 ---
 
-WHILE $processing DO:
-  - IF $skip THEN:
-    - CONTINUE
-  - Do work
+WHILE $processing = true DO
+  IF $skip = true THEN
+    CONTINUE
+  END
+  Do work
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
 
-  // v0.9: PARALLEL FOR EACH removed - CONTINUE in FOR EACH is still valid
-  test('parses CONTINUE inside nested FOR EACH', () => {
+  // v0.9: PARALLEL FOR EACH removed - CONTINUE in FOR is still valid
+  test('parses CONTINUE inside nested FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $task IN $tasks:
-  - IF $task.invalid THEN:
-    - CONTINUE
-  - Execute $task
+FOR $task IN $tasks
+  IF $task.invalid = true THEN
+    CONTINUE
+  END
+  Execute $task
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -302,9 +314,11 @@ name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $done THEN:
-    - BREAK
+FOR $item IN $items
+  IF $done = true THEN
+    BREAK
+  END
+END
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source preserved');
@@ -317,9 +331,11 @@ name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $skip THEN:
-    - CONTINUE
+FOR $item IN $items
+  IF $skip = true THEN
+    CONTINUE
+  END
+END
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source preserved');
@@ -332,12 +348,15 @@ name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $item.skip THEN:
-    - CONTINUE
-  - IF $found THEN:
-    - BREAK
-  - Process $item
+FOR $item IN $items
+  IF $item.skip = true THEN
+    CONTINUE
+  END
+  IF $found = true THEN
+    BREAK
+  END
+  Process $item
+END
 `);
     assertIncludes(result.output, 'BREAK');
     assertIncludes(result.output, 'CONTINUE');
@@ -357,7 +376,7 @@ name: test
 description: test
 ---
 
-- $param: $Task = "do something"
+$param: $Task = "do something"
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -375,7 +394,7 @@ name: test
 description: test
 ---
 
-- $required: $Task
+$required: $Task
 `);
     const vars = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
@@ -397,7 +416,7 @@ description: test
 
 $Task: any task
 
-- $param: $Task = "value"
+$param: $Task = "value"
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source preserved');
@@ -411,7 +430,7 @@ description: test
 
 $Task: any task
 
-- $param: $Task = "value"
+$param: $Task = "value"
 `);
     const paramVar = result.metadata.variables.find(v => v.name === 'param');
     assert(paramVar !== undefined, 'Should find param');
@@ -425,13 +444,13 @@ $Task: any task
 // ============================================================================
 
 describe('v0.2 Integration', () => {
-  // v0.9: Updated to use FOR EACH instead of PARALLEL FOR EACH
+  // v0.10: Updated to use FOR instead of PARALLEL FOR EACH
   test('complex skill with v0.2+ features', () => {
     const source = `---
 name: async-processor
 description: Process items with early exit
 uses:
-  - ~validator
+  - ~/skill/validator
 ---
 
 ## Types
@@ -441,25 +460,28 @@ $Result: "success" | "failure"
 
 ## Input
 
-- $items: $Item[]
-- $validator: $Task
+$items: $Item[]
+$validator: $Task
 
 ## Workflow
 
-FOR EACH $item IN $items:
-  - IF $item.invalid THEN:
-    - CONTINUE
-  - Process $item
-  - IF $item.triggers_stop THEN:
-    - BREAK
-  - Validate with ~/skill/validator
+FOR $item IN $items
+  IF $item.invalid = true THEN
+    CONTINUE
+  END
+  Process $item
+  IF $item.triggers_stop = true THEN
+    BREAK
+  END
+  USE ~/skill/validator TO /validate/
+END
 `;
     const doc = parse(source);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source preserved');
-    assertIncludes(result.output, 'FOR EACH');
+    assertIncludes(result.output, 'FOR');
     assertIncludes(result.output, 'CONTINUE');
     assertIncludes(result.output, 'BREAK');
   });
@@ -478,14 +500,17 @@ $Strategy: "fast" | "thorough"
 
 ## Workflow
 
-FOR EACH $item IN $items:
-  - Process $item
-  - IF $item.priority = "high" THEN:
-    - Expedite
+FOR $item IN $items
+  Process $item
+  IF $item.priority = "high" THEN
+    Expedite
+  END
+END
 
-WHILE NOT complete AND $iterations < 5 DO:
-  - Execute ~/skill/helper-skill
-  - Update $iterations
+WHILE NOT /complete/ AND $iterations < 5 DO
+  USE ~/skill/helper-skill TO /execute/
+  $iterations = $iterations + 1
+END
 `;
     const doc = parse(v08Skill);
     assertEqual(doc.errors.length, 0, 'v0.8 skill should parse without errors');
@@ -494,22 +519,24 @@ WHILE NOT complete AND $iterations < 5 DO:
     assert(result.diagnostics.filter(d => d.severity === 'error').length === 0, 'Should compile without errors');
   });
 
-  // v0.9: Nested FOR EACH loops still work
-  test('nested FOR EACH loops', () => {
+  // v0.10: Nested FOR loops still work
+  test('nested FOR loops', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $batch IN $batches:
-  - FOR EACH $item IN $batch:
-    - Process $item
+FOR $batch IN $batches
+  FOR $item IN $batch
+    Process $item
+  END
+END
 `);
     assertEqual(doc.errors.length, 0);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
     );
-    assert(forEachs.length >= 1, 'Should have outer FOR EACH');
+    assert(forEachs.length >= 1, 'Should have outer FOR');
   });
 
   test('BREAK inside nested loops', () => {
@@ -518,10 +545,13 @@ name: test
 description: test
 ---
 
-FOR EACH $a IN $as:
-  - FOR EACH $b IN $bs:
-    - IF $found THEN:
-      - BREAK
+FOR $a IN $as
+  FOR $b IN $bs
+    IF $found = true THEN
+      BREAK
+    END
+  END
+END
 `);
     assertEqual(doc.errors.length, 0, 'BREAK in nested loop should be valid');
   });
@@ -535,15 +565,16 @@ name: test
 description: test
 ---
 
-WHILE $round < $maxRounds DO:
+WHILE $round < $maxRounds DO
+  DELEGATE /task/ TO ~/agent/worker WITH:
+    param: $value
 
-  Delegate to #task WITH:
-    - $param = $value
-
-  IF /condition/ THEN:
+  IF /condition/ THEN
     BREAK
+  END
 
   $round = $round + 1
+END
 `);
     assertEqual(doc.errors.length, 0, `BREAK should be valid inside WHILE > IF. Errors: ${doc.errors.map(e => e.message)}`);
     
@@ -568,14 +599,15 @@ WHILE $round < $maxRounds DO:
 // ============================================================================
 
 describe('v0.2+ Edge Cases', () => {
-  // v0.9: PARALLEL FOR EACH removed - test empty FOR EACH instead
-  test('empty FOR EACH body', () => {
+  // v0.9: PARALLEL FOR EACH removed - test empty FOR body instead
+  test('empty FOR body', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
+FOR $item IN $items
+END
 
 ## Next Section
 `);
@@ -588,7 +620,7 @@ name: test
 description: test
 ---
 
-- $parallel = true
+$parallel = true
 `);
     assertEqual(doc.errors.length, 0);
     const vars = doc.sections.flatMap(s => 
@@ -603,11 +635,14 @@ name: test
 description: test
 ---
 
-FOR EACH $item IN $items:
-  - IF $skip THEN:
-    - CONTINUE
-  - IF $stop THEN:
-    - BREAK
+FOR $item IN $items
+  IF $skip = true THEN
+    CONTINUE
+  END
+  IF $stop = true THEN
+    BREAK
+  END
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -618,11 +653,15 @@ name: test
 description: test
 ---
 
-FOR EACH $a IN $as:
-  - FOR EACH $b IN $bs:
-    - WHILE $processing DO:
-      - IF $done THEN:
-        - BREAK
+FOR $a IN $as
+  FOR $b IN $bs
+    WHILE $processing = true DO
+      IF $done = true THEN
+        BREAK
+      END
+    END
+  END
+END
 `);
     assertEqual(doc.errors.length, 0);
   });

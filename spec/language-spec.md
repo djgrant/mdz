@@ -1,4 +1,4 @@
-# MDZ Language Specification v0.9
+# MDZ Language Specification v0.10
 
 > A markdown extension language for multi-agent systems
 
@@ -141,8 +141,8 @@ Types can be:
 Reference a type by its name with `$` prefix:
 
 ```
-- $validator: $Task
-- $transforms: ($Task, $Strategy)[]
+$validator: $Task
+$transforms: ($Task, $Strategy)[]
 ```
 
 ### Built-in Types
@@ -175,9 +175,9 @@ $name = value
 
 Examples:
 ```
-- $current: $FilePath = $SolutionPath(0)
-- $iterations = 0
-- $result: $ValidationResult
+$current: $FilePath = $SolutionPath(0)
+$iterations = 0
+$result: $ValidationResult
 ```
 
 ### Required Parameters (v0.2)
@@ -231,16 +231,17 @@ $array << value
 
 Examples:
 ```
-- $results << $currentResult
-- $candidates << /the winning solution/
-- $errors << $error
+$results << $currentResult
+$candidates << /the winning solution/
+$errors << $error
 ```
 
 The push operator is used to collect values during iteration:
 
 ```
-FOR EACH $item IN $items:
-  - $processed << /process $item/
+FOR $item IN $items
+  $processed << /process $item/
+END
 ```
 
 ## Links and Anchors
@@ -408,28 +409,30 @@ Inferred variables combine variable declaration with semantic interpretation. Th
 Use `/description/` as a type annotation to describe what a value should be:
 
 ```
-- $target: /the file to modify/ = "default.txt"
-- $context: /relevant background information/
+$target: /the file to modify/ = "default.txt"
+$context: /relevant background information/
 ```
 
 This is more flexible than reference types (`$Type`) when you need to describe the expected value semantically rather than reference a defined type.
 
 ## Control Flow
 
-### FOR EACH
+### FOR
 
 Iterate over a collection:
 
 ```
-FOR EACH $item IN $collection:
-  - Process $item
-  - Next step
+FOR $item IN $collection
+  DO /process $item/
+  DO /next step/
+END
 ```
 
 With destructuring:
 ```
-FOR EACH ($task, $strategy) IN $transforms:
-  - Execute $task with $strategy
+FOR ($task, $strategy) IN $transforms
+  DO /execute $task with $strategy/
+END
 ```
 
 ### WHILE
@@ -437,31 +440,36 @@ FOR EACH ($task, $strategy) IN $transforms:
 Loop with condition. The `DO` keyword acts as the condition delimiter:
 
 ```
-WHILE condition AND $iterations < 5 DO:
-  - Perform iteration
-  - Update state
+WHILE condition AND $iterations < 5 DO
+  DO /perform iteration/
+  DO /update state/
+END
 ```
 
 Conditions can include:
 - Variable comparisons: `$x < 5`
-- Semantic conditions: `NOT diminishing returns` (LLM-interpreted)
+- Semantic conditions: `NOT /diminishing returns/` (LLM-interpreted)
 - Logical operators: `AND`, `OR`, `NOT`
+
+Semantic conditions must be wrapped in semantic markers (`/.../`) to distinguish them from variables and keywords.
 
 ### IF THEN ELSE
 
 Conditional branching. The `THEN` keyword acts as the condition delimiter:
 
 ```
-IF $condition THEN:
-  - Do this
-ELSE:
-  - Do that
+IF $condition THEN
+  DO /do this/
+ELSE
+  DO /do that/
+END
 ```
 
 With semantic conditions:
 ```
-IF /any critical findings/ THEN:
-  - Request changes
+IF /any critical findings/ THEN
+  DO /request changes/
+END
 ```
 
 ### BREAK and CONTINUE (v0.2)
@@ -469,12 +477,15 @@ IF /any critical findings/ THEN:
 Early exit and skip in loops:
 
 ```
-FOR EACH $item IN $items:
-  - IF $item.invalid THEN:
-    - CONTINUE              # Skip to next iteration
-  - IF $found = true THEN:
-    - BREAK                 # Exit the loop
-  - Process normally
+FOR $item IN $items
+  IF $item.invalid THEN
+    CONTINUE                # Skip to next iteration
+  END
+  IF $found = true THEN
+    BREAK                   # Exit the loop
+  END
+  DO /process normally/
+END
 ```
 
 ### RETURN (v0.9)
@@ -490,25 +501,27 @@ RETURN is valid only at the end of a section or as the last statement in a loop 
 ```
 ## Validate Input
 
-- IF $input.empty THEN:
-  - RETURN "invalid"
-- Process $input
-- RETURN "valid"
+IF $input.empty THEN
+  RETURN "invalid"
+END
+DO /process $input/
+RETURN "valid"
 ```
 
 In loops, RETURN exits the current iteration (similar to yielding a value):
 
 ```
-FOR EACH $item IN $items:
-  - Process $item
-  - RETURN $item.result    # Yield result for this iteration
+FOR $item IN $items
+  DO /process $item/
+  RETURN $item.result      # Yield result for this iteration
+END
 ```
 
 **Implicit return**: A section without an explicit RETURN completes naturally. The absence of RETURN means natural completion, not an error.
 
-### DO Statement (v0.9)
+### DO Statement (v0.9, v0.10)
 
-The `DO` keyword as a standalone statement introduces a prose instruction:
+The `DO` keyword introduces a standalone instruction, either single-line or as a block:
 
 ```
 DO /prose instruction/
@@ -518,11 +531,16 @@ Examples:
 ```
 DO /analyze the current state and determine next steps/
 DO /summarize findings into a report/
+
+DO
+  /summarize findings/
+  /return a report/
+END
 ```
 
-**Note**: This is distinct from `WHILE...DO` where `DO` acts as a condition delimiter. Standalone `DO` at the start of a line introduces an instruction for the LLM to execute.
+**Note**: This is distinct from `WHILE...DO` and `FOR...DO` where `DO` acts as an optional delimiter. Single-line `DO` is only valid at top-level (outside fenced code blocks).
 
-## Statements (v0.8, v0.9)
+## Statements (v0.8+)
 
 MDZ v0.8 introduces four key statement types for working with external resources: `DELEGATE`, `USE`, `EXECUTE`, and `GOTO`.
 
@@ -672,31 +690,33 @@ Workflows typically follow:
 2. Execution phase (loops, delegations, transformations)
 3. Completion phase (collect results, report)
 
-## Structural Rules (v0.9)
+## Structural Rules (v0.10)
 
-### Colon Rule
+### END Rule
 
-A colon at the end of a line indicates an indented block follows:
+Blocks are closed with `END`, and indentation is cosmetic only:
 
 ```
-FOR EACH $item IN $items:
-  - Process $item
-  - Next step
+FOR $item IN $items
+  DO /process $item/
+  DO /next step/
+END
 ```
 
 This applies to:
-- Control flow statements (`FOR EACH`, `WHILE`, `IF`, `ELSE`)
-- Composition statements with parameters (`USE ... TO ...:`, `DELEGATE ... WITH:`)
-- Section-like structures
+- Control flow statements (`FOR`, `WHILE`, `IF`, `ELSE IF`, `ELSE`)
+- `DO` blocks
 
 ### Keyword Placement Rule
 
-CAPS keywords must appear at the start of a line or after indentation:
+CAPS keywords must appear at the start of a line (optionally indented):
 
 ```
-FOR EACH $item IN $items:        # Valid: line start
-  - IF $condition THEN:          # Valid: after indentation
-    - BREAK                      # Valid: after indentation
+FOR $item IN $items             # Valid: line start
+  IF $condition THEN            # Valid: indented position
+    BREAK                       # Valid: indented position
+  END
+END
 ```
 
 Keywords embedded in prose are not recognized as control structures:
@@ -728,7 +748,7 @@ MDZ tooling validates source documents without transforming them. The compiler:
 7. **Dependency cycles** - Detects circular dependencies across skills
 8. **Link conventions** - Warns when link doesn't follow folder conventions (agent/, skill/, tool/)
 9. **RETURN placement** - Errors when RETURN is not at end of section/iteration (v0.9)
-10. **Keyword placement** - Warns when keywords not at line start or indented (v0.9)
+10. **Keyword placement** - Warns when keywords are not at line start (v0.10)
 
 ### Error Codes
 
@@ -742,7 +762,7 @@ MDZ tooling validates source documents without transforming them. The compiler:
 | E012 | Error | Dependency cycle detected |
 | E013 | Error | RETURN not at end of section/iteration (v0.9) |
 | W002 | Warning | Link doesn't follow folder conventions |
-| W003 | Warning | Keyword not at line start or indented (v0.9) |
+| W003 | Warning | Keyword not at line start (v0.10) |
 
 ### Dependency Graph
 
@@ -805,7 +825,7 @@ A compliant validator must:
 - Build dependency graph from link statements
 - Detect dependency cycles
 - Validate RETURN placement (end of section/iteration only)
-- Validate keyword placement (line start or indented)
+- Validate keyword placement (line start)
 
 ### LSP Features
 
@@ -826,7 +846,7 @@ Syntax highlighting should distinguish:
 - Anchors (`#section`)
 - Semantic markers (`/.../`)
 - Inferred variables (`$/name/`)
-- Control flow keywords (`FOR EACH`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `BREAK`, `CONTINUE`, `RETURN`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`, `ASYNC`, `AWAIT`)
+- Control flow keywords (`FOR`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `END`, `BREAK`, `CONTINUE`, `RETURN`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`, `ASYNC`, `AWAIT`)
 - Operators (`<<`)
 
 ## Grouping and Braces
@@ -842,9 +862,9 @@ Parentheses serve four distinct purposes in MDZ:
 The `DO` keyword delimits WHILE conditions (like `THEN` for `IF`):
 
 ```
-WHILE $iterations < 5 DO:             # Valid
-WHILE condition AND $x > 0 DO:        # Valid
-WHILE NOT diminishing returns DO:     # Valid (semantic condition)
+WHILE $iterations < 5 DO             # Valid
+WHILE condition AND $x > 0 DO        # Valid
+WHILE NOT /diminishing returns/ DO   # Valid (semantic condition)
 ```
 
 Parentheses are optional for grouping complex conditions.
@@ -856,9 +876,9 @@ Parentheses are optional for grouping complex conditions.
 $Pair: ($Task, $Strategy)             # Required for compound types
 $Task[]                               # No parens for single type
 
-# FOR EACH destructuring  
-FOR EACH ($item, $priority) IN $pairs:  # Required for destructuring
-FOR EACH $item IN $items:               # No parens for single variable
+# FOR destructuring
+FOR ($item, $priority) IN $pairs      # Required for destructuring
+FOR $item IN $items                   # No parens for single variable
 ```
 
 #### 3. Lambda parameters — REQUIRED for multiple parameters
@@ -873,9 +893,9 @@ $fn = ($a, $b) => expression          # Multiple params: parens required
 Parentheses can group sub-expressions to control precedence or improve readability:
 
 ```
-IF ($a = 1) AND ($b = 2) THEN:        # Optional but clear
-IF $a = 1 AND $b = 2 THEN:            # Also valid, uses precedence
-IF (($a AND $b) OR $c) THEN:          # Grouping overrides precedence
+IF ($a = 1) AND ($b = 2) THEN        # Optional but clear
+IF $a = 1 AND $b = 2 THEN            # Also valid, uses precedence
+IF (($a AND $b) OR $c) THEN          # Grouping overrides precedence
 ```
 
 #### 5. IF conditions — OPTIONAL
@@ -883,9 +903,9 @@ IF (($a AND $b) OR $c) THEN:          # Grouping overrides precedence
 The IF statement does **not** require parentheses around conditions:
 
 ```
-IF $result = "progress" THEN:         # Valid - no parens
-IF ($result = "progress") THEN:       # Valid - with parens
-IF condition AND other THEN:          # Valid - semantic condition
+IF $result = "progress" THEN         # Valid - no parens
+IF ($result = "progress") THEN       # Valid - with parens
+IF /condition/ AND /other/ THEN      # Valid - semantic condition
 ```
 
 Both IF and WHILE use keyword delimiters (`THEN` and `DO` respectively), so parentheses are optional for both.
@@ -926,7 +946,7 @@ Curly braces are used only for template interpolation:
 $path = $n => `output-${n}.md`        # ${} inside template literal
 ```
 
-Note: MDZ does **not** use `{}` for code blocks (Python-style indentation is used instead).
+Note: MDZ does **not** use `{}` for code blocks (blocks are closed with `END`).
 
 ### Forward Slashes `/`
 
@@ -979,25 +999,25 @@ From highest to lowest:
 
 ```
 # These are equivalent:
-IF $a AND $b OR $c THEN:
-IF ($a AND $b) OR $c THEN:            # AND binds tighter than OR
+IF $a AND $b OR $c THEN
+IF ($a AND $b) OR $c THEN            # AND binds tighter than OR
 
 # This is different:
-IF $a AND ($b OR $c) THEN:            # Parens override precedence
+IF $a AND ($b OR $c) THEN            # Parens override precedence
 
 # Comparison binds tighter than logical:
-IF $x = 1 AND $y = 2 THEN:
-IF ($x = 1) AND ($y = 2) THEN:        # Same meaning
+IF $x = 1 AND $y = 2 THEN
+IF ($x = 1) AND ($y = 2) THEN        # Same meaning
 ```
 
 ### Quick Reference
 
 | Construct | Parens Required? | Example |
 |-----------|-----------------|---------|
-| WHILE condition | No | `WHILE $x < 5 DO:` |
-| IF condition | No | `IF $x = 1 THEN:` |
-| FOR EACH single var | No | `FOR EACH $item IN $list:` |
-| FOR EACH destructure | **Yes** | `FOR EACH ($a, $b) IN $pairs:` |
+| WHILE condition | No | `WHILE $x < 5 DO` |
+| IF condition | No | `IF $x = 1 THEN` |
+| FOR single var | No | `FOR $item IN $list` |
+| FOR destructure | **Yes** | `FOR ($a, $b) IN $pairs` |
 | Lambda single param | No | `$x => expr` |
 | Lambda multi params | **Yes** | `($a, $b) => expr` |
 | Function call | **Yes** | `$fn($x)` |
@@ -1023,15 +1043,16 @@ PATH            = IDENT ('/' IDENT)*
 SEMANTIC        = '/' /[^\/\n]+/ '/'
 INFERRED_VAR    = '$/' /[^\/\n]+/ '/'
 SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'
-FOR_EACH        = 'FOR EACH' PATTERN 'IN' EXPR ':'
-WHILE           = 'WHILE' CONDITION 'DO:'
-IF_THEN         = 'IF' CONDITION 'THEN:'
-ELSE_IF         = 'ELSE IF' CONDITION 'THEN:'
-ELSE            = 'ELSE:'
+FOR             = 'FOR' PATTERN 'IN' EXPR ['DO']
+WHILE           = 'WHILE' CONDITION ['DO']
+IF_THEN         = 'IF' CONDITION ['THEN']
+ELSE_IF         = 'ELSE IF' CONDITION ['THEN']
+ELSE            = 'ELSE'
+END             = 'END'
 BREAK           = 'BREAK'
 CONTINUE        = 'CONTINUE'
 RETURN          = 'RETURN' EXPR?                               <!-- v0.9 -->
-DO_STMT         = 'DO' SEMANTIC                                <!-- v0.9 standalone -->
+DO_STMT         = 'DO' SEMANTIC | 'DO' BLOCK 'END'             <!-- v0.9, v0.10 -->
 DELEGATE        = ['ASYNC'|'AWAIT'] 'DELEGATE' [SEMANTIC] ['TO' LINK] ['WITH' (ANCHOR | ':' PARAMS)]  <!-- v0.9 -->
 USE             = 'USE' LINK 'TO' SEMANTIC (':' PARAMS)?
 EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC
@@ -1118,8 +1139,9 @@ The `PARALLEL FOR EACH` construct was removed in favor of the `ASYNC DELEGATE` p
 
 **Migration path**: Replace `PARALLEL FOR EACH $item IN $items:` with:
 ```
-FOR EACH $item IN $items:
+FOR $item IN $items
   - ASYNC DELEGATE /process $item/ TO ~/agent/worker
+END
 ```
 
 ### Why BREAK/CONTINUE? (v0.2)
@@ -1188,23 +1210,23 @@ The standalone DO statement provides explicit prose instructions:
 - **Parseable**: Clear syntax for tooling to identify instructions
 - **Distinct**: Different from WHILE...DO where DO is a delimiter
 
-### Why Keyword Placement Rule? (v0.9)
+### Why Keyword Placement Rule? (v0.10)
 
 Requiring keywords at line start or after indentation:
 
 - **Unambiguous parsing**: Keywords in prose don't trigger control flow
 - **Natural prose**: Can write "The FOR keyword..." without conflict
-- **Clear structure**: Indentation shows nesting
+- **Clear structure**: `END` shows nesting; indentation is optional
 - **Simpler grammar**: Reduces parser ambiguity
 
-### Why Colon Rule? (v0.9)
+### Why END Blocks? (v0.10)
 
-Colon at line end indicating an indented block:
+Blocks closed with `END`:
 
-- **Python familiarity**: Well-established convention
-- **Visual cue**: Clearly signals "more content follows"
-- **Consistent**: Same pattern for all block structures
-- **Parseable**: Easy to detect block starts
+- **Unambiguous**: Clear block boundaries without indentation
+- **LLM-friendly**: Explicit closing token improves readability
+- **Consistent**: Same rule across `FOR`, `WHILE`, `IF/ELSE`, and `DO`
+- **Parseable**: No indentation stack required
 
 ### Why DELEGATE? (v0.6)
 
@@ -1257,16 +1279,17 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ### Keywords
 
-- **For-each loop** (`FOR EACH $x IN $y:`) — Iteration over a collection.
-- **While loop** (`WHILE cond DO:`) — Conditional loop.
-- **Conditional** (`IF cond THEN:`) — Conditional branching.
-- **Else if clause** (`ELSE IF cond THEN:`) — Chained conditional branch.
-- **Else clause** (`ELSE:`) — Alternative branch of a conditional.
+- **For loop** (`FOR $x IN $y`) — Iteration over a collection.
+- **While loop** (`WHILE cond DO`) — Conditional loop.
+- **Conditional** (`IF cond THEN`) — Conditional branching.
+- **Else if clause** (`ELSE IF cond THEN`) — Chained conditional branch.
+- **Else clause** (`ELSE`) — Alternative branch of a conditional.
+- **Block terminator** (`END`) — Closes `FOR`, `WHILE`, `IF/ELSE`, and `DO` blocks.
 - **With clause** (`WITH #anchor` or `WITH:`) — Passes context to delegate.
 - **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.
 - **Loop control** (`BREAK`, `CONTINUE`) — Early exit or skip within loops.
 - **Return statement** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
-- **Do statement** (`DO /instruction/`) — Standalone prose instruction (v0.9).
+- **Do statement** (`DO /instruction/` or `DO ... END`) — Standalone instruction (v0.9, v0.10).
 - **Collection operator** (`IN`) — Specifies the collection in a loop.
 - **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawns a subagent with task.
 - **Async delegation** (`ASYNC DELEGATE`) — Fire-and-forget agent spawn (v0.9).
@@ -1322,9 +1345,9 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ### Control Flow
 
-- **Block** — Indented content after `:` belonging to a control flow statement.
+- **Block** — Content between a block opener and its matching `END`.
 - **Condition** — Boolean expression in `WHILE`/`IF` (deterministic or semantic).
-- **Semantic condition** (`NOT diminishing returns`) — Natural language condition interpreted by LLM.
+- **Semantic condition** (`NOT /diminishing returns/`) — Natural language condition interpreted by LLM.
 - **Deterministic condition** (`$x < 5`) — Computable boolean expression.
 - **Destructuring** (`($a, $b) IN $tuples`) — Unpacking tuple elements in iteration.
 - **Return** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
@@ -1342,6 +1365,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ## Version History
 
+- **v0.10** (2026-01-14): END-delimited blocks (indentation cosmetic); `FOR $x IN $y` replaces `FOR EACH`; optional `DO` for `FOR`/`WHILE`; optional `THEN` for `IF`/`ELSE IF`; `DO` supports single-line and block forms; removed `THEN:`/`DO:` colon delimiters
 - **v0.9** (2026-01-13): RETURN keyword (end of section/iteration only); ASYNC/AWAIT modifiers for DELEGATE; optional TO target in DELEGATE; push operator `<<` for array collection; WITH parameter syntax changed to `param: value`; removed PARALLEL FOR EACH (use ASYNC DELEGATE pattern); DO as standalone prose instruction; frontmatter declarations (types/input/context move from sections to YAML); colon rule (line-ending colon = indented block); keyword placement rule (CAPS at line start or indented)
 - **v0.8** (2026-01-13): Breaking change: Link-based references `~/path` replacing sigil-based `(reference)` syntax; removed `uses:` frontmatter (dependencies inferred from statements); new keywords `USE`, `EXECUTE`, `GOTO`; `WITH #anchor` for passing context templates; folder conventions (`agent/`, `skill/`, `tool/`)
 - **v0.7** (2026-01-12): Breaking change: Sigil-based reference syntax `(@agent)`, `(~skill)`, `(#section)`, `(!tool)`; unified `uses:` frontmatter field with sigil-prefixed identifiers; removed separate `skills:`/`agents:`/`tools:` fields

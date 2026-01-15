@@ -4,19 +4,17 @@
  * Tests for the DELEGATE keyword feature for multi-agent orchestration.
  * 
  * DELEGATE syntax enables skill authors to delegate tasks to sub-agents,
- * distinct from the Execute (~skill) pattern which composes skills.
+ * distinct from the EXECUTE/USE patterns which compose skills and tools.
  * 
  * Supported syntax forms:
- * - DELEGATE TO (@agent):          Block form with agent reference
- * - DELEGATE TO $agentVar:         Block form with variable reference
- * - DELEGATE $task TO (@agent)     Inline form with task
- * - DELEGATE TO (@agent) WITH:     Block form with parameters
+ * - DELEGATE /task/ TO ~/agent/agent          Inline form with task
+ * - DELEGATE TO ~/agent/agent WITH:           Block form with parameters
  * 
- * Frontmatter uses unified `uses:` with sigils:
+ * Frontmatter uses unified `uses:` with links:
  * - uses:
- *   - @agent      (agents)
- *   - ~skill      (skills)
- *   - !tool       (tools)
+ *   - ~/agent/agent      (agents)
+ *   - ~/skill/skill      (skills)
+ *   - ~/tool/tool        (tools)
  */
 
 import { parse } from '../packages/core/src/parser/parser';
@@ -90,11 +88,10 @@ function hasDelegateSupport(): boolean {
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@general):
-  - $task = "test"
+DELEGATE /test/ TO ~/agent/general
 `);
     // Check if any block is a DelegateStatement
     const hasDelegateBlock = doc.sections.some(s => 
@@ -107,14 +104,14 @@ DELEGATE TO (@general):
 }
 
 /**
- * Check if frontmatter parsing supports `uses:` with @agent sigils.
+ * Check if frontmatter parsing supports `uses:` with agent links.
  */
 function hasAgentsFrontmatterSupport(): boolean {
   const doc = parse(`---
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 `);
   // Check both raw and parsed agents array
@@ -134,11 +131,11 @@ describe('DELEGATE - Parsing', () => {
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@general):
-  - $task = "do something"
+DELEGATE /do something/ TO ~/agent/general WITH:
+  task: "do something"
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     // When implemented, check for DelegateStatement in AST
@@ -154,14 +151,13 @@ DELEGATE TO (@general):
 name: test
 description: test
 uses:
-  - @researcher
-  - @writer
+  - ~/agent/researcher
+  - ~/agent/writer
 ---
 
-- $agent = "researcher"
+$agent = "researcher"
 
-DELEGATE TO $agent:
-  - Find relevant information
+DELEGATE /find relevant information/ TO ~/agent/researcher
 `);
     assertEqual(doc.errors.length, 0);
     // Check target is VariableReference
@@ -172,10 +168,10 @@ DELEGATE TO $agent:
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE "write documentation" TO (@general)
+DELEGATE /write documentation/ TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0);
     // Check task is captured
@@ -186,12 +182,12 @@ DELEGATE "write documentation" TO (@general)
 name: test
 description: test
 uses:
-  - @validator
+  - ~/agent/validator
 ---
 
-DELEGATE TO (@validator) WITH:
-  - $code = $currentCode
-  - $criteria = "performance"
+DELEGATE /validate code/ TO ~/agent/validator WITH:
+  code: $currentCode
+  criteria: "performance"
 `);
     assertEqual(doc.errors.length, 0);
     // Check parameters are parsed
@@ -202,14 +198,14 @@ DELEGATE TO (@validator) WITH:
 name: test
 description: test
 uses:
-  - @analyzer
+  - ~/agent/analyzer
 ---
 
 $Input: content to analyze
 
-DELEGATE TO (@analyzer) WITH:
-  - $input: $Input = $data
-  - $format: $String = "json"
+DELEGATE TO ~/agent/analyzer WITH:
+  input: $data
+  format: "json"
 `);
     assertEqual(doc.errors.length, 0);
     // Check type annotations on parameters
@@ -224,32 +220,32 @@ describe('DELEGATE - Control Flow Integration', () => {
   const delegateSupported = hasDelegateSupport();
   const testOrSkip = delegateSupported ? test : skip;
 
-  testOrSkip('parses DELEGATE inside FOR EACH', () => {
+  testOrSkip('parses DELEGATE inside FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - @worker
+  - ~/agent/worker
 ---
 
-FOR EACH $task IN $tasks:
-  - DELEGATE TO (@worker):
-    - Execute $task
+FOR $task IN $tasks
+  DELEGATE /execute $task/ TO ~/agent/worker
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
 
-  testOrSkip('parses DELEGATE inside PARALLEL FOR EACH', () => {
+  testOrSkip('parses DELEGATE inside PARALLEL FOR', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - @processor
+  - ~/agent/processor
 ---
 
-PARALLEL FOR EACH $item IN $items:
-  - DELEGATE TO (@processor):
-    - Process $item
+FOR $item IN $items
+  DELEGATE /process $item/ TO ~/agent/processor
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -259,16 +255,15 @@ PARALLEL FOR EACH $item IN $items:
 name: test
 description: test
 uses:
-  - @expert
-  - @novice
+  - ~/agent/expert
+  - ~/agent/novice
 ---
 
-IF $complexity = "high" THEN:
-  - DELEGATE TO (@expert):
-    - Handle complex case
-ELSE:
-  - DELEGATE TO (@novice):
-    - Handle simple case
+IF $complexity = "high" THEN
+  DELEGATE /handle complex case/ TO ~/agent/expert
+ELSE
+  DELEGATE /handle simple case/ TO ~/agent/novice
+END
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -278,13 +273,13 @@ ELSE:
 name: test
 description: test
 uses:
-  - @reviewer
+  - ~/agent/reviewer
 ---
 
-WHILE $iterations < 5 DO:
-  - DELEGATE TO (@reviewer):
-    - Review current state
-  - $iterations = $iterations + 1
+WHILE $iterations < 5 DO
+  DELEGATE /review current state/ TO ~/agent/reviewer
+  $iterations = $iterations + 1
+END
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     
@@ -300,17 +295,17 @@ WHILE $iterations < 5 DO:
 // Frontmatter - agents field Tests
 // ============================================================================
 
-describe('Frontmatter - unified uses: with sigils', () => {
+describe('Frontmatter - unified uses: with links', () => {
   const agentsSupported = hasAgentsFrontmatterSupport();
 
-  test('parses agents from uses: with @ sigil', () => {
+  test('parses agents from uses: with agent links', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - @general
-  - @researcher
-  - @writer
+  - ~/agent/general
+  - ~/agent/researcher
+  - ~/agent/writer
 ---
 `);
     assertEqual(doc.errors.length, 0, 'Frontmatter parsing should not error');
@@ -327,13 +322,13 @@ uses:
     }
   });
 
-  test('parses skills from uses: with ~ sigil', () => {
+  test('parses skills from uses: with skill links', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - ~orchestrate
-  - ~work-packages
+  - ~/skill/orchestrate
+  - ~/skill/work-packages
 ---
 `);
     assertEqual(doc.errors.length, 0);
@@ -360,9 +355,9 @@ uses:
 name: test
 description: test
 uses:
-  - @general
-  - ~orchestrate
-  - !browser
+  - ~/agent/general
+  - ~/skill/orchestrate
+  - ~/tool/browser
 ---
 `);
     assertEqual(doc.errors.length, 0);
@@ -393,11 +388,10 @@ describe('DELEGATE - Compilation/Validation', () => {
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@general):
-  - $task = "do something"
+DELEGATE /do something/ TO ~/agent/general
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source should be preserved');
@@ -408,15 +402,13 @@ DELEGATE TO (@general):
 name: test
 description: test
 uses:
-  - @general
-  - @specialist
+  - ~/agent/general
+  - ~/agent/specialist
 ---
 
-DELEGATE TO (@general):
-  - Task one
+DELEGATE /task one/ TO ~/agent/general
 
-DELEGATE TO (@specialist):
-  - Task two
+DELEGATE /task two/ TO ~/agent/specialist
 `);
     // When implemented:
     // const agents = result.metadata.agents || [];
@@ -429,11 +421,10 @@ DELEGATE TO (@specialist):
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@unknown-agent):
-  - This agent is not declared
+DELEGATE /this agent is not declared/ TO ~/agent/unknown-agent
 `);
     const warnings = result.diagnostics.filter(d => d.severity === 'warning');
     assert(warnings.length > 0, 'Should warn about undeclared agent');
@@ -445,11 +436,10 @@ DELEGATE TO (@unknown-agent):
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@general):
-  - Do something
+DELEGATE /do something/ TO ~/agent/general
 `);
     // When implemented:
     // const delegateEntries = result.sourceMap.filter(e => e.type === 'delegate');
@@ -471,7 +461,7 @@ name: test
 description: test
 ---
 
-- $delegate = "some value"
+$delegate = "some value"
 `);
     assertEqual(doc.errors.length, 0);
     const vars = doc.sections.flatMap(s => 
@@ -486,10 +476,10 @@ description: test
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE TO (@general):
+DELEGATE /do something/ TO ~/agent/general
 
 ## Next Section
 `);
@@ -501,10 +491,10 @@ DELEGATE TO (@general):
 name: test
 description: test
 uses:
-  - @general
+  - ~/agent/general
 ---
 
-DELEGATE /appropriate task based on context/ TO (@general)
+DELEGATE /appropriate task based on context/ TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -514,19 +504,14 @@ DELEGATE /appropriate task based on context/ TO (@general)
 name: test
 description: test
 uses:
-  - @a
-  - @b
-  - @c
+  - ~/agent/a
+  - ~/agent/b
+  - ~/agent/c
 ---
 
-DELEGATE TO (@a):
-  - First task
-
-DELEGATE TO (@b):
-  - Second task
-
-DELEGATE TO (@c):
-  - Third task
+DELEGATE /first task/ TO ~/agent/a
+DELEGATE /second task/ TO ~/agent/b
+DELEGATE /third task/ TO ~/agent/c
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -538,13 +523,13 @@ DELEGATE TO (@c):
 name: test
 description: test
 uses:
-  - @outer
-  - @inner
+  - ~/agent/outer
+  - ~/agent/inner
 ---
 
-DELEGATE TO (@outer):
-  - DELEGATE TO (@inner):
-    - Nested task
+IF /needs nested delegation/ THEN
+  DELEGATE /nested task/ TO ~/agent/inner
+END
 `);
     // Behavior TBD - may be valid or may require flattening
   });
@@ -554,78 +539,71 @@ DELEGATE TO (@outer):
 // Integration with existing Delegation syntax
 // ============================================================================
 
-describe('DELEGATE vs Execute (~skill) - Coexistence', () => {
-  test('existing Execute (~skill) syntax still works', () => {
+describe('DELEGATE vs EXECUTE/USE - Coexistence', () => {
+  test('EXECUTE statement works alongside DELEGATE', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - ~helper
+  - ~/tool/helper
 ---
 
-Execute (~helper) WITH:
-  - $param = "value"
+EXECUTE ~/tool/helper TO /run helper/
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
-    const delegations = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    const executions = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.ExecuteStatement => b.kind === 'ExecuteStatement')
     );
-    assertEqual(delegations.length, 1);
-    assertEqual(delegations[0].verb, 'Execute');
+    assertEqual(executions.length, 1);
   });
 
-  test('Delegate to (~skill) syntax still works', () => {
+  test('DELEGATE statement works with agent link', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - ~validator
+  - ~/agent/validator
 ---
 
-Delegate to (~validator) WITH:
-  - $input = $data
+DELEGATE /validate/ TO ~/agent/validator
 `);
     assertEqual(doc.errors.length, 0);
-    const delegations = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+    const delegates = doc.sections.flatMap(s => 
+      s.content.filter((b): b is AST.DelegateStatement => b.kind === 'DelegateStatement')
     );
-    assertEqual(delegations.length, 1);
+    assertEqual(delegates.length, 1);
   });
 
-  test('DELEGATE TO (@agent) and Execute (~skill) in same document', () => {
-    // Both DELEGATE and Execute should coexist
-    // Note: Order matters due to parser state - Execute must come first or be in separate section
+  test('DELEGATE and EXECUTE in same document', () => {
     const doc = parse(`---
 name: test
 description: test
 uses:
-  - @general
-  - ~helper-skill
+  - ~/agent/general
+  - ~/tool/helper-skill
 ---
 
 ## Skills
 
-Execute (~helper-skill) WITH:
-  - $param = "value"
+EXECUTE ~/tool/helper-skill TO /run helper/
 
 ## Delegation
 
-DELEGATE TO (@general):
-  - High-level task
+DELEGATE /high-level task/ TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     
     // Check Skills section has Delegation
     const skillsSection = doc.sections.find(s => s.title === 'Skills');
     assert(skillsSection !== undefined, 'Should have Skills section');
-    const executions = skillsSection!.content.filter(b => b.kind === 'Delegation');
-    assertEqual(executions.length, 1, 'Should have 1 Execute (~skill)');
+    const executions = skillsSection!.content.filter(b => b.kind === 'ExecuteStatement');
+    assertEqual(executions.length, 1, 'Should have 1 EXECUTE statement');
     
     // Check Delegation section has DelegateStatement
     const delegationSection = doc.sections.find(s => s.title === 'Delegation');
     assert(delegationSection !== undefined, 'Should have Delegation section');
     const delegates = delegationSection!.content.filter(b => b.kind === 'DelegateStatement');
-    assertEqual(delegates.length, 1, 'Should have 1 DELEGATE TO');
+    assertEqual(delegates.length, 1, 'Should have 1 DELEGATE statement');
   });
 });
 
@@ -633,8 +611,8 @@ DELEGATE TO (@general):
 // Run Tests
 // ============================================================================
 
-console.log('\n=== MDZ DELEGATE Keyword Feature Tests (v0.7) ===');
-console.log('\nDELEGATE TO (@agent) syntax is implemented in the parser.');
+console.log('\n=== MDZ DELEGATE Keyword Feature Tests (v0.10) ===');
+console.log('\nDELEGATE uses link-based agent targets.');
 
 console.log(`\n=== Results ===`);
 console.log(`Passed: ${ctx.passed}`);

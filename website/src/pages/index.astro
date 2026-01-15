@@ -392,9 +392,12 @@ const codeExample = `<span class="zen-comment">---</span>
             The LLM executes at runtime
           </p>
           <pre
-            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$list</span>:
-<span class="zen-keyword">WHILE</span> condition <span class="zen-keyword">DO</span>:
-<span class="zen-keyword">IF</span> <span class="zen-variable">$x</span> = <span class="zen-string">"y"</span> <span class="zen-keyword">THEN</span>:</code></pre>
+            class="text-sm bg-black/5 dark:bg-white/5 p-3 rounded-lg max-w-full overflow-x-auto"><code><span class="zen-keyword">FOR</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$list</span>
+<span class="zen-keyword">END</span>
+<span class="zen-keyword">WHILE</span> <span class="zen-semantic">/condition/</span> <span class="zen-keyword">DO</span>
+<span class="zen-keyword">END</span>
+<span class="zen-keyword">IF</span> <span class="zen-variable">$x</span> = <span class="zen-string">"y"</span> <span class="zen-keyword">THEN</span>
+<span class="zen-keyword">END</span></code></pre>
         </div>
 
         <!-- Composition -->

@@ -82,7 +82,7 @@ description: A multi-step task that composes other skills
 
 <span class="zen-heading">## Input</span>
 
-- <span class="zen-variable">$data</span>: <span class="zen-type">$String</span>
+<span class="zen-variable">$data</span>: <span class="zen-type">$String</span>
 
 <span class="zen-heading">## Workflow</span>
 
@@ -90,11 +90,11 @@ description: A multi-step task that composes other skills
 2. <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/another-skill</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/transform result/</span>
 3. Return final result</code></pre>
 
-   <p>Link to other skills to avoid duplication. Dependencies are inferred automatically.</p>
+   <p>Link to other skills to avoid duplication. Dependencies can be declared in <code>uses:</code> or inferred from links.</p>
 
    <h2>Dependency Management</h2>
 
-   <p>Skills link to other skills using link syntax. Dependencies are inferred automatically from the links in your document:</p>
+   <p>Skills link to other skills using link syntax. Dependencies can be inferred from links or declared explicitly:</p>
 
    <pre><code class="mdz"><span class="zen-comment">---
 name: dependent-skill

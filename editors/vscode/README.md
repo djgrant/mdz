@@ -5,9 +5,9 @@ Syntax highlighting and language support for MDZ (Zen Markdown) files.
 ## Features
 
 - Syntax highlighting for `.mdz` files
-- Control flow keywords (FOR EACH, WHILE, IF/THEN/ELSE)
+- Control flow keywords (FOR, WHILE, IF/THEN/ELSE, END)
 - Variable and type highlighting
-- Skill references ([[links]])
+- Skill references (~/skill/name)
 - Semantic markers (/content/)
 
 ## Development

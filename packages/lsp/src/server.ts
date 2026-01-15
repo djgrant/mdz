@@ -79,6 +79,15 @@ export interface Hover {
   range?: Range;
 }
 
+export interface SemanticTokensLegend {
+  tokenTypes: string[];
+  tokenModifiers: string[];
+}
+
+export interface SemanticTokens {
+  data: number[];
+}
+
 export interface DocumentSymbol {
   name: string;
   kind: SymbolKind;
@@ -164,6 +173,23 @@ export interface SemanticMarkerInfo {
 export class ZenLanguageServer {
   private documents: Map<string, DocumentState> = new Map();
   private skillRegistry: Map<string, DocumentState> = new Map();
+  private semanticTokenTypes = [
+    'keyword',
+    'variable',
+    'type',
+    'string',
+    'number',
+    'operator',
+    'function',
+    'parameter',
+    'namespace',
+    'semanticMarker',
+    'link',
+    'anchor',
+  ];
+  private semanticTokenTypeIndex = new Map(
+    this.semanticTokenTypes.map((type, index) => [type, index])
+  );
 
   // ==========================================================================
   // Document Management
@@ -416,6 +442,343 @@ export class ZenLanguageServer {
         return '';
     }
   }
+
+  // ==========================================================================
+  // Semantic Tokens
+  // ==========================================================================
+
+  // -- MDZ_SEMANTIC_TOKENS_START
+  getSemanticTokensLegend(): SemanticTokensLegend {
+    return {
+      tokenTypes: [...this.semanticTokenTypes],
+      tokenModifiers: [],
+    };
+  }
+
+  getSemanticTokens(uri: string): SemanticTokens {
+    const state = this.documents.get(uri);
+    if (!state) return { data: [] };
+
+    const tokens: Array<{ line: number; char: number; length: number; type: number; modifiers: number }> = [];
+    const lineOffsets = this.buildLineOffsets(state.content);
+    const codeLines = this.collectCodeBlockLines(state.ast);
+
+    const addToken = (line: number, char: number, length: number, type: string): void => {
+      if (length <= 0) return;
+      const typeIndex = this.semanticTokenTypeIndex.get(type);
+      if (typeIndex === undefined) return;
+      tokens.push({ line, char, length, type: typeIndex, modifiers: 0 });
+    };
+
+    const addSpanToken = (span: AST.Span, type: string): void => {
+      if (span.start.line !== span.end.line) return;
+      addToken(span.start.line - 1, span.start.column, span.end.column - span.start.column, type);
+    };
+
+    const addKeywordFromLine = (lineIndex: number, line: string): void => {
+      if (codeLines.has(lineIndex + 1)) return;
+      const match = line.match(/^\s*(ELSE IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT|DELEGATE|USE|EXECUTE|GOTO)\b/);
+      if (!match) return;
+      const keyword = match[1];
+      const start = line.indexOf(keyword);
+      if (start >= 0) {
+        addToken(lineIndex, start, keyword.length, 'keyword');
+      }
+    };
+
+    const addOperatorToken = (span: AST.Span, operator: string): void => {
+      const startOffset = span.start.offset;
+      const endOffset = span.end.offset;
+      const slice = state.content.slice(startOffset, endOffset);
+      let index = -1;
+      if (operator === 'AND' || operator === 'OR' || operator === 'NOT') {
+        const regex = new RegExp(`\\b${operator}\\b`);
+        const match = slice.match(regex);
+        if (match && match.index !== undefined) {
+          index = match.index;
+        }
+      } else {
+        index = slice.indexOf(operator);
+      }
+      if (index < 0) return;
+      const pos = this.offsetToPosition(startOffset + index, lineOffsets);
+      addToken(pos.line, pos.character, operator.length, 'operator');
+    };
+
+    const lines = state.content.split('\n');
+    const addNameToken = (
+      lineIndex: number,
+      startColumn: number,
+      endColumn: number,
+      name: string,
+      type: string,
+      allowBare: boolean
+    ): void => {
+      if (codeLines.has(lineIndex + 1)) return;
+      const line = lines[lineIndex] || '';
+      const searchStart = Math.max(0, startColumn);
+      const searchEnd = endColumn > 0 ? Math.min(line.length, endColumn) : line.length;
+      const slice = line.slice(searchStart, searchEnd);
+      let matchIndex = slice.indexOf(name);
+      if (matchIndex === -1 && allowBare) {
+        const bare = name.replace(/^\$/, '');
+        const regex = new RegExp(`\\b${bare}\\b`);
+        const match = slice.match(regex);
+        if (match && match.index !== undefined) {
+          matchIndex = match.index;
+          addToken(lineIndex, searchStart + matchIndex, bare.length, type);
+          return;
+        }
+        return;
+      }
+      if (matchIndex === -1) return;
+      addToken(lineIndex, searchStart + matchIndex, name.length, type);
+    };
+
+    const addVariableNameToken = (span: AST.Span, name: string): void => {
+      const lineIndex = span.start.line - 1;
+      addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, 'variable', true);
+    };
+
+    const addTypeNameToken = (span: AST.Span, name: string): void => {
+      const lineIndex = span.start.line - 1;
+      addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, 'type', false);
+    };
+
+    const collectExpressionTokens = (expr: AST.Expression): void => {
+      switch (expr.kind) {
+        case 'VariableReference':
+          addSpanToken(expr.span, 'variable');
+          break;
+        case 'InferredVariable':
+          addSpanToken(expr.span, 'variable');
+          break;
+        case 'StringLiteral':
+          addSpanToken(expr.span, 'string');
+          break;
+        case 'NumberLiteral':
+          addSpanToken(expr.span, 'number');
+          break;
+        case 'BooleanLiteral':
+          addSpanToken(expr.span, 'keyword');
+          break;
+        case 'SemanticMarker':
+          addSpanToken(expr.span, 'semanticMarker');
+          break;
+        case 'Link':
+          addSpanToken(expr.span, 'link');
+          break;
+        case 'Anchor':
+          addSpanToken(expr.span, 'anchor');
+          break;
+        case 'TemplateLiteral':
+          for (const part of expr.parts) {
+            if (typeof part !== 'string') {
+              collectExpressionTokens(part);
+            }
+          }
+          break;
+        case 'ArrayLiteral':
+          for (const el of expr.elements) {
+            collectExpressionTokens(el);
+          }
+          break;
+        case 'BinaryExpression':
+          collectExpressionTokens(expr.left);
+          collectExpressionTokens(expr.right);
+          addOperatorToken(expr.span, expr.operator);
+          break;
+        case 'UnaryExpression':
+          collectExpressionTokens(expr.operand);
+          addOperatorToken(expr.span, expr.operator);
+          break;
+        case 'LambdaExpression':
+          collectExpressionTokens(expr.body);
+          break;
+        case 'FunctionCall':
+          collectExpressionTokens(expr.callee);
+          for (const arg of expr.args) {
+            collectExpressionTokens(arg);
+          }
+          break;
+        case 'MemberAccess':
+          collectExpressionTokens(expr.object);
+          break;
+        case 'InlineText':
+          break;
+      }
+    };
+
+    const collectConditionTokens = (cond: AST.Condition): void => {
+      switch (cond.kind) {
+        case 'SemanticCondition':
+          addSpanToken(cond.span, 'semanticMarker');
+          break;
+        case 'DeterministicCondition':
+          collectExpressionTokens(cond.left);
+          collectExpressionTokens(cond.right);
+          addOperatorToken(cond.span, cond.operator);
+          break;
+        case 'CompoundCondition':
+          collectConditionTokens(cond.left);
+          collectConditionTokens(cond.right);
+          addOperatorToken(cond.span, cond.operator);
+          break;
+      }
+    };
+
+    const collectBlockTokens = (blocks: AST.Block[]): void => {
+      for (const block of blocks) {
+        switch (block.kind) {
+          case 'TypeDefinition':
+            addTypeNameToken(block.span, block.name);
+            break;
+          case 'VariableDeclaration':
+            addVariableNameToken(block.span, block.name);
+            if (block.typeAnnotation) {
+              if (block.typeAnnotation.kind === 'TypeReference') {
+                addTypeNameToken(block.typeAnnotation.span, block.typeAnnotation.name);
+              } else if (block.typeAnnotation.kind === 'SemanticType') {
+                addSpanToken(block.typeAnnotation.span, 'semanticMarker');
+              }
+            }
+            if (block.value) {
+              collectExpressionTokens(block.value);
+            }
+            break;
+          case 'ForEachStatement':
+            if (block.pattern.kind === 'SimplePattern') {
+              addVariableNameToken(block.pattern.span, block.pattern.name);
+            } else {
+              for (const name of block.pattern.names) {
+                addVariableNameToken(block.pattern.span, name);
+              }
+            }
+            collectExpressionTokens(block.collection);
+            collectBlockTokens(block.body);
+            break;
+          case 'WhileStatement':
+            collectConditionTokens(block.condition);
+            collectBlockTokens(block.body);
+            break;
+          case 'IfStatement':
+            collectConditionTokens(block.condition);
+            collectBlockTokens(block.thenBody);
+            for (const clause of block.elseIf) {
+              collectConditionTokens(clause.condition);
+              collectBlockTokens(clause.body);
+            }
+            if (block.elseBody) {
+              collectBlockTokens(block.elseBody);
+            }
+            break;
+          case 'DoStatement': {
+            const doBlock = block as AST.DoStatement & { body?: AST.Block[] };
+            if (doBlock.instruction) {
+              addSpanToken(doBlock.instruction.span, 'semanticMarker');
+            }
+            if (doBlock.body) {
+              collectBlockTokens(doBlock.body);
+            }
+            break;
+          }
+          case 'ReturnStatement':
+            if (block.value) {
+              collectExpressionTokens(block.value);
+            }
+            break;
+          case 'PushStatement':
+            collectExpressionTokens(block.target);
+            collectExpressionTokens(block.value);
+            break;
+          case 'DelegateStatement':
+            if (block.task) addSpanToken(block.task.span, 'semanticMarker');
+            if (block.target) addSpanToken(block.target.span, 'link');
+            if (block.withAnchor) addSpanToken(block.withAnchor.span, 'anchor');
+            if (block.parameters) {
+              for (const param of block.parameters.parameters) {
+                addVariableNameToken(param.span, param.name);
+                if (param.value) collectExpressionTokens(param.value);
+              }
+            }
+            break;
+          case 'UseStatement':
+            addSpanToken(block.link.span, 'link');
+            addSpanToken(block.task.span, 'semanticMarker');
+            if (block.parameters) {
+              for (const param of block.parameters.parameters) {
+                addVariableNameToken(param.span, param.name);
+                if (param.value) collectExpressionTokens(param.value);
+              }
+            }
+            break;
+          case 'ExecuteStatement':
+            addSpanToken(block.link.span, 'link');
+            addSpanToken(block.task.span, 'semanticMarker');
+            break;
+          case 'GotoStatement':
+            addSpanToken(block.anchor.span, 'anchor');
+            break;
+          case 'Delegation':
+            addSpanToken(block.target.span, block.target.kind === 'Link' ? 'link' : 'anchor');
+            for (const param of block.parameters) {
+              addVariableNameToken(param.span, param.name);
+              if (param.value) collectExpressionTokens(param.value);
+            }
+            break;
+          case 'Paragraph':
+            for (const item of block.content) {
+              switch (item.kind) {
+                case 'SemanticMarker':
+                  addSpanToken(item.span, 'semanticMarker');
+                  break;
+                case 'VariableReference':
+                case 'InferredVariable':
+                  addSpanToken(item.span, 'variable');
+                  break;
+                case 'Link':
+                  addSpanToken(item.span, 'link');
+                  break;
+                case 'Anchor':
+                  addSpanToken(item.span, 'anchor');
+                  break;
+                case 'CodeSpan':
+                  break;
+              }
+            }
+            break;
+          case 'CodeBlock':
+          case 'List':
+          case 'HorizontalRule':
+            break;
+        }
+      }
+    };
+
+    for (const section of state.ast.sections) {
+      collectBlockTokens(section.content);
+    }
+
+    for (let i = 0; i < lines.length; i += 1) {
+      addKeywordFromLine(i, lines[i]);
+    }
+
+    tokens.sort((a, b) => (a.line - b.line) || (a.char - b.char));
+
+    const data: number[] = [];
+    let prevLine = 0;
+    let prevChar = 0;
+    for (const token of tokens) {
+      const deltaLine = token.line - prevLine;
+      const deltaChar = deltaLine === 0 ? token.char - prevChar : token.char;
+      data.push(deltaLine, deltaChar, token.length, token.type, token.modifiers);
+      prevLine = token.line;
+      prevChar = token.char;
+    }
+
+    return { data };
+  }
+  // -- MDZ_SEMANTIC_TOKENS_END
 
   // ==========================================================================
   // Diagnostics
@@ -816,10 +1179,12 @@ export class ZenLanguageServer {
 
   private getKeywordCompletions(): CompletionItem[] {
     return [
-      { label: 'FOR EACH', kind: CompletionItemKind.Keyword, insertText: 'FOR EACH $item IN $items:\n  - ' },
-      { label: 'WHILE', kind: CompletionItemKind.Keyword, insertText: 'WHILE ($condition):\n  - ' },
-      { label: 'IF', kind: CompletionItemKind.Keyword, insertText: 'IF $condition THEN:\n  - ' },
-      { label: 'ELSE', kind: CompletionItemKind.Keyword, insertText: 'ELSE:\n  - ' },
+      { label: 'FOR', kind: CompletionItemKind.Keyword, insertText: 'FOR $item IN $items\n  \nEND' },
+      { label: 'WHILE', kind: CompletionItemKind.Keyword, insertText: 'WHILE /condition/ DO\n  \nEND' },
+      { label: 'IF', kind: CompletionItemKind.Keyword, insertText: 'IF $condition THEN\n  \nEND' },
+      { label: 'ELSE', kind: CompletionItemKind.Keyword, insertText: 'ELSE\n  ' },
+      { label: 'DO', kind: CompletionItemKind.Keyword, insertText: 'DO\n  \nEND' },
+      { label: 'END', kind: CompletionItemKind.Keyword, insertText: 'END' },
     ];
   }
 
@@ -899,6 +1264,43 @@ export class ZenLanguageServer {
     if (line === span.end.line && char > span.end.column) return false;
 
     return true;
+  }
+
+  private buildLineOffsets(content: string): number[] {
+    const offsets: number[] = [];
+    let current = 0;
+    offsets.push(0);
+    for (const char of content) {
+      current += 1;
+      if (char === '\n') {
+        offsets.push(current);
+      }
+    }
+    return offsets;
+  }
+
+  private offsetToPosition(offset: number, lineOffsets: number[]): Position {
+    let line = 0;
+    while (line + 1 < lineOffsets.length && lineOffsets[line + 1] <= offset) {
+      line += 1;
+    }
+    const lineOffset = lineOffsets[line] ?? 0;
+    return { line, character: offset - lineOffset };
+  }
+
+  private collectCodeBlockLines(ast: AST.Document): Set<number> {
+    const lines = new Set<number>();
+    for (const section of ast.sections) {
+      for (const block of section.content) {
+        if (block.kind !== 'CodeBlock') continue;
+        const start = block.span.start.line;
+        const end = block.span.end.line;
+        for (let line = start; line <= end; line += 1) {
+          lines.add(line);
+        }
+      }
+    }
+    return lines;
   }
 }
 

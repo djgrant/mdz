@@ -23,23 +23,18 @@ Identify the core claim, evidence, and assumptions.
 
 ### 2. Advocate
 
-Construct the strongest version a proponent would make:
-- Add evidence the author omitted
-- Address obvious objections preemptively
-- Remove weak points that undermine the core
+DO /construct the strongest version a proponent would make, adding omitted evidence, addressing objections, and removing weak points/
 
 ### Gate
 
-IF /just the original restated/ THEN:
-  Try again with genuine strengthening.
+IF /just the original restated/ THEN
+  Try again with genuine strengthening
   GOTO #gate
+END
 
 ### 3. Critique
 
-Challenge the steelmanned version:
-- What assumptions remain questionable?
-- What evidence is still weak?
-- What counterarguments survive?
+DO /challenge the steelmanned version: identify questionable assumptions, weak evidence, and surviving counterarguments/
 
 ### 4. Judge
 
@@ -47,8 +42,4 @@ Determine verdict: withstands, weakened, or falls.
 
 ### 5. Report
 
-Write to $outputPath:
-- Original argument
-- Steelmanned version
-- Key critiques
-- Verdict
+DO /write to $outputPath: original argument, steelmanned version, key critiques, verdict/

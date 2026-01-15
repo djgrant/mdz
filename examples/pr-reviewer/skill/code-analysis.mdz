@@ -14,15 +14,13 @@ input:
 
 ## Guidelines
 
-- **critical**: Crashes, data loss, security breaches
-- **major**: Bugs, O(n^2) in hot paths, missing error handling
-- **minor**: Maintainability, unclear naming
-- **trivial**: Style preferences
+Critical: crashes, data loss, security breaches. Major: bugs, O(n^2) in hot paths, missing error handling. Minor: maintainability, unclear naming. Trivial: style preferences.
 
 ## Workflow
 
-FOR EACH $learning IN $learnings:
-  Adjust criteria to respect the preference.
+FOR $learning IN $learnings
+  Adjust criteria to respect the preference
+END
 
 Scan $diff for findings. Assign severity per #guidelines.
 

@@ -25,37 +25,34 @@ It is $timeHorizon from now. The decision has failed. We are conducting a post-m
 
 ### 2. Explore Failures
 
-FOR EACH $category IN ["technical", "organizational", "external", "human", "resource"]:
-  ASYNC DELEGATE /imagine failure in $category domain for $decision/ TO ~/agent/failure-analyst WITH:
-    ```md
-    What specifically failed?
-    What was the chain of events?
-    What is the likelihood and impact?
-    ```
-
-  Write results to `$analysisPath/$category.md`
+FOR $category IN ["technical", "organizational", "external", "human", "resource"]
+  ASYNC DELEGATE /imagine failure in $category domain for $decision/ TO ~/agent/failure-analyst WITH #failure-prompt
+  Write results to $analysisPath/$category.md
+END
 
 ### 3. Assess Risk
 
-FOR EACH $mode IN /identified failure modes/:
-  Assess severity based on likelihood and impact.
+FOR $mode IN /identified failure modes/
+  Assess severity based on likelihood and impact
+END
 
 Write to `{$analysisPath}/risks.md`
 
 ### 4. Plan Mitigations
 
-FOR EACH $failure IN /risks requiring mitigation/:
-  IF /risk is acceptable/ THEN:
+FOR $failure IN /risks requiring mitigation/
+  IF /risk is acceptable/ THEN
     CONTINUE
+  END
 
-  Design mitigation to reduce likelihood, impact, or both.
-  Cost should be proportional to risk.
-
-  Append to `$analysisPath/mitigations.md`
+  Design mitigation to reduce likelihood, impact, or both; cost proportional to risk
+  Append to $analysisPath/mitigations.md
+END
 
 ### 5. Final Assessment
 
-Read $analysisPath and determine:
-- Critical unmitigated risks
-- Recommendation: proceed, proceed with caution, or reconsider
-- Leading indicators to watch
+DO /read $analysisPath and determine critical unmitigated risks, recommendation (proceed, proceed with caution, reconsider), and leading indicators to watch/
+
+## Failure Prompt
+
+What specifically failed? What was the chain of events? What is the likelihood and impact?

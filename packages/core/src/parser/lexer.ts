@@ -14,9 +14,9 @@ import { Position, Span, createSpan } from './ast';
 
 export type TokenType =
   | 'FRONTMATTER_START' | 'FRONTMATTER_END' | 'HEADING' | 'LIST_MARKER'
-  | 'HORIZONTAL_RULE' | 'NEWLINE' | 'INDENT' | 'DEDENT' | 'EOF'
+  | 'HORIZONTAL_RULE' | 'NEWLINE' | 'EOF'
   // Control flow keywords
-  | 'FOR' | 'EACH' | 'IN' | 'WHILE' | 'DO' | 'IF' | 'THEN' | 'ELSE'
+  | 'FOR' | 'IN' | 'WHILE' | 'DO' | 'IF' | 'THEN' | 'ELSE' | 'END'
   | 'AND' | 'OR' | 'NOT' | 'WITH'
   | 'BREAK'     // v0.2
   | 'CONTINUE'  // v0.2
@@ -63,8 +63,6 @@ export class Lexer {
   private line: number = 1;
   private column: number = 0;
   private tokens: Token[] = [];
-  private indentStack: number[] = [0];
-
   constructor(source: string) {
     this.source = source;
   }
@@ -72,11 +70,6 @@ export class Lexer {
   tokenize(): Token[] {
     while (!this.isAtEnd()) {
       this.scanToken();
-    }
-    
-    while (this.indentStack.length > 1) {
-      this.indentStack.pop();
-      this.addToken('DEDENT', '');
     }
     
     this.addToken('EOF', '');
@@ -103,10 +96,7 @@ export class Lexer {
         return;
       }
 
-      // Handle indentation
-      this.handleIndent();
     }
-
     const char = this.peek();
 
     // Whitespace (not at line start)
@@ -271,33 +261,7 @@ export class Lexer {
     this.addToken('TEXT', char);
   }
 
-  private handleIndent(): void {
-    let indent = 0;
-    while (this.peek() === ' ') {
-      indent++;
-      this.advance();
-    }
-    while (this.peek() === '\t') {
-      indent += 2;
-      this.advance();
-    }
-
-    // Empty line - don't change indent
-    if (this.peek() === '\n' || this.isAtEnd()) {
-      return;
-    }
-
-    const current = this.indentStack[this.indentStack.length - 1];
-    if (indent > current) {
-      this.indentStack.push(indent);
-      this.addToken('INDENT', ' '.repeat(indent - current));
-    } else if (indent < current) {
-      while (this.indentStack.length > 1 && this.indentStack[this.indentStack.length - 1] > indent) {
-        this.indentStack.pop();
-        this.addToken('DEDENT', '');
-      }
-    }
-  }
+  // Indentation is cosmetic in v0.10; no INDENT/DEDENT tokens.
 
   private scanFrontmatter(): void {
     while (!this.isAtEnd()) {
@@ -397,27 +361,30 @@ export class Lexer {
    * Assumes current position is at '/'.
    * 
    * Disambiguation heuristic:
-   * - If content between slashes contains a space, it's a semantic marker
-   * - Otherwise it's likely a path (e.g., /path/to/file) and we don't tokenize it
+   * - Treat /.../ as a semantic marker only if the closing slash is followed by
+   *   whitespace, punctuation, or end-of-line (avoids path-like /a/b)
+   * - Slashes are not allowed inside markers
    * 
    * @param stopChar - Additional character to stop lookahead at (for templates, use '`')
    */
   private tryPeekSemanticMarker(stopChar?: string): boolean {
     let lookahead = 1;
-    let hasSpace = false;
     
     while (this.pos + lookahead < this.source.length) {
       const c = this.source[this.pos + lookahead];
       if (c === '/') {
-        // Found closing slash - it's semantic only if has space
-        return hasSpace;
+        const nextChar = this.source[this.pos + lookahead + 1] ?? '\0';
+        if (nextChar === '\n' || nextChar === '\0' || /\s/.test(nextChar)) {
+          return true;
+        }
+        if (/[.,;:!?)]}]/.test(nextChar)) {
+          return true;
+        }
+        return false;
       }
       if (c === '\n' || (stopChar && c === stopChar)) {
         // No closing slash on this line - not a semantic marker
         return false;
-      }
-      if (c === ' ') {
-        hasSpace = true;
       }
       lookahead++;
     }
@@ -708,9 +675,9 @@ export class Lexer {
     // v0.3: Added DO for WHILE...DO syntax, DELEGATE and TO for agent delegation
     // v0.9: Added RETURN, ASYNC, AWAIT; removed PARALLEL
     const keywords: Record<string, TokenType> = {
-      'FOR': 'FOR', 'EACH': 'EACH', 'IN': 'IN', 'WHILE': 'WHILE',
+      'FOR': 'FOR', 'IN': 'IN', 'WHILE': 'WHILE',
       'DO': 'DO',
-      'IF': 'IF', 'THEN': 'THEN', 'ELSE': 'ELSE',
+      'IF': 'IF', 'THEN': 'THEN', 'ELSE': 'ELSE', 'END': 'END',
       'AND': 'AND', 'OR': 'OR', 'NOT': 'NOT', 'WITH': 'WITH',
       'BREAK': 'BREAK',
       'CONTINUE': 'CONTINUE',

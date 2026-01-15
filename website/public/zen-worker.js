@@ -3469,16 +3469,11 @@
       __publicField(this, "line", 1);
       __publicField(this, "column", 0);
       __publicField(this, "tokens", []);
-      __publicField(this, "indentStack", [0]);
       this.source = source;
     }
     tokenize() {
       while (!this.isAtEnd()) {
         this.scanToken();
-      }
-      while (this.indentStack.length > 1) {
-        this.indentStack.pop();
-        this.addToken("DEDENT", "");
       }
       this.addToken("EOF", "");
       return this.tokens;
@@ -3498,7 +3493,6 @@
           if (!this.isAtEnd()) this.consumeNewline();
           return;
         }
-        this.handleIndent();
       }
       const char = this.peek();
       if (char === " " || char === "	") {
@@ -3625,30 +3619,7 @@
       this.advance();
       this.addToken("TEXT", char);
     }
-    handleIndent() {
-      let indent = 0;
-      while (this.peek() === " ") {
-        indent++;
-        this.advance();
-      }
-      while (this.peek() === "	") {
-        indent += 2;
-        this.advance();
-      }
-      if (this.peek() === "\n" || this.isAtEnd()) {
-        return;
-      }
-      const current = this.indentStack[this.indentStack.length - 1];
-      if (indent > current) {
-        this.indentStack.push(indent);
-        this.addToken("INDENT", " ".repeat(indent - current));
-      } else if (indent < current) {
-        while (this.indentStack.length > 1 && this.indentStack[this.indentStack.length - 1] > indent) {
-          this.indentStack.pop();
-          this.addToken("DEDENT", "");
-        }
-      }
-    }
+    // Indentation is cosmetic in v0.10; no INDENT/DEDENT tokens.
     scanFrontmatter() {
       while (!this.isAtEnd()) {
         if (this.column === 0 && this.lookAhead("---")) {
@@ -3736,24 +3707,28 @@
      * Assumes current position is at '/'.
      * 
      * Disambiguation heuristic:
-     * - If content between slashes contains a space, it's a semantic marker
-     * - Otherwise it's likely a path (e.g., /path/to/file) and we don't tokenize it
+     * - Treat /.../ as a semantic marker only if the closing slash is followed by
+     *   whitespace, punctuation, or end-of-line (avoids path-like /a/b)
+     * - Slashes are not allowed inside markers
      * 
      * @param stopChar - Additional character to stop lookahead at (for templates, use '`')
      */
     tryPeekSemanticMarker(stopChar) {
       let lookahead = 1;
-      let hasSpace = false;
       while (this.pos + lookahead < this.source.length) {
         const c = this.source[this.pos + lookahead];
         if (c === "/") {
-          return hasSpace;
+          const nextChar = this.source[this.pos + lookahead + 1] ?? "\0";
+          if (nextChar === "\n" || nextChar === "\0" || /\s/.test(nextChar)) {
+            return true;
+          }
+          if (/[.,;:!?)]}]/.test(nextChar)) {
+            return true;
+          }
+          return false;
         }
         if (c === "\n" || stopChar && c === stopChar) {
           return false;
-        }
-        if (c === " ") {
-          hasSpace = true;
         }
         lookahead++;
       }
@@ -4017,13 +3992,13 @@
       }
       const keywords = {
         "FOR": "FOR",
-        "EACH": "EACH",
         "IN": "IN",
         "WHILE": "WHILE",
         "DO": "DO",
         "IF": "IF",
         "THEN": "THEN",
         "ELSE": "ELSE",
+        "END": "END",
         "AND": "AND",
         "OR": "OR",
         "NOT": "NOT",
@@ -4101,7 +4076,7 @@
 
   // ../packages/core/src/parser/parser.ts
   var Parser = class {
-    // v0.2: Track if we're inside a loop
+    // v0.10: Track control-flow nesting
     constructor(source) {
       this.source = source;
       __publicField(this, "tokens", []);
@@ -4109,12 +4084,15 @@
       __publicField(this, "errors", []);
       __publicField(this, "frontmatterContent", "");
       __publicField(this, "loopDepth", 0);
+      // v0.2: Track if we're inside a loop
+      __publicField(this, "blockDepth", 0);
     }
     parse() {
       this.tokens = tokenize(this.source);
       this.pos = 0;
       this.errors = [];
       this.loopDepth = 0;
+      this.blockDepth = 0;
       const frontmatter = this.parseFrontmatter();
       const sections = this.parseSections();
       const span = this.tokens.length > 0 ? mergeSpans(
@@ -4201,7 +4179,27 @@
       if (Array.isArray(parsed.uses)) {
         for (const entry of parsed.uses) {
           if (typeof entry !== "string") continue;
-          if (entry.startsWith("~")) {
+          if (entry.startsWith("~/")) {
+            const parts = entry.slice(2).split("/");
+            const kind = parts[0];
+            const name = parts.slice(1).join("/");
+            if (kind === "agent") {
+              if (!agents.includes(name)) {
+                agents.push(name);
+                uses.push(entry);
+              }
+            } else if (kind === "skill") {
+              if (!skills.includes(name)) {
+                skills.push(name);
+                uses.push(entry);
+              }
+            } else if (kind === "tool") {
+              if (!tools.includes(name)) {
+                tools.push(name);
+                uses.push(entry);
+              }
+            }
+          } else if (entry.startsWith("~")) {
             const skill = entry.slice(1);
             if (!skills.includes(skill)) {
               skills.push(skill);
@@ -4460,6 +4458,16 @@
       return blocks;
     }
     parseBlock() {
+      if (this.check("END")) {
+        this.error("E001", "Unexpected END");
+        this.advance();
+        return null;
+      }
+      if (this.check("ELSE")) {
+        this.error("E001", "Unexpected ELSE");
+        this.advance();
+        return null;
+      }
       if (this.check("TYPE_IDENT")) {
         const lookahead = this.peek(1);
         if (lookahead?.type === "COLON") {
@@ -4469,9 +4477,6 @@
           }
         }
       }
-      if (this.check("LIST_MARKER")) {
-        return this.parseListItem();
-      }
       if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
         const lookahead = this.peek(1);
         if (lookahead?.type === "PUSH") {
@@ -4480,7 +4485,7 @@
         return this.parseVariableOrType();
       }
       if (this.check("FOR")) {
-        return this.parseForEach();
+        return this.parseFor();
       }
       if (this.check("WHILE")) {
         return this.parseWhile();
@@ -4501,10 +4506,7 @@
         return this.parseDelegateStatement();
       }
       if (this.check("DO")) {
-        const next = this.peek(1);
-        if (next?.type === "SEMANTIC_MARKER") {
-          return this.parseDoStatement();
-        }
+        return this.parseDoStatement();
       }
       if (this.check("DELEGATE")) {
         return this.parseDelegateStatement();
@@ -4727,47 +4729,6 @@
         i++;
       }
       return false;
-    }
-    parseListItem() {
-      this.advance();
-      if (this.check("DOLLAR_IDENT") || this.check("TYPE_IDENT")) {
-        const lookahead = this.peek(1);
-        if (lookahead?.type === "PUSH") {
-          return this.parsePushStatement();
-        }
-        return this.parseVariableDeclaration();
-      }
-      if (this.check("FOR")) {
-        return this.parseForEach();
-      }
-      if (this.check("WHILE")) {
-        return this.parseWhile();
-      }
-      if (this.check("IF")) {
-        return this.parseIf();
-      }
-      if (this.check("BREAK")) {
-        return this.parseBreak();
-      }
-      if (this.check("CONTINUE")) {
-        return this.parseContinue();
-      }
-      if (this.check("RETURN")) {
-        return this.parseReturnStatement();
-      }
-      if (this.check("ASYNC") || this.check("AWAIT")) {
-        return this.parseDelegateStatement();
-      }
-      if (this.check("DO")) {
-        const next = this.peek(1);
-        if (next?.type === "SEMANTIC_MARKER") {
-          return this.parseDoStatement();
-        }
-      }
-      if (this.check("DELEGATE")) {
-        return this.parseDelegateStatement();
-      }
-      return this.parseParagraph();
     }
     // ==========================================================================
     // Expressions
@@ -5129,48 +5090,63 @@
     // ==========================================================================
     // Control Flow
     // ==========================================================================
-    parseForEach() {
+    parseFor() {
       const start = this.advance();
-      this.expect("EACH");
       const pattern = this.parsePattern();
       this.expect("IN");
       const collection = this.parseExpression();
-      this.expect("COLON");
+      if (this.check("DO")) {
+        this.advance();
+      }
+      this.expect("NEWLINE");
       this.skipNewlines();
       this.loopDepth++;
-      const body = this.parseIndentedBlocks();
+      this.blockDepth++;
+      const body = this.parseBlockBody(["END"]);
+      this.blockDepth--;
       this.loopDepth--;
+      const end = this.expect("END");
+      this.skipNewlines();
       return {
         kind: "ForEachStatement",
         pattern,
         collection,
         body,
-        span: mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span)
+        span: mergeSpans(start.span, end?.span || (body.length > 0 ? body[body.length - 1].span : collection.span))
       };
     }
     parseWhile() {
       const start = this.advance();
       const condition = this.parseCondition();
-      this.expect("DO");
-      this.expect("COLON");
+      if (this.check("DO")) {
+        this.advance();
+      }
+      this.expect("NEWLINE");
       this.skipNewlines();
       this.loopDepth++;
-      const body = this.parseIndentedBlocks();
+      this.blockDepth++;
+      const body = this.parseBlockBody(["END"]);
+      this.blockDepth--;
       this.loopDepth--;
+      const end = this.expect("END");
+      this.skipNewlines();
       return {
         kind: "WhileStatement",
         condition,
         body,
-        span: mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : condition.span)
+        span: mergeSpans(start.span, end?.span || (body.length > 0 ? body[body.length - 1].span : condition.span))
       };
     }
     parseIf() {
       const start = this.advance();
       const condition = this.parseCondition();
-      this.expect("THEN");
-      this.expect("COLON");
+      if (this.check("THEN")) {
+        this.advance();
+      }
+      this.expect("NEWLINE");
       this.skipNewlines();
-      const thenBody = this.parseIndentedBlocks();
+      this.blockDepth++;
+      const thenBody = this.parseBlockBody(["ELSE", "END"]);
       const elseIf = [];
       let elseBody = null;
       while (this.check("ELSE")) {
@@ -5179,10 +5155,12 @@
         if (this.check("IF")) {
           this.advance();
           const elseIfCondition = this.parseCondition();
-          this.expect("THEN");
-          this.expect("COLON");
+          if (this.check("THEN")) {
+            this.advance();
+          }
+          this.expect("NEWLINE");
           this.skipNewlines();
-          const elseIfBody = this.parseIndentedBlocks();
+          const elseIfBody = this.parseBlockBody(["ELSE", "END"]);
           elseIf.push({
             condition: elseIfCondition,
             body: elseIfBody,
@@ -5192,13 +5170,16 @@
             )
           });
         } else {
-          this.expect("COLON");
+          this.expect("NEWLINE");
           this.skipNewlines();
-          elseBody = this.parseIndentedBlocks();
+          elseBody = this.parseBlockBody(["END"]);
           break;
         }
       }
-      let endSpan = condition.span;
+      this.blockDepth--;
+      const end = this.expect("END");
+      this.skipNewlines();
+      let endSpan = end?.span || condition.span;
       if (elseBody?.length) {
         endSpan = elseBody[elseBody.length - 1].span;
       } else if (elseIf.length > 0) {
@@ -5241,7 +5222,7 @@
     parseReturnStatement() {
       const token = this.advance();
       let value;
-      if (!this.check("NEWLINE") && !this.isAtEnd() && !this.check("DEDENT")) {
+      if (!this.check("NEWLINE") && !this.isAtEnd() && !this.check("END") && !this.check("ELSE")) {
         value = this.parseExpression();
       }
       return {
@@ -5262,14 +5243,31 @@
         span: mergeSpans(target.span, value.span)
       };
     }
-    // v0.9: DO instruction (standalone prose instruction)
+    // v0.9/v0.10: DO instruction (standalone or block)
     parseDoStatement() {
       const token = this.advance();
-      const instruction = this.parseSemanticMarker();
+      if (this.check("SEMANTIC_MARKER")) {
+        if (this.blockDepth > 0) {
+          this.error("E005", "Single-line DO is only valid at top level");
+        }
+        const instruction = this.parseSemanticMarker();
+        return {
+          kind: "DoStatement",
+          instruction,
+          span: mergeSpans(token.span, instruction.span)
+        };
+      }
+      this.expect("NEWLINE");
+      this.skipNewlines();
+      this.blockDepth++;
+      const body = this.parseBlockBody(["END"]);
+      this.blockDepth--;
+      const end = this.expect("END");
+      this.skipNewlines();
       return {
         kind: "DoStatement",
-        instruction,
-        span: mergeSpans(token.span, instruction.span)
+        body,
+        span: mergeSpans(token.span, end?.span || (body.length > 0 ? body[body.length - 1].span : token.span))
       };
     }
     // v0.9: DELEGATE statement for agent delegation
@@ -5367,21 +5365,27 @@
       const start = this.advance();
       this.skipNewlines();
       const parameters = [];
-      const hasIndent = this.check("INDENT");
-      if (hasIndent) {
-        this.advance();
-      }
-      while (this.check("LIST_MARKER") && !this.isAtEnd()) {
-        this.advance();
-        const param = this.parseVariableDeclaration(true);
-        parameters.push(param);
-        this.skipNewlines();
-        if (!this.check("LIST_MARKER") || this.check("HEADING")) {
-          break;
+      while ((this.check("LOWER_IDENT") || this.check("UPPER_IDENT") || this.check("DOLLAR_IDENT")) && !this.isAtEnd()) {
+        const nameToken = this.advance();
+        const name = nameToken.type === "DOLLAR_IDENT" ? nameToken.value.slice(1) : nameToken.value;
+        this.expect("COLON");
+        let value = null;
+        let isRequired = false;
+        if (!this.check("NEWLINE") && !this.check("END") && !this.check("ELSE") && !this.isAtEnd()) {
+          value = this.parseExpression();
+        } else {
+          isRequired = true;
         }
-      }
-      if (hasIndent && this.check("DEDENT")) {
-        this.advance();
+        parameters.push({
+          kind: "VariableDeclaration",
+          name,
+          typeAnnotation: null,
+          value,
+          isLambda: false,
+          isRequired,
+          span: mergeSpans(nameToken.span, value?.span || nameToken.span)
+        });
+        this.skipNewlines();
       }
       return {
         kind: "ParameterBlock",
@@ -5461,6 +5465,15 @@
       if (negated) {
         this.advance();
       }
+      if (this.check("SEMANTIC_MARKER")) {
+        const marker = this.parseSemanticMarker();
+        return {
+          kind: "SemanticCondition",
+          text: marker.content,
+          negated,
+          span: marker.span
+        };
+      }
       if (this.check("LPAREN")) {
         this.advance();
         const cond = this.parseCondition();
@@ -5481,6 +5494,7 @@
             span: mergeSpans(left.span, right.span)
           };
         }
+        this.error("E005", "Deterministic conditions require a comparison operator");
         return {
           kind: "SemanticCondition",
           text: "$" + left.name,
@@ -5488,34 +5502,28 @@
           span: left.span
         };
       }
-      let text = "";
-      const start = this.current();
-      while (!this.isAtEnd() && !this.check("RPAREN") && !this.check("AND") && !this.check("OR") && !this.check("THEN") && !this.check("DO") && !this.check("COLON")) {
-        if (text) text += " ";
-        text += this.advance().value;
-      }
+      this.error("E005", "Semantic conditions must use /.../");
+      const fallback = this.current();
+      this.advance();
       return {
         kind: "SemanticCondition",
-        text: text.trim(),
+        text: fallback.value,
         negated,
-        span: mergeSpans(start.span, this.previous().span)
+        span: fallback.span
       };
     }
-    parseIndentedBlocks() {
+    parseBlockBody(stopTypes) {
       const blocks = [];
-      if (this.check("INDENT")) {
-        this.advance();
-      }
-      while (!this.check("DEDENT") && !this.isAtEnd() && !this.check("HEADING")) {
+      while (!this.isAtEnd() && !this.check("HEADING")) {
+        if (stopTypes.includes(this.current().type)) {
+          break;
+        }
         this.skipNewlines();
-        if (this.check("DEDENT") || this.isAtEnd() || this.check("HEADING")) break;
+        if (this.isAtEnd() || this.check("HEADING") || stopTypes.includes(this.current().type)) break;
         const block = this.parseBlock();
         if (block) {
           blocks.push(block);
         }
-      }
-      if (this.check("DEDENT")) {
-        this.advance();
       }
       return blocks;
     }
@@ -5599,23 +5607,9 @@
       const parameters = [];
       if (this.check("WITH")) {
         this.advance();
-        this.expect("COLON");
-        this.skipNewlines();
-        const hasIndent = this.check("INDENT");
-        if (hasIndent) {
-          this.advance();
-        }
-        while (this.check("LIST_MARKER") && !this.isAtEnd()) {
-          this.advance();
-          const param = this.parseVariableDeclaration(true);
-          parameters.push(param);
-          this.skipNewlines();
-          if (!this.check("LIST_MARKER") || this.check("HEADING")) {
-            break;
-          }
-        }
-        if (hasIndent && this.check("DEDENT")) {
-          this.advance();
+        if (this.check("COLON")) {
+          const paramBlock = this.parseParameterBlock();
+          parameters.push(...paramBlock.parameters);
         }
       }
       const span = mergeSpans(verbToken.span, this.previous().span);
@@ -5892,6 +5886,9 @@
         case "DoStatement":
           if (block.instruction) {
             this.extractFromExpression(block.instruction);
+          }
+          if (block.body) {
+            this.extractFromBlocks(block.body);
           }
           break;
         case "WhileStatement":
@@ -6294,10 +6291,15 @@
           }
           this.checkExpressionScope(block.value, usedBeforeDefined);
         } else if (block.kind === "DoStatement") {
-          for (const interpolation of block.instruction.interpolations) {
-            if (!this.definedVariables.has(interpolation.name)) {
-              usedBeforeDefined.add(interpolation.name);
+          if (block.instruction) {
+            for (const interpolation of block.instruction.interpolations) {
+              if (!this.definedVariables.has(interpolation.name)) {
+                usedBeforeDefined.add(interpolation.name);
+              }
             }
+          }
+          if (block.body) {
+            this.checkScopeInBlocks(block.body, usedBeforeDefined);
           }
         }
       }
@@ -6529,6 +6531,23 @@
     constructor() {
       __publicField(this, "documents", /* @__PURE__ */ new Map());
       __publicField(this, "skillRegistry", /* @__PURE__ */ new Map());
+      __publicField(this, "semanticTokenTypes", [
+        "keyword",
+        "variable",
+        "type",
+        "string",
+        "number",
+        "operator",
+        "function",
+        "parameter",
+        "namespace",
+        "semanticMarker",
+        "link",
+        "anchor"
+      ]);
+      __publicField(this, "semanticTokenTypeIndex", new Map(
+        this.semanticTokenTypes.map((type, index) => [type, index])
+      ));
     }
     // ==========================================================================
     // Document Management
@@ -6737,6 +6756,317 @@
           return "";
       }
     }
+    // ==========================================================================
+    // Semantic Tokens
+    // ==========================================================================
+    // -- MDZ_SEMANTIC_TOKENS_START
+    getSemanticTokensLegend() {
+      return {
+        tokenTypes: [...this.semanticTokenTypes],
+        tokenModifiers: []
+      };
+    }
+    getSemanticTokens(uri) {
+      const state = this.documents.get(uri);
+      if (!state) return { data: [] };
+      const tokens = [];
+      const lineOffsets = this.buildLineOffsets(state.content);
+      const codeLines = this.collectCodeBlockLines(state.ast);
+      const addToken = (line, char, length, type) => {
+        if (length <= 0) return;
+        const typeIndex = this.semanticTokenTypeIndex.get(type);
+        if (typeIndex === void 0) return;
+        tokens.push({ line, char, length, type: typeIndex, modifiers: 0 });
+      };
+      const addSpanToken = (span, type) => {
+        if (span.start.line !== span.end.line) return;
+        addToken(span.start.line - 1, span.start.column, span.end.column - span.start.column, type);
+      };
+      const addKeywordFromLine = (lineIndex, line) => {
+        if (codeLines.has(lineIndex + 1)) return;
+        const match = line.match(/^\s*(ELSE IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT|DELEGATE|USE|EXECUTE|GOTO)\b/);
+        if (!match) return;
+        const keyword = match[1];
+        const start = line.indexOf(keyword);
+        if (start >= 0) {
+          addToken(lineIndex, start, keyword.length, "keyword");
+        }
+      };
+      const addOperatorToken = (span, operator) => {
+        const startOffset = span.start.offset;
+        const endOffset = span.end.offset;
+        const slice = state.content.slice(startOffset, endOffset);
+        let index = -1;
+        if (operator === "AND" || operator === "OR" || operator === "NOT") {
+          const regex = new RegExp(`\\b${operator}\\b`);
+          const match = slice.match(regex);
+          if (match && match.index !== void 0) {
+            index = match.index;
+          }
+        } else {
+          index = slice.indexOf(operator);
+        }
+        if (index < 0) return;
+        const pos = this.offsetToPosition(startOffset + index, lineOffsets);
+        addToken(pos.line, pos.character, operator.length, "operator");
+      };
+      const lines = state.content.split("\n");
+      const addNameToken = (lineIndex, startColumn, endColumn, name, type, allowBare) => {
+        if (codeLines.has(lineIndex + 1)) return;
+        const line = lines[lineIndex] || "";
+        const searchStart = Math.max(0, startColumn);
+        const searchEnd = endColumn > 0 ? Math.min(line.length, endColumn) : line.length;
+        const slice = line.slice(searchStart, searchEnd);
+        let matchIndex = slice.indexOf(name);
+        if (matchIndex === -1 && allowBare) {
+          const bare = name.replace(/^\$/, "");
+          const regex = new RegExp(`\\b${bare}\\b`);
+          const match = slice.match(regex);
+          if (match && match.index !== void 0) {
+            matchIndex = match.index;
+            addToken(lineIndex, searchStart + matchIndex, bare.length, type);
+            return;
+          }
+          return;
+        }
+        if (matchIndex === -1) return;
+        addToken(lineIndex, searchStart + matchIndex, name.length, type);
+      };
+      const addVariableNameToken = (span, name) => {
+        const lineIndex = span.start.line - 1;
+        addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, "variable", true);
+      };
+      const addTypeNameToken = (span, name) => {
+        const lineIndex = span.start.line - 1;
+        addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, "type", false);
+      };
+      const collectExpressionTokens = (expr) => {
+        switch (expr.kind) {
+          case "VariableReference":
+            addSpanToken(expr.span, "variable");
+            break;
+          case "InferredVariable":
+            addSpanToken(expr.span, "variable");
+            break;
+          case "StringLiteral":
+            addSpanToken(expr.span, "string");
+            break;
+          case "NumberLiteral":
+            addSpanToken(expr.span, "number");
+            break;
+          case "BooleanLiteral":
+            addSpanToken(expr.span, "keyword");
+            break;
+          case "SemanticMarker":
+            addSpanToken(expr.span, "semanticMarker");
+            break;
+          case "Link":
+            addSpanToken(expr.span, "link");
+            break;
+          case "Anchor":
+            addSpanToken(expr.span, "anchor");
+            break;
+          case "TemplateLiteral":
+            for (const part of expr.parts) {
+              if (typeof part !== "string") {
+                collectExpressionTokens(part);
+              }
+            }
+            break;
+          case "ArrayLiteral":
+            for (const el of expr.elements) {
+              collectExpressionTokens(el);
+            }
+            break;
+          case "BinaryExpression":
+            collectExpressionTokens(expr.left);
+            collectExpressionTokens(expr.right);
+            addOperatorToken(expr.span, expr.operator);
+            break;
+          case "UnaryExpression":
+            collectExpressionTokens(expr.operand);
+            addOperatorToken(expr.span, expr.operator);
+            break;
+          case "LambdaExpression":
+            collectExpressionTokens(expr.body);
+            break;
+          case "FunctionCall":
+            collectExpressionTokens(expr.callee);
+            for (const arg of expr.args) {
+              collectExpressionTokens(arg);
+            }
+            break;
+          case "MemberAccess":
+            collectExpressionTokens(expr.object);
+            break;
+          case "InlineText":
+            break;
+        }
+      };
+      const collectConditionTokens = (cond) => {
+        switch (cond.kind) {
+          case "SemanticCondition":
+            addSpanToken(cond.span, "semanticMarker");
+            break;
+          case "DeterministicCondition":
+            collectExpressionTokens(cond.left);
+            collectExpressionTokens(cond.right);
+            addOperatorToken(cond.span, cond.operator);
+            break;
+          case "CompoundCondition":
+            collectConditionTokens(cond.left);
+            collectConditionTokens(cond.right);
+            addOperatorToken(cond.span, cond.operator);
+            break;
+        }
+      };
+      const collectBlockTokens = (blocks) => {
+        for (const block of blocks) {
+          switch (block.kind) {
+            case "TypeDefinition":
+              addTypeNameToken(block.span, block.name);
+              break;
+            case "VariableDeclaration":
+              addVariableNameToken(block.span, block.name);
+              if (block.typeAnnotation) {
+                if (block.typeAnnotation.kind === "TypeReference") {
+                  addTypeNameToken(block.typeAnnotation.span, block.typeAnnotation.name);
+                } else if (block.typeAnnotation.kind === "SemanticType") {
+                  addSpanToken(block.typeAnnotation.span, "semanticMarker");
+                }
+              }
+              if (block.value) {
+                collectExpressionTokens(block.value);
+              }
+              break;
+            case "ForEachStatement":
+              if (block.pattern.kind === "SimplePattern") {
+                addVariableNameToken(block.pattern.span, block.pattern.name);
+              } else {
+                for (const name of block.pattern.names) {
+                  addVariableNameToken(block.pattern.span, name);
+                }
+              }
+              collectExpressionTokens(block.collection);
+              collectBlockTokens(block.body);
+              break;
+            case "WhileStatement":
+              collectConditionTokens(block.condition);
+              collectBlockTokens(block.body);
+              break;
+            case "IfStatement":
+              collectConditionTokens(block.condition);
+              collectBlockTokens(block.thenBody);
+              for (const clause of block.elseIf) {
+                collectConditionTokens(clause.condition);
+                collectBlockTokens(clause.body);
+              }
+              if (block.elseBody) {
+                collectBlockTokens(block.elseBody);
+              }
+              break;
+            case "DoStatement": {
+              const doBlock = block;
+              if (doBlock.instruction) {
+                addSpanToken(doBlock.instruction.span, "semanticMarker");
+              }
+              if (doBlock.body) {
+                collectBlockTokens(doBlock.body);
+              }
+              break;
+            }
+            case "ReturnStatement":
+              if (block.value) {
+                collectExpressionTokens(block.value);
+              }
+              break;
+            case "PushStatement":
+              collectExpressionTokens(block.target);
+              collectExpressionTokens(block.value);
+              break;
+            case "DelegateStatement":
+              if (block.task) addSpanToken(block.task.span, "semanticMarker");
+              if (block.target) addSpanToken(block.target.span, "link");
+              if (block.withAnchor) addSpanToken(block.withAnchor.span, "anchor");
+              if (block.parameters) {
+                for (const param of block.parameters.parameters) {
+                  addVariableNameToken(param.span, param.name);
+                  if (param.value) collectExpressionTokens(param.value);
+                }
+              }
+              break;
+            case "UseStatement":
+              addSpanToken(block.link.span, "link");
+              addSpanToken(block.task.span, "semanticMarker");
+              if (block.parameters) {
+                for (const param of block.parameters.parameters) {
+                  addVariableNameToken(param.span, param.name);
+                  if (param.value) collectExpressionTokens(param.value);
+                }
+              }
+              break;
+            case "ExecuteStatement":
+              addSpanToken(block.link.span, "link");
+              addSpanToken(block.task.span, "semanticMarker");
+              break;
+            case "GotoStatement":
+              addSpanToken(block.anchor.span, "anchor");
+              break;
+            case "Delegation":
+              addSpanToken(block.target.span, block.target.kind === "Link" ? "link" : "anchor");
+              for (const param of block.parameters) {
+                addVariableNameToken(param.span, param.name);
+                if (param.value) collectExpressionTokens(param.value);
+              }
+              break;
+            case "Paragraph":
+              for (const item of block.content) {
+                switch (item.kind) {
+                  case "SemanticMarker":
+                    addSpanToken(item.span, "semanticMarker");
+                    break;
+                  case "VariableReference":
+                  case "InferredVariable":
+                    addSpanToken(item.span, "variable");
+                    break;
+                  case "Link":
+                    addSpanToken(item.span, "link");
+                    break;
+                  case "Anchor":
+                    addSpanToken(item.span, "anchor");
+                    break;
+                  case "CodeSpan":
+                    break;
+                }
+              }
+              break;
+            case "CodeBlock":
+            case "List":
+            case "HorizontalRule":
+              break;
+          }
+        }
+      };
+      for (const section of state.ast.sections) {
+        collectBlockTokens(section.content);
+      }
+      for (let i = 0; i < lines.length; i += 1) {
+        addKeywordFromLine(i, lines[i]);
+      }
+      tokens.sort((a, b) => a.line - b.line || a.char - b.char);
+      const data = [];
+      let prevLine = 0;
+      let prevChar = 0;
+      for (const token of tokens) {
+        const deltaLine = token.line - prevLine;
+        const deltaChar = deltaLine === 0 ? token.char - prevChar : token.char;
+        data.push(deltaLine, deltaChar, token.length, token.type, token.modifiers);
+        prevLine = token.line;
+        prevChar = token.char;
+      }
+      return { data };
+    }
+    // -- MDZ_SEMANTIC_TOKENS_END
     // ==========================================================================
     // Diagnostics
     // ==========================================================================
@@ -7065,10 +7395,12 @@ Section: ${section.title}`;
     }
     getKeywordCompletions() {
       return [
-        { label: "FOR EACH", kind: 14 /* Keyword */, insertText: "FOR EACH $item IN $items:\n  - " },
-        { label: "WHILE", kind: 14 /* Keyword */, insertText: "WHILE ($condition):\n  - " },
-        { label: "IF", kind: 14 /* Keyword */, insertText: "IF $condition THEN:\n  - " },
-        { label: "ELSE", kind: 14 /* Keyword */, insertText: "ELSE:\n  - " }
+        { label: "FOR", kind: 14 /* Keyword */, insertText: "FOR $item IN $items\n  \nEND" },
+        { label: "WHILE", kind: 14 /* Keyword */, insertText: "WHILE /condition/ DO\n  \nEND" },
+        { label: "IF", kind: 14 /* Keyword */, insertText: "IF $condition THEN\n  \nEND" },
+        { label: "ELSE", kind: 14 /* Keyword */, insertText: "ELSE\n  " },
+        { label: "DO", kind: 14 /* Keyword */, insertText: "DO\n  \nEND" },
+        { label: "END", kind: 14 /* Keyword */, insertText: "END" }
       ];
     }
     // ==========================================================================
@@ -7133,6 +7465,40 @@ Section: ${section.title}`;
       if (line === span.start.line && char < span.start.column) return false;
       if (line === span.end.line && char > span.end.column) return false;
       return true;
+    }
+    buildLineOffsets(content) {
+      const offsets = [];
+      let current = 0;
+      offsets.push(0);
+      for (const char of content) {
+        current += 1;
+        if (char === "\n") {
+          offsets.push(current);
+        }
+      }
+      return offsets;
+    }
+    offsetToPosition(offset, lineOffsets) {
+      let line = 0;
+      while (line + 1 < lineOffsets.length && lineOffsets[line + 1] <= offset) {
+        line += 1;
+      }
+      const lineOffset = lineOffsets[line] ?? 0;
+      return { line, character: offset - lineOffset };
+    }
+    collectCodeBlockLines(ast) {
+      const lines = /* @__PURE__ */ new Set();
+      for (const section of ast.sections) {
+        for (const block of section.content) {
+          if (block.kind !== "CodeBlock") continue;
+          const start = block.span.start.line;
+          const end = block.span.end.line;
+          for (let line = start; line <= end; line += 1) {
+            lines.add(line);
+          }
+        }
+      }
+      return lines;
     }
   };
 
@@ -7260,6 +7626,23 @@ Section: ${section.title}`;
       });
     }
   }
+  function handleSemanticTokens(id, uri, source) {
+    try {
+      lspServer.updateDocument(uri, source);
+      const result = lspServer.getSemanticTokens(uri);
+      postMessage({
+        type: "semanticTokens",
+        id,
+        result
+      });
+    } catch (error) {
+      postMessage({
+        type: "error",
+        id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
   function handleValidateProject(id, files) {
     try {
       const fileResults = {};
@@ -7373,6 +7756,9 @@ Section: ${section.title}`;
         break;
       case "diagnostics":
         handleDiagnostics(message.id, message.uri, message.source);
+        break;
+      case "semanticTokens":
+        handleSemanticTokens(message.id, message.uri, message.source);
         break;
       default:
         postMessage({

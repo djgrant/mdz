@@ -1245,17 +1245,24 @@ const projectsJson = JSON.stringify(examplesData.projects);
     // Register zen language
     monaco.languages.register({ id: "zen" });
 
+    // -- MDZ_MONARCH_START
     monaco.languages.setMonarchTokensProvider("zen", {
       tokenizer: {
         root: [
+          [/^```.*$/, { token: "markup.fenced_code", next: "@codeblock" }],
           [/^---$/, "meta.frontmatter"],
           [/^#+\s+.*$/, "markup.heading"],
+          [/`[^`]*`/, "string"],
           [
-            /\b(FOR EACH|WHILE|DO|IF|THEN|ELSE|IN|AND|OR|NOT|WITH|BREAK|CONTINUE|RETURN|ASYNC|AWAIT|DELEGATE|USE|EXECUTE|GOTO|TO)\b/,
+            /^\s*(ELSE IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT|DELEGATE|USE|EXECUTE|GOTO)\b/,
             "keyword",
           ],
+          [/\b(THEN|IN|AND|OR|NOT|WITH|TO)\b/, "keyword"],
           [/<</, "keyword.operator"],
-          [/\/(?=[^\/\n]+\/)/, { token: "delimiter.semantic", next: "@semantic" }],
+          [
+            /\/(?=[^\/\n]+\/(?:\s|$|[.,;:!?)}\]]))/,
+            { token: "delimiter.semantic", next: "@semantic" },
+          ],
           [/\$\/[^\/]+\//, "variable.inferred"],
           [/~\/[a-zA-Z0-9\/_-]+/, "entity.reference"],
           [/#[a-zA-Z][a-zA-Z0-9_-]*/, "entity.reference"],
@@ -1266,12 +1273,17 @@ const projectsJson = JSON.stringify(examplesData.projects);
           [/<!--[\s\S]*?-->/, "comment"],
           [/^>.*$/, "comment"],
         ],
+        codeblock: [
+          [/^```.*$/, { token: "markup.fenced_code", next: "@pop" }],
+          [/.*$/, "markup.fenced_code"],
+        ],
         semantic: [
           [/[^\/]+/, "string.semantic"],
           [/\//, { token: "delimiter.semantic", next: "@pop" }],
         ],
       },
     });
+    // -- MDZ_MONARCH_END
 
     // Theme
     monaco.editor.defineTheme("zen-dark", {
@@ -1455,6 +1467,38 @@ const projectsJson = JSON.stringify(examplesData.projects);
 
         return { suggestions };
       },
+    });
+
+    const semanticTokenLegend = {
+      tokenTypes: [
+        "keyword",
+        "variable",
+        "type",
+        "string",
+        "number",
+        "operator",
+        "function",
+        "parameter",
+        "namespace",
+        "semanticMarker",
+        "link",
+        "anchor",
+      ],
+      tokenModifiers: [],
+    };
+
+    monaco.languages.registerDocumentSemanticTokensProvider("zen", {
+      getLegend: () => semanticTokenLegend,
+      provideDocumentSemanticTokens: async (model) => {
+        const result = await sendToWorker("semanticTokens", {
+          uri: model.uri.toString(),
+          source: model.getValue(),
+        });
+        return {
+          data: new Uint32Array(result.data),
+        };
+      },
+      releaseDocumentSemanticTokens: () => {},
     });
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

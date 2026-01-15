@@ -20,21 +20,20 @@ context:
 
 ### 1. Analyze Files
 
-FOR EACH $file IN $files:
-  IF /file not accessible/ THEN:
+FOR $file IN $files
+  IF /file not accessible/ THEN
     Record error
     CONTINUE
+  END
 
   ASYNC DELEGATE /analyze $file for $concern/ TO ~/agent/analyzer
+END
 
-Collect results into $analyses
+DO /collect results into $analyses/
 
 ### 2. Aggregate
 
-Cross-reference $analyses:
-- Group findings by $Severity
-- Identify patterns appearing across files
-- Find files needing most attention
+DO /cross-reference $analyses: group findings by $Severity, identify cross-file patterns, and find files needing most attention/
 
 ### 3. Report
 

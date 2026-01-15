@@ -17,14 +17,15 @@ Generate a formatted review from collected findings.
 
 ### 1. Determine Outcome
 
-IF /any critical findings/ THEN:
+IF /any critical findings/ THEN
   $outcome = "request-changes"
-ELSE IF /major findings > 3/ THEN:
+ELSE IF /major findings > 3/ THEN
   $outcome = "request-changes"
-ELSE IF /any findings/ THEN:
+ELSE IF /any findings/ THEN
   $outcome = "comment"
-ELSE:
+ELSE
   $outcome = "approve"
+END
 
 ### 2. Return Review
 

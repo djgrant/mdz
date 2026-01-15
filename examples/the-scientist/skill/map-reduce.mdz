@@ -20,27 +20,30 @@ context:
 ## Workflow
 
 USE ~/skill/work-packages TO /create master work package/
-DO summarise status quo into $statusQuo
+DO /summarise status quo into $statusQuo/
 
-IF $strategy = "accumulate" THEN:
-  DELEGATE WITH #accumulate-prompt
-ELSE:
-  DELEGATE WITH #independent-prompt
+IF $strategy = "accumulate" THEN
+  DELEGATE /run accumulate prompt/ WITH #accumulate-prompt
+ELSE
+  DELEGATE /run independent prompt/ WITH #independent-prompt
+END
 
 RETURN $statusQuo
 
 ## Accumulate Prompt
 
 ```mdz
-WHILE $iteration < $maxIterations AND NOT /diminishing returns/ DO:
-  DELEGATE $transform WITH:
+WHILE $iteration < $maxIterations AND NOT /diminishing returns/ DO
+  DELEGATE /run transform/ WITH:
     input: $statusQuo
     output: /next candidate path/
-  DELEGATE $validator WITH:
+  DELEGATE /run validator/ WITH:
     candidate: /next candidate path/
-  IF /validation passed/ THEN:
+  IF /validation passed/ THEN
     $statusQuo = /next candidate path/
+  END
   $iteration = $iteration + 1
+END
 
 RETURN $statusQuo
 ```
@@ -50,13 +53,14 @@ RETURN $statusQuo
 ```mdz
 $results = []
 
-WHILE $iteration < $maxIterations DO:
-  $results << ASYNC DELEGATE $transform WITH:
+WHILE $iteration < $maxIterations DO
+  $results << ASYNC DELEGATE /run transform/ WITH:
     iteration: $iteration
     output: /candidate path/
   $iteration = $iteration + 1
+END
 
-DELEGATE $validator WITH:
+DELEGATE /run validator/ WITH:
   candidates: $results
 
 RETURN /winning candidate/

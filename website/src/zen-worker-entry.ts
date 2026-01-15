@@ -14,7 +14,7 @@ import { compile } from '../../packages/core/src/compiler/compiler';
 import type { CompileResult, Diagnostic as CompilerDiagnostic, DependencyGraph, DocumentMetadata } from '../../packages/core/src/compiler/compiler';
 import { ZenLanguageServer } from '../../packages/lsp/src/server';
 import type { Document } from '../../packages/core/src/parser/ast';
-import type { Position, CompletionItem, Hover, Diagnostic } from '../../packages/lsp/src/server';
+import type { Position, CompletionItem, Hover, Diagnostic, SemanticTokens } from '../../packages/lsp/src/server';
 
 // ============================================================================
 // Message Types
@@ -61,7 +61,8 @@ type WorkerRequest =
   | { type: 'validateProject'; id: number; files: Record<string, string> }
   | { type: 'completions'; id: number; uri: string; source: string; position: Position }
   | { type: 'hover'; id: number; uri: string; source: string; position: Position }
-  | { type: 'diagnostics'; id: number; uri: string; source: string };
+  | { type: 'diagnostics'; id: number; uri: string; source: string }
+  | { type: 'semanticTokens'; id: number; uri: string; source: string };
 
 type WorkerResponse =
   | { type: 'parse'; id: number; result: Document }
@@ -70,6 +71,7 @@ type WorkerResponse =
   | { type: 'completions'; id: number; result: CompletionItem[] }
   | { type: 'hover'; id: number; result: Hover | null }
   | { type: 'diagnostics'; id: number; result: Diagnostic[] }
+  | { type: 'semanticTokens'; id: number; result: SemanticTokens }
   | { type: 'error'; id: number; error: string };
 
 // ============================================================================
@@ -222,6 +224,24 @@ function handleDiagnostics(id: number, uri: string, source: string): void {
   }
 }
 
+function handleSemanticTokens(id: number, uri: string, source: string): void {
+  try {
+    lspServer.updateDocument(uri, source);
+    const result = lspServer.getSemanticTokens(uri);
+    postMessage({
+      type: 'semanticTokens',
+      id,
+      result,
+    } as WorkerResponse);
+  } catch (error) {
+    postMessage({
+      type: 'error',
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    } as WorkerResponse);
+  }
+}
+
 function handleValidateProject(id: number, files: Record<string, string>): void {
   try {
     const fileResults: Record<string, ValidateResult> = {};
@@ -360,6 +380,10 @@ self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
 
     case 'diagnostics':
       handleDiagnostics(message.id, message.uri, message.source);
+      break;
+
+    case 'semanticTokens':
+      handleSemanticTokens(message.id, message.uri, message.source);
       break;
 
     default:

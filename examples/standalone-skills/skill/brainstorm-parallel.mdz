@@ -19,21 +19,18 @@ context:
 
 ### 1. Frame
 
-Restate $problem to ensure shared understanding.
+DO /restate $problem to ensure shared understanding/
 
 ### 2. Explore
 
-FOR EACH $perspective IN $perspectives:
+FOR $perspective IN $perspectives
   ASYNC DELEGATE /generate ideas for $problem from the $perspective viewpoint/ TO ~/agent/divergent
+END
 
-Collect all results into $ideas.
+DO /collect all results into $ideas/
 
 ### 3. Synthesize
 
-After all parallel work completes:
+DO /after all parallel work completes, find patterns that transcend individual perspectives, discover combinations no single perspective would reach, and note tensions that reveal hidden assumptions in $problem/
 
-- Find patterns that transcend individual perspectives
-- Discover combinations no single perspective would reach
-- Note tensions that reveal hidden assumptions in $problem
-
-Write synthesis to $outputPath
+DO /write synthesis to $outputPath/

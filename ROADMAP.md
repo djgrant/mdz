@@ -37,7 +37,7 @@ See "Current State" above.
 
 **Status:** NOT IMPLEMENTED
 
-Runtime control flow (IF, FOR EACH, WHILE, etc.) is fully implemented. Build-time macro system is not.
+Runtime control flow (IF, FOR, WHILE, etc.) is fully implemented. Build-time macro system is not.
 
 **Goal:** `{{IF}}` expansion to clean, single-path outputs.
 
@@ -45,7 +45,7 @@ Runtime control flow (IF, FOR EACH, WHILE, etc.) is fully implemented. Build-tim
 - When values known at build time → prune branches
 - When unknown → split into variant files (dbt-style)
 - What triggers variant selection at runtime?
-- Should macros support loops? (`{{FOR EACH variant IN variants}}`)
+- Should macros support loops? (`{{FOR variant IN variants}}`)
 
 **Open questions:**
 - How do variants get named?

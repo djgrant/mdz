@@ -25,7 +25,7 @@ Work packages persist task state between agent sessions.
 
 ## Workflow
 
-1. Create in `.opencode/work/todo/wp-{name}.md`
-2. Move to `in-progress/` when starting
-3. Record results
-4. Move to `completed/` when done
+DO /create in .opencode work todo wp-{name}.md/
+DO /move to in-progress when starting/
+DO /record results/
+DO /move to completed when done/

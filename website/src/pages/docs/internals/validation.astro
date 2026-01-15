@@ -107,8 +107,9 @@ description: missing closing dashes
 
   <h3>Example Scope Error</h3>
 
-  <pre><code class="mdz">FOR EACH $item IN $items:
-  - $result = $undefined_var + 1</code></pre>
+  <pre><code class="mdz">FOR $item IN $items
+  $result = $undefined_var + 1
+END</code></pre>
 
   <p>
     Produces error:

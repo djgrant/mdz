@@ -38,9 +38,10 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     Fan out work to multiple agents, collect results, and synthesize a final output:
   </p>
   
-  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
-  - <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/processor</span>
-  - Collect <span class="zen-variable">$result</span> into <span class="zen-variable">$results</span>
+  <pre><code class="mdz"><span class="zen-keyword">FOR</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>
+  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/processor</span>
+  Collect <span class="zen-variable">$result</span> into <span class="zen-variable">$results</span>
+<span class="zen-keyword">END</span>
 
 Synthesize <span class="zen-variable">$results</span> into final output</code></pre>
 
@@ -54,11 +55,16 @@ Synthesize <span class="zen-variable">$results</span> into final output</code></
     Loop until a condition is met, refining approach based on observations:
   </p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> success <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
-  - Form hypothesis
-  - Run experiment
-  - Observe results
-  - <span class="zen-keyword">IF</span> progress <span class="zen-keyword">THEN</span> refine <span class="zen-keyword">ELSE</span> pivot</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/success/</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>
+  Form hypothesis
+  Run experiment
+  Observe results
+  <span class="zen-keyword">IF</span> <span class="zen-semantic">/progress/</span> <span class="zen-keyword">THEN</span>
+    Refine
+  <span class="zen-keyword">ELSE</span>
+    Pivot
+  <span class="zen-keyword">END</span>
+<span class="zen-keyword">END</span></code></pre>
 
   <p>
     This pattern is ideal for problems requiring exploration and adaptation.
@@ -113,22 +119,16 @@ description: When orchestrating hypothesis-driven iteration
     The core iteration continues until diminishing returns or max iterations:
   </p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> diminishing returns <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>:
-  
-  #### Design Experiment
-  Create experiment work package with success criteria
-  
-  #### Run Experiment
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/diminishing returns/</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>
+  Design experiment and set success criteria
   <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/run experiment/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/experimenter</span> <span class="zen-keyword">WITH</span> <span class="zen-reference">#experiment-prompt</span>
-  
-  #### Observe Results
   Extract <span class="zen-variable">$observations</span> and update master work package
-  
-  #### Evaluate
-  <span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = "progress" <span class="zen-keyword">THEN</span>:
-    - Commit changes, update hypothesis
-  <span class="zen-keyword">ELSE</span>:
-    - Revert if regression, revise hypothesis</code></pre>
+  <span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = "progress" <span class="zen-keyword">THEN</span>
+    Commit changes, update hypothesis
+  <span class="zen-keyword">ELSE</span>
+    Revert if regression, revise hypothesis
+  <span class="zen-keyword">END</span>
+<span class="zen-keyword">END</span></code></pre>
 
   <h3>Result Accumulation</h3>
   
@@ -163,19 +163,20 @@ description: When coordinating multiple skills
 
 <span class="zen-heading">## Input</span>
 
-- <span class="zen-variable">$collection</span>: items to process
-- <span class="zen-variable">$maxIterations</span>: <span class="zen-type">$Number</span> = 5
+<span class="zen-variable">$collection</span>: items to process
+<span class="zen-variable">$maxIterations</span>: <span class="zen-type">$Number</span> = 5
 
 <span class="zen-heading">## Context</span>
 
-- <span class="zen-variable">$results</span>: <span class="zen-type">$Result</span>[] = []
-- <span class="zen-variable">$iteration</span> = 0
+<span class="zen-variable">$results</span>: <span class="zen-type">$Result</span>[] = []
+<span class="zen-variable">$iteration</span> = 0
 
 <span class="zen-heading">## Workflow</span>
 
-<span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>:
-  - <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span>
-  - Collect result
+<span class="zen-keyword">FOR</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>
+  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span>
+  Collect result
+<span class="zen-keyword">END</span>
 
 <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/synthesize</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/combine results/</span></code></pre>
 
@@ -193,7 +194,7 @@ description: When coordinating multiple skills
   
   <ul>
     <li><a href="/docs/composition">Composition</a> — Links and delegation</li>
-    <li><a href="/docs/control-flow">Control Flow</a> — WHILE, FOR EACH, IF/THEN/ELSE</li>
+    <li><a href="/docs/control-flow">Control Flow</a> — WHILE, FOR, IF/THEN/ELSE, END</li>
     <li><a href="/examples">Examples</a> — Full implementations including scientific-method</li>
   </ul>
 </DocsLayout>

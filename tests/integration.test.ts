@@ -67,13 +67,13 @@ $Status: "pending" | "done"
 
 ## Input
 
-- $target: $Task
-- $status: $Status = "pending"
+$target: $Task
+$status: $Status = "pending"
 
 ## Workflow
 
-1. Execute $target with ~/skill/base-skill
-2. Update $status
+USE ~/skill/base-skill TO /execute $target/
+$status = "pending"
 
 ## Helper Section
 
@@ -91,16 +91,19 @@ $Item: an item to process
 
 ## Workflow
 
-FOR EACH $item IN $items:
-  - Process $item
+FOR $item IN $items
+  Process $item
+END
 
-WHILE $count < 5 DO:
-  - Increment
+WHILE $count < 5 DO
+  Increment
+END
 
-IF $done = true THEN:
-  - Report success
-ELSE:
-  - Continue
+IF $done = true THEN
+  Report success
+ELSE
+  Continue
+END
 `;
 
 const semanticSkill = `---
@@ -110,8 +113,8 @@ description: Tests semantic markers
 
 ## Workflow
 
-1. Write to /appropriate location/
-2. Determine /best approach for task/
+DO /write to appropriate location/
+DO /determine best approach for task/
 `;
 
 // ============================================================================
@@ -181,12 +184,12 @@ describe('Control Flow Skill Parsing', () => {
     assert(doc.sections.length > 0, 'Should have sections');
   });
 
-  test('identifies FOR EACH', () => {
+  test('identifies FOR', () => {
     const doc = parse(controlFlowSkill);
     const forEachs = doc.sections.flatMap(s => 
       s.content.filter(b => b.kind === 'ForEachStatement')
     );
-    assert(forEachs.length >= 1, 'Should have FOR EACH');
+    assert(forEachs.length >= 1, 'Should have FOR');
   });
 
   test('identifies WHILE', () => {
@@ -207,7 +210,7 @@ describe('Control Flow Skill Parsing', () => {
 
   test('compiles control flow (preserves source)', () => {
     const result = compile(controlFlowSkill, { includeHeader: false });
-    assert(result.output.includes('FOR EACH'), 'FOR EACH in output');
+    assert(result.output.includes('FOR'), 'FOR in output');
     assert(result.output.includes('WHILE'), 'WHILE in output');
     // Control flow tracked in source map
     const cfEntries = result.sourceMap.filter(e => e.type === 'control-flow');
@@ -228,8 +231,8 @@ describe('Semantic Skill Parsing', () => {
   test('preserves semantic markers (no transformation)', () => {
     const result = compile(semanticSkill, { includeHeader: false });
     // Semantic markers should be preserved (new /content/ syntax)
-    assert(result.output.includes('/appropriate location/'), 'Marker preserved');
-    assert(result.output.includes('/best approach'), 'Marker preserved');
+    assert(result.output.includes('/write to appropriate location/'), 'Marker preserved');
+    assert(result.output.includes('/determine best approach for task/'), 'Marker preserved');
     // No transformation applied
     assert(!result.output.includes('(determine:'), 'No transformation');
     // Markers tracked in source map

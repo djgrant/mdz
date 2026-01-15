@@ -20,6 +20,7 @@ export class Parser {
   private errors: AST.ParseError[] = [];
   private frontmatterContent: string = '';
   private loopDepth: number = 0;  // v0.2: Track if we're inside a loop
+  private blockDepth: number = 0; // v0.10: Track control-flow nesting
 
   constructor(private source: string) {}
 
@@ -28,6 +29,7 @@ export class Parser {
     this.pos = 0;
     this.errors = [];
     this.loopDepth = 0;
+    this.blockDepth = 0;
 
     const frontmatter = this.parseFrontmatter();
     const sections = this.parseSections();
@@ -138,7 +140,27 @@ export class Parser {
       for (const entry of parsed.uses) {
         if (typeof entry !== 'string') continue;
         
-        if (entry.startsWith('~')) {
+        if (entry.startsWith('~/')) {
+          const parts = entry.slice(2).split('/');
+          const kind = parts[0];
+          const name = parts.slice(1).join('/');
+          if (kind === 'agent') {
+            if (!agents.includes(name)) {
+              agents.push(name);
+              uses.push(entry);
+            }
+          } else if (kind === 'skill') {
+            if (!skills.includes(name)) {
+              skills.push(name);
+              uses.push(entry);
+            }
+          } else if (kind === 'tool') {
+            if (!tools.includes(name)) {
+              tools.push(name);
+              uses.push(entry);
+            }
+          }
+        } else if (entry.startsWith('~')) {
           // ~skill-name -> skills
           const skill = entry.slice(1);
           if (!skills.includes(skill)) {
@@ -446,6 +468,18 @@ export class Parser {
   }
 
   private parseBlock(): AST.Block | null {
+    if (this.check('END')) {
+      this.error('E001', 'Unexpected END');
+      this.advance();
+      return null;
+    }
+
+    if (this.check('ELSE')) {
+      this.error('E001', 'Unexpected ELSE');
+      this.advance();
+      return null;
+    }
+
     // Type definition: $TypeName: ...
     if (this.check('TYPE_IDENT')) {
       const lookahead = this.peek(1);
@@ -460,11 +494,6 @@ export class Parser {
       }
     }
 
-    // Variable declaration
-    if (this.check('LIST_MARKER')) {
-      return this.parseListItem();
-    }
-
     if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
       // v0.9: Check for push operator <<
       const lookahead = this.peek(1);
@@ -476,7 +505,7 @@ export class Parser {
 
     // Control flow
     if (this.check('FOR')) {
-      return this.parseForEach();
+      return this.parseFor();
     }
 
     if (this.check('WHILE')) {
@@ -507,13 +536,9 @@ export class Parser {
       return this.parseDelegateStatement();
     }
 
-    // v0.9: DO instruction (standalone, not WHILE...DO)
+    // v0.9/v0.10: DO instruction (standalone or block)
     if (this.check('DO')) {
-      // Lookahead to distinguish DO /instruction/ from stray DO
-      const next = this.peek(1);
-      if (next?.type === 'SEMANTIC_MARKER') {
-        return this.parseDoStatement();
-      }
+      return this.parseDoStatement();
     }
 
     // v0.3: DELEGATE statement
@@ -800,65 +825,6 @@ export class Parser {
     return false;
   }
 
-  private parseListItem(): AST.Block {
-    this.advance();  // consume LIST_MARKER
-
-    // Variable declaration
-    if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
-      // v0.9: Check for push operator <<
-      const lookahead = this.peek(1);
-      if (lookahead?.type === 'PUSH') {
-        return this.parsePushStatement();
-      }
-      return this.parseVariableDeclaration();
-    }
-
-    // v0.2: Control flow inside list items
-    if (this.check('FOR')) {
-      return this.parseForEach();
-    }
-
-    if (this.check('WHILE')) {
-      return this.parseWhile();
-    }
-
-    if (this.check('IF')) {
-      return this.parseIf();
-    }
-
-    if (this.check('BREAK')) {
-      return this.parseBreak();
-    }
-
-    if (this.check('CONTINUE')) {
-      return this.parseContinue();
-    }
-
-    // v0.9: RETURN in list items
-    if (this.check('RETURN')) {
-      return this.parseReturnStatement();
-    }
-
-    // v0.9: ASYNC/AWAIT DELEGATE
-    if (this.check('ASYNC') || this.check('AWAIT')) {
-      return this.parseDelegateStatement();
-    }
-
-    // v0.9: DO instruction
-    if (this.check('DO')) {
-      const next = this.peek(1);
-      if (next?.type === 'SEMANTIC_MARKER') {
-        return this.parseDoStatement();
-      }
-    }
-
-    // v0.3: DELEGATE inside list items
-    if (this.check('DELEGATE')) {
-      return this.parseDelegateStatement();
-    }
-
-    return this.parseParagraph();
-  }
 
   // ==========================================================================
   // Expressions
@@ -1293,73 +1259,91 @@ export class Parser {
   // Control Flow
   // ==========================================================================
 
-  private parseForEach(): AST.ForEachStatement {
+  private parseFor(): AST.ForEachStatement {
     const start = this.advance();
-    this.expect('EACH');
-    
+
     const pattern = this.parsePattern();
     this.expect('IN');
     const collection = this.parseExpression();
-    this.expect('COLON');
+    if (this.check('DO')) {
+      this.advance();
+    }
+    this.expect('NEWLINE');
     this.skipNewlines();
 
     this.loopDepth++;
-    const body = this.parseIndentedBlocks();
+    this.blockDepth++;
+    const body = this.parseBlockBody(['END']);
+    this.blockDepth--;
     this.loopDepth--;
+
+    const end = this.expect('END');
+    this.skipNewlines();
 
     return {
       kind: 'ForEachStatement',
       pattern,
       collection,
       body,
-      span: AST.mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : collection.span),
+      span: AST.mergeSpans(start.span, end?.span || (body.length > 0 ? body[body.length - 1].span : collection.span)),
     };
   }
 
   private parseWhile(): AST.WhileStatement {
     const start = this.advance();
     const condition = this.parseCondition();
-    this.expect('DO');
-    this.expect('COLON');
+    if (this.check('DO')) {
+      this.advance();
+    }
+    this.expect('NEWLINE');
     this.skipNewlines();
 
     this.loopDepth++;
-    const body = this.parseIndentedBlocks();
+    this.blockDepth++;
+    const body = this.parseBlockBody(['END']);
+    this.blockDepth--;
     this.loopDepth--;
+
+    const end = this.expect('END');
+    this.skipNewlines();
 
     return {
       kind: 'WhileStatement',
       condition,
       body,
-      span: AST.mergeSpans(start.span, body.length > 0 ? body[body.length - 1].span : condition.span),
+      span: AST.mergeSpans(start.span, end?.span || (body.length > 0 ? body[body.length - 1].span : condition.span)),
     };
   }
 
   private parseIf(): AST.IfStatement {
     const start = this.advance();
     const condition = this.parseCondition();
-    this.expect('THEN');
-    this.expect('COLON');
+    if (this.check('THEN')) {
+      this.advance();
+    }
+    this.expect('NEWLINE');
     this.skipNewlines();
 
-    const thenBody = this.parseIndentedBlocks();
+    this.blockDepth++;
+    const thenBody = this.parseBlockBody(['ELSE', 'END']);
 
     const elseIf: AST.ElseIfClause[] = [];
     let elseBody: AST.Block[] | null = null;
 
-    // Parse ELSE IF chains and final ELSE
     while (this.check('ELSE')) {
       const elseStart = this.current();
-      this.advance();  // consume ELSE
+      this.advance();
 
       if (this.check('IF')) {
-        // ELSE IF clause
-        this.advance();  // consume IF
+        this.advance();
         const elseIfCondition = this.parseCondition();
-        this.expect('THEN');
-        this.expect('COLON');
+        if (this.check('THEN')) {
+          this.advance();
+        }
+        this.expect('NEWLINE');
         this.skipNewlines();
-        const elseIfBody = this.parseIndentedBlocks();
+
+        const elseIfBody = this.parseBlockBody(['ELSE', 'END']);
 
         elseIf.push({
           condition: elseIfCondition,
@@ -1370,16 +1354,19 @@ export class Parser {
           ),
         });
       } else {
-        // Plain ELSE clause (terminates the chain)
-        this.expect('COLON');
+        this.expect('NEWLINE');
         this.skipNewlines();
-        elseBody = this.parseIndentedBlocks();
-        break;  // ELSE must be last
+        elseBody = this.parseBlockBody(['END']);
+        break;
       }
     }
 
-    // Determine the end span
-    let endSpan = condition.span;
+    this.blockDepth--;
+
+    const end = this.expect('END');
+    this.skipNewlines();
+
+    let endSpan = end?.span || condition.span;
     if (elseBody?.length) {
       endSpan = elseBody[elseBody.length - 1].span;
     } else if (elseIf.length > 0) {
@@ -1432,7 +1419,7 @@ export class Parser {
     
     let value: AST.Expression | undefined;
     // Check if there's an expression to return (not at newline/end)
-    if (!this.check('NEWLINE') && !this.isAtEnd() && !this.check('DEDENT')) {
+    if (!this.check('NEWLINE') && !this.isAtEnd() && !this.check('END') && !this.check('ELSE')) {
       value = this.parseExpression();
     }
     
@@ -1457,15 +1444,36 @@ export class Parser {
     };
   }
 
-  // v0.9: DO instruction (standalone prose instruction)
+  // v0.9/v0.10: DO instruction (standalone or block)
   private parseDoStatement(): AST.DoStatement {
     const token = this.advance();  // consume DO
-    const instruction = this.parseSemanticMarker();
-    
+
+    if (this.check('SEMANTIC_MARKER')) {
+      if (this.blockDepth > 0) {
+        this.error('E005', 'Single-line DO is only valid at top level');
+      }
+      const instruction = this.parseSemanticMarker();
+      return {
+        kind: 'DoStatement',
+        instruction,
+        span: AST.mergeSpans(token.span, instruction.span),
+      };
+    }
+
+    this.expect('NEWLINE');
+    this.skipNewlines();
+
+    this.blockDepth++;
+    const body = this.parseBlockBody(['END']);
+    this.blockDepth--;
+
+    const end = this.expect('END');
+    this.skipNewlines();
+
     return {
       kind: 'DoStatement',
-      instruction,
-      span: AST.mergeSpans(token.span, instruction.span),
+      body,
+      span: AST.mergeSpans(token.span, end?.span || (body.length > 0 ? body[body.length - 1].span : token.span)),
     };
   }
 
@@ -1600,27 +1608,31 @@ export class Parser {
     
     const parameters: AST.VariableDeclaration[] = [];
     
-    // Consume INDENT if present
-    const hasIndent = this.check('INDENT');
-    if (hasIndent) {
-      this.advance();
-    }
-    
-    // Parse parameters as list items
-    while (this.check('LIST_MARKER') && !this.isAtEnd()) {
-      this.advance();  // consume LIST_MARKER
-      const param = this.parseVariableDeclaration(true);
-      parameters.push(param);
-      this.skipNewlines();
-      
-      if (!this.check('LIST_MARKER') || this.check('HEADING')) {
-        break;
+    while ((this.check('LOWER_IDENT') || this.check('UPPER_IDENT') || this.check('DOLLAR_IDENT')) && !this.isAtEnd()) {
+      const nameToken = this.advance();
+      const name = nameToken.type === 'DOLLAR_IDENT' ? nameToken.value.slice(1) : nameToken.value;
+
+      this.expect('COLON');
+
+      let value: AST.Expression | null = null;
+      let isRequired = false;
+      if (!this.check('NEWLINE') && !this.check('END') && !this.check('ELSE') && !this.isAtEnd()) {
+        value = this.parseExpression();
+      } else {
+        isRequired = true;
       }
-    }
-    
-    // Consume matching DEDENT if we consumed an INDENT
-    if (hasIndent && this.check('DEDENT')) {
-      this.advance();
+
+      parameters.push({
+        kind: 'VariableDeclaration',
+        name,
+        typeAnnotation: null,
+        value,
+        isLambda: false,
+        isRequired,
+        span: AST.mergeSpans(nameToken.span, value?.span || nameToken.span),
+      });
+
+      this.skipNewlines();
     }
     
     return {
@@ -1716,6 +1728,16 @@ export class Parser {
       this.advance();
     }
 
+    if (this.check('SEMANTIC_MARKER')) {
+      const marker = this.parseSemanticMarker();
+      return {
+        kind: 'SemanticCondition',
+        text: marker.content,
+        negated,
+        span: marker.span,
+      };
+    }
+
     if (this.check('LPAREN')) {
       this.advance();
       const cond = this.parseCondition();
@@ -1742,6 +1764,7 @@ export class Parser {
         };
       }
 
+      this.error('E005', 'Deterministic conditions require a comparison operator');
       return {
         kind: 'SemanticCondition',
         text: '$' + (left as AST.VariableReference).name,
@@ -1750,50 +1773,32 @@ export class Parser {
       };
     }
 
-    let text = '';
-    const start = this.current();
-    
-    while (
-      !this.isAtEnd() &&
-      !this.check('RPAREN') &&
-      !this.check('AND') &&
-      !this.check('OR') &&
-      !this.check('THEN') &&
-      !this.check('DO') &&
-      !this.check('COLON')
-    ) {
-      if (text) text += ' ';
-      text += this.advance().value;
-    }
-
+    this.error('E005', 'Semantic conditions must use /.../');
+    const fallback = this.current();
+    this.advance();
     return {
       kind: 'SemanticCondition',
-      text: text.trim(),
+      text: fallback.value,
       negated,
-      span: AST.mergeSpans(start.span, this.previous().span),
+      span: fallback.span,
     };
   }
 
-  private parseIndentedBlocks(): AST.Block[] {
+  private parseBlockBody(stopTypes: TokenType[]): AST.Block[] {
     const blocks: AST.Block[] = [];
 
-    if (this.check('INDENT')) {
-      this.advance();
-    }
-
-    while (!this.check('DEDENT') && !this.isAtEnd() && !this.check('HEADING')) {
+    while (!this.isAtEnd() && !this.check('HEADING')) {
+      if (stopTypes.includes(this.current().type)) {
+        break;
+      }
       this.skipNewlines();
       
-      if (this.check('DEDENT') || this.isAtEnd() || this.check('HEADING')) break;
+      if (this.isAtEnd() || this.check('HEADING') || stopTypes.includes(this.current().type)) break;
 
       const block = this.parseBlock();
       if (block) {
         blocks.push(block);
       }
-    }
-
-    if (this.check('DEDENT')) {
-      this.advance();
     }
 
     return blocks;
@@ -1899,33 +1904,9 @@ export class Parser {
     // Check for WITH
     if (this.check('WITH')) {
       this.advance(); // consume WITH
-      this.expect('COLON'); // WITH:
-
-      this.skipNewlines();
-
-      // Consume INDENT if present (WITH clause may be indented)
-      const hasIndent = this.check('INDENT');
-      if (hasIndent) {
-        this.advance();
-      }
-
-      // Parse WITH parameters as list items (like Input sections)
-      while (this.check('LIST_MARKER') && !this.isAtEnd()) {
-        this.advance(); // consume LIST_MARKER
-        const param = this.parseVariableDeclaration(true); // true for inWithClause
-        parameters.push(param);
-
-        this.skipNewlines();
-
-        // Stop if we hit a non-list-marker or heading
-        if (!this.check('LIST_MARKER') || this.check('HEADING')) {
-          break;
-        }
-      }
-
-      // Consume matching DEDENT if we consumed an INDENT
-      if (hasIndent && this.check('DEDENT')) {
-        this.advance();
+      if (this.check('COLON')) {
+        const paramBlock = this.parseParameterBlock();
+        parameters.push(...paramBlock.parameters);
       }
     }
 

@@ -19,24 +19,19 @@ context:
 
 ### 1. Scan for Signals
 
-FOR EACH $doc IN $docPaths:
-  ASYNC DELEGATE /scan $doc for staleness/ TO ~/agent/doc-scanner WITH:
-    ```md
-    Check for:
-    - missing APIs
-    - version mismatches
-    - broken examples
-    - dead links
-    ```
+FOR $doc IN $docPaths
+  ASYNC DELEGATE /scan $doc for staleness/ TO ~/agent/doc-scanner WITH #scan-context
+END
 
-Collect all results into $findings.
+DO /collect all results into $findings/
+
+## Scan Context
+
+Check for missing APIs, version mismatches, broken examples, and dead links.
 
 ### 2. Prioritize
 
-Sort $findings by impact on users:
-- Onboarding docs with issues are more urgent
-- High-traffic pages need faster fixes
-- Internal docs can wait longer
+DO /sort $findings by impact on users: onboarding docs with issues are most urgent; high-traffic pages need faster fixes; internal docs can wait longer/
 
 ### 3. Report
 
@@ -45,15 +40,19 @@ Write to $reportPath:
 ```md
 #### Needs Immediate Attention
 
-FOR EACH ($doc, $signals, $assessment) IN $findings:
-  IF $assessment = "critical" THEN:
-    - $doc: $signals
+FOR ($doc, $signals, $assessment) IN $findings
+  IF $assessment = "critical" THEN
+    $doc: $signals
+  END
+END
 
 #### Schedule for Review
 
-FOR EACH ($doc, $signals, $assessment) IN $findings:
-  IF $assessment = "warning" THEN:
-    - $doc: $signals
+FOR ($doc, $signals, $assessment) IN $findings
+  IF $assessment = "warning" THEN
+    $doc: $signals
+  END
+END
 
 #### Healthy
 

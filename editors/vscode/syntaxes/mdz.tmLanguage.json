@@ -8,15 +8,17 @@
     { "include": "#comment" },
     { "include": "#code-block" },
     { "include": "#heading" },
+    { "include": "#block-if-for-while" },
+    { "include": "#block-do" },
     { "include": "#keyword" },
     { "include": "#control-flow" },
     { "include": "#type-definition" },
     { "include": "#variable" },
     { "include": "#type" },
     { "include": "#reference" },
-    { "include": "#semantic-marker" },
     { "include": "#string" },
     { "include": "#template" },
+    { "include": "#semantic-marker" },
     { "include": "#number" },
     { "include": "#operator" },
     { "include": "#list-marker" }
@@ -47,17 +49,60 @@
     "control-flow": {
       "patterns": [
         {
-          "match": "\\b(FOR\\s+EACH|WHILE|IF|THEN|ELSE|BREAK|CONTINUE|RETURN|ASYNC|AWAIT|DO)\\b",
+          "match": "^\\s*(ELSE\\s+IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT)\\b",
           "name": "keyword.control.mdz"
         },
         {
-          "match": "\\b(DELEGATE|USE|EXECUTE|GOTO)\\b",
+          "match": "^\\s*(DELEGATE|USE|EXECUTE|GOTO)\\b",
           "name": "keyword.control.mdz"
         },
         {
-          "match": "\\b(IN|AND|OR|NOT|WITH|TO)\\b",
+          "match": "\\b(THEN|IN|AND|OR|NOT|WITH|TO)\\b",
           "name": "keyword.operator.word.mdz"
         }
+      ]
+    },
+    "block-if-for-while": {
+      "begin": "^\\s*(IF|FOR|WHILE)\\b",
+      "end": "^\\s*END\\b",
+      "name": "meta.block.control.mdz",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.mdz" }
+      },
+      "patterns": [
+        { "include": "#block-do" },
+        { "include": "#block-if-for-while" },
+        { "include": "#control-flow" },
+        { "include": "#type-definition" },
+        { "include": "#variable" },
+        { "include": "#type" },
+        { "include": "#reference" },
+        { "include": "#string" },
+        { "include": "#template" },
+        { "include": "#semantic-marker" },
+        { "include": "#number" },
+        { "include": "#operator" }
+      ]
+    },
+    "block-do": {
+      "begin": "^\\s*DO\\s*$",
+      "end": "^\\s*END\\b",
+      "name": "meta.block.do.mdz",
+      "beginCaptures": {
+        "0": { "name": "keyword.control.mdz" }
+      },
+      "patterns": [
+        { "include": "#block-if-for-while" },
+        { "include": "#control-flow" },
+        { "include": "#type-definition" },
+        { "include": "#variable" },
+        { "include": "#type" },
+        { "include": "#reference" },
+        { "include": "#string" },
+        { "include": "#template" },
+        { "include": "#semantic-marker" },
+        { "include": "#number" },
+        { "include": "#operator" }
       ]
     },
     "type-definition": {
@@ -128,8 +173,7 @@
           "match": "\\$\\{[^}]*\\}",
           "name": "variable.other.interpolated.mdz"
         },
-        { "include": "#variable" },
-        { "include": "#semantic-marker" }
+        { "include": "#variable" }
       ]
     },
     "number": {

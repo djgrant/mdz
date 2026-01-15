@@ -31,11 +31,11 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
   <p>Types enable tooling to check that modules fit together correctly:</p>
 
   <pre><code class="mdz"><span class="zen-comment">&lt;!-- In skill A --&gt;</span>
-- <span class="zen-variable">$validator</span>: <span class="zen-type">$Task</span>
+<span class="zen-variable">$validator</span>: <span class="zen-type">$Task</span>
 
 <span class="zen-comment">&lt;!-- In skill B (referencing A) --&gt;</span>
-<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/a</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/validate/</span>
-  - <span class="zen-variable">$validator</span> = 42  ← Error: <span class="zen-type">$Number</span> where <span class="zen-type">$Task</span> expected</code></pre>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/a</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/validate/</span> <span class="zen-keyword">WITH</span>:
+  validator: 42  ← Error: <span class="zen-type">$Number</span> where <span class="zen-type">$Task</span> expected</code></pre>
 
   <p>
     This mismatch is caught at build time—before the LLM ever sees it. 
@@ -87,9 +87,9 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <p>Use the <strong>type annotation</strong> (<code>:</code>) to declare variable types:</p>
 
-  <pre><code class="mdz">- <span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>                           <span class="zen-comment">&lt;!-- required parameter --&gt;</span>
-- <span class="zen-variable">$result</span>: <span class="zen-type">$Result</span> = <span class="zen-string">"pending"</span>          <span class="zen-comment">&lt;!-- typed with default --&gt;</span>
-- <span class="zen-variable">$transforms</span>: <span class="zen-type">$Task</span>[]                   <span class="zen-comment">&lt;!-- array of tasks --&gt;</span></code></pre>
+  <pre><code class="mdz"><span class="zen-variable">$task</span>: <span class="zen-type">$Task</span>                           <span class="zen-comment">&lt;!-- required parameter --&gt;</span>
+<span class="zen-variable">$result</span>: <span class="zen-type">$Result</span> = <span class="zen-string">"pending"</span>          <span class="zen-comment">&lt;!-- typed with default --&gt;</span>
+<span class="zen-variable">$transforms</span>: <span class="zen-type">$Task</span>[]                   <span class="zen-comment">&lt;!-- array of tasks --&gt;</span></code></pre>
 
   <h3>What Tooling Checks</h3>
 

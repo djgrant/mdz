@@ -146,17 +146,19 @@ import DocsLayout from "../../layouts/DocsLayout.astro";
 
   <h3>Conditional Execution</h3>
 
-  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"failure"</span> <span class="zen-keyword">THEN</span>:
-  - <span class="zen-keyword">GOTO</span> <span class="zen-reference">#recovery-strategy</span>
-<span class="zen-keyword">ELSE</span>:
-  - <span class="zen-keyword">GOTO</span> <span class="zen-reference">#main-workflow</span></code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = <span class="zen-string">"failure"</span> <span class="zen-keyword">THEN</span>
+  <span class="zen-keyword">GOTO</span> <span class="zen-reference">#recovery-strategy</span>
+<span class="zen-keyword">ELSE</span>
+  <span class="zen-keyword">GOTO</span> <span class="zen-reference">#main-workflow</span>
+<span class="zen-keyword">END</span></code></pre>
 
   <h3>Iterative Composition</h3>
 
-  <pre><code class="mdz"><span class="zen-keyword">FOR EACH</span> <span class="zen-variable">$skill</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skills</span>:
-  - Load <span class="zen-variable">$skill</span> source
-  - <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/orchestrate</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/coordinate execution/</span>
-  - Collect results</code></pre>
+  <pre><code class="mdz"><span class="zen-keyword">FOR</span> <span class="zen-variable">$skill</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$skills</span>
+  Load <span class="zen-variable">$skill</span> source
+  <span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/orchestrate</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/coordinate execution/</span>
+  Collect results
+<span class="zen-keyword">END</span></code></pre>
 
   <h2>Link Handling</h2>
 

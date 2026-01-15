@@ -15,17 +15,19 @@ input:
 
 ### 1. Analyze Dependencies
 
-FOR EACH $skill IN $skills:
-  - Load skill source using ~/skill/work-packages
-  - Extract uses from frontmatter
-  - Build dependency graph
+FOR $skill IN $skills
+  Load skill source using ~/skill/work-packages
+  Extract uses from frontmatter
+  Build dependency graph
+END
 
 ### 2. Validate Composition
 
 Detect cycles in the graph
-IF /cycle detected/ THEN:
-  - Report error
-  - Abort
+IF /cycle detected/ THEN
+  Report error
+  Abort
+END
 
 ### 3. Simplify
 
@@ -34,5 +36,5 @@ USE ~/skill/simplify TO /reduce complexity/
 ### 4. Execute
 
 USE ~/skill/orchestrate TO /execute workflow/ WITH:
-  - $skills
-  - $mode
+  skills: $skills
+  mode: $mode
