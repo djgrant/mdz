@@ -1,0 +1,65 @@
+# Getting Started
+
+Install MDZ and write your first skill in under 5 minutes.
+
+## Installation
+
+```bash
+npm install zenmarkdown
+```
+
+Or with your preferred package manager:
+
+```bash
+pnpm add zenmarkdown
+yarn add zenmarkdown
+```
+
+## Your First Skill
+
+Create a file named `greeting.mdz`:
+
+<!-- mdz-snippet: docs/snippets/getting-started/greeting.mdz -->
+
+## Validate Your Skill
+
+Check for errors before the LLM ever sees it:
+
+```bash
+mdz check greeting.mdz
+```
+
+This validates syntax, references, and type contracts. Any issues are flagged now—not discovered at runtime with a confused LLM.
+
+## Build with Preprocessing (Optional)
+
+If your skill uses macros (`{{IF}}` constructs) or you want reference inlining, run the build:
+
+```bash
+mdz compile greeting.mdz -o ./dist
+```
+
+Preprocessing resolves macros and optionally inlines referenced content. The output is still markdown—just with build-time decisions resolved.
+
+## Use Programmatically
+
+```typescript
+import { parse, compile } from 'zenmarkdown';
+
+// Parse to AST
+const ast = parse(source);
+console.log(ast.frontmatter?.name);
+
+// Validate and extract metadata
+const result = compile(source);
+if (result.diagnostics.some(d => d.severity === 'error')) {
+  console.error('Validation failed:', result.diagnostics);
+}
+```
+
+## Next Steps
+
+- [Syntax Reference](/docs/syntax) — Complete syntax documentation
+- [Type System](/docs/types) — Learn about type contracts
+- [Control Flow](/docs/control-flow) — FOR, WHILE, IF/THEN/ELSE, END
+- [Examples](/examples) — Real-world skill examples

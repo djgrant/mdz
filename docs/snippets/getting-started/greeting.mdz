@@ -1,0 +1,14 @@
+---
+name: greeting
+description: When you need to greet someone
+---
+
+## Input
+
+$name: $String
+
+## Workflow
+
+1. Generate a friendly greeting for $name
+2. Make it appropriately warm
+3. Return the greeting
