@@ -29,7 +29,7 @@ Check for errors before the LLM ever sees it:
 mdz check greeting.mdz
 ```
 
-This validates syntax, references, and type contracts. Any issues are flagged now—not discovered at runtime with a confused LLM.
+This validates syntax, references, and type contracts. Any issues are flagged now--not discovered at runtime with a confused LLM.
 
 ## Build with Preprocessing (Optional)
 
@@ -39,7 +39,7 @@ If your skill uses macros (`{{IF}}` constructs) or you want reference inlining, 
 mdz compile greeting.mdz -o ./dist
 ```
 
-Preprocessing resolves macros and optionally inlines referenced content. The output is still markdown—just with build-time decisions resolved.
+Preprocessing resolves macros and optionally inlines referenced content. The output is still markdown--just with build-time decisions resolved.
 
 ## Use Programmatically
 
@@ -59,7 +59,7 @@ if (result.diagnostics.some(d => d.severity === 'error')) {
 
 ## Next Steps
 
-- [Syntax Reference](/docs/syntax) — Complete syntax documentation
-- [Type System](/docs/types) — Learn about type contracts
-- [Control Flow](/docs/control-flow) — FOR, WHILE, IF/THEN/ELSE, END
-- [Examples](/examples) — Real-world skill examples
+- [Syntax Reference](/docs/syntax) -- Complete syntax documentation
+- [Type System](/docs/types) -- Learn about type contracts
+- [Control Flow](/docs/control-flow) -- FOR, WHILE, IF/THEN/ELSE, END
+- [Examples](/examples) -- Real-world skill examples

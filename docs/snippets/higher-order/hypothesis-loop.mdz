@@ -1,0 +1,10 @@
+WHILE NOT /success/ AND $iteration < $maxIterations DO
+  Form hypothesis
+  Run experiment
+  Observe results
+  IF /progress/ THEN
+    Refine
+  ELSE
+    Pivot
+  END
+END

@@ -1,7 +1,7 @@
 /**
  * Examples Tests
  * 
- * Validates all example files in examples/ directory compile without errors.
+ * Validates all example files in docs/examples compile without errors.
  * This ensures examples stay in sync with language changes.
  */
 
@@ -71,11 +71,12 @@ function findMdzFiles(dir: string): string[] {
 // ============================================================================
 
 // Handle both compiled (dist/tests/) and direct tsx execution
-const projectRoot = fs.existsSync(path.join(__dirname, '..', '..', 'examples'))
+const projectRoot = fs.existsSync(path.join(__dirname, '..', '..', 'docs', 'examples'))
   ? path.join(__dirname, '..', '..')
   : path.join(__dirname, '..');
 
-const examplesDir = path.join(projectRoot, 'examples');
+const examplesDir = path.join(projectRoot, 'docs', 'examples');
+const snippetsDir = path.join(projectRoot, 'docs', 'snippets');
 
 // Files that are intentionally broken (for testing error handling)
 const excludedFiles = new Set([
@@ -97,7 +98,7 @@ const filesByDir = new Map<string, string[]>();
 for (const file of allFiles) {
   const relativePath = path.relative(examplesDir, file);
   const parentDir = path.dirname(relativePath);
-  const dirKey = parentDir === '.' ? 'examples/' : `examples/${parentDir}/`;
+  const dirKey = parentDir === '.' ? 'docs/examples/' : `docs/examples/${parentDir}/`;
   
   if (!filesByDir.has(dirKey)) {
     filesByDir.set(dirKey, []);
@@ -154,6 +155,42 @@ describe('Summary', () => {
   
   test(`found ${allFiles.length} example files (${testedCount} tested, ${skippedCount} skipped)`, () => {
     assert(allFiles.length > 0, 'Should have at least one example file');
+  });
+});
+
+// ============================================================================
+// Snippet Validation Tests
+// ============================================================================
+
+console.log('\n=== MDZ Snippet Tests ===\n');
+
+const snippetFiles = fs.existsSync(snippetsDir) ? findMdzFiles(snippetsDir) : [];
+
+describe('docs/snippets/', () => {
+  for (const file of snippetFiles) {
+    const relativePath = path.relative(snippetsDir, file);
+    test(`${relativePath} parses without errors`, () => {
+      const source = fs.readFileSync(file, 'utf-8');
+      const result = compile(source, {
+        validateTypes: false,
+        validateReferences: false,
+      });
+
+      const errors = result.diagnostics.filter(d => d.severity === 'error');
+
+      if (errors.length > 0) {
+        const errorMessages = errors.map(e =>
+          `  Line ${e.span?.start?.line || '?'}: ${e.message}`
+        ).join('\n');
+        throw new Error(`Compilation errors:\n${errorMessages}`);
+      }
+    });
+  }
+});
+
+describe('Snippets Summary', () => {
+  test(`found ${snippetFiles.length} snippet files`, () => {
+    assert(snippetFiles.length > 0, 'Should have at least one snippet file');
   });
 });
 

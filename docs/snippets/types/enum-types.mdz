@@ -1,0 +1,3 @@
+$Strategy: "fast" | "thorough"
+$Result: "confirmed" | "refuted" | "inconclusive"
+$Priority: "low" | "medium" | "high" | "critical"

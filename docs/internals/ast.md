@@ -1,0 +1,162 @@
+# AST Structure
+
+MDZ uses a two-phase parsing approach: lexical analysis followed by recursive descent parsing. This page covers the lexer, parser, and AST node types.
+
+## Lexical Analysis
+
+The **lexer** tokenizes source text into a stream of tokens. It handles:
+
+- Indentation-based block structure
+- Markdown constructs (headings, lists, code blocks)
+- MDZ-specific tokens (variables, references, semantic markers)
+- Control flow keywords (FOR, WHILE, IF, etc.)
+
+### Lexer Token Examples
+
+Here's how the lexer tokenizes a simple MDZ snippet:
+
+<!-- mdz-snippet: docs/snippets/internals/ast/lexer-example.mdz -->
+
+This produces the following token stream (simplified):
+
+```json
+[FRONTMATTER_START '---'], [LOWER_IDENT 'name'], [COLON ':' ],
+[LOWER_IDENT 'example'], [FRONTMATTER_END '---'], [HEADING '## Types'],
+[TYPE_IDENT '$User'], [COLON ':'], [TEXT 'person with name and email'], [EOF]
+```
+
+### Indentation Stack Algorithm
+
+MDZ uses an indentation stack to handle Python-style block structure. The algorithm maintains a stack of indentation levels:
+
+- Start with stack = [0]
+- For each line, measure leading whitespace
+- If indent > current level: push new level, emit INDENT
+- If indent < current level: pop levels until match, emit DEDENT
+- Handle mixed tabs/spaces (tabs = 2 spaces)
+
+**Data structures:** Simple array stack for indent levels, position tracking for error reporting.
+
+**Edge cases handled:** Mixed tabs/spaces (tabs count as 2 spaces), empty lines (ignored), and inconsistent indentation (reported as errors).
+
+## Recursive Descent Parser
+
+The **parser** builds an Abstract Syntax Tree (AST) using recursive descent with the following grammar productions:
+
+### Grammar Productions
+
+```ebnf
+Document ::= Frontmatter? Section* EOF
+
+Frontmatter ::= FRONTMATTER_START FrontmatterContent* FRONTMATTER_END
+
+Section ::= HEADING Block*
+
+Block ::= TypeDefinition | VariableDeclaration | ControlFlow | Delegation | Prose
+
+TypeDefinition ::= TYPE_IDENT ASSIGN TypeExpr
+
+VariableDeclaration ::= DOLLAR_IDENT (COLON TypeReference)? (ASSIGN Expression)?
+
+ControlFlow ::= For | While | If | Do | Break | Continue | Return | Push
+
+For ::= FOR Pattern IN Expression (DO)? NEWLINE Block* END
+While ::= WHILE Condition (DO)? NEWLINE Block* END
+If ::= IF Condition (THEN)? NEWLINE Block* (ELSE IF Condition NEWLINE Block*)* (ELSE NEWLINE Block*)? END
+Do ::= DO SemanticMarker | DO NEWLINE Block* END
+
+Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral
+```
+
+The parser maintains state for:
+
+- **Loop depth** -- Counter for BREAK/CONTINUE validation (must be inside loops)
+- **Parse errors** -- Recoverable syntax issues collected in AST
+- **Source spans** -- Position tracking for error reporting and IDE features
+
+### Error Recovery Strategy
+
+The parser uses panic-mode error recovery: when a syntax error is encountered, it skips tokens until it finds a synchronization point (like NEWLINE or END), then continues parsing. This allows reporting multiple errors in a single pass rather than stopping at the first error.
+
+## AST Node Types
+
+The AST is a complete representation of the parsed document, with full type safety and source location tracking.
+
+### Core Types
+
+Every AST node extends `BaseNode` with a `kind` discriminant and `span` for source location tracking.
+
+The core interfaces are:
+
+- `frontmatter` -- Optional metadata (name, description)
+- `sections` -- Array of heading-based content sections
+- `errors` -- Parse errors encountered during parsing
+
+### Document Structure
+
+The root is a `Document` containing frontmatter and sections, with parse errors collected during parsing.
+
+Key document properties:
+
+- Frontmatter (name, description)
+- Type definitions (`$Type: ...`)
+- Variable declarations (`$var: $Type = value`)
+- Control flow (FOR, WHILE, IF/THEN/ELSE, END)
+- Composition keywords (USE, EXECUTE, DELEGATE, GOTO)
+- Links (`~/skill/name`, `~/agent/name`)
+- Anchors (`#section`)
+- Semantic markers (`/content/`, `$/name/`)
+
+### AST Construction Example
+
+For this MDZ input:
+
+<!-- mdz-snippet: docs/snippets/internals/ast/ast-example.mdz -->
+
+The parser produces this AST structure (simplified):
+
+- **Document** root with frontmatter and sections
+- **Frontmatter** containing metadata (name: calculator)
+- **Section** for "Input" with level 2 heading
+- **List** containing two VariableDeclaration nodes
+- **VariableDeclarations** for $x and $y with Number type annotations
+
+### Block Types
+
+Blocks represent the different constructs that can appear in sections: type definitions, variable declarations, control flow statements (FOR, WHILE, IF, DO), delegation, and prose content (paragraphs, code blocks, lists).
+
+### Expression Types
+
+Expressions handle values and computations: literals, variable references, function calls, skill/section references, semantic markers, and binary operations.
+
+```typescript
+type Expression =
+  | StringLiteral | NumberLiteral | BooleanLiteral
+  | VariableReference | FunctionCall | SkillReference
+  | BinaryExpression | TemplateLiteral | SemanticMarker;
+```
+
+### Type System
+
+MDZ's type system supports semantic types (descriptive), enums, compound types (tuples), arrays, functions, and type references.
+
+Type expressions include:
+
+- **SemanticType** -- Descriptive types like "user identifier" or "email address"
+- **EnumType** -- Fixed set of values like "admin | user | guest"
+- **CompoundType** -- Tuples like (String, Number)
+- **ArrayType** -- Collections like String[]
+- **FunctionType** -- Function signatures like (x, y) => Number
+- **TypeReference** -- References to defined types like $User
+
+### Control Flow
+
+Control structures are represented as executable blocks: FOR loops, WHILE loops, IF/THEN/ELSE statements, and BREAK/CONTINUE statements for loop control.
+
+Loop statements include:
+
+- **ForEachStatement** -- Sequential iteration over collections
+- **ParallelForEachStatement** -- Parallel iteration with optional merge strategies (collect/first/last)
+- **WhileStatement** -- Conditional loops
+- **IfStatement** -- Conditional execution with optional else blocks
+- **BreakStatement/ContinueStatement** -- Loop control flow

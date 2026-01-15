@@ -1,0 +1,2 @@
+$pathGenerator = $n => `output-$n.md`
+$formatter = ($item, $index) => `$index. $item`

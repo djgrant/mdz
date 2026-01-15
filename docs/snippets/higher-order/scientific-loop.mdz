@@ -1,0 +1,10 @@
+WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO
+  Design experiment and set success criteria
+  DELEGATE /run experiment/ TO ~/agent/experimenter WITH #experiment-prompt
+  Extract $observations and update master work package
+  IF $result = "progress" THEN
+    Commit changes, update hypothesis
+  ELSE
+    Revert if regression, revise hypothesis
+  END
+END

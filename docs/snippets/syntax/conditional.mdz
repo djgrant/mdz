@@ -1,0 +1,11 @@
+IF /condition/ THEN
+  Do this
+ELSE
+  Do that
+END
+
+IF $strategy = "accumulate" THEN
+  Validate incrementally
+ELSE
+  Collect all candidates
+END

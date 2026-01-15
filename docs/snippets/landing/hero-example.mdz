@@ -1,0 +1,22 @@
+---
+name: iterative-solver
+description: Hypothesis-driven problem solving
+
+types:
+  $Hypothesis: /a testable prediction/
+  $Outcome: "confirmed" | "refuted"
+
+input:
+  $problem: $String
+---
+
+## Workflow
+
+DELEGATE /initial research/ TO ~/agent/research
+WHILE NOT /problem solved/ DO
+  Formulate $hypothesis: $Hypothesis
+  USE ~/skill/experiment TO /test hypothesis/
+  IF $outcome = "confirmed" THEN
+    RETURN $solution
+  END
+END

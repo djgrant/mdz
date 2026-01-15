@@ -1,0 +1,164 @@
+# Validation
+
+MDZ uses a multi-stage validation pipeline to catch issues before runtime. The pipeline runs after parsing and includes concrete diagnostic examples.
+
+## Validation Pipeline Overview
+
+The validation pipeline consists of five stages, each catching different categories of issues:
+
+1. **Parse Validation** -- Syntax errors during parsing
+2. **Type Validation** -- Type reference resolution
+3. **Scope Validation** -- Variable definition and usage
+4. **Link Validation** -- File link and anchor validation
+5. **Dependency Analysis** -- Cross-file dependencies and cycles
+
+## Stage 1: Parse Validation
+
+During parsing, the parser detects and recovers from syntax errors:
+
+- Malformed frontmatter
+- Unclosed brackets or markers
+- Invalid indentation
+- Missing required tokens
+
+Parse errors are recoverable--the parser continues and attaches errors to the AST.
+
+### Example Parse Error
+
+For malformed frontmatter like:
+
+<!-- mdz-snippet: docs/snippets/internals/validation/parse-error.mdz -->
+
+The parser produces:
+
+- **Diagnostic:** E013 - Invalid frontmatter
+- **Message:** "Frontmatter section not properly closed"
+- **Span:** Lines 1-3, recoverable
+
+## Stage 2: Type Validation
+
+The compiler checks that all type references resolve:
+
+- Variable type annotations reference defined types
+- Built-in primitives (String, Number, Boolean) are automatically recognized
+- Undefined types trigger warnings (not errors, as semantic types are flexible)
+
+### Example Type Error
+
+For undefined type reference:
+
+<!-- mdz-snippet: docs/snippets/internals/validation/type-error.mdz -->
+
+Produces warning:
+
+- **Diagnostic:** W008 - Undefined type
+- **Message:** "Type 'UnknownType' is not defined"
+- **Span:** Position of 'UnknownType'
+
+## Stage 3: Scope Validation
+
+Variables must be defined before use:
+
+- Tracks variable declarations in scope
+- Validates variable references in expressions
+- Handles loop variables and block scoping
+- Semantic references (variables that represent concepts) are tracked but not strictly validated
+
+### Example Scope Error
+
+<!-- mdz-snippet: docs/snippets/internals/validation/scope-error.mdz -->
+
+Produces error:
+
+- **Diagnostic:** E007 - Undefined variable
+- **Message:** "Variable '$undefined_var' is not defined in scope"
+- **Span:** Position of '$undefined_var'
+
+## Stage 4: Link Validation
+
+Links and anchors must resolve:
+
+- Links like `~/skill/name` must point to existing files
+- Local anchors `#section` must exist in the current document
+- Cross-file anchors `~/skill/name#section` require the file and section to exist
+
+### Example Link Error
+
+<!-- mdz-snippet: docs/snippets/internals/validation/link-error.mdz -->
+
+If 'skill/advanced-math.mdz' doesn't exist, produces error:
+
+- **Diagnostic:** E009 - Undefined link target
+- **Message:** "File 'skill/advanced-math.mdz' does not exist"
+- **Span:** Position of '~/skill/advanced-math'
+
+## Stage 5: Dependency Analysis
+
+The compiler builds a dependency graph using DFS cycle detection:
+
+- Extracts dependencies from inline links (`~/skill/name`, etc.)
+- Detects circular dependencies that could cause infinite loops
+- Generates visualization data for `mdz graph`
+
+### Example Cycle Error
+
+If skill A uses B, B uses C, C uses A:
+
+- **Diagnostic:** E999 - Circular dependency
+- **Message:** "Circular dependency detected: A -> B -> C -> A"
+- **Span:** Location of the problematic reference
+
+## Error Codes Reference
+
+Complete list of validation error and warning codes:
+
+### Parse Errors (E001-E015)
+
+- **E001** -- Unexpected token
+- **E002** -- Expected token not found
+- **E003** -- Invalid indentation
+- **E004** -- Unclosed bracket
+- **E005** -- Unclosed semantic marker
+- **E006** -- Invalid control flow syntax
+- **E013** -- Invalid frontmatter
+- **E014** -- BREAK/CONTINUE outside loop
+
+### Semantic Errors (E007-E012)
+
+- **E007** -- Undefined variable reference
+- **E008** -- Undefined type reference (often warning)
+- **E009** -- Undefined link target
+- **E010** -- Undefined anchor
+- **E011** -- Duplicate definition
+- **E012** -- Invalid link format
+
+### Dependency Errors (E999)
+
+- **E999** -- Circular dependency detected
+
+### Warnings (W001-W010)
+
+- **W001** -- Link target may not exist
+- **W002** -- Unused variable
+- **W003** -- Unused type
+- **W008** -- Type not defined (semantic types are flexible)
+
+## Diagnostic Output Format
+
+Diagnostics are structured for both CLI and IDE consumption:
+
+```text
+skill.mdz:15:7 E007 Variable '$undefined_var' is not defined in scope
+  |
+15|   - $result = $undefined_var + 1
+  |               ^^^^^^^^^^^^^^^
+  |
+  = help: Did you mean '$defined_var'?
+```
+
+The format includes:
+
+- File location (file:line:column)
+- Error code and message
+- Source context with caret indicator
+- Suggestions when available

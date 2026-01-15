@@ -1,0 +1,3 @@
+DELEGATE /initial analysis/ TO ~/agent/explorer
+
+DELEGATE /architecture design/ TO ~/agent/architect

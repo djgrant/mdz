@@ -1,0 +1,179 @@
+# Compilation
+
+The MDZ compiler is validator-first: it validates without transforming the source. This page covers the compilation pipeline, metadata extraction, skill registry, and dependency graph construction.
+
+## Source = Output Principle
+
+**The LLM sees exactly what you write.** No code generation, no transpilation. The compiler:
+
+- Parses the source into AST
+- Extracts metadata and validates
+- Returns the original source unchanged
+- Provides diagnostics and dependency information
+
+## Metadata Extraction
+
+The compiler extracts structured information for tooling: document metadata, type definitions, variable declarations, skill/section references, and section anchors.
+
+Extracted metadata includes:
+
+- **Frontmatter** -- name, description
+- **Types** -- All type definitions with their expressions
+- **Variables** -- All variable declarations with types and values
+- **Links** -- All links (`~/skill/name`) throughout the document
+- **Anchors** -- All anchor references (`#section`)
+- **Sections** -- Section headings with their anchor IDs
+
+## Skill Registry
+
+For cross-skill validation, the compiler uses a skill registry that provides access to other skills' ASTs and content. The registry enables validating references, checking type consistency, and providing IDE completions.
+
+Registry operations:
+
+- **register(skill)** -- Add a skill to the registry
+- **get(name)** -- Retrieve a skill by name
+- **has(name)** -- Check if a skill exists
+- **getSections(name)** -- Get available sections for a skill
+
+## Dependency Graph Construction
+
+Dependencies are extracted automatically from links in the document:
+
+- **Links** -- Inline `~/skill/name`, `~/agent/name`, `~/tool/name` references
+- **Anchors** -- Cross-file anchors like `~/skill/name#section`
+
+**Note:** Dependencies are now inferred automatically. No `uses:` frontmatter block is needed.
+
+The compiler builds a dependency graph showing:
+
+- **Nodes** -- Skills this document depends on
+- **Edges** -- Relationship type (uses, reference)
+- **Cycles** -- Circular dependency chains (if any)
+
+### Cycle Detection Algorithm
+
+Uses DFS with three states: unvisited, visiting, visited. When encountering a node already in 'visiting' state, a cycle is detected.
+
+```typescript
+function detectCycles(graph: DependencyGraph): string[][] {
+  const cycles: string[][] = [];
+  const state = new Map<string, 'unvisited' | 'visiting' | 'visited'>();
+  const path: string[] = [];
+
+  function visit(node: string) {
+    if (state.get(node) === 'visiting') {
+      // Found a cycle
+      const cycleStart = path.indexOf(node);
+      cycles.push([...path.slice(cycleStart), node]);
+      return;
+    }
+    if (state.get(node) === 'visited') return;
+
+    state.set(node, 'visiting');
+    path.push(node);
+
+    for (const dep of graph.getDependencies(node)) {
+      visit(dep);
+    }
+
+    path.pop();
+    state.set(node, 'visited');
+  }
+
+  for (const node of graph.nodes) {
+    visit(node);
+  }
+  return cycles;
+}
+```
+
+### Graph Visualization
+
+The `mdz graph` command generates visualization data that can be rendered using various tools. The output includes:
+
+- DOT format for Graphviz
+- JSON format for custom renderers
+- Mermaid format for documentation
+
+## Diagnostic System
+
+Validation produces structured diagnostics with severity levels (error, warning, info), error codes, messages, and source locations.
+
+```typescript
+interface Diagnostic {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  message: string;
+  span: Span;
+  suggestions?: string[];
+}
+```
+
+Common error codes include:
+
+- **E007** -- Undefined variable reference
+- **E008** -- Undefined type reference
+- **E009** -- Undefined skill reference
+- **E010** -- Undefined section reference
+- **E999** -- Circular dependency detected
+
+## LSP Integration
+
+The Language Server Protocol implementation provides IDE features for MDZ files.
+
+### Document State Management
+
+The LSP server maintains state for each open document, including the parsed AST, extracted types and variables, references, and semantic markers for fast IDE operations.
+
+### Go-to-Definition
+
+Supports navigation to:
+
+- Variable declarations from usage sites
+- Type definitions from references
+- File definitions from `~/path/to/file` links
+- Section anchors from `#section` references
+
+### Hover Information
+
+Provides contextual information on hover:
+
+- Type definitions and their structure
+- Variable types and lambda status
+- File descriptions from frontmatter
+- Link and anchor targets
+
+### Autocompletion
+
+Context-aware completions for:
+
+- **Links** -- After `~/`, shows available files by folder
+- **Anchors** -- After `#`, shows available sections
+- **Variables/Types** -- After `$`, shows defined names
+- **Semantic markers** -- After semantic marker syntax, suggests common patterns
+- **Keywords** -- At line start, suggests control flow and composition keywords
+
+### Diagnostics
+
+Real-time validation in the editor:
+
+- Parse errors from the parser
+- Undefined link targets
+- Undefined anchors
+- Type and scope issues
+
+### Document Symbols
+
+Provides outline/symbol view:
+
+- Sections as top-level symbols
+- Types and variables as children
+- Control flow structures
+
+### Skill Registry Integration
+
+The LSP maintains a workspace skill registry:
+
+- Auto-registers files from open documents
+- Provides cross-file completions
+- Validates cross-file links

@@ -1,0 +1,148 @@
+# Skill Library
+
+Organize, version, and share your MDZ skills effectively to build reusable skill libraries.
+
+## Directory Structure
+
+Organize your skills in a simple hierarchy:
+
+```
+skills/
+|-- personal/
+|   |-- greeting.mdz
+|   `-- code-review.mdz
+|-- team/
+|   |-- project-specific.mdz
+|   `-- shared-workflows.mdz
+`-- shared/
+    |-- coding/
+    |   |-- typescript.mdz
+    |   `-- debugging.mdz
+    `-- communication/
+        |-- email.mdz
+        `-- meeting-notes.mdz
+```
+
+This structure separates personal, team, and shared skills. For larger organizations, consider domain-specific subdirectories or role-based folders.
+
+## Versioning Strategy
+
+Optional semantic versioning for skills when formal releases are needed:
+
+- **MAJOR** - Breaking changes
+- **MINOR** - New features, backward compatible
+- **PATCH** - Bug fixes
+
+Tag releases in git:
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+Include version in frontmatter (optional):
+
+```yaml
+---
+name: greeting
+version: 1.2.3
+description: A friendly greeting skill
+---
+```
+
+For casual use, versioning can be informal or omitted.
+
+## Sharing Patterns
+
+Share skills simply:
+
+- **Copy-Paste** - Direct file sharing for quick reuse
+- **Git Clone** - Clone repositories locally
+- **Git Subtrees** - Merge shared skills into your repo
+- **Git Submodules** - Reference external repos (complex, use cautiously)
+- **NPM Packages** - Package compiled skills for distribution
+
+Example with git subtree:
+
+```bash
+git subtree add --prefix skills/shared https://github.com/user/shared-skills.git main
+```
+
+## Skill Composition
+
+Build complex skills by composing simpler ones:
+
+<!-- mdz-snippet: docs/snippets/skill-library/complex-task.mdz -->
+
+Link to other skills to avoid duplication. Dependencies can be declared in `uses:` or inferred from links.
+
+## Dependency Management
+
+Skills link to other skills using link syntax. Dependencies can be inferred from links or declared explicitly:
+
+<!-- mdz-snippet: docs/snippets/skill-library/dependent-skill.mdz -->
+
+Check dependency graphs:
+
+```bash
+mdz graph your-skill.mdz
+```
+
+Avoid circular dependencies for clean architecture.
+
+## Team Workflows
+
+Treat skills as lightweight code:
+
+- Use branches for development
+- Review changes via pull requests
+- Validate in CI
+- Document usage
+
+CI example:
+
+```yaml
+name: Validate Skills
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm install -g @mdz/cli
+      - run: mdz check skills/**/*.mdz
+```
+
+## Skill Testing
+
+Test skills beyond validation:
+
+- Manual testing with sample inputs
+- Integration tests for compositions
+- Regression tests for updates
+
+Use MDZ CLI for basic checks:
+
+```bash
+mdz check your-skill.mdz
+```
+
+## Migration Paths
+
+Migrate personal skills to shared:
+
+1. Copy skill to shared directory
+2. Update frontmatter (add version, description)
+3. Commit to shared repo
+4. Update links in dependent files
+
+For team to organization-wide, repeat with broader access.
+
+## Skill Registry
+
+Discover skills:
+
+- GitHub search with "mdz-skill" topic
+- Community forums and discussions
+- Future: Official MDZ skill registry

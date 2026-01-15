@@ -30,7 +30,8 @@ editors/
 ├── vscode/            # VS Code extension (syntax highlighting)
 └── zed/               # Zed extension (syntax highlighting)
 
-examples/              # Example MDZ skills
+docs/                  # Markdown docs source of truth
+└── examples/          # Example MDZ skills
 tests/                 # Test suites
 website/               # Documentation website and playground
 ```

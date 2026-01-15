@@ -237,11 +237,11 @@ For the complete language specification, see:
 
 ## Examples
 
-See the `examples/` directory for real-world skills:
+See the `docs/examples/` directory for real-world skills:
 
-- [`the-scientist.mdz`](examples/the-scientist.mdz) - Hypothesis-driven iteration
-- [`debugger.mdz`](examples/debugger.mdz) - Skill execution tracing
-- [`skill-composer.mdz`](examples/skill-composer.mdz) - Multi-skill orchestration
+- [`scientific-method.mdz`](docs/examples/the-scientist/skill/scientific-method.mdz) - Hypothesis-driven iteration
+- [`steelmanning.mdz`](docs/examples/standalone-skills/skill/steelmanning.mdz) - Argument analysis
+- [`pr-reviewer.mdz`](docs/examples/pr-reviewer/agent/pr-reviewer.mdz) - Multi-skill orchestration
 
 ## Design Philosophy
 

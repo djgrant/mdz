@@ -1,0 +1,28 @@
+---
+name: code-review
+description: When reviewing code changes for quality and correctness
+---
+
+## Types
+
+$CodeChange: /a set of file modifications with context/
+$ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
+$Issue: /identified problem with severity and location/
+
+## Input
+
+$changes: $CodeChange
+$focus: $ReviewFocus[] = ["correctness", "maintainability"]
+
+## Context
+
+$issues: $Issue[] = []
+
+## Workflow
+
+Analyze $changes for patterns and potential issues
+FOR $area IN $focus
+  Apply focused review for $area
+  Add identified issues to $issues
+END
+USE ~/skill/reasoning TO /generate summary/

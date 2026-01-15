@@ -165,7 +165,7 @@ async function main() {
   // Load the PR reviewer skill
   const skillPath = path.resolve(
     __dirname,
-    "../../../examples/demo/pr-reviewer.mdz"
+    "../../../docs/examples/pr-reviewer/agent/pr-reviewer.mdz"
   );
   console.log(`Loading skill: ${skillPath}`);
 

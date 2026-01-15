@@ -1,0 +1,3 @@
+FOR $item IN $items
+  $result = $undefined_var + 1
+END

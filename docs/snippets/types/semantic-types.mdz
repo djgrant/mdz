@@ -1,0 +1,3 @@
+$Task: /any task that an agent can execute/
+$Hypothesis: /a testable prediction about what will solve the problem/
+$Observation: /data collected from running an experiment/

@@ -1,5 +1,5 @@
 /**
- * Build examples manifest from the examples/ directory
+ * Build examples manifest from the docs/examples directory
  *
  * Each subdirectory becomes a project.
  * Directory names are preserved as-is (no formatting).
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const rootDir = resolve(__dirname, '../..');
-const examplesDir = resolve(rootDir, 'examples');
+const examplesDir = resolve(rootDir, 'docs/examples');
 const outDir = resolve(__dirname, '../src/data');
 const outFile = resolve(outDir, 'examples.json');
 

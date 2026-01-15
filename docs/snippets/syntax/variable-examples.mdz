@@ -1,0 +1,3 @@
+$current: $FilePath = $SolutionPath(0)
+$iterations = 0
+$result: $ValidationResult

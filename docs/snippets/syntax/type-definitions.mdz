@@ -1,0 +1,5 @@
+$TypeName: /natural language description/
+
+$Task: /any task that an agent can execute/
+$Strategy: "accumulate" | "independent"
+$Result: "success" | "failure" | "pending"

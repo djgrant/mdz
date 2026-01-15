@@ -1,0 +1,3 @@
+$task: $Task                           <!-- required parameter -->
+$result: $Result = "pending"          <!-- typed with default -->
+$transforms: $Task[]                   <!-- array of tasks -->

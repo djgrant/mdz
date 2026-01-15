@@ -36,6 +36,8 @@ src/
     └── global.css         # Design tokens and base styles
 ```
 
+Example source files live in `docs/examples/` at the repo root and are ingested by `website/scripts/build-examples.js`.
+
 ## Design System
 
 The site uses a minimal design system with:

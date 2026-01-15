@@ -1,0 +1,5 @@
+IF $result = "failure" THEN
+  GOTO #recovery-strategy
+ELSE
+  GOTO #main-workflow
+END

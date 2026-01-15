@@ -4,6 +4,7 @@ This is the migration map from the legacy website docs to markdown files in `doc
 
 ## Source Pages
 
+- `website/src/pages/index.astro` -> `docs/landing.md`
 - `website/src/pages/docs/index.astro` -> `docs/index.md`
 - `website/src/pages/docs/getting-started.astro` -> `docs/getting-started.md`
 - `website/src/pages/docs/syntax.astro` -> `docs/syntax.md`
@@ -28,8 +29,12 @@ This is the migration map from the legacy website docs to markdown files in `doc
 - All MDZ code snippets will live in `docs/snippets/` as `.mdz` files.
 - Markdown pages will reference snippets via an import/include mechanism (TBD).
 
+## Status
+
+- All legacy docs pages have a corresponding markdown file in `docs/`.
+
 ## Open Tasks
 
 - Capture landing page and playground snippets into `docs/snippets/`.
-- Replace inline MDZ code blocks with snippet references.
 - Decide templating for snippet inclusion (MDX or custom preprocessor).
+- Build the minimal docs renderer + global highlighter switch.

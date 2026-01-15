@@ -1,0 +1,4 @@
+$functionName = $param => expression
+$functionName = ($a, $b) => expression   <!-- multiple params -->
+
+$solutionPath = $n => `output-$n.md`

@@ -1,0 +1,4 @@
+FOR $item IN $collection
+  Process $item
+  Next step
+END
