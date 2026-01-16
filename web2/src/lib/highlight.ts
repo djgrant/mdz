@@ -15,11 +15,8 @@ const keywordInlinePattern = /\b(THEN|IN|AND|OR|NOT|WITH|TO)\b/g;
 
 const basePatterns: Array<{ regex: RegExp; type: string }> = [
   { regex: /<!--[^\n]*?-->/g, type: "comment" },
-  { regex: /\$/g, type: "operator" },
   { regex: /\b-?\d+(?:\.\d+)?\b/g, type: "number" },
-  { regex: /\"[^\"]*\"/g, type: "string" },
-  { regex: /`[^`]*`/g, type: "string" },
-  { regex: /\$/g, type: "operator" },
+  { regex: /"[^"]*"/g, type: "string" },
   { regex: /\$\/[a-zA-Z0-9_-]+\//g, type: "semantic" },
   { regex: /\/[^\n\/]+\//g, type: "semantic" },
   { regex: /~\/[a-zA-Z0-9/_-]+(?:#[a-zA-Z0-9_-]+)?/g, type: "reference" },
@@ -41,23 +38,70 @@ function collectTokens(lines: string[]): Token[] {
 
   lines.forEach((line, lineIndex) => {
     const trimmed = line.trim();
+    const lineTokens: Token[] = [];
+
     if (trimmed === "---") {
-      tokens.push({ line: lineIndex, start: 0, length: line.length, type: "frontmatter" });
+      lineTokens.push({ line: lineIndex, start: 0, length: line.length, type: "frontmatter" });
       inFrontmatter = !inFrontmatter;
-      return;
     }
 
     if (inFrontmatter) {
-      tokens.push({ line: lineIndex, start: 0, length: line.length, type: "frontmatter" });
+      const frontmatterKeyMatch = line.match(/^\s*[A-Za-z0-9_-]+:/);
+      if (frontmatterKeyMatch) {
+        lineTokens.push({
+          line: lineIndex,
+          start: frontmatterKeyMatch.index ?? 0,
+          length: frontmatterKeyMatch[0].length,
+          type: "frontmatter",
+        });
+      }
+    }
+
+    if (!inFrontmatter && /^#+\s+/.test(line)) {
+      lineTokens.push({ line: lineIndex, start: 0, length: line.length, type: "heading" });
+      tokens.push(...lineTokens);
       return;
     }
 
-    if (/^#+\s+/.test(line)) {
-      tokens.push({ line: lineIndex, start: 0, length: line.length, type: "heading" });
-      return;
+    const templatePattern = /`[^`]*`/g;
+    const templateVarPattern = /\$\/[^\/\n]+\/|\$[A-Za-z][A-Za-z0-9-]*/g;
+    let templateMatch: RegExpExecArray | null;
+    templatePattern.lastIndex = 0;
+    while ((templateMatch = templatePattern.exec(line))) {
+      const fullStart = templateMatch.index;
+      const fullEnd = templateMatch.index + templateMatch[0].length;
+      const content = templateMatch[0].slice(1, -1);
+      let cursor = fullStart;
+      templateVarPattern.lastIndex = 0;
+      let varMatch: RegExpExecArray | null;
+      while ((varMatch = templateVarPattern.exec(content))) {
+        const varStart = fullStart + 1 + varMatch.index;
+        if (cursor < varStart) {
+          lineTokens.push({
+            line: lineIndex,
+            start: cursor,
+            length: varStart - cursor,
+            type: "string",
+          });
+        }
+        lineTokens.push({
+          line: lineIndex,
+          start: varStart,
+          length: varMatch[0].length,
+          type: varMatch[0].startsWith("$/") ? "semantic" : "variable",
+        });
+        cursor = varStart + varMatch[0].length;
+      }
+      if (cursor < fullEnd) {
+        lineTokens.push({
+          line: lineIndex,
+          start: cursor,
+          length: fullEnd - cursor,
+          type: "string",
+        });
+      }
     }
 
-    const lineTokens: Token[] = [];
     const allPatterns = [
       { regex: keywordPattern, type: "keyword" },
       { regex: keywordInlinePattern, type: "keyword" },
@@ -154,6 +198,9 @@ function mapLspType(type: string): string {
     case "link":
     case "anchor":
       return "reference";
+    case "frontmatter":
+    case "heading":
+      return type;
     default:
       return type;
   }

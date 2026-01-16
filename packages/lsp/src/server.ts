@@ -186,6 +186,8 @@ export class ZenLanguageServer {
     'semanticMarker',
     'link',
     'anchor',
+    'frontmatter',
+    'heading',
   ];
   private semanticTokenTypeIndex = new Map(
     this.semanticTokenTypes.map((type, index) => [type, index])
@@ -462,6 +464,15 @@ export class ZenLanguageServer {
     const tokens: Array<{ line: number; char: number; length: number; type: number; modifiers: number }> = [];
     const lineOffsets = this.buildLineOffsets(state.content);
     const codeLines = this.collectCodeBlockLines(state.ast);
+    const lines = state.content.split('\n');
+    const frontmatterLines = new Set<number>();
+    if (state.ast.frontmatter) {
+      const start = state.ast.frontmatter.span.start.line;
+      const end = state.ast.frontmatter.span.end.line;
+      for (let line = start; line <= end; line += 1) {
+        frontmatterLines.add(line);
+      }
+    }
 
     const addToken = (line: number, char: number, length: number, type: string): void => {
       if (length <= 0) return;
@@ -473,6 +484,116 @@ export class ZenLanguageServer {
     const addSpanToken = (span: AST.Span, type: string): void => {
       if (span.start.line !== span.end.line) return;
       addToken(span.start.line - 1, span.start.column, span.end.column - span.start.column, type);
+    };
+
+    const addLineToken = (lineIndex: number, length: number, type: string): void => {
+      if (length <= 0) return;
+      addToken(lineIndex, 0, length, type);
+    };
+
+    const addFrontmatterTokens = (): void => {
+      if (!state.ast.frontmatter) return;
+      const start = state.ast.frontmatter.span.start.line - 1;
+      const end = state.ast.frontmatter.span.end.line - 1;
+      for (let lineIndex = start; lineIndex <= end; lineIndex += 1) {
+        const line = lines[lineIndex] ?? '';
+        const trimmed = line.trim();
+        if (trimmed === '---') {
+          addLineToken(lineIndex, line.length, 'frontmatter');
+          continue;
+        }
+        const match = line.match(/^\s*[A-Za-z0-9_-]+:/);
+        if (match) {
+          addToken(lineIndex, match.index ?? 0, match[0].length, 'frontmatter');
+        }
+      }
+    };
+
+    const headingPattern = /^#+\s+/;
+    const inlineKeywordPattern = /\b(THEN|IN|WITH|TO)\b/g;
+
+    const addHeadingFromLine = (lineIndex: number, line: string): void => {
+      if (codeLines.has(lineIndex + 1) || frontmatterLines.has(lineIndex + 1)) return;
+      if (!headingPattern.test(line)) return;
+      addLineToken(lineIndex, line.length, 'heading');
+    };
+
+    const addInlineKeywordFromLine = (lineIndex: number, line: string): void => {
+      if (codeLines.has(lineIndex + 1) || frontmatterLines.has(lineIndex + 1)) return;
+      inlineKeywordPattern.lastIndex = 0;
+      let match: RegExpExecArray | null;
+      while ((match = inlineKeywordPattern.exec(line))) {
+        addToken(lineIndex, match.index, match[0].length, 'keyword');
+      }
+    };
+
+    const addTemplateTokensFromLine = (lineIndex: number, line: string): void => {
+      if (codeLines.has(lineIndex + 1)) return;
+      const templatePattern = /`[^`]*`/g;
+      const variablePattern = /\$\/[^\/\n]+\/|\$[A-Za-z][A-Za-z0-9-]*/g;
+      let templateMatch: RegExpExecArray | null;
+      templatePattern.lastIndex = 0;
+      while ((templateMatch = templatePattern.exec(line))) {
+        const fullStart = templateMatch.index;
+        const fullEnd = templateMatch.index + templateMatch[0].length;
+        const content = templateMatch[0].slice(1, -1);
+        let cursor = fullStart;
+        variablePattern.lastIndex = 0;
+        let varMatch: RegExpExecArray | null;
+        while ((varMatch = variablePattern.exec(content))) {
+          const varStart = fullStart + 1 + varMatch.index;
+          if (cursor < varStart) {
+            addToken(lineIndex, cursor, varStart - cursor, 'string');
+          }
+          addToken(lineIndex, varStart, varMatch[0].length, 'variable');
+          cursor = varStart + varMatch[0].length;
+        }
+        if (cursor < fullEnd) {
+          addToken(lineIndex, cursor, fullEnd - cursor, 'string');
+        }
+      }
+    };
+
+    const addFrontmatterInlineTokens = (lineIndex: number, line: string): void => {
+      if (!frontmatterLines.has(lineIndex + 1)) return;
+      if (line.trim() === '---') return;
+      const patterns: Array<{ regex: RegExp; type: string }> = [
+        { regex: /\$\/[^\/\n]+\//g, type: 'variable' },
+        { regex: /\$[A-Z][A-Za-z0-9]*/g, type: 'type' },
+        { regex: /\$[a-z][A-Za-z0-9-]*/g, type: 'variable' },
+        { regex: /"[^"]*"/g, type: 'string' },
+        { regex: /\/[^\n\/]+\//g, type: 'semanticMarker' },
+        { regex: /\b-?\d+(?:\.\d+)?\b/g, type: 'number' },
+      ];
+      for (const { regex, type } of patterns) {
+        let match: RegExpExecArray | null;
+        regex.lastIndex = 0;
+        while ((match = regex.exec(line))) {
+          addToken(lineIndex, match.index, match[0].length, type);
+        }
+      }
+    };
+
+    const addStringToken = (span: AST.Span): void => {
+      if (span.start.line !== span.end.line) return;
+      const lineIndex = span.start.line - 1;
+      const line = lines[lineIndex] ?? '';
+      let start = span.start.column;
+      let length = span.end.column - span.start.column;
+
+      if (start >= 1 && line[start - 1] === '"') {
+        start -= 1;
+        length += 1;
+      } else if (start >= 2 && line[start - 2] === '"') {
+        start -= 2;
+        length += 2;
+      }
+
+      if (start + length < line.length && line[start + length] === '"') {
+        length += 1;
+      }
+
+      addToken(lineIndex, start, length, 'string');
     };
 
     const addKeywordFromLine = (lineIndex: number, line: string): void => {
@@ -502,10 +623,10 @@ export class ZenLanguageServer {
       }
       if (index < 0) return;
       const pos = this.offsetToPosition(startOffset + index, lineOffsets);
-      addToken(pos.line, pos.character, operator.length, 'operator');
+      const tokenType = operator === 'AND' || operator === 'OR' || operator === 'NOT' ? 'keyword' : 'operator';
+      addToken(pos.line, pos.character, operator.length, tokenType);
     };
 
-    const lines = state.content.split('\n');
     const addNameToken = (
       lineIndex: number,
       startColumn: number,
@@ -545,6 +666,47 @@ export class ZenLanguageServer {
       addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, 'type', false);
     };
 
+    const addEnumTokens = (expr: AST.EnumType): void => {
+      if (expr.span.start.line !== expr.span.end.line) return;
+      const lineIndex = expr.span.start.line - 1;
+      const line = lines[lineIndex] ?? '';
+      const start = Math.max(0, expr.span.start.column - 2);
+      const end = Math.min(line.length, expr.span.end.column + 2);
+      if (end <= start) return;
+      const stringPattern = /"[^"]*"/g;
+      let match: RegExpExecArray | null;
+      while ((match = stringPattern.exec(line))) {
+        const tokenStart = match.index;
+        const tokenEnd = match.index + match[0].length;
+        if (tokenStart >= start && tokenEnd <= end) {
+          addToken(lineIndex, tokenStart, match[0].length, 'string');
+        }
+      }
+    };
+
+    const collectTypeExprTokens = (expr: AST.TypeExpr): void => {
+      switch (expr.kind) {
+        case 'SemanticType':
+          addSpanToken(expr.span, 'semanticMarker');
+          break;
+        case 'EnumType':
+          addEnumTokens(expr);
+          break;
+        case 'CompoundType':
+          expr.elements.forEach(collectTypeExprTokens);
+          break;
+        case 'ArrayType':
+          collectTypeExprTokens(expr.elementType);
+          break;
+        case 'FunctionType':
+          collectTypeExprTokens(expr.returnType);
+          break;
+        case 'TypeReference':
+          addSpanToken(expr.span, 'type');
+          break;
+      }
+    };
+
     const collectExpressionTokens = (expr: AST.Expression): void => {
       switch (expr.kind) {
         case 'VariableReference':
@@ -554,7 +716,7 @@ export class ZenLanguageServer {
           addSpanToken(expr.span, 'variable');
           break;
         case 'StringLiteral':
-          addSpanToken(expr.span, 'string');
+          addStringToken(expr.span);
           break;
         case 'NumberLiteral':
           addSpanToken(expr.span, 'number');
@@ -632,6 +794,7 @@ export class ZenLanguageServer {
         switch (block.kind) {
           case 'TypeDefinition':
             addTypeNameToken(block.span, block.name);
+            collectTypeExprTokens(block.typeExpr);
             break;
           case 'VariableDeclaration':
             addVariableNameToken(block.span, block.name);
@@ -759,8 +922,14 @@ export class ZenLanguageServer {
       collectBlockTokens(section.content);
     }
 
+    addFrontmatterTokens();
+
     for (let i = 0; i < lines.length; i += 1) {
+      addHeadingFromLine(i, lines[i]);
       addKeywordFromLine(i, lines[i]);
+      addInlineKeywordFromLine(i, lines[i]);
+      addTemplateTokensFromLine(i, lines[i]);
+      addFrontmatterInlineTokens(i, lines[i]);
     }
 
     tokens.sort((a, b) => (a.line - b.line) || (a.char - b.char));

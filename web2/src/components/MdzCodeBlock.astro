@@ -15,13 +15,26 @@ const blockId = `mdz-${Math.abs(hash)}`;
 
 <div class="mdz-code-block" data-mdz-block data-mdz-id={blockId}>
   <div class="mdz-code-toolbar">
-    <div class="mdz-tabs" role="tablist" aria-label="Highlight mode">
-      <button class="mdz-tab is-active" type="button" data-mdz-tab="textmate">TextMate</button>
-      <button class="mdz-tab" type="button" data-mdz-tab="monarch">Monarch</button>
-      <button class="mdz-tab" type="button" data-mdz-tab="lsp">LSP</button>
+    <div class="mdz-toolbar-left">
+      <span class="mdz-toolbar-title">MDZ</span>
     </div>
-    <div class="mdz-actions">
-      <button type="button" data-mdz-compare>Compare</button>
+    <div class="mdz-toolbar-right">
+      <button class="mdz-settings" type="button" aria-label="Open code settings" data-mdz-settings>
+        <span aria-hidden="true">⚙</span>
+      </button>
+      <div class="mdz-menu" data-mdz-menu>
+        <div class="mdz-menu-section">
+          <div class="mdz-menu-label">Highlight</div>
+          <div class="mdz-tabs" role="tablist" aria-label="Highlight mode">
+            <button class="mdz-tab is-active" type="button" data-mdz-tab="textmate">TextMate</button>
+            <button class="mdz-tab" type="button" data-mdz-tab="monarch">Monarch</button>
+            <button class="mdz-tab" type="button" data-mdz-tab="lsp">LSP</button>
+          </div>
+        </div>
+        <div class="mdz-menu-section">
+          <button class="mdz-menu-button" type="button" data-mdz-compare>Compare</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="mdz-code-panel mdz-mode-textmate is-active" data-mdz-panel="textmate">
@@ -80,6 +93,8 @@ const blockId = `mdz-${Math.abs(hash)}`;
     const tabs = Array.from(block.querySelectorAll("[data-mdz-tab]"));
     const panels = Array.from(block.querySelectorAll("[data-mdz-panel]"));
     const compareButton = block.querySelector("[data-mdz-compare]");
+    const settingsButton = block.querySelector("[data-mdz-settings]");
+    const menu = block.querySelector("[data-mdz-menu]");
     const modal = block.querySelector("[data-mdz-modal]");
     const modalBody = block.querySelector("[data-mdz-modal-body]");
     const lspPanel = block.querySelector("[data-mdz-modal-panel=\"lsp\"]");
@@ -124,6 +139,7 @@ const blockId = `mdz-${Math.abs(hash)}`;
         localStorage.setItem(storageKey, mode);
         setMode(mode);
         window.dispatchEvent(new CustomEvent("mdz-highlight-change", { detail: mode }));
+        menu?.classList.remove("is-open");
       });
     });
 
@@ -136,6 +152,7 @@ const blockId = `mdz-${Math.abs(hash)}`;
 
     compareButton?.addEventListener("click", () => {
       modal?.classList.add("is-open");
+      menu?.classList.remove("is-open");
     });
 
     closeButton?.addEventListener("click", () => {
@@ -155,6 +172,17 @@ const blockId = `mdz-${Math.abs(hash)}`;
         localStorage.setItem(layoutKey, layout);
         setLayout(layout);
       });
+    });
+
+    settingsButton?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      menu?.classList.toggle("is-open");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!menu?.classList.contains("is-open")) return;
+      if (menu.contains(event.target) || settingsButton?.contains(event.target)) return;
+      menu.classList.remove("is-open");
     });
   })();
 </script>

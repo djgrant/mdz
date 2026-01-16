@@ -116,10 +116,16 @@ export class Lexer {
       return;
     }
 
-    // Heading
+    // Heading (only when followed by space after hashes)
     if (this.column === 0 && char === '#') {
-      this.scanHeading();
-      return;
+      let offset = 0;
+      while (this.peekAt(offset) === '#') {
+        offset += 1;
+      }
+      if (this.peekAt(offset) === ' ') {
+        this.scanHeading();
+        return;
+      }
     }
 
     // List marker
@@ -176,7 +182,7 @@ export class Lexer {
 
     // v0.8: Anchor references: #section (same-file reference)
     // Must come before hash identifier scanning for inline anchors
-    if (char === '#' && this.column > 0) {
+    if (char === '#') {
       const result = this.tryScanAnchor();
       if (result) return;
     }
@@ -479,7 +485,8 @@ export class Lexer {
 
     // Build token value as JSON
     const value = JSON.stringify({ path, anchor });
-    this.addToken('LINK', value);
+    const rawLength = this.pos - startPos;
+    this.addToken('LINK', value, rawLength);
     return true;
   }
 
@@ -537,7 +544,8 @@ export class Lexer {
       return false;
     }
 
-    this.addToken('ANCHOR', name);
+    const rawLength = this.pos - startPos;
+    this.addToken('ANCHOR', name, rawLength);
     return true;
   }
 
@@ -732,8 +740,8 @@ export class Lexer {
   }
   private isAlphaNumeric(c: string): boolean { return this.isAlpha(c) || this.isDigit(c); }
   
-  private addToken(type: TokenType, value: string): void {
-    const len = value.length;
+  private addToken(type: TokenType, value: string, length: number = value.length): void {
+    const len = length;
     this.tokens.push({
       type, value,
       span: createSpan(this.line, this.column - len, this.pos - len, this.line, this.column, this.pos),
