@@ -402,7 +402,11 @@ export class Compiler {
       case 'DoStatement':
         // v0.9: Extract instruction content
         if (block.instruction) {
-          this.extractFromExpression(block.instruction);
+          this.sourceMap.push({
+            source: block.instruction.span,
+            type: 'semantic',
+            name: block.instruction.content,
+          });
         }
         if (block.body) {
           this.extractFromBlocks(block.body);
@@ -524,12 +528,6 @@ export class Compiler {
       } else if (content.kind === 'Anchor') {
         // v0.8: Anchor reference (#section)
         this.extractAnchorReference(content);
-      } else if (content.kind === 'SemanticMarker') {
-        this.sourceMap.push({
-          source: content.span,
-          type: 'semantic',
-          name: content.content,
-        });
       } else if (content.kind === 'InferredVariable') {
         // InferredVariable nodes ($/name/) are intentionally unresolved
         // They don't need extraction - the LLM infers them at runtime
@@ -563,7 +561,7 @@ export class Compiler {
       this.extractLinkReference(deleg.target);
     }
     
-    // Extract from task semantic marker (optional in v0.8.1)
+    // Extract from task semantic span (optional in v0.8.1)
     if (deleg.task) {
       this.sourceMap.push({
         source: deleg.task.span,
@@ -597,7 +595,7 @@ export class Compiler {
     // Extract from skill link (~/skill/x)
     this.extractLinkReference(stmt.link);
     
-    // Extract from task semantic marker
+    // Extract from task semantic span
     this.sourceMap.push({
       source: stmt.task.span,
       type: 'semantic',
@@ -624,7 +622,7 @@ export class Compiler {
     // Extract from tool link (~/tool/x)
     this.extractLinkReference(stmt.link);
     
-    // Extract from task semantic marker
+    // Extract from task semantic span
     this.sourceMap.push({
       source: stmt.task.span,
       type: 'semantic',
@@ -683,13 +681,6 @@ export class Compiler {
         break;
       case 'Anchor':
         this.extractAnchorReference(expr);
-        break;
-      case 'SemanticMarker':
-        this.sourceMap.push({
-          source: expr.span,
-          type: 'semantic',
-          name: expr.content,
-        });
         break;
       case 'InferredVariable':
         // InferredVariable ($/name/) nodes are intentionally unresolved
@@ -856,13 +847,6 @@ export class Compiler {
             if (!this.definedVariables.has(content.name)) {
               usedBeforeDefined.add(content.name);
             }
-          } else if (content.kind === 'SemanticMarker') {
-            // Validate $var references inside semantic markers
-            for (const interpolation of content.interpolations) {
-              if (!this.definedVariables.has(interpolation.name)) {
-                usedBeforeDefined.add(interpolation.name);
-              }
-            }
           }
           // InferredVariable ($/name/) nodes are intentionally unresolved
           // They don't need scope validation - the LLM infers them at runtime
@@ -923,13 +907,6 @@ export class Compiler {
       // InferredVariable ($/name/) nodes are intentionally unresolved
       // They don't need scope validation - the LLM infers them at runtime
       // Do nothing - this is by design
-    } else if (expr.kind === 'SemanticMarker') {
-      // Validate $var references inside semantic markers
-      for (const interpolation of expr.interpolations) {
-        if (!this.definedVariables.has(interpolation.name)) {
-          usedBeforeDefined.add(interpolation.name);
-        }
-      }
     } else if (expr.kind === 'BinaryExpression') {
       this.checkExpressionScope(expr.left, usedBeforeDefined);
       this.checkExpressionScope(expr.right, usedBeforeDefined);

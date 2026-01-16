@@ -3,7 +3,7 @@ name: scientific-method
 description: When orchestrating hypothesis-driven iteration
 
 types:
-  $Hypothesis: /a testable prediction about what will solve the problem/
+  $Hypothesis: a testable prediction about what will solve the problem
   $Result: "confirmed" | "refuted" | "inconclusive"
 
 input:
@@ -18,10 +18,10 @@ context:
 
 ## Workflow
 
-WHILE NOT /diminishing returns/ AND $iteration < $maxIterations DO
+WHILE NOT diminishing returns AND $iteration < $maxIterations DO
   Formulate $hypothesis based on $problem
   Design experiment to test $hypothesis
-  USE ~/skill/work-packages TO /execute experiment/
+  USE ~/skill/work-packages TO execute experiment
   Evaluate $result from experiment
   IF $result = "confirmed" THEN
     Commit changes

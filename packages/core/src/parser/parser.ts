@@ -730,6 +730,61 @@ export class Parser {
     };
   }
 
+  private parseSemanticText(stopTypes: TokenType[]): {
+    content: string;
+    span: AST.Span;
+    interpolations: AST.VariableReference[];
+  } {
+    const start = this.current();
+    const interpolations: AST.VariableReference[] = [];
+    let end: Token | null = null;
+
+    while (!this.isAtEnd() && !stopTypes.includes(this.current().type)) {
+      const token = this.advance();
+      end = token;
+      if (token.type === 'DOLLAR_IDENT') {
+        interpolations.push({
+          kind: 'VariableReference',
+          name: token.value.slice(1),
+          span: token.span,
+        });
+      }
+    }
+
+    if (!end) {
+      return { content: '', span: start.span, interpolations: [] };
+    }
+
+    const content = this.source.slice(start.span.start.offset, end.span.end.offset).trim();
+
+    return {
+      content,
+      span: AST.mergeSpans(start.span, end.span),
+      interpolations,
+    };
+  }
+
+  private parseSemanticSpan(stopTypes: TokenType[]): AST.SemanticMarker {
+    const { content, span, interpolations } = this.parseSemanticText(stopTypes);
+
+    return {
+      kind: 'SemanticMarker',
+      content,
+      interpolations,
+      span,
+    };
+  }
+
+  private parseSemanticTypeAnnotation(stopTypes: TokenType[]): AST.SemanticType {
+    const { content, span } = this.parseSemanticText(stopTypes);
+
+    return {
+      kind: 'SemanticType',
+      description: content,
+      span,
+    };
+  }
+
   // ==========================================================================
   // Variables
   // ==========================================================================
@@ -765,15 +820,8 @@ export class Parser {
           name: typeToken.value.slice(1),
           span: typeToken.span,
         };
-      } else if (this.check('SEMANTIC_MARKER')) {
-        // Support $var: /semantic description/ = value syntax
-        const semanticToken = this.advance();
-        const description = semanticToken.value.slice(1, -1); // Remove /slashes/
-        typeAnnotation = {
-          kind: 'SemanticType',
-          description,
-          span: semanticToken.span,
-        };
+      } else {
+        typeAnnotation = this.parseSemanticTypeAnnotation(['ASSIGN', 'NEWLINE', 'END', 'ELSE']);
       }
     }
 
@@ -962,10 +1010,6 @@ export class Parser {
       return this.parseAnchor();
     }
 
-    if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
-      return this.parseSemanticMarker();
-    }
-
     if (this.check('INFERRED_VAR')) {
       return this.parseInferredVariable();
     }
@@ -1052,8 +1096,6 @@ export class Parser {
           name: varToken.value.slice(1),
           span: varToken.span,
         });
-      } else if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
-        parts.push(this.parseSemanticMarker());
       } else if (this.check('INFERRED_VAR')) {
         parts.push(this.parseInferredVariable());
       } else {
@@ -1111,64 +1153,6 @@ export class Parser {
       kind: 'Anchor',
       name: token.value,
       span: token.span,
-    };
-  }
-
-  private parseSemanticMarker(): AST.SemanticMarker {
-    // Handle new /content/ syntax (SEMANTIC_MARKER token)
-    if (this.check('SEMANTIC_MARKER')) {
-      const token = this.advance();
-      // Extract content from /content/ - remove leading and trailing slashes
-      const content = token.value.slice(1, -1);
-      
-      // Extract any embedded $variables from the content
-      const interpolations: AST.VariableReference[] = [];
-      const varRegex = /\$([a-zA-Z][a-zA-Z0-9_-]*)/g;
-      let match;
-      while ((match = varRegex.exec(content)) !== null) {
-        interpolations.push({
-          kind: 'VariableReference',
-          name: match[1],
-          span: token.span, // Approximate span
-        });
-      }
-      
-      return {
-        kind: 'SemanticMarker',
-        content,
-        interpolations,
-        span: token.span,
-      };
-    }
-    
-    // Handle legacy {~~content} syntax (SEMANTIC_OPEN token)
-    const start = this.advance();
-    let content = '';
-    const interpolations: AST.VariableReference[] = [];
-
-    while (!this.check('SEMANTIC_CLOSE') && !this.isAtEnd()) {
-      if (this.check('SEMANTIC_CONTENT')) {
-        content += this.advance().value;
-      } else if (this.check('DOLLAR_IDENT')) {
-        const varToken = this.advance();
-        content += varToken.value;
-        interpolations.push({
-          kind: 'VariableReference',
-          name: varToken.value.slice(1),
-          span: varToken.span,
-        });
-      } else {
-        content += this.advance().value;
-      }
-    }
-
-    const end = this.expect('SEMANTIC_CLOSE');
-
-    return {
-      kind: 'SemanticMarker',
-      content,
-      interpolations,
-      span: AST.mergeSpans(start.span, end?.span || this.previous().span),
     };
   }
 
@@ -1238,8 +1222,6 @@ export class Parser {
       // v0.8: link-based references
       !this.check('LINK') &&
       !this.check('ANCHOR') &&
-      !this.check('SEMANTIC_OPEN') &&
-      !this.check('SEMANTIC_MARKER') &&
       !this.check('INFERRED_VAR') &&
       !this.check('DOLLAR_IDENT') &&
       !this.check('TYPE_IDENT')
@@ -1448,11 +1430,11 @@ export class Parser {
   private parseDoStatement(): AST.DoStatement {
     const token = this.advance();  // consume DO
 
-    if (this.check('SEMANTIC_MARKER')) {
+    if (!this.check('NEWLINE')) {
       if (this.blockDepth > 0) {
         this.error('E005', 'Single-line DO is only valid at top level');
       }
-      const instruction = this.parseSemanticMarker();
+      const instruction = this.parseSemanticSpan(['NEWLINE', 'EOF']);
       return {
         kind: 'DoStatement',
         instruction,
@@ -1496,10 +1478,11 @@ export class Parser {
     
     this.expect('DELEGATE');
     
-    // Task is optional: /semantic marker/
+    // Task is optional positional span
     let task: AST.SemanticMarker | undefined;
-    if (this.check('SEMANTIC_MARKER')) {
-      task = this.parseSemanticMarker();
+    const taskStopTokens: TokenType[] = ['TO', 'WITH', 'COLON', 'NEWLINE', 'END', 'EOF'];
+    if (!taskStopTokens.includes(this.current().type)) {
+      task = this.parseSemanticSpan(taskStopTokens);
     }
     
     // v0.9: TO is optional
@@ -1536,7 +1519,7 @@ export class Parser {
   }
 
   // v0.8: USE statement for skill activation
-  // Syntax: USE ~/skill/x TO /task/
+  // Syntax: USE ~/skill/x TO task
   private parseUseStatement(): AST.UseStatement {
     const start = this.advance();  // consume USE
     
@@ -1546,8 +1529,8 @@ export class Parser {
     // Expect TO keyword
     this.expect('TO');
     
-    // Parse task: /semantic marker/
-    const task = this.parseSemanticMarker();
+    // Parse task: positional semantic span
+    const task = this.parseSemanticSpan(['COLON', 'NEWLINE', 'EOF']);
     
     // Optional parameter block with colon
     let parameters: AST.ParameterBlock | undefined;
@@ -1565,7 +1548,7 @@ export class Parser {
   }
 
   // v0.8: EXECUTE statement for tool invocation
-  // Syntax: EXECUTE ~/tool/x TO /action/
+  // Syntax: EXECUTE ~/tool/x TO action
   private parseExecuteStatement(): AST.ExecuteStatement {
     const start = this.advance();  // consume EXECUTE
     
@@ -1575,8 +1558,8 @@ export class Parser {
     // Expect TO keyword
     this.expect('TO');
     
-    // Parse task: /semantic marker/
-    const task = this.parseSemanticMarker();
+    // Parse task: positional semantic span
+    const task = this.parseSemanticSpan(['NEWLINE', 'EOF']);
     
     return {
       kind: 'ExecuteStatement',
@@ -1686,6 +1669,40 @@ export class Parser {
     return this.parseOrCondition();
   }
 
+  private isConditionStop(type: TokenType): boolean {
+    return ['AND', 'OR', 'THEN', 'DO', 'NEWLINE', 'END', 'ELSE', 'EOF'].includes(type);
+  }
+
+  private hasComparisonOperatorAhead(): boolean {
+    let sawVariable = false;
+    let i = 0;
+    while (true) {
+      const token = this.peek(i);
+      if (!token) return false;
+      if (this.isConditionStop(token.type)) {
+        return false;
+      }
+      if (token.type === 'DOLLAR_IDENT' || token.type === 'TYPE_IDENT') {
+        sawVariable = true;
+      }
+      if (sawVariable && ['ASSIGN', 'NEQ', 'LT', 'GT', 'LTE', 'GTE'].includes(token.type)) {
+        return true;
+      }
+      i += 1;
+    }
+  }
+
+  private parseSemanticConditionSpan(negated: boolean): AST.SemanticCondition {
+    const { content, span } = this.parseSemanticText(['AND', 'OR', 'THEN', 'DO', 'NEWLINE', 'END', 'ELSE', 'EOF']);
+
+    return {
+      kind: 'SemanticCondition',
+      text: content,
+      negated,
+      span,
+    };
+  }
+
   private parseOrCondition(): AST.Condition {
     let left = this.parseAndCondition();
 
@@ -1728,16 +1745,6 @@ export class Parser {
       this.advance();
     }
 
-    if (this.check('SEMANTIC_MARKER')) {
-      const marker = this.parseSemanticMarker();
-      return {
-        kind: 'SemanticCondition',
-        text: marker.content,
-        negated,
-        span: marker.span,
-      };
-    }
-
     if (this.check('LPAREN')) {
       this.advance();
       const cond = this.parseCondition();
@@ -1745,16 +1752,16 @@ export class Parser {
       return cond;
     }
 
-    if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
+    if ((this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) && this.hasComparisonOperatorAhead()) {
       const left = this.parseVariableReference();
-      
-      if (this.check('ASSIGN') || this.check('NEQ') || 
+
+      if (this.check('ASSIGN') || this.check('NEQ') ||
           this.check('LT') || this.check('GT') ||
           this.check('LTE') || this.check('GTE')) {
         const opToken = this.advance();
         const op = this.tokenToOperator(opToken.type);
         const right = this.parsePrimary();
-        
+
         return {
           kind: 'DeterministicCondition',
           left,
@@ -1763,25 +1770,9 @@ export class Parser {
           span: AST.mergeSpans(left.span, right.span),
         };
       }
-
-      this.error('E005', 'Deterministic conditions require a comparison operator');
-      return {
-        kind: 'SemanticCondition',
-        text: '$' + (left as AST.VariableReference).name,
-        negated,
-        span: left.span,
-      };
     }
 
-    this.error('E005', 'Semantic conditions must use /.../');
-    const fallback = this.current();
-    this.advance();
-    return {
-      kind: 'SemanticCondition',
-      text: fallback.value,
-      negated,
-      span: fallback.span,
-    };
+    return this.parseSemanticConditionSpan(negated);
   }
 
   private parseBlockBody(stopTypes: TokenType[]): AST.Block[] {
@@ -1818,8 +1809,6 @@ export class Parser {
         content.push(this.parseLink());
       } else if (this.check('ANCHOR')) {
         content.push(this.parseAnchor());
-      } else if (this.check('SEMANTIC_OPEN') || this.check('SEMANTIC_MARKER')) {
-        content.push(this.parseSemanticMarker());
       } else if (this.check('INFERRED_VAR')) {
         content.push(this.parseInferredVariable());
       } else if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {

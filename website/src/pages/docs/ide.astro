@@ -31,10 +31,14 @@ const highlighterSources = [
   },
 ];
 
-const readRepoFile = async (relativePath) =>
+const readRepoFile = async (relativePath: string) =>
   readFile(path.join(repoRoot, relativePath), 'utf8');
 
-const extractMarkedBlock = (content, startMarker, endMarker) => {
+const extractMarkedBlock = (
+  content: string,
+  startMarker?: string,
+  endMarker?: string,
+) => {
   if (!startMarker || !endMarker) return content;
   const startIndex = content.indexOf(startMarker);
   if (startIndex === -1) return '';
@@ -82,7 +86,7 @@ const highlighters = await Promise.all(
     <li>Variable and type highlighting</li>
     <li>Link highlighting (<code>~/skill/name</code>, <code>~/agent/name</code>)</li>
     <li>Anchor highlighting (<code>#section</code>)</li>
-    <li>Semantic markers</li>
+    <li>Semantic spans and inferred variables</li>
   </ul>
 
   <h3>Installing from Source</h3>
@@ -118,7 +122,7 @@ npm run compile
     <li><strong>Keywords</strong> — FOR, WHILE, USE, DELEGATE, etc. in purple</li>
     <li><strong>Links</strong> — <code>~/skill/name</code>, <code>~/agent/name</code> in blue</li>
     <li><strong>Anchors</strong> — <code>#section</code> in blue</li>
-    <li><strong>Semantics</strong> — semantic markers in pink</li>
+    <li><strong>Semantics</strong> — semantic spans in pink</li>
     <li><strong>Strings</strong> — "quoted" in green</li>
   </ul>
 
@@ -174,7 +178,7 @@ npm run compile
   </p>
   
   <ul>
-    <li>Autocomplete after <code>~/</code>, <code>#</code>, <code>$</code>, and <code>/</code></li>
+    <li>Autocomplete after <code>~/</code>, <code>#</code>, <code>$</code>, and <code>$/</code></li>
     <li>Hover information for types and variables</li>
     <li>Go-to-definition for links and anchors</li>
     <li>Error diagnostics</li>

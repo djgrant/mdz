@@ -5,6 +5,6 @@ description: A workflow with a broken section reference
 
 ## Workflow
 
-USE ~/skill/work-packages TO /start/
+USE ~/skill/work-packages TO start
 GOTO #non-existent-section
 Check #missing-step

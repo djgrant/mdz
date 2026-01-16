@@ -1,4 +1,4 @@
-IF /condition/ THEN
+IF condition THEN
   Do this
 ELSE
   Do that

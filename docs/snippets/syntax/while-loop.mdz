@@ -1,4 +1,4 @@
-WHILE /condition/ AND $iterations < 5 DO
+WHILE condition AND $iterations < 5 DO
   Perform iteration
   Update state
 END

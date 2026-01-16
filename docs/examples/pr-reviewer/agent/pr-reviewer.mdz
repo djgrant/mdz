@@ -17,41 +17,41 @@ AI-powered code review that learns from feedback.
 
 ### 1. Gather Context
 
-DO /fetch PR metadata from $prUrl/
-DO /extract changed files into $files as (filename, diff) pairs/
-DO /skip generated files: dist, node_modules, *.lock, *.min.js/
+DO fetch PR metadata from $prUrl
+DO extract changed files into $files as (filename, diff) pairs
+DO skip generated files: dist, node_modules, *.lock, *.min.js
 
 ### 2. Load Learnings
 
-USE ~/skill/learnings#apply TO /load applicable learnings/ WITH:
-  paths: filenames from $files
+USE ~/skill/learnings#apply TO load applicable learnings WITH:
+  paths: $files
 
 ### 3. Analyze Changes
 
 FOR ($filename, $diff) IN $files
-  ASYNC DELEGATE /analyze $filename for issues, respecting learned preferences/ TO ~/agent/code-analyzer
+  ASYNC DELEGATE analyze $filename for issues, respecting learned preferences TO ~/agent/code-analyzer
 END
 
 Collect all results into $findings.
 
 ### 4. Note Positives
 
-DO /identify what the PR does well: clean structure, test coverage, clear error handling/
+DO identify what the PR does well: clean structure, test coverage, clear error handling
 
 ### 5. Generate Review
 
-USE ~/skill/review-format TO /format the review/ WITH:
+USE ~/skill/review-format TO format the review WITH:
   findings: $findings
   positives: $positives
 
-Post the formatted review to the PR.
+DO post the formatted review to the PR.
 
 ## Handling Feedback
 
 When a user responds to a review comment:
 
-IF /feedback expresses a preference/ THEN
-  USE ~/skill/learnings#learn TO /record preference/ WITH:
+IF feedback expresses a preference THEN
+  USE ~/skill/learnings#learn TO record preference WITH:
     feedback: the feedback text
     file: relevant file path
 END

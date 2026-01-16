@@ -3,9 +3,9 @@ name: pre-mortem
 description: When making a significant decision, use this skill to explore failure modes before committing.
 
 types:
-  $Decision: /a significant choice being considered/
+  $Decision: a significant choice being considered
   $FailureCategory: "technical" | "organizational" | "external" | "human" | "resource"
-  $FailureMode: /a specific way the decision could fail/
+  $FailureMode: a specific way the decision could fail
 
 input:
   $decision: $Decision
@@ -26,13 +26,13 @@ It is $timeHorizon from now. The decision has failed. We are conducting a post-m
 ### 2. Explore Failures
 
 FOR $category IN ["technical", "organizational", "external", "human", "resource"]
-  ASYNC DELEGATE /imagine failure in $category domain for $decision/ TO ~/agent/failure-analyst WITH #failure-prompt
+  ASYNC DELEGATE imagine failure in $category domain for $decision TO ~/agent/failure-analyst WITH #failure-prompt
   Write results to $analysisPath/$category.md
 END
 
 ### 3. Assess Risk
 
-FOR $mode IN /identified failure modes/
+FOR $mode IN identified failure modes
   Assess severity based on likelihood and impact
 END
 
@@ -40,8 +40,8 @@ Write to `{$analysisPath}/risks.md`
 
 ### 4. Plan Mitigations
 
-FOR $failure IN /risks requiring mitigation/
-  IF /risk is acceptable/ THEN
+FOR $failure IN risks requiring mitigation
+  IF risk is acceptable THEN
     CONTINUE
   END
 
@@ -51,7 +51,7 @@ END
 
 ### 5. Final Assessment
 
-DO /read $analysisPath and determine critical unmitigated risks, recommendation (proceed, proceed with caution, reconsider), and leading indicators to watch/
+DO read $analysisPath and determine critical unmitigated risks, recommendation (proceed, proceed with caution, reconsider), and leading indicators to watch
 
 ## Failure Prompt
 

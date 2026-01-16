@@ -118,9 +118,9 @@ export type Block =
   | ReturnStatement           // v0.9
   | PushStatement             // v0.9
   | DoStatement               // v0.9
-  | DelegateStatement         // v0.8: DELEGATE /task/ TO ~/agent/x
-  | UseStatement              // v0.8: USE ~/skill/x TO /task/
-  | ExecuteStatement          // v0.8: EXECUTE ~/tool/x TO /action/
+  | DelegateStatement         // v0.8: DELEGATE task TO ~/agent/x
+  | UseStatement              // v0.8: USE ~/skill/x TO task
+  | ExecuteStatement          // v0.8: EXECUTE ~/tool/x TO action
   | GotoStatement             // v0.8: GOTO #section
   | Delegation
   | Paragraph
@@ -184,7 +184,7 @@ export interface TypeReference extends BaseNode {
 export interface VariableDeclaration extends BaseNode {
   kind: 'VariableDeclaration';
   name: string;
-  typeAnnotation: TypeReference | SemanticType | null;  // v0.4: supports /semantic description/ syntax
+  typeAnnotation: TypeReference | SemanticType | null;  // v0.11: unquoted semantic descriptions
   value: Expression | null;
   isLambda: boolean;
   isRequired?: boolean;  // v0.2: for WITH clause parameters
@@ -205,7 +205,6 @@ export type Expression =
   | FunctionCall
   | LinkNode         // v0.8: ~/path/to/file or ~/path/to/file#anchor
   | AnchorNode       // v0.8: #section (same-file reference)
-  | SemanticMarker
   | InferredVariable
   | BinaryExpression
   | UnaryExpression
@@ -270,7 +269,7 @@ export interface AnchorNode extends BaseNode {
 
 export interface SemanticMarker extends BaseNode {
   kind: 'SemanticMarker';
-  content: string;
+  content: string;                 // Positional semantic span content
   interpolations: VariableReference[];
 }
 
@@ -370,19 +369,19 @@ export interface PushStatement extends BaseNode {
 // v0.9: DO instruction (standalone prose instruction)
 export interface DoStatement extends BaseNode {
   kind: 'DoStatement';
-  instruction?: SemanticMarker;
+  instruction?: SemanticMarker;       // Positional instruction span
   body?: Block[];
 }
 
 // v0.8: DELEGATE statement for agent delegation
 // v0.9: Added async/awaited flags, made target optional
-// Syntax: DELEGATE /task/ TO ~/agent/x [WITH #template]
-//         DELEGATE TO ~/agent/x WITH: params  (v0.8.1: task in params)
-//         ASYNC DELEGATE /task/ TO ~/agent/x  (v0.9: fire and forget)
+// Syntax: DELEGATE task TO ~/agent/x [WITH #template]
+//         ASYNC DELEGATE task TO ~/agent/x  (v0.9: fire and forget)
+
 //         AWAIT $handle                        (v0.9: await async delegate)
 export interface DelegateStatement extends BaseNode {
   kind: 'DelegateStatement';
-  task?: SemanticMarker;             // Task being delegated: /do something/ (optional in v0.8.1)
+  task?: SemanticMarker;             // Task being delegated (positional span)
   target?: LinkNode;                 // Target agent: ~/agent/architect (v0.9: optional for AWAIT)
   withAnchor?: AnchorNode;           // Optional template: WITH #template
   parameters?: ParameterBlock;       // Optional parameters block
@@ -391,20 +390,20 @@ export interface DelegateStatement extends BaseNode {
 }
 
 // v0.8: USE statement for skill activation
-// Syntax: USE ~/skill/x TO /task/
+// Syntax: USE ~/skill/x TO task
 export interface UseStatement extends BaseNode {
   kind: 'UseStatement';
   link: LinkNode;                     // Skill to use: ~/skill/work-packages
-  task: SemanticMarker;              // Task description: /manage work/
+  task: SemanticMarker;              // Task description (positional span)
   parameters?: ParameterBlock;        // Optional parameters block
 }
 
 // v0.8: EXECUTE statement for tool invocation
-// Syntax: EXECUTE ~/tool/x TO /action/
+// Syntax: EXECUTE ~/tool/x TO action
 export interface ExecuteStatement extends BaseNode {
   kind: 'ExecuteStatement';
   link: LinkNode;                     // Tool to execute: ~/tool/browser
-  task: SemanticMarker;              // Action description: /take screenshot/
+  task: SemanticMarker;              // Action description (positional span)
 }
 
 // v0.8: GOTO statement for same-file navigation
@@ -479,7 +478,6 @@ export type InlineContent =
   | VariableReference
   | LinkNode         // v0.8
   | AnchorNode       // v0.8
-  | SemanticMarker
   | InferredVariable
   | Emphasis
   | Strong
@@ -536,7 +534,7 @@ export interface ParseError extends BaseNode {
 export type ErrorCode =
   | 'E001' // Unexpected token
   | 'E002' // Unclosed bracket
-  | 'E003' // Unclosed semantic marker
+  | 'E003' // Malformed inferred variable
   | 'E004' // Invalid type name
   | 'E005' // Malformed control flow
   | 'E006' // Invalid indentation
@@ -545,7 +543,7 @@ export type ErrorCode =
   | 'E009' // Undefined skill reference
   | 'E010' // Undefined section reference
   | 'E011' // Duplicate definition
-  | 'E012' // Nested semantic marker
+  | 'E012' // Reserved (legacy semantic span)
   | 'E013' // Invalid frontmatter
   | 'E014' // Missing required field
   | 'E015' // Syntax error

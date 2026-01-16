@@ -9,6 +9,6 @@ $data: $String
 
 ## Workflow
 
-1. USE ~/skill/basic-skill TO /process data/
-2. USE ~/skill/another-skill TO /transform result/
+1. USE ~/skill/basic-skill TO process data
+2. USE ~/skill/another-skill TO transform result
 3. Return final result

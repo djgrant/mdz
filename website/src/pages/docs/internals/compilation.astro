@@ -167,7 +167,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h3>Document State Management</h3>
 
   <p>
-    The LSP server maintains state for each open document, including the parsed AST, extracted types and variables, references, and semantic markers for fast IDE operations.
+    The LSP server maintains state for each open document, including the parsed AST, extracted types and variables, references, and semantic spans for fast IDE operations.
   </p>
 
   <h3>Go-to-Definition</h3>
@@ -206,7 +206,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     <li><strong>Links</strong> — After <code>~/</code>, shows available files by folder</li>
     <li><strong>Anchors</strong> — After <code>#</code>, shows available sections</li>
     <li><strong>Variables/Types</strong> — After <code>$</code>, shows defined names</li>
-    <li><strong>Semantic markers</strong> — After semantic marker syntax, suggests common patterns</li>
+    <li><strong>Inferred variables</strong> — After <code>$/</code>, suggests common patterns</li>
     <li><strong>Keywords</strong> — At line start, suggests control flow and composition keywords</li>
   </ul>
 

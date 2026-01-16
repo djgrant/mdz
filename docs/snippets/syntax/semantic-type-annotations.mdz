@@ -2,7 +2,7 @@
 $skillPath: $String  <!-- path to the skill -->
 
 ## Context
-$skill: /the loaded and parsed skill AST from $skillPath/
+$skill: the loaded and parsed skill AST from $skillPath
 
 ## Workflow
 FOR $statement IN $skill.statements

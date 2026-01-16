@@ -5,8 +5,8 @@ description: When coordinating multiple skills
 
 ## Types
 
-$State: /context maintained across iterations/
-$Result: /output from delegated work/
+$State: context maintained across iterations
+$Result: output from delegated work
 
 ## Input
 
@@ -21,8 +21,8 @@ $iteration = 0
 ## Workflow
 
 FOR $item IN $collection
-  DELEGATE /process item/ TO ~/agent/worker
+  DELEGATE process item TO ~/agent/worker
   Collect result
 END
 
-USE ~/skill/synthesize TO /combine results/
+USE ~/skill/synthesize TO combine results

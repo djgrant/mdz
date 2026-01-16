@@ -33,7 +33,7 @@ MDZ extends markdown with:
 - **Types**: `$TypeName`
 - **Skill references**: `~/skill/skill-name`
 - **Section references**: `#section-name`
-- **Semantic markers**: `/interpret this/`, `$/inferred-var/`
+- **Semantic spans**: positional instructions, plus `$/inferred-var/`
 - **Control flow**: `FOR`, `WHILE`, `IF THEN ELSE`, `END`
 
 Note: Full MDZ syntax highlighting requires a custom Tree-sitter grammar.

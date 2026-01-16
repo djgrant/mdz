@@ -21,7 +21,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 ## Delimiters
 
 - **Frontmatter fence** (`---`) -- YAML frontmatter delimiter (opening and closing).
-- **Semantic marker** (`/content/`) -- Content for LLM interpretation.
+- **Semantic span** (positional) -- Content for LLM interpretation based on placement.
 - **Tuple** (`(a, b)`) -- Grouping of multiple values. Used in types and destructuring.
 - **Array literal** (`[a, b]`) -- Collection of values.
 - **Array suffix** (`$Type[]`) -- Type modifier indicating a collection.
@@ -31,7 +31,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **For loop** (`FOR $x IN $y ... END`) -- Iteration over a collection.
 - **While loop** (`WHILE cond ... END`) -- Conditional loop.
 - **Return statement** (`RETURN $value`) -- Exit and return a value.
-- **Async delegate** (`ASYNC DELEGATE /task/ TO ~/agent/x`) -- Non-blocking agent delegation.
+- **Async delegate** (`ASYNC DELEGATE task TO ~/agent/x`) -- Non-blocking agent delegation.
 - **Await** (`AWAIT $handle`) -- Wait for async operation to complete.
 - **Conditional** (`IF cond THEN ... END`) -- Conditional branching.
 - **Else clause** (`ELSE`) -- Alternative branch of a conditional.
@@ -41,9 +41,9 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ## Composition Keywords
 
-- **USE** (`USE ~/skill/x TO /task/`) -- Invoke a skill to perform a task.
-- **EXECUTE** (`EXECUTE ~/tool/x TO /action/`) -- Execute a tool.
-- **DELEGATE** (`DELEGATE /task/ TO ~/agent/x`) -- Delegate to an autonomous agent.
+- **USE** (`USE ~/skill/x TO task`) -- Invoke a skill to perform a task.
+- **EXECUTE** (`EXECUTE ~/tool/x TO action`) -- Execute a tool.
+- **DELEGATE** (`DELEGATE task TO ~/agent/x`) -- Delegate to an autonomous agent.
 - **GOTO** (`GOTO #section`) -- Jump to a section anchor.
 - **WITH** (`WITH #anchor`) -- Pass a template section.
 - **TO** -- Target specifier in composition statements.
@@ -75,7 +75,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ## Type Forms
 
-- **Semantic type** (`$Task: /any executable instruction/`) -- Natural language type description.
+- **Semantic type** (`$Task: any executable instruction`) -- Natural language type description.
 - **Enum type** (`$Status: "active" | "done"`) -- Fixed set of string values.
 - **Tuple type** (`($Task, $Priority)`) -- Compound type of ordered values.
 - **Array type** (`$Task[]`) -- Collection of a single type.
@@ -94,15 +94,15 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 - **Block** -- Indented content after `:` belonging to a control flow statement.
 - **Condition** -- Boolean expression in `WHILE`/`IF` (deterministic or semantic).
-- **Semantic condition** (`NOT /diminishing returns/`) -- Natural language condition interpreted by LLM.
+- **Semantic condition** (`NOT diminishing returns`) -- Natural language condition interpreted by LLM.
 - **Deterministic condition** (`$x < 5`) -- Computable boolean expression.
 - **Destructuring** (`($a, $b) IN $tuples`) -- Unpacking tuple elements in iteration.
 
 ## Composition
 
-- **Skill invocation** (`USE ~/skill/x TO /task/`) -- Invoking another skill.
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) -- Running an external tool.
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) -- Spawning autonomous subagent.
+- **Skill invocation** (`USE ~/skill/x TO task`) -- Invoking another skill.
+- **Tool execution** (`EXECUTE ~/tool/x TO action`) -- Running an external tool.
+- **Agent delegation** (`DELEGATE task TO ~/agent/x`) -- Spawning autonomous subagent.
 - **Section navigation** (`GOTO #section`) -- Jumping to a section anchor.
 
 ## Operator Precedence

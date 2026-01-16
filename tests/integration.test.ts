@@ -72,7 +72,7 @@ $status: $Status = "pending"
 
 ## Workflow
 
-USE ~/skill/base-skill TO /execute $target/
+USE ~/skill/base-skill TO execute $target
 $status = "pending"
 
 ## Helper Section
@@ -108,13 +108,13 @@ END
 
 const semanticSkill = `---
 name: semantic-skill
-description: Tests semantic markers
+description: Tests semantic spans
 ---
 
 ## Workflow
 
-DO /write to appropriate location/
-DO /determine best approach for task/
+DO write to appropriate location
+DO determine best approach for task
 `;
 
 // ============================================================================
@@ -219,25 +219,25 @@ describe('Control Flow Skill Parsing', () => {
 });
 
 // ============================================================================
-// Semantic Marker Tests
+// Semantic Span Tests
 // ============================================================================
 
 describe('Semantic Skill Parsing', () => {
-  test('parses semantic markers', () => {
+  test('parses instruction spans', () => {
     const doc = parse(semanticSkill);
     assertEqual(doc.errors.length, 0);
   });
 
-  test('preserves semantic markers (no transformation)', () => {
+  test('preserves instruction spans (no transformation)', () => {
     const result = compile(semanticSkill, { includeHeader: false });
-    // Semantic markers should be preserved (new /content/ syntax)
-    assert(result.output.includes('/write to appropriate location/'), 'Marker preserved');
-    assert(result.output.includes('/determine best approach for task/'), 'Marker preserved');
+    // Instruction spans should be preserved
+    assert(result.output.includes('DO write to appropriate location'), 'Instruction preserved');
+    assert(result.output.includes('DO determine best approach for task'), 'Instruction preserved');
     // No transformation applied
     assert(!result.output.includes('(determine:'), 'No transformation');
-    // Markers tracked in source map
+    // Spans tracked in source map
     const semEntries = result.sourceMap.filter(e => e.type === 'semantic');
-    assert(semEntries.length >= 2, 'Semantic markers in source map');
+    assert(semEntries.length >= 2, 'Instruction spans in source map');
   });
 });
 

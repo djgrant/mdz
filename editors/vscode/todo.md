@@ -1,4 +1,4 @@
-I will rewrite the VS Code extension files to adhere to the MDZ v0.5 language specification. This involves fixing the grammar scope mismatch, updating the syntax highlighting rules to match the new spec (including PARALLEL, BREAK, CONTINUE, and new semantic marker syntax), and correcting the language configuration.
+I will rewrite the VS Code extension files to adhere to the MDZ v0.5 language specification. This involves fixing the grammar scope mismatch, updating the syntax highlighting rules to match the new spec (including PARALLEL, BREAK, CONTINUE, and new semantic span syntax), and correcting the language configuration.
 
 1. Update package.json
 
@@ -77,7 +77,7 @@ I will verify the grammar path and ensure the scope name matches the grammar fil
 "mdz.transformSemantics": {
 "type": "boolean",
 "default": true,
-"description": "Transform semantic markers during compilation"
+"description": "Transform semantic spans during compilation"
 }
 }
 }

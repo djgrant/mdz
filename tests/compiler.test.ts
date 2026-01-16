@@ -65,7 +65,7 @@ description: A test
 
 ## Section
 
-Some content with $variable and ~/skill/my-skill and /semantic marker/.
+Some content with $variable and ~/skill/my-skill and $/semantic span/.
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Output should equal source exactly');
@@ -88,19 +88,20 @@ $current: $Task = do something
       'Types should NOT be expanded');
   });
 
-  test('/marker/ stays as /marker/ (no transformation)', () => {
+  test('instruction spans stay as authored (no transformation)', () => {
     const source = `---
 name: test
 description: test
 ---
 
-Write to /appropriate location/
+DO appropriate location
 `;
     const result = compile(source, { includeHeader: false });
-    assertIncludes(result.output, '/appropriate location/');
-    assert(!result.output.includes('(determine:'), 
-      'Semantic markers should NOT be transformed');
+    assertIncludes(result.output, 'DO appropriate location');
+    assert(!result.output.includes('(determine:'),
+      'Instruction spans should NOT be transformed');
   });
+
 
   test('~/link/ref stays as ~/link/ref (v0.8)', () => {
     const source = `---
@@ -486,13 +487,13 @@ Reference ~/skill/skill-ref and #section-ref
     assertEqual(refEntries.length, 2);
   });
 
-  test('generates source map entries for semantic markers', () => {
+  test('generates source map entries for instruction spans', () => {
     const result = compile(`---
 name: test
 description: test
 ---
 
-Write to /location marker/
+DO location marker
 `, { generateSourceMap: true });
     
     const semEntries = result.sourceMap.filter(e => e.type === 'semantic');
@@ -658,20 +659,20 @@ $validator: $Task
 
 ## Workflow
 
-DO /create master work package at appropriate location/
+DO create master work package at appropriate location
 
 FOR ($task, $strategy) IN $transforms
-  DELEGATE /handle iteration/ TO ~/agent/iteration-manager
+  DELEGATE handle iteration TO ~/agent/iteration-manager
 END
    
-WHILE NOT /diminishing returns/ AND $iterations < 5 DO
+WHILE NOT diminishing returns AND $iterations < 5 DO
   Execute iteration
   IF $result = "progress" THEN
     $current = $current
   END
 END
 
-RETURN /findings/
+RETURN findings
 
 ## Iteration Manager
 
@@ -680,7 +681,7 @@ Handle a single iteration.
 
     // Source unchanged
     assertIncludes(result.output, '$Task: any task');
-    assertIncludes(result.output, '/create master work package at appropriate location/');
+    assertIncludes(result.output, 'DO create master work package at appropriate location');
     assertIncludes(result.output, '## Iteration Manager');
     
     // Metadata extracted

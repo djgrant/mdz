@@ -109,7 +109,7 @@ description: Test
 
 ## Workflow
 
-ASYNC DELEGATE /task/ TO ~/agent/worker
+ASYNC DELEGATE task TO ~/agent/worker
 `;
       const doc = parse(source);
       const blocks = doc.sections[0].content;
@@ -126,7 +126,7 @@ description: Test
 
 ## Workflow
 
-DELEGATE /task/ WITH #template
+DELEGATE task WITH #template
 `;
       const doc = parse(source);
       const blocks = doc.sections[0].content;
@@ -164,7 +164,7 @@ description: Test
 
 ## Workflow
 
-DO /analyze the content/
+DO analyze the content
 `;
       const doc = parse(source);
       const blocks = doc.sections[0].content;
@@ -473,7 +473,7 @@ FOR $item IN $items
   IF $item.triggers_stop = true THEN
     BREAK
   END
-  USE ~/skill/validator TO /validate/
+  USE ~/skill/validator TO validate
 END
 `;
     const doc = parse(source);
@@ -507,8 +507,8 @@ FOR $item IN $items
   END
 END
 
-WHILE NOT /complete/ AND $iterations < 5 DO
-  USE ~/skill/helper-skill TO /execute/
+WHILE NOT complete AND $iterations < 5 DO
+  USE ~/skill/helper-skill TO execute
   $iterations = $iterations + 1
 END
 `;
@@ -566,10 +566,10 @@ description: test
 ---
 
 WHILE $round < $maxRounds DO
-  DELEGATE /task/ TO ~/agent/worker WITH:
+  DELEGATE task TO ~/agent/worker WITH:
     param: $value
 
-  IF /condition/ THEN
+  IF condition THEN
     BREAK
   END
 

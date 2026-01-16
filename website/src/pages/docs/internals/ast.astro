@@ -18,7 +18,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li>Indentation-based block structure</li>
     <li>Markdown constructs (headings, lists, code blocks)</li>
-    <li>MDZ-specific tokens (variables, references, semantic markers)</li>
+    <li>MDZ-specific tokens (variables, references, inferred variables)</li>
     <li>Control flow keywords (FOR, WHILE, IF, etc.)</li>
   </ul>
 
@@ -34,7 +34,7 @@ name: example
 
 ## Types
 
-$User: /person with name and email/</code></pre>
+$User: person with name and email</code></pre>
 
   <p>
     This produces the following token stream (simplified):
@@ -91,7 +91,7 @@ ControlFlow ::= For | While | If | Do | Break | Continue | Return | Push
 For ::= FOR Pattern IN Expression (DO)? NEWLINE Block* END
 While ::= WHILE Condition (DO)? NEWLINE Block* END
 If ::= IF Condition (THEN)? NEWLINE Block* (ELSE IF Condition NEWLINE Block*)* (ELSE NEWLINE Block*)? END
-Do ::= DO SemanticMarker | DO NEWLINE Block* END
+Do ::= DO SemanticSpan | DO NEWLINE Block* END
 
 Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</code></pre>
 
@@ -151,7 +151,7 @@ Expression ::= Literal | Reference | BinaryOp | FunctionCall | TemplateLiteral</
     <li>Composition keywords (USE, EXECUTE, DELEGATE, GOTO)</li>
     <li>Links (<code>~/skill/name</code>, <code>~/agent/name</code>)</li>
     <li>Anchors (<code>#section</code>)</li>
-    <li>Semantic markers (<code>/content/</code>, <code>$/name/</code>)</li>
+    <li>Semantic spans (positional) and inferred variables (<code>$/name/</code>)</li>
   </ul>
 
   <h3>AST Construction Example</h3>
@@ -190,14 +190,14 @@ name: calculator
   <h3>Expression Types</h3>
 
   <p>
-    Expressions handle values and computations: literals, variable references, function calls, skill/section references, semantic markers, and binary operations.
-  </p>
+Expressions handle values and computations: literals, variable references, function calls, skill/section references, inferred variables, and binary operations.
 
   <pre><code class="language-typescript">type Expression =
   | StringLiteral | NumberLiteral | BooleanLiteral
   | VariableReference | FunctionCall | SkillReference
-  | BinaryExpression | TemplateLiteral | SemanticMarker;
+  | BinaryExpression | TemplateLiteral | InferredVariable;
 </code></pre>
+
 
   <h3>Type System</h3>
 

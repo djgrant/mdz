@@ -3,11 +3,12 @@ name: simplify
 description: When a solution needs simplifying, use this skill to find its essence.
 
 input:
-  $target: /what to simplify/
-  $essence: /what must be preserved/
+$target: what to simplify
+$essence: what must be preserved
+
 
 context:
-  $relevantHeuristics: #heuristics[] = /a relevant set of heuristics/
+  $relevantHeuristics: #heuristics[] = a relevant set of heuristics
 ---
 
 ## Heuristics
@@ -19,7 +20,7 @@ Subtractive Iteration: remove one element and check if it still works. Forced Co
 FOR $heuristic IN $relevantHeuristics
   Apply to $target
   Check if $essence is preserved
-  IF /simpler and essence intact/ THEN
+  IF simpler and essence intact THEN
     Keep the change
   END
 END

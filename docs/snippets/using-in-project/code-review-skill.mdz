@@ -5,9 +5,9 @@ description: When reviewing code changes for quality and correctness
 
 ## Types
 
-$CodeChange: /a set of file modifications with context/
+$CodeChange: a set of file modifications with context
 $ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
-$Issue: /identified problem with severity and location/
+$Issue: identified problem with severity and location
 
 ## Input
 
@@ -25,4 +25,4 @@ FOR $area IN $focus
   Apply focused review for $area
   Add identified issues to $issues
 END
-USE ~/skill/reasoning TO /generate summary/
+USE ~/skill/reasoning TO generate summary

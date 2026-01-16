@@ -1,7 +1,7 @@
-WHILE NOT /diminishing returns/ DO
+WHILE NOT diminishing returns DO
   Continue iterating
 END
 
-IF /the result looks promising/ THEN
+IF the result looks promising THEN
   Proceed with optimization
 END

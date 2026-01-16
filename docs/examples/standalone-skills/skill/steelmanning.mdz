@@ -3,9 +3,10 @@ name: steelmanning
 description: When evaluating an argument, use this skill to strengthen it before critiquing it.
 
 types:
-  $Argument: /a position with supporting reasoning/
-  $StrongVersion: /the most defensible form with evidence added and weak points removed/
-  $Critique: /a challenge that applies to the strong version, not the original/
+$Argument: a position with supporting reasoning
+$StrongVersion: the most defensible form with evidence added and weak points removed
+$Critique: a challenge that applies to the strong version, not the original
+
   $Verdict: "withstands" | "weakened" | "falls"
 
 input:
@@ -23,18 +24,18 @@ Identify the core claim, evidence, and assumptions.
 
 ### 2. Advocate
 
-DO /construct the strongest version a proponent would make, adding omitted evidence, addressing objections, and removing weak points/
+DO construct the strongest version a proponent would make, adding omitted evidence, addressing objections, and removing weak points
 
 ### Gate
 
-IF /just the original restated/ THEN
+IF just the original restated THEN
   Try again with genuine strengthening
   GOTO #gate
 END
 
 ### 3. Critique
 
-DO /challenge the steelmanned version: identify questionable assumptions, weak evidence, and surviving counterarguments/
+DO challenge the steelmanned version: identify questionable assumptions, weak evidence, and surviving counterarguments
 
 ### 4. Judge
 
@@ -42,4 +43,4 @@ Determine verdict: withstands, weakened, or falls.
 
 ### 5. Report
 
-DO /write to $outputPath: original argument, steelmanned version, key critiques, verdict/
+DO write to $outputPath: original argument, steelmanned version, key critiques, verdict

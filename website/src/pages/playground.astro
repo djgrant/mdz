@@ -1254,15 +1254,24 @@ const projectsJson = JSON.stringify(examplesData.projects);
           [/^#+\s+.*$/, "markup.heading"],
           [/`[^`]*`/, "string"],
           [
+            /^(\s*)(?:(ASYNC|AWAIT)\s+)?(DELEGATE)(\s+)([^\n]+?)(?=\s+TO\b|\s+WITH\b|\s*:?$)/,
+            ["", "keyword", "keyword", "", "string.semantic"],
+          ],
+          [
+            /^(\s*)(USE|EXECUTE)(\s+)(?:[^\n]*?\bTO\b\s+)([^\n:]+)/,
+            ["", "keyword", "", "string.semantic"],
+          ],
+          [/^(\s*)(DO)(\s+)(.+)$/, ["", "keyword", "", "string.semantic"]],
+          [
+            /^(\s*)(IF|WHILE)(\s+)([^\n]+?)(?=\s+(?:THEN|DO)\b)/,
+            ["", "keyword", "", "string.semantic"],
+          ],
+          [
             /^\s*(ELSE IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT|DELEGATE|USE|EXECUTE|GOTO)\b/,
             "keyword",
           ],
           [/\b(THEN|IN|AND|OR|NOT|WITH|TO)\b/, "keyword"],
           [/<</, "keyword.operator"],
-          [
-            /\/(?=[^\/\n]+\/(?:\s|$|[.,;:!?)}\]]))/,
-            { token: "delimiter.semantic", next: "@semantic" },
-          ],
           [/\$\/[^\/]+\//, "variable.inferred"],
           [/~\/[a-zA-Z0-9\/_-]+/, "entity.reference"],
           [/#[a-zA-Z][a-zA-Z0-9_-]*/, "entity.reference"],
@@ -1276,10 +1285,6 @@ const projectsJson = JSON.stringify(examplesData.projects);
         codeblock: [
           [/^```.*$/, { token: "markup.fenced_code", next: "@pop" }],
           [/.*$/, "markup.fenced_code"],
-        ],
-        semantic: [
-          [/[^\/]+/, "string.semantic"],
-          [/\//, { token: "delimiter.semantic", next: "@pop" }],
         ],
       },
     });
@@ -1300,6 +1305,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
         { token: "variable.inferred", foreground: "EC4899" },
         { token: "entity.reference", foreground: "3B82F6" },
         { token: "delimiter.semantic", foreground: "EC4899" },
+        { token: "variable.semantic", foreground: "F59E0B" },
         { token: "delimiter.reference", foreground: "3B82F6" },
         { token: "number", foreground: "F59E0B" },
         { token: "comment", foreground: "6A737D", fontStyle: "italic" },
@@ -1324,6 +1330,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
         { token: "variable.inferred", foreground: "DB2777" },
         { token: "entity.reference", foreground: "2563EB" },
         { token: "delimiter.semantic", foreground: "DB2777" },
+        { token: "variable.semantic", foreground: "D97706" },
         { token: "delimiter.reference", foreground: "2563EB" },
         { token: "number", foreground: "D97706" },
         { token: "comment", foreground: "6B7280", fontStyle: "italic" },
@@ -1480,7 +1487,7 @@ const projectsJson = JSON.stringify(examplesData.projects);
         "function",
         "parameter",
         "namespace",
-        "semanticMarker",
+        "semanticSpan",
         "link",
         "anchor",
       ],

@@ -213,7 +213,7 @@ Install the MDZ extension for:
 - Control flow keywords (FOR, WHILE, IF/THEN/ELSE, END)
 - Variable and type highlighting
 - Skill references with sigils
-- Semantic markers (/content/)
+- Semantic spans and inferred variables (`$/.../`)
 
 The extension is located in `editors/vscode/`. To install locally:
 

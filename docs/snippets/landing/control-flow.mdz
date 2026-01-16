@@ -1,7 +1,7 @@
 FOR $item IN $list
   Process $item
 END
-WHILE /condition/ DO
+WHILE condition DO
   Continue
 END
 IF $x = "y" THEN

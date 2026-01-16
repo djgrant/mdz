@@ -3,7 +3,7 @@ name: map-reduce
 description: When you need multiple iterations to converge on a solution, use this skill to transform, validate, and iterate.
 
 types:
-  $Task: /instructions for a sub-agent to execute/
+  $Task: instructions for a sub-agent to execute
   $Strategy: "accumulate" | "independent"
 
 input:
@@ -19,13 +19,13 @@ context:
 
 ## Workflow
 
-USE ~/skill/work-packages TO /create master work package/
-DO /summarise status quo into $statusQuo/
+USE ~/skill/work-packages TO create master work package
+DO summarise status quo into $statusQuo
 
 IF $strategy = "accumulate" THEN
-  DELEGATE /run accumulate prompt/ WITH #accumulate-prompt
+  DELEGATE run accumulate prompt WITH #accumulate-prompt
 ELSE
-  DELEGATE /run independent prompt/ WITH #independent-prompt
+  DELEGATE run independent prompt WITH #independent-prompt
 END
 
 RETURN $statusQuo
@@ -33,14 +33,14 @@ RETURN $statusQuo
 ## Accumulate Prompt
 
 ```mdz
-WHILE $iteration < $maxIterations AND NOT /diminishing returns/ DO
-  DELEGATE /run transform/ WITH:
+WHILE $iteration < $maxIterations AND NOT diminishing returns DO
+  DELEGATE run transform WITH:
     input: $statusQuo
-    output: /next candidate path/
-  DELEGATE /run validator/ WITH:
-    candidate: /next candidate path/
-  IF /validation passed/ THEN
-    $statusQuo = /next candidate path/
+    output: next candidate path
+  DELEGATE run validator WITH:
+    candidate: next candidate path
+  IF validation passed THEN
+    $statusQuo = next candidate path
   END
   $iteration = $iteration + 1
 END
@@ -54,14 +54,14 @@ RETURN $statusQuo
 $results = []
 
 WHILE $iteration < $maxIterations DO
-  $results << ASYNC DELEGATE /run transform/ WITH:
+  $results << ASYNC DELEGATE run transform WITH:
     iteration: $iteration
-    output: /candidate path/
+    output: candidate path
   $iteration = $iteration + 1
 END
 
-DELEGATE /run validator/ WITH:
+DELEGATE run validator WITH:
   candidates: $results
 
-RETURN /winning candidate/
+RETURN winning candidate
 ```

@@ -1,7 +1,7 @@
 FOR $task IN $tasks
   Process $task
   IF $task.priority = "high" THEN
-    WHILE NOT /complete/ DO
+    WHILE NOT complete DO
       Execute step
       Check progress
     END

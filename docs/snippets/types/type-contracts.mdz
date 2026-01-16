@@ -2,5 +2,5 @@
 $validator: $Task
 
 <!-- In skill B (referencing A) -->
-USE ~/skill/a TO /validate/ WITH:
+USE ~/skill/a TO validate WITH:
   validator: 42  -> Error: $Number where $Task expected

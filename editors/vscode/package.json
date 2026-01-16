@@ -68,7 +68,7 @@
         "mdz.transformSemantics": {
           "type": "boolean",
           "default": true,
-          "description": "Transform semantic markers during compilation"
+          "description": "Transform semantic spans during compilation"
         }
       }
     }

@@ -50,8 +50,8 @@ escape_seq      = '\\' ( '"' | '\\' | 'n' | 't' ) ;
 number_literal  = [ '-' ] digit { digit } [ '.' digit { digit } ] ;
 
 template_literal = '`' { template_char | template_expr } '`' ;
-template_char   = ? any char except '`' and '${' and '/' ? ;
-template_expr   = '${' expression '}' | semantic_marker ;
+template_char   = ? any char except '`' and '${' ? ;
+template_expr   = '${' expression '}' ;
 ```
 
 ### Keywords
@@ -102,7 +102,7 @@ lbracket        = '[' ;
 rbracket        = ']' ;
 lbrace          = '{' ;
 rbrace          = '}' ;
-semantic_delim  = '/' ;
+inferred_delim  = '/' ;
 link_prefix     = '~/' ;                /* v0.8: Link prefix */
 ```
 
@@ -210,7 +210,7 @@ var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
 var_name        = dollar ident ;
 
 type_annotation = colon type_reference
-                | semantic_type_annotation
+                | semantic_type
                 ;
 
 /* Default values must be literal values, not prose descriptions */
@@ -238,7 +238,6 @@ value_expr      = literal
                 | function_call
                 | skill_reference
                 | section_reference
-                | semantic_marker
                 | inline_text
                 ;
 
@@ -291,19 +290,16 @@ anchor            = '#' kebab_ident ;                        /* #section-name (s
 */
 ```
 
-### Semantic Markers
+### Semantic Spans and Inferred Variables
 
 ```ebnf
-semantic_marker   = semantic_delim semantic_content semantic_delim ;
-semantic_content  = { semantic_char | var_reference } ;
-semantic_char     = ? any char except '/' and '$' and newline ? ;
+/* Semantic spans are positional: they are parsed from the surrounding grammar
+   (e.g., after DELEGATE, after TO in USE/EXECUTE, or as a fallback condition). */
+semantic_span     = { any_char } ;
 
 /* Inferred variables - value derived by LLM at runtime */
-inferred_var      = dollar semantic_marker ;
-inferred_name     = { letter | digit | whitespace } ;
-
-/* Semantic type annotations - describes what a value should be */
-semantic_type_annotation = colon semantic_marker ;
+inferred_var      = dollar inferred_delim inferred_content inferred_delim ;
+inferred_content  = { any_char } ;
 ```
 
 ### Control Flow
@@ -348,7 +344,7 @@ continue_stmt     = CONTINUE newline ;
 return_stmt       = RETURN [ expression ] newline ;
 
 /* v0.9/v0.10: DO statement - standalone or block instruction */
-do_stmt           = DO semantic_marker newline
+do_stmt           = DO semantic_span newline
                   | DO newline block_body END newline
                   ;
 
@@ -362,23 +358,23 @@ push_stmt         = var_reference push_op expression newline ;
    - ASYNC modifier = fire-and-forget
    - AWAIT modifier = wait for result (default behavior)
 */
-delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_marker ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline
+delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_span ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline
                   ;
 /* Examples:
-   DELEGATE /task/ TO ~/agent/x                    -- inline, no params
-   DELEGATE /task/ TO ~/agent/x WITH #template     -- inline with anchor
-   DELEGATE /task/ TO ~/agent/x WITH:              -- inline with params
+   DELEGATE task TO ~/agent/x                    -- inline, no params
+   DELEGATE task TO ~/agent/x WITH #template     -- inline with anchor
+   DELEGATE task TO ~/agent/x WITH:              -- inline with params
      param: value
-   DELEGATE /task/                                 -- no target (v0.9)
-   ASYNC DELEGATE /task/ TO ~/agent/x              -- fire-and-forget (v0.9)
-   AWAIT DELEGATE /task/ TO ~/agent/x              -- wait for result (v0.9)
+   DELEGATE task                                 -- no target (v0.9)
+   ASYNC DELEGATE task TO ~/agent/x              -- fire-and-forget (v0.9)
+   AWAIT DELEGATE task TO ~/agent/x              -- wait for result (v0.9)
 */
 
 /* USE - follow skill instructions */
-use_stmt          = USE link TO semantic_marker newline ;                     /* USE ~/skill/x TO /task/ */
+use_stmt          = USE link TO semantic_span newline ;                     /* USE ~/skill/x TO task */
 
 /* EXECUTE - invoke tool */
-execute_stmt      = EXECUTE link TO semantic_marker newline ;                 /* EXECUTE ~/tool/x TO /action/ */
+execute_stmt      = EXECUTE link TO semantic_span newline ;                 /* EXECUTE ~/tool/x TO action */
 
 /* GOTO - control flow to section */
 goto_stmt         = GOTO anchor newline ;                                     /* GOTO #section */
@@ -389,8 +385,8 @@ condition         = comparison_expr { logical_op comparison_expr } ;
 comparison_expr   = simple_condition | lparen condition rparen ;
 simple_condition  = semantic_condition | deterministic_condition ;
 
-/* Semantic conditions: LLM interprets the meaning (must use semantic markers) */
-semantic_condition = [ NOT ] semantic_marker ;  /* e.g., /diminishing returns/ */
+/* Semantic conditions: LLM interprets the meaning (positional fallback) */
+semantic_condition = [ NOT ] semantic_span ;  /* e.g., diminishing returns */
 
 /* Deterministic conditions: compiler can validate */
 deterministic_condition = var_reference comparison_op value_expr ;
@@ -418,7 +414,7 @@ block_line        = block newline ;
 
 ```ebnf
 /* v0.8: Skill composition using USE statement */
-use_stmt          = USE link TO semantic_marker [ colon newline with_params ] ;
+use_stmt          = USE link TO semantic_span [ colon newline with_params ] ;
 
 with_clause       = WITH colon newline { with_param } ;
 
@@ -437,9 +433,9 @@ with_params       = { with_param } ;
 ### Agent Delegation (v0.9)
 
 Agent delegation spawns a subagent with a task. This is distinct from skill composition:
-- **Skill composition** (`USE ~/skill/x TO /task/`) follows skill logic in the current context
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) spawns an independent subagent
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) invokes an external tool
+- **Skill composition** (`USE ~/skill/x TO task`) follows skill logic in the current context
+- **Agent delegation** (`DELEGATE task TO ~/agent/x`) spawns an independent subagent
+- **Tool execution** (`EXECUTE ~/tool/x TO action`) invokes an external tool
 
 ```ebnf
 /* v0.9: Agent delegation - spawning subagents
@@ -447,15 +443,15 @@ Agent delegation spawns a subagent with a task. This is distinct from skill comp
    - AWAIT modifier: wait for result (default behavior)
    - TO target is optional (uses default/inferred target)
 */
-delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_marker ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline ;
+delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_span ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline ;
 
 /* Examples:
-   DELEGATE /task/ TO ~/agent/explorer              -- spawn and wait (default)
-   ASYNC DELEGATE /task/ TO ~/agent/explorer        -- fire-and-forget
-   AWAIT DELEGATE /task/ TO ~/agent/explorer        -- explicit wait
-   DELEGATE /task/                                  -- inferred target
-   DELEGATE /task/ TO ~/agent/x WITH #template      -- with context template
-   DELEGATE /task/ TO ~/agent/x WITH:               -- with inline params
+   DELEGATE task TO ~/agent/explorer              -- spawn and wait (default)
+   ASYNC DELEGATE task TO ~/agent/explorer        -- fire-and-forget
+   AWAIT DELEGATE task TO ~/agent/explorer        -- explicit wait
+   DELEGATE task                                  -- inferred target
+   DELEGATE task TO ~/agent/x WITH #template      -- with context template
+   DELEGATE task TO ~/agent/x WITH:               -- with inline params
      param: value
 */
 ```
@@ -468,7 +464,6 @@ paragraph         = { inline_content } newline { inline_content newline } newlin
 inline_content    = text
                   | var_reference
                   | reference
-                  | semantic_marker
                   | emphasis
                   | strong
                   | code_span
@@ -527,18 +522,18 @@ $fn = $x => expression       → Lambda
 $fn = value                  → Assignment
 ```
 
-#### Rule 3: Semantic Marker Boundary
+#### Rule 3: Semantic Span Boundaries
 
-`/` starts a semantic marker that extends to the next `/`:
-- No nesting allowed
-- Variables within are interpolated
-- Cannot contain newlines
+Semantic spans are positional and derived from grammar context:
+- Instructions follow keywords like `DELEGATE`, `DO`, or `TO`
+- Conditions become semantic when they don't match deterministic grammar
+- Inferred variables still use `$/.../`
 
 ```
-/content with $var/          → Semantic marker with var interpolation
-$/inferred name/             → Inferred variable (LLM derives value)
-$var: /description/ = value  → Semantic type annotation
-//content//                  → Error: invalid syntax (empty marker)
+DELEGATE process item TO ~/agent/worker   → Instruction span
+IF diminishing returns THEN              → Semantic condition
+$/inferred name/                          → Inferred variable (LLM derives value)
+$var: description = value                 → Semantic type annotation
 ```
 
 #### Rule 4: Control Flow Blocks
@@ -550,11 +545,11 @@ END determines block membership:
 
 ```
 FOR $x IN $items
-  DO /process $x/           ← Part of FOR block
+  DO process $x             ← Part of FOR block
   IF $x = "special" THEN    ← Nested control flow
-    DO /handle special/     ← Part of IF block
+    DO handle special       ← Part of IF block
   END
-  DO /continue processing/  ← Back to FOR block
+  DO continue processing    ← Back to FOR block
 END
 Done with loop              ← Outside block
 ```
@@ -618,24 +613,24 @@ Keywords affected: FOR, IN, WHILE, DO, IF, THEN, ELSE, END, AND, OR, NOT, WITH, 
 
 ```
 WHILE $x < 5 DO
-  DO /process/
+  DO process
 END
 
 FOR $item IN $items DO
-  DO /process $item/
+  DO process $item
 END
 
-DO /analyze the situation/  ← Standalone single-line DO (top-level only)
+DO analyze the situation  ← Standalone single-line DO (top-level only)
 
 DO
-  /summarize findings/
+  summarize findings
 END
 ```
 
 Invalid (single-line DO inside a fence):
 ````md
 ```md
-DO /summarize findings/
+DO summarize findings
 ```
 ````
 
@@ -644,12 +639,12 @@ DO /summarize findings/
 Each keyword has a distinct purpose:
 
 ```
-DELEGATE /task/ TO ~/agent/explorer      ← Spawns subagent
-ASYNC DELEGATE /task/ TO ~/agent/x       ← Fire-and-forget subagent
-AWAIT DELEGATE /task/ TO ~/agent/x       ← Wait for subagent result
-DELEGATE /task/                          ← Inferred target
-USE ~/skill/validator TO /validate/      ← Follows skill instructions
-EXECUTE ~/tool/browser TO /screenshot/   ← Invokes external tool
+DELEGATE task TO ~/agent/explorer      ← Spawns subagent
+ASYNC DELEGATE task TO ~/agent/x       ← Fire-and-forget subagent
+AWAIT DELEGATE task TO ~/agent/x       ← Wait for subagent result
+DELEGATE task                          ← Inferred target
+USE ~/skill/validator TO validate      ← Follows skill instructions
+EXECUTE ~/tool/browser TO screenshot   ← Invokes external tool
 GOTO #section                            ← Control flow to section
 ```
 
@@ -676,13 +671,13 @@ Parentheses are required in some contexts and optional in others:
 ```
 <!-- WHILE uses DO delimiter (like IF uses THEN) -->
 WHILE $x < 5 DO                 ← Valid
-WHILE NOT /complete/ DO         ← Valid (semantic condition)
-WHILE $x < 5 AND NOT /done/ DO  ← Valid (compound condition)
+WHILE NOT complete DO         ← Valid (semantic condition)
+WHILE $x < 5 AND NOT done DO  ← Valid (compound condition)
 
 <!-- IF uses THEN delimiter -->
 IF $x = 5 THEN              ← Valid
 IF ($x = 5) THEN            ← Also valid (optional parens for grouping)
-IF /diminishing returns/ THEN ← Valid (semantic condition)
+IF diminishing returns THEN ← Valid (semantic condition)
 
 <!-- Destructuring requires parens -->
 FOR ($a, $b) IN $pairs      ← Valid
@@ -695,7 +690,6 @@ For error recovery, the parser recognizes these malformed constructs:
 
 ```ebnf
 error_unclosed_link      = '~/' { any_char } ( newline | EOF ) ;   /* Malformed link */
-error_unclosed_semantic  = '/' { any_char } ( newline | EOF ) ;
 error_invalid_type_name  = dollar lower_ident assign_op { any_char } newline ;
 error_malformed_control  = ( FOR | WHILE | IF | DELEGATE | USE | EXECUTE | GOTO | DO | RETURN | ASYNC | AWAIT ) { any_char } ( newline | EOF ) ;
 error_break_outside_loop = BREAK ; /* When not inside a loop */
@@ -738,7 +732,7 @@ The grammar describes validation, not transformation:
 
 - **No type expansion** - `$Task` stays `$Task`
 - **No reference inlining** - `~/skill/x` stays `~/skill/x`
-- **No semantic transformation** - `/content/` stays `/content/`
+- **No semantic transformation** - instruction spans stay as authored
 - **No output compilation** - Source IS the output
 
 ## Examples
@@ -767,13 +761,13 @@ context:
 
 ## Workflow
 
-Setup at /appropriate location/
+Setup at appropriate location
 
 FOR $item IN $items
   IF $item.invalid THEN
     CONTINUE
   END
-  DO /process $item according to $strategy/
+  DO process $item according to $strategy
   $results << $item
   IF $item.triggers_stop THEN
     BREAK
@@ -782,30 +776,30 @@ END
 
 FOR ($item, $priority) IN $prioritized
   IF $priority = "high" THEN
-    DO /expedite processing/
+    DO expedite processing
   ELSE
-    DO /queue for later/
+    DO queue for later
   END
 END
 
 WHILE NOT $complete AND $iterations < 5 DO
   GOTO #process-step
-  USE ~/skill/item-validator TO /validate current state/
+  USE ~/skill/item-validator TO validate current state
 END
 
-ASYNC DELEGATE /find related patterns/ TO ~/agent/explorer WITH #context-template
+ASYNC DELEGATE find related patterns TO ~/agent/explorer WITH #context-template
 
-AWAIT DELEGATE /analyze the findings/ TO ~/agent/analyzer
+AWAIT DELEGATE analyze the findings TO ~/agent/analyzer
 
-DELEGATE /background task/
+DELEGATE background task
 
-EXECUTE ~/tool/browser TO /capture final screenshot/
+EXECUTE ~/tool/browser TO capture final screenshot
 
 RETURN $results
 
 ## Process Step
 
-USE ~/skill/omr TO /apply transforms/:
+USE ~/skill/omr TO apply transforms:
   transforms: [("Apply heuristic", "accumulate")]
   validator: $Task              <!-- Required parameter -->
 
@@ -818,8 +812,14 @@ Strategy: $strategy
 
 ## Version
 
-Grammar version: 0.10
-Aligned with: language-spec.md v0.10
+Grammar version: 0.11
+Aligned with: language-spec.md v0.11
+
+### Changes from v0.11
+
+- **Breaking change**: Removed `/.../` semantic markers in favor of positional instruction/condition spans
+- Semantic type annotations are now unquoted prose after `:`
+- Inferred variables keep `$/.../` syntax
 
 ### Changes from v0.10
 
@@ -831,7 +831,7 @@ Aligned with: language-spec.md v0.10
   - `THEN` optional after `IF`/`ELSE IF`
 - **Removed colon delimiters**: `THEN:` → `THEN`, `DO:` → `DO`
 - **Indentation cosmetic only**: no effect on block membership
-- **DO blocks**: single-line `DO /.../` and multi-line `DO ... END`
+- **DO blocks**: single-line `DO instruction` and multi-line `DO ... END`
 - **Single-line DO restriction**: valid only at top-level (outside fences)
 
 ### Changes from v0.9
@@ -841,7 +841,7 @@ Aligned with: language-spec.md v0.10
 - **New operators**: `<<` (push operator for array collection)
 - **New statements**:
   - `RETURN [expression]` - Return from section or loop iteration
-  - `DO /prose instruction/` - Standalone prose instruction
+  - `DO prose instruction` - Standalone prose instruction
   - `$array << value` - Push value to array
 - **Updated DELEGATE syntax**:
   - `TO target` is now optional
@@ -874,9 +874,9 @@ Aligned with: language-spec.md v0.10
 - Removed `uses:` frontmatter field - dependencies inferred from statements
 - New keywords: `USE`, `EXECUTE`, `GOTO`
 - New statement forms:
-  - `DELEGATE /task/ TO ~/agent/x` - Spawn agent
-  - `USE ~/skill/x TO /task/` - Follow skill
-  - `EXECUTE ~/tool/x TO /action/` - Invoke tool
+  - `DELEGATE task TO ~/agent/x` - Spawn agent
+  - `USE ~/skill/x TO task` - Follow skill
+  - `EXECUTE ~/tool/x TO action` - Invoke tool
   - `GOTO #section` - Control flow
 - Added `WITH #template` clause for passing context to delegates
 - Removed `at_sign`, `tilde`, `bang` operators (replaced by link_prefix)
@@ -907,9 +907,9 @@ Aligned with: language-spec.md v0.10
 
 ### Changes from v0.4
 
-- Changed semantic marker syntax from `{~~content}` to `/content/`
+- Changed semantic marker syntax from `{~~content}` to `/content/` (removed in v0.11)
 - Added inferred variable syntax `$/name/`
-- Added semantic type annotation syntax `: /description/`
+- Added semantic type annotation syntax `: /description/` (now unquoted prose)
 - Updated `semantic_delim` operator (replaces `semantic_open` and `semantic_close`)
 
 ### Changes from v0.3

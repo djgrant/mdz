@@ -51,7 +51,7 @@ Types provide semantic hints about values:
 
 ### Type Forms
 
-- **Semantic type**: `$Task: /any executable instruction/`
+- **Semantic type**: `$Task: any executable instruction`
 - **Enum type**: `$Strategy: "fast" | "thorough"` (variants separated by **union** operator `|`)
 - **Tuple type**: `($Task, $Strategy)`
 - **Array type**: `$Task[]` (uses **array suffix**)
@@ -81,7 +81,7 @@ When a variable needs a semantic description rather than a named type, use the *
 
 <MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_type_annotations_mdz} />
 
-This pattern makes semantic transformations explicit and avoids confusion about where properties come from.
+This pattern keeps semantic descriptions explicit without requiring named types.
 
 ## Links
 
@@ -117,13 +117,13 @@ Section names are derived from headings by:
 
 <MdzCodeBlock source={snippet_docs_snippets_syntax_section_anchors_mdz} />
 
-## Semantic Markers
+## Semantic Spans
 
-The `/content/` syntax marks content for LLM interpretation. There are three forms:
+Semantic interpretation is positional. Instruction spans follow keywords like `DELEGATE`, `USE ... TO`, `EXECUTE ... TO`, and single-line `DO`. Conditions that do not match deterministic grammar are treated as semantic.
 
-### Inline Semantic Markers
+### Instruction Spans
 
-Mark inline content that the LLM should interpret contextually:
+Mark instruction content for the LLM to interpret contextually:
 
 <MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_inline_mdz} />
 
@@ -141,7 +141,7 @@ The LLM maintains these values implicitly based on context.
 
 ### Semantic Type Annotations
 
-Use `/description/` as a type annotation for variables that need semantic descriptions:
+Use unquoted prose as a type annotation for variables that need semantic descriptions:
 
 <MdzCodeBlock source={snippet_docs_snippets_syntax_semantic_annotation_short_mdz} />
 

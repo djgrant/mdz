@@ -12,7 +12,7 @@ Install the `zenmarkdown` extension for:
 - Variable and type highlighting
 - Link highlighting (`~/skill/name`, `~/agent/name`)
 - Anchor highlighting (`#section`)
-- Semantic markers
+- Semantic spans and inferred variables
 
 ### Installing from Source
 
@@ -43,7 +43,7 @@ The grammar highlights:
 - **Keywords** -- FOR, WHILE, USE, DELEGATE, etc. in purple
 - **Links** -- `~/skill/name`, `~/agent/name` in blue
 - **Anchors** -- `#section` in blue
-- **Semantics** -- semantic markers in pink
+- **Semantics** -- semantic spans in pink
 - **Strings** -- "quoted" in green
 
 TextMate highlighting is best-effort. For precise, context-aware highlighting, use the LSP semantic tokens below.
@@ -60,7 +60,7 @@ The project currently maintains three highlighters:
 
 MDZ includes a language server with the following features:
 
-- Autocomplete after `~/`, `#`, `$`, and `/`
+- Autocomplete after `~/`, `#`, `$`, and `$/`
 - Hover information for types and variables
 - Go-to-definition for links and anchors
 - Error diagnostics

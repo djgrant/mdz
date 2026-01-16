@@ -3,7 +3,7 @@ name: skill-composer
 description: Compose multiple skills into workflows
 
 types:
-  $SkillRef: /reference to another skill/
+  $SkillRef: reference to another skill
   $CompositionMode: "sequential" | "parallel"
 
 input:
@@ -24,17 +24,17 @@ END
 ### 2. Validate Composition
 
 Detect cycles in the graph
-IF /cycle detected/ THEN
+IF cycle detected THEN
   Report error
   Abort
 END
 
 ### 3. Simplify
 
-USE ~/skill/simplify TO /reduce complexity/
+USE ~/skill/simplify TO reduce complexity
 
 ### 4. Execute
 
-USE ~/skill/orchestrate TO /execute workflow/ WITH:
+USE ~/skill/orchestrate TO execute workflow WITH:
   skills: $skills
   mode: $mode

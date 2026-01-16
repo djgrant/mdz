@@ -17,7 +17,8 @@
 ; For now, we inherit standard markdown patterns
 ; Future: create tree-sitter-mdz grammar for full support
 ;
-; Semantic marker syntax (v0.4):
-;   /content/     - inline semantic marker
-;   $/name/       - inferred variable
-;   $var: /desc/  - semantic type annotation
+; Semantic span syntax (v0.11):
+;   DO instruction            - positional instruction span
+;   USE ~/skill/x TO task     - positional task span
+;   $/name/                   - inferred variable
+;   $var: description         - semantic type annotation

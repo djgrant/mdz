@@ -1,2 +1,2 @@
-/appropriate location/
-/best strategy for $task/
+DO appropriate location
+DELEGATE best strategy for $task TO ~/agent/strategist

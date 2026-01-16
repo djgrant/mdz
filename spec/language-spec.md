@@ -216,10 +216,10 @@ $FunctionName = ($a, $b) => expression
 
 Examples:
 ```
-$SolutionPath = $n => `/relevant wp path/-candidate-${n}.md`
+$SolutionPath = $n => `relevant wp path-candidate-${n}.md`
 ```
 
-Lambdas can include semantic markers and template literals.
+Lambdas can include template literals.
 
 ### Push Operator (v0.9)
 
@@ -232,7 +232,7 @@ $array << value
 Examples:
 ```
 $results << $currentResult
-$candidates << /the winning solution/
+$candidates << the winning solution
 $errors << $error
 ```
 
@@ -371,27 +371,30 @@ Common patterns:
 - **Analyzer agents**: Deep analysis of specific areas
 - **Reviewer agents**: Validation and review tasks
 
-## Semantic Markers
+## Semantic Spans
 
-### Basic Semantic Marker
+MDZ treats prose as the default. Semantic interpretation is positional: tooling infers intent based on where text appears.
 
-The `/content/` syntax marks content for LLM interpretation:
+### Instruction Spans
+
+Instruction spans appear after control keywords and targets:
 
 ```
-/appropriate location for this work package/
+DELEGATE process item TO ~/agent/worker
+USE ~/skill/summarize TO summarize the input
+EXECUTE ~/tool/convert TO transform the document
+DO normalize the data
 ```
-
-The LLM should determine the actual value based on context.
 
 ### Variable Interpolation
 
 Variables are expanded BEFORE semantic interpretation:
 
 ```
-/the path for candidate $n/
+DELEGATE process item $n TO ~/agent/worker
 ```
 
-First `$n` is resolved (e.g., to `3`), then the LLM interprets "the path for candidate 3".
+First `$n` is resolved, then the LLM interprets the instruction.
 
 ### Inferred Variables
 
@@ -406,11 +409,11 @@ Inferred variables combine variable declaration with semantic interpretation. Th
 
 ### Semantic Type Annotations
 
-Use `/description/` as a type annotation to describe what a value should be:
+Use unquoted prose as a type annotation to describe what a value should be:
 
 ```
-$target: /the file to modify/ = "default.txt"
-$context: /relevant background information/
+$target: the file to modify = "default.txt"
+$context: relevant background information
 ```
 
 This is more flexible than reference types (`$Type`) when you need to describe the expected value semantically rather than reference a defined type.
@@ -423,15 +426,15 @@ Iterate over a collection:
 
 ```
 FOR $item IN $collection
-  DO /process $item/
-  DO /next step/
+  DO process $item
+  DO next step
 END
 ```
 
 With destructuring:
 ```
 FOR ($task, $strategy) IN $transforms
-  DO /execute $task with $strategy/
+  DO execute $task with $strategy
 END
 ```
 
@@ -440,18 +443,18 @@ END
 Loop with condition. The `DO` keyword acts as the condition delimiter:
 
 ```
-WHILE condition AND $iterations < 5 DO
-  DO /perform iteration/
-  DO /update state/
+WHILE diminishing returns AND $iterations < 5 DO
+  DO perform iteration
+  DO update state
 END
 ```
 
 Conditions can include:
 - Variable comparisons: `$x < 5`
-- Semantic conditions: `NOT /diminishing returns/` (LLM-interpreted)
+- Semantic conditions: `NOT diminishing returns` (LLM-interpreted, positional)
 - Logical operators: `AND`, `OR`, `NOT`
 
-Semantic conditions must be wrapped in semantic markers (`/.../`) to distinguish them from variables and keywords.
+Semantic conditions are used when a condition does not match deterministic grammar.
 
 ### IF THEN ELSE
 
@@ -459,16 +462,16 @@ Conditional branching. The `THEN` keyword acts as the condition delimiter:
 
 ```
 IF $condition THEN
-  DO /do this/
+  DO do this
 ELSE
-  DO /do that/
+  DO do that
 END
 ```
 
 With semantic conditions:
 ```
-IF /any critical findings/ THEN
-  DO /request changes/
+IF any critical findings THEN
+  DO request changes
 END
 ```
 
@@ -788,10 +791,10 @@ An MDZ skill executes as:
 
 ### Semantic Interpretation
 
-`/content/` is interpreted by the LLM:
+Instruction spans and semantic conditions are interpreted by the LLM:
 - Consider current context
 - Derive appropriate concrete value
-- The result replaces the marker in execution
+- The result replaces the semantic span in execution
 
 ### Error Handling
 
@@ -811,7 +814,7 @@ A compliant parser must extract:
 - Type definitions (from frontmatter)
 - Variable declarations
 - Links (`~/path/to/resource`) and anchors (`#section`)
-- Semantic markers
+- Instruction spans, semantic conditions, inferred variables
 - Control flow constructs (including BREAK, CONTINUE, RETURN, DELEGATE, USE, EXECUTE, GOTO, DO)
 
 ### Validator Requirements
@@ -831,7 +834,7 @@ A compliant validator must:
 
 The syntax supports:
 - **Go-to-definition**: For `~/links`, `#anchors`, `$variables`
-- **Autocomplete**: After `~/`, `#`, `$`, `/`, `DELEGATE ... TO`, `USE`, `EXECUTE`, `GOTO`, `ASYNC`, `AWAIT`
+- **Autocomplete**: After `~/`, `#`, `$`, `$/`, `DELEGATE ... TO`, `USE`, `EXECUTE`, `GOTO`, `ASYNC`, `AWAIT`
 - **Hover**: Show type definitions, link targets, section content
 - **Diagnostics**: Unresolved links, broken anchors, unused variables, BREAK/CONTINUE outside loops, invalid RETURN placement
 
@@ -844,7 +847,7 @@ Syntax highlighting should distinguish:
 - Variables (`$varName`)
 - Links (`~/path/to/resource`)
 - Anchors (`#section`)
-- Semantic markers (`/.../`)
+- Instruction spans / semantic conditions (positional)
 - Inferred variables (`$/name/`)
 - Control flow keywords (`FOR`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `END`, `BREAK`, `CONTINUE`, `RETURN`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`, `ASYNC`, `AWAIT`)
 - Operators (`<<`)
@@ -864,7 +867,7 @@ The `DO` keyword delimits WHILE conditions (like `THEN` for `IF`):
 ```
 WHILE $iterations < 5 DO             # Valid
 WHILE condition AND $x > 0 DO        # Valid
-WHILE NOT /diminishing returns/ DO   # Valid (semantic condition)
+WHILE NOT diminishing returns DO   # Valid (semantic condition)
 ```
 
 Parentheses are optional for grouping complex conditions.
@@ -950,27 +953,13 @@ Note: MDZ does **not** use `{}` for code blocks (blocks are closed with `END`).
 
 ### Forward Slashes `/`
 
-Forward slashes delimit semantic content:
+Forward slashes are reserved for inferred variables:
 
-#### 1. Semantic markers
-
-```
-/appropriate location/                # LLM interprets this
-/the path for candidate $n/           # With variable interpolation
-```
-
-#### 2. Inferred variables
+#### Inferred variables
 
 ```
 $/the user's primary intent/          # Variable with LLM-derived value
 $/relevant context from history/      # Value inferred at runtime
-```
-
-#### 3. Semantic type annotations
-
-```
-$target: /file to modify/ = "out.md"  # Describes what the value should be
-$context: /background info/           # Semantic type instead of $Type
 ```
 
 ### Double Angle Brackets `<<` (v0.9)
@@ -1040,9 +1029,7 @@ PUSH            = '$' IDENT '<<' EXPR                          <!-- v0.9 -->
 LINK            = '~/' PATH ('#' IDENT)?
 ANCHOR          = '#' IDENT
 PATH            = IDENT ('/' IDENT)*
-SEMANTIC        = '/' /[^\/\n]+/ '/'
 INFERRED_VAR    = '$/' /[^\/\n]+/ '/'
-SEMANTIC_TYPE   = ':' '/' /[^\/\n]+/ '/'
 FOR             = 'FOR' PATTERN 'IN' EXPR ['DO']
 WHILE           = 'WHILE' CONDITION ['DO']
 IF_THEN         = 'IF' CONDITION ['THEN']
@@ -1052,10 +1039,10 @@ END             = 'END'
 BREAK           = 'BREAK'
 CONTINUE        = 'CONTINUE'
 RETURN          = 'RETURN' EXPR?                               <!-- v0.9 -->
-DO_STMT         = 'DO' SEMANTIC | 'DO' BLOCK 'END'             <!-- v0.9, v0.10 -->
-DELEGATE        = ['ASYNC'|'AWAIT'] 'DELEGATE' [SEMANTIC] ['TO' LINK] ['WITH' (ANCHOR | ':' PARAMS)]  <!-- v0.9 -->
-USE             = 'USE' LINK 'TO' SEMANTIC (':' PARAMS)?
-EXECUTE         = 'EXECUTE' LINK 'TO' SEMANTIC
+DO_STMT         = 'DO' INSTRUCTION | 'DO' BLOCK 'END'          <!-- v0.9, v0.10 -->
+DELEGATE        = ['ASYNC'|'AWAIT'] 'DELEGATE' [INSTRUCTION] ['TO' LINK] ['WITH' (ANCHOR | ':' PARAMS)]  <!-- v0.9 -->
+USE             = 'USE' LINK 'TO' INSTRUCTION (':' PARAMS)?
+EXECUTE         = 'EXECUTE' LINK 'TO' INSTRUCTION
 GOTO            = 'GOTO' ANCHOR
 LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
 WITH_PARAM      = IDENT ':' EXPR                               <!-- v0.9 -->
@@ -1078,13 +1065,18 @@ PATH            = /[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)*/
 - Familiar (SQL, BASIC heritage)
 - Simple regex parsing
 
-### Why /.../ for Semantics?
+### Why Positional Semantics?
 
-- Lightweight and readable inline
-- Clear visual boundary without heavy punctuation
-- Familiar from regex notation (pattern/interpretation)
-- Enables `$/name/` for inferred variables naturally
-- Enables `: /desc/` for semantic type annotations
+- Prose is the default; instruction spans are positional
+- Removes the need for a general-purpose escape hatch
+- Keeps the "code + prose" mental model consistent
+- Tooling can infer intent from keyword placement
+
+### Why $/.../ for Inferred Variables?
+
+- Compact inline declaration for inferred values
+- Distinct enough to avoid ambiguity in prose
+- Avoids boilerplate when a variable is only needed once
 
 ### Why $variables?
 
@@ -1270,9 +1262,9 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 ### Delimiters
 
 - **Frontmatter fence** (`---`) — YAML frontmatter delimiter (opening and closing).
-- **Semantic marker** (`/content/`) — Content for LLM interpretation. Slashes delimit the semantic content.
+- **Instruction span** (positional) — Content for LLM interpretation based on placement.
 - **Inferred variable** (`$/name/`) — Variable whose value is derived by LLM at runtime.
-- **Semantic type annotation** (`: /description/`) — Type annotation using natural language description.
+- **Semantic type annotation** (`: description`) — Type annotation using natural language description.
 - **Tuple** (`(a, b)`) — Grouping of multiple values. Used in types and destructuring.
 - **Array literal** (`[a, b]`) — Collection of values.
 - **Array suffix** (`$Type[]`) — Type modifier indicating a collection.
@@ -1289,13 +1281,13 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 - **Logical operators** (`AND`, `OR`, `NOT`) — Boolean logic in conditions.
 - **Loop control** (`BREAK`, `CONTINUE`) — Early exit or skip within loops.
 - **Return statement** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
-- **Do statement** (`DO /instruction/` or `DO ... END`) — Standalone instruction (v0.9, v0.10).
+- **Do statement** (`DO instruction` or `DO ... END`) — Standalone instruction (v0.9, v0.10).
 - **Collection operator** (`IN`) — Specifies the collection in a loop.
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawns a subagent with task.
+- **Agent delegation** (`DELEGATE task TO ~/agent/x`) — Spawns a subagent with task.
 - **Async delegation** (`ASYNC DELEGATE`) — Fire-and-forget agent spawn (v0.9).
 - **Await delegation** (`AWAIT DELEGATE`) — Wait-for-result agent spawn (v0.9).
-- **Skill usage** (`USE ~/skill/x TO /task/`) — Follows skill instructions.
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invokes external tool.
+- **Skill usage** (`USE ~/skill/x TO task`) — Follows skill instructions.
+- **Tool execution** (`EXECUTE ~/tool/x TO action`) — Invokes external tool.
 - **Section jump** (`GOTO #section`) — Control flow to section.
 - **Target specifier** (`TO`) — Specifies target in DELEGATE/USE/EXECUTE statements (optional for DELEGATE in v0.9).
 
@@ -1347,30 +1339,31 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 - **Block** — Content between a block opener and its matching `END`.
 - **Condition** — Boolean expression in `WHILE`/`IF` (deterministic or semantic).
-- **Semantic condition** (`NOT /diminishing returns/`) — Natural language condition interpreted by LLM.
+- **Semantic condition** (`NOT diminishing returns`) — Natural language condition interpreted by LLM.
 - **Deterministic condition** (`$x < 5`) — Computable boolean expression.
 - **Destructuring** (`($a, $b) IN $tuples`) — Unpacking tuple elements in iteration.
 - **Return** (`RETURN [expr]`) — Exit section/iteration with optional value (v0.9).
 
 ### Composition
 
-- **Skill usage** (`USE ~/skill/x TO /task/`) — Running skill logic in current context.
-- **Agent delegation** (`DELEGATE /task/ TO ~/agent/x`) — Spawning independent subagent.
+- **Skill usage** (`USE ~/skill/x TO task`) — Running skill logic in current context.
+- **Agent delegation** (`DELEGATE task TO ~/agent/x`) — Spawning independent subagent.
 - **Async delegation** (`ASYNC DELEGATE`) — Fire-and-forget delegation (v0.9).
 - **Await delegation** (`AWAIT DELEGATE`) — Blocking delegation (v0.9).
-- **Tool execution** (`EXECUTE ~/tool/x TO /action/`) — Invoking external tool.
+- **Tool execution** (`EXECUTE ~/tool/x TO action`) — Invoking external tool.
 - **Section jump** (`GOTO #section`) — Control flow to section in current document.
 - **Context template** (`WITH #anchor` or `WITH:`) — Passing section or parameters as context.
 - **Dependency inference** — Dependencies extracted from link statements, not frontmatter.
 
 ## Version History
 
+- **v0.11** (2026-01-16): Positional semantics for instructions/conditions; removed `/.../` semantic markers; semantic type annotations are unquoted prose; inferred variables keep `$/.../`
 - **v0.10** (2026-01-14): END-delimited blocks (indentation cosmetic); `FOR $x IN $y` replaces `FOR EACH`; optional `DO` for `FOR`/`WHILE`; optional `THEN` for `IF`/`ELSE IF`; `DO` supports single-line and block forms; removed `THEN:`/`DO:` colon delimiters
 - **v0.9** (2026-01-13): RETURN keyword (end of section/iteration only); ASYNC/AWAIT modifiers for DELEGATE; optional TO target in DELEGATE; push operator `<<` for array collection; WITH parameter syntax changed to `param: value`; removed PARALLEL FOR EACH (use ASYNC DELEGATE pattern); DO as standalone prose instruction; frontmatter declarations (types/input/context move from sections to YAML); colon rule (line-ending colon = indented block); keyword placement rule (CAPS at line start or indented)
 - **v0.8** (2026-01-13): Breaking change: Link-based references `~/path` replacing sigil-based `(reference)` syntax; removed `uses:` frontmatter (dependencies inferred from statements); new keywords `USE`, `EXECUTE`, `GOTO`; `WITH #anchor` for passing context templates; folder conventions (`agent/`, `skill/`, `tool/`)
 - **v0.7** (2026-01-12): Breaking change: Sigil-based reference syntax `(@agent)`, `(~skill)`, `(#section)`, `(!tool)`; unified `uses:` frontmatter field with sigil-prefixed identifiers; removed separate `skills:`/`agents:`/`tools:` fields
 - **v0.6** (2026-01-12): Added DELEGATE keyword for subagent spawning, `skills:`/`agents:`/`tools:` frontmatter fields
-- **v0.5** (2026-01-05): New semantic marker syntax `/content/`, inferred variables `$/name/`, semantic type annotations `: /description/`
+- **v0.5** (2026-01-05): Added semantic markers `/content/`, inferred variables `$/name/`, semantic type annotations `: /description/` (semantic markers later removed in v0.11)
 - **v0.4** (2026-01-05): Changed type definition syntax from `=` to `:` for clarity
 - **v0.3** (2026-01-03): Validator-first architecture - source = output, validation focus
 - **v0.2** (2026-01-03): Added PARALLEL FOR EACH, typed parameters, BREAK/CONTINUE

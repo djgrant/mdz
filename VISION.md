@@ -42,7 +42,7 @@ The tooling layer checks that modules fit together correctly. Some checks are de
 - Do type names match across boundaries?
 
 *LLM-assisted checks (future):*
-- Is this semantic marker meaningful in context?
+- Is this semantic span meaningful in context?
 - Does the control flow logic make sense?
 - Are there unreachable branches?
 
@@ -194,7 +194,7 @@ FOR $item IN $items
   Process $item
 END
   
-WHILE NOT /diminishing returns/ AND $iteration < 5 DO
+WHILE NOT diminishing returns AND $iteration < 5 DO
   Continue iterating
 END
 
@@ -247,11 +247,11 @@ Tooling can check callers provide correct parameters. Declared dependencies enab
 
 If you're writing `{{IF}}` branches, consider: should this be two modules composed together? The pit of success is reaching for composition first.
 
-**Semantic markers for uncertainty:**
+**Semantic spans for uncertainty:**
 
-Instead of hardcoding paths that will be wrong, mark them:
+Instead of hardcoding paths that will be wrong, describe them in positional instructions:
 ```markdown
-Write to {~~appropriate location}
+DO write to the appropriate location
 ```
 The LLM determines; you don't guess.
 
@@ -316,7 +316,7 @@ This creates tension between readability and parseability. Each syntax choice ne
 - **Types vs variables** - Case convention (`$Task` vs `$task`) vs explicit keyword (`type $Task`). What enables contract checking?
 - **References** - `~/skill/name` vs prose that tooling infers. What level of explicitness is needed?
 - **Macros vs runtime** - `{{IF}}` vs `IF THEN`. Must be syntactically distinct.
-- **Semantic markers** - `{~~content}` vs unmarked prose. Does the compiler need to identify these?
+- **Semantic spans** - positional prose vs explicit markers. Does the compiler need to identify these?
 
 Syntax choices aren't just aesthetic - they determine what the compiler can do deterministically. But we don't yet know which trade-offs are right.
 

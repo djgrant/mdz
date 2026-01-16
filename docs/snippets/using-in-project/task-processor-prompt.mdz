@@ -1,8 +1,8 @@
 You are a task processor. Follow this process:
 
 ## Types
-$Task: /a unit of work with inputs and expected outputs/
-$Result: /successful completion or error details/
+$Task: a unit of work with inputs and expected outputs
+$Result: successful completion or error details
 
 ## Input
 $task: $Task
@@ -15,7 +15,7 @@ $maxAttempts = 3
 Validate $task inputs and requirements
 WHILE $attempts < $maxAttempts DO
   Execute $task
-  IF /execution succeeded/ THEN
+  IF execution succeeded THEN
     Return success result
   ELSE
     Increment $attempts

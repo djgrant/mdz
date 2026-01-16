@@ -7,7 +7,7 @@
  * distinct from the EXECUTE/USE patterns which compose skills and tools.
  * 
  * Supported syntax forms:
- * - DELEGATE /task/ TO ~/agent/agent          Inline form with task
+ * - DELEGATE task TO ~/agent/agent          Inline form with task
  * - DELEGATE TO ~/agent/agent WITH:           Block form with parameters
  * 
  * Frontmatter uses unified `uses:` with links:
@@ -91,7 +91,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /test/ TO ~/agent/general
+DELEGATE test TO ~/agent/general
 `);
     // Check if any block is a DelegateStatement
     const hasDelegateBlock = doc.sections.some(s => 
@@ -134,7 +134,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /do something/ TO ~/agent/general WITH:
+DELEGATE do something TO ~/agent/general WITH:
   task: "do something"
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
@@ -157,7 +157,7 @@ uses:
 
 $agent = "researcher"
 
-DELEGATE /find relevant information/ TO ~/agent/researcher
+DELEGATE find relevant information TO ~/agent/researcher
 `);
     assertEqual(doc.errors.length, 0);
     // Check target is VariableReference
@@ -171,7 +171,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /write documentation/ TO ~/agent/general
+DELEGATE write documentation TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0);
     // Check task is captured
@@ -185,7 +185,7 @@ uses:
   - ~/agent/validator
 ---
 
-DELEGATE /validate code/ TO ~/agent/validator WITH:
+DELEGATE validate code TO ~/agent/validator WITH:
   code: $currentCode
   criteria: "performance"
 `);
@@ -229,7 +229,7 @@ uses:
 ---
 
 FOR $task IN $tasks
-  DELEGATE /execute $task/ TO ~/agent/worker
+  DELEGATE execute $task TO ~/agent/worker
 END
 `);
     assertEqual(doc.errors.length, 0);
@@ -244,7 +244,7 @@ uses:
 ---
 
 FOR $item IN $items
-  DELEGATE /process $item/ TO ~/agent/processor
+  DELEGATE process $item TO ~/agent/processor
 END
 `);
     assertEqual(doc.errors.length, 0);
@@ -260,9 +260,9 @@ uses:
 ---
 
 IF $complexity = "high" THEN
-  DELEGATE /handle complex case/ TO ~/agent/expert
+  DELEGATE handle complex case TO ~/agent/expert
 ELSE
-  DELEGATE /handle simple case/ TO ~/agent/novice
+  DELEGATE handle simple case TO ~/agent/novice
 END
 `);
     assertEqual(doc.errors.length, 0);
@@ -277,7 +277,7 @@ uses:
 ---
 
 WHILE $iterations < 5 DO
-  DELEGATE /review current state/ TO ~/agent/reviewer
+  DELEGATE review current state TO ~/agent/reviewer
   $iterations = $iterations + 1
 END
 `);
@@ -391,7 +391,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /do something/ TO ~/agent/general
+DELEGATE do something TO ~/agent/general
 `;
     const result = compile(source, { includeHeader: false });
     assertEqual(result.output, source, 'Source should be preserved');
@@ -406,9 +406,9 @@ uses:
   - ~/agent/specialist
 ---
 
-DELEGATE /task one/ TO ~/agent/general
+DELEGATE task one TO ~/agent/general
 
-DELEGATE /task two/ TO ~/agent/specialist
+DELEGATE task two TO ~/agent/specialist
 `);
     // When implemented:
     // const agents = result.metadata.agents || [];
@@ -424,7 +424,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /this agent is not declared/ TO ~/agent/unknown-agent
+DELEGATE this agent is not declared TO ~/agent/unknown-agent
 `);
     const warnings = result.diagnostics.filter(d => d.severity === 'warning');
     assert(warnings.length > 0, 'Should warn about undeclared agent');
@@ -439,7 +439,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /do something/ TO ~/agent/general
+DELEGATE do something TO ~/agent/general
 `);
     // When implemented:
     // const delegateEntries = result.sourceMap.filter(e => e.type === 'delegate');
@@ -479,14 +479,14 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /do something/ TO ~/agent/general
+DELEGATE do something TO ~/agent/general
 
 ## Next Section
 `);
     assertEqual(doc.errors.length, 0);
   });
 
-  testOrSkip('DELEGATE with semantic marker as task', () => {
+  testOrSkip('DELEGATE with instruction task span', () => {
     const doc = parse(`---
 name: test
 description: test
@@ -494,7 +494,7 @@ uses:
   - ~/agent/general
 ---
 
-DELEGATE /appropriate task based on context/ TO ~/agent/general
+DELEGATE appropriate task based on context TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -509,9 +509,9 @@ uses:
   - ~/agent/c
 ---
 
-DELEGATE /first task/ TO ~/agent/a
-DELEGATE /second task/ TO ~/agent/b
-DELEGATE /third task/ TO ~/agent/c
+DELEGATE first task TO ~/agent/a
+DELEGATE second task TO ~/agent/b
+DELEGATE third task TO ~/agent/c
 `);
     assertEqual(doc.errors.length, 0);
   });
@@ -527,8 +527,8 @@ uses:
   - ~/agent/inner
 ---
 
-IF /needs nested delegation/ THEN
-  DELEGATE /nested task/ TO ~/agent/inner
+IF needs nested delegation THEN
+  DELEGATE nested task TO ~/agent/inner
 END
 `);
     // Behavior TBD - may be valid or may require flattening
@@ -548,7 +548,7 @@ uses:
   - ~/tool/helper
 ---
 
-EXECUTE ~/tool/helper TO /run helper/
+EXECUTE ~/tool/helper TO run helper
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     const executions = doc.sections.flatMap(s => 
@@ -565,7 +565,7 @@ uses:
   - ~/agent/validator
 ---
 
-DELEGATE /validate/ TO ~/agent/validator
+DELEGATE validate TO ~/agent/validator
 `);
     assertEqual(doc.errors.length, 0);
     const delegates = doc.sections.flatMap(s => 
@@ -585,11 +585,11 @@ uses:
 
 ## Skills
 
-EXECUTE ~/tool/helper-skill TO /run helper/
+EXECUTE ~/tool/helper-skill TO run helper
 
 ## Delegation
 
-DELEGATE /high-level task/ TO ~/agent/general
+DELEGATE high-level task TO ~/agent/general
 `);
     assertEqual(doc.errors.length, 0, `Errors: ${doc.errors.map(e => e.message)}`);
     

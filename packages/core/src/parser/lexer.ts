@@ -39,11 +39,8 @@ export type TokenType =
   // v0.8: Link-based references (replaces sigil-based refs)
   | 'LINK'         // ~/path/to/file or ~/path/to/file#anchor
   | 'ANCHOR'       // #section (same-file reference)
-  // Special - semantic markers (v0.4: new /content/ syntax)
-  | 'SEMANTIC_MARKER'   // /content with spaces/
+  // Special - inferred variables (v0.5)
   | 'INFERRED_VAR'      // $/name/
-  // Legacy semantic markers (deprecated, kept for backward compatibility)
-  | 'SEMANTIC_OPEN' | 'SEMANTIC_CLOSE' | 'SEMANTIC_CONTENT'
   | 'TEXT' | 'CODE_BLOCK_START' | 'CODE_BLOCK_CONTENT' | 'CODE_BLOCK_END'
   | 'BLOCKQUOTE' | 'ERROR';
 
@@ -157,22 +154,6 @@ export class Lexer {
       return;
     }
 
-    // Legacy semantic marker (deprecated)
-    if (this.lookAhead('{~~')) {
-      this.consumeChars(3);
-      this.addToken('SEMANTIC_OPEN', '{~~');
-      this.scanSemanticContent();
-      return;
-    }
-
-    // New semantic marker: /content with spaces/
-    // Disambiguation: if content contains spaces, it's a semantic marker
-    // Otherwise it's likely a path (e.g., /path/to/file) - not tokenized as semantic
-    if (char === '/') {
-      const result = this.tryScanSemanticMarker();
-      if (result) return;
-      // Not a semantic marker - fall through to emit as TEXT
-    }
 
     // v0.8: Link-based references: ~/path/to/file or ~/path/to/file#anchor
     if (char === '~' && this.peekAt(1) === '/') {
@@ -348,83 +329,6 @@ export class Lexer {
     }
     this.addToken('BLOCKQUOTE', '>' + content);
     if (!this.isAtEnd()) this.consumeNewline();
-  }
-
-  private scanSemanticContent(): void {
-    let content = '';
-    while (!this.isAtEnd() && this.peek() !== '}' && this.peek() !== '\n') {
-      content += this.advance();
-    }
-    if (content) this.addToken('SEMANTIC_CONTENT', content);
-    if (this.peek() === '}') {
-      this.advance();
-      this.addToken('SEMANTIC_CLOSE', '}');
-    }
-  }
-
-  /**
-   * Peeks ahead to check if current position starts a semantic marker.
-   * Assumes current position is at '/'.
-   * 
-   * Disambiguation heuristic:
-   * - Treat /.../ as a semantic marker only if the closing slash is followed by
-   *   whitespace, punctuation, or end-of-line (avoids path-like /a/b)
-   * - Slashes are not allowed inside markers
-   * 
-   * @param stopChar - Additional character to stop lookahead at (for templates, use '`')
-   */
-  private tryPeekSemanticMarker(stopChar?: string): boolean {
-    let lookahead = 1;
-    
-    while (this.pos + lookahead < this.source.length) {
-      const c = this.source[this.pos + lookahead];
-      if (c === '/') {
-        const nextChar = this.source[this.pos + lookahead + 1] ?? '\0';
-        if (nextChar === '\n' || nextChar === '\0' || /\s/.test(nextChar)) {
-          return true;
-        }
-        if (/[.,;:!?)]}]/.test(nextChar)) {
-          return true;
-        }
-        return false;
-      }
-      if (c === '\n' || (stopChar && c === stopChar)) {
-        // No closing slash on this line - not a semantic marker
-        return false;
-      }
-      lookahead++;
-    }
-    
-    // Reached end of file without finding closing slash
-    return false;
-  }
-
-  /**
-   * Scans and tokenizes a semantic marker: /content with spaces/
-   * Assumes current position is at '/' and that tryPeekSemanticMarker returned true.
-   */
-  private scanSemanticMarkerContent(): void {
-    this.advance(); // opening /
-    let content = '';
-    while (!this.isAtEnd() && this.peek() !== '/') {
-      content += this.advance();
-    }
-    if (this.peek() === '/') {
-      this.advance(); // closing /
-    }
-    this.addToken('SEMANTIC_MARKER', '/' + content + '/');
-  }
-
-  /**
-   * Tries to scan a semantic marker: /content with spaces/
-   * Returns true if a semantic marker was found and tokenized.
-   */
-  private tryScanSemanticMarker(): boolean {
-    if (this.tryPeekSemanticMarker()) {
-      this.scanSemanticMarkerContent();
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -641,16 +545,6 @@ export class Lexer {
         } else {
           this.addToken('ERROR', '$/' + content);
         }
-      } else if (this.lookAhead('{~~')) {
-        // Legacy semantic marker in template
-        if (part) { this.addToken('TEMPLATE_PART', part); part = ''; }
-        this.consumeChars(3);
-        this.addToken('SEMANTIC_OPEN', '{~~');
-        this.scanSemanticContent();
-      } else if (this.peek() === '/' && this.tryPeekSemanticMarker('`')) {
-        // New semantic marker in template: /content with spaces/
-        if (part) { this.addToken('TEMPLATE_PART', part); part = ''; }
-        this.scanSemanticMarkerContent();
       } else {
         part += this.advance();
       }

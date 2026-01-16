@@ -8,7 +8,7 @@ Syntax highlighting and language support for MDZ (Zen Markdown) files.
 - Control flow keywords (FOR, WHILE, IF/THEN/ELSE, END)
 - Variable and type highlighting
 - Skill references (~/skill/name)
-- Semantic markers (/content/)
+- Semantic spans and inferred variables (`$/.../`)
 
 ## Development
 
@@ -47,7 +47,7 @@ You may need to reload VS Code for the extension to fully activate.
 
 - `mdz.expandTypes` - Expand type references during compilation (default: true)
 - `mdz.resolveReferences` - Resolve skill references during compilation (default: true)
-- `mdz.transformSemantics` - Transform semantic markers during compilation (default: true)
+- `mdz.transformSemantics` - Transform semantic spans during compilation (default: true)
 
 ## About MDZ
 

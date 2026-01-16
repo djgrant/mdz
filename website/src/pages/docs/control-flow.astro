@@ -50,7 +50,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <p>Loop with a <strong>condition</strong>. The <code>DO</code> keyword delimits the condition (like <code>THEN</code> for <code>IF</code>):</p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-semantic">/condition/</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-semantic">condition</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iterations</span> &lt; 5 <span class="zen-keyword">DO</span>
   Perform iteration
   Update state
 <span class="zen-keyword">END</span></code></pre>
@@ -61,8 +61,8 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   
   <ul>
     <li><strong>Deterministic condition</strong>: <code>$x &lt; 5</code>, <code>$status = "active"</code></li>
-    <li><strong>Semantic condition</strong>: <code>NOT /diminishing returns/</code> (LLM interprets)</li>
-    <li><strong>Combined</strong>: <code>NOT /complete/ AND $count &lt; 10</code> (using <strong>logical operators</strong>)</li>
+    <li><strong>Semantic condition</strong>: <code>NOT diminishing returns</code> (LLM interprets)</li>
+    <li><strong>Combined</strong>: <code>NOT complete AND $count &lt; 10</code> (using <strong>logical operators</strong>)</li>
   </ul>
 
   <h2>Conditional</h2>
@@ -113,7 +113,7 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
   <pre><code class="mdz"><span class="zen-keyword">FOR</span> <span class="zen-variable">$task</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$tasks</span>
   Process <span class="zen-variable">$task</span>
   <span class="zen-keyword">IF</span> <span class="zen-variable">$task</span>.priority = <span class="zen-string">"high"</span> <span class="zen-keyword">THEN</span>
-    <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/complete/</span> <span class="zen-keyword">DO</span>
+    <span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">complete</span> <span class="zen-keyword">DO</span>
       Execute step
       Check progress
     <span class="zen-keyword">END</span>
@@ -152,11 +152,11 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
     interprets. Use them when the condition requires understanding context:
   </p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/diminishing returns/</span> <span class="zen-keyword">DO</span>
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">diminishing returns</span> <span class="zen-keyword">DO</span>
   Continue iterating
 <span class="zen-keyword">END</span>
 
-<span class="zen-keyword">IF</span> <span class="zen-semantic">/the result looks promising/</span> <span class="zen-keyword">THEN</span>
+<span class="zen-keyword">IF</span> <span class="zen-semantic">the result looks promising</span> <span class="zen-keyword">THEN</span>
   Proceed with optimization
 <span class="zen-keyword">END</span></code></pre>
 

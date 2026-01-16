@@ -119,9 +119,9 @@ description: When orchestrating hypothesis-driven iteration
     The core iteration continues until diminishing returns or max iterations:
   </p>
   
-  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">/diminishing returns/</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>
+  <pre><code class="mdz"><span class="zen-keyword">WHILE</span> <span class="zen-keyword">NOT</span> <span class="zen-semantic">diminishing returns</span> <span class="zen-keyword">AND</span> <span class="zen-variable">$iteration</span> &lt; <span class="zen-variable">$maxIterations</span> <span class="zen-keyword">DO</span>
   Design experiment and set success criteria
-  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/run experiment/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/experimenter</span> <span class="zen-keyword">WITH</span> <span class="zen-reference">#experiment-prompt</span>
+  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">run experiment</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/experimenter</span> <span class="zen-keyword">WITH</span> <span class="zen-reference">#experiment-prompt</span>
   Extract <span class="zen-variable">$observations</span> and update master work package
   <span class="zen-keyword">IF</span> <span class="zen-variable">$result</span> = "progress" <span class="zen-keyword">THEN</span>
     Commit changes, update hypothesis
@@ -158,8 +158,8 @@ description: When coordinating multiple skills
 
 <span class="zen-heading">## Types</span>
 
-<span class="zen-type">$State</span>: <span class="zen-semantic">/context maintained across iterations/</span>
-<span class="zen-type">$Result</span>: <span class="zen-semantic">/output from delegated work/</span>
+<span class="zen-type">$State</span>: <span class="zen-semantic">context maintained across iterations</span>
+<span class="zen-type">$Result</span>: <span class="zen-semantic">output from delegated work</span>
 
 <span class="zen-heading">## Input</span>
 
@@ -174,11 +174,11 @@ description: When coordinating multiple skills
 <span class="zen-heading">## Workflow</span>
 
 <span class="zen-keyword">FOR</span> <span class="zen-variable">$item</span> <span class="zen-keyword">IN</span> <span class="zen-variable">$collection</span>
-  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">/process item/</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span>
+  <span class="zen-keyword">DELEGATE</span> <span class="zen-semantic">process item</span> <span class="zen-keyword">TO</span> <span class="zen-reference">~/agent/worker</span>
   Collect result
 <span class="zen-keyword">END</span>
 
-<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/synthesize</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">/combine results/</span></code></pre>
+<span class="zen-keyword">USE</span> <span class="zen-reference">~/skill/synthesize</span> <span class="zen-keyword">TO</span> <span class="zen-semantic">combine results</span></code></pre>
 
   <h2>Key Techniques</h2>
   

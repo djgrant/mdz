@@ -35,7 +35,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 
   <ul>
     <li><strong>Frontmatter fence</strong> (<code>---</code>) — YAML frontmatter delimiter (opening and closing).</li>
-    <li><strong>Semantic marker</strong> (<code>/content/</code>) — Content for LLM interpretation.</li>
+    <li><strong>Semantic span</strong> (positional) — Content for LLM interpretation based on placement.</li>
     <li><strong>Tuple</strong> (<code>(a, b)</code>) — Grouping of multiple values. Used in types and destructuring.</li>
     <li><strong>Array literal</strong> (<code>[a, b]</code>) — Collection of values.</li>
     <li><strong>Array suffix</strong> (<code>$Type[]</code>) — Type modifier indicating a collection.</li>
@@ -47,7 +47,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
     <li><strong>For loop</strong> (<code>FOR $x IN $y ... END</code>) — Iteration over a collection.</li>
     <li><strong>While loop</strong> (<code>WHILE cond ... END</code>) — Conditional loop.</li>
     <li><strong>Return statement</strong> (<code>RETURN $value</code>) — Exit and return a value.</li>
-    <li><strong>Async delegate</strong> (<code>ASYNC DELEGATE /task/ TO ~/agent/x</code>) — Non-blocking agent delegation.</li>
+    <li><strong>Async delegate</strong> (<code>ASYNC DELEGATE task TO ~/agent/x</code>) — Non-blocking agent delegation.</li>
     <li><strong>Await</strong> (<code>AWAIT $handle</code>) — Wait for async operation to complete.</li>
     <li><strong>Conditional</strong> (<code>IF cond THEN ... END</code>) — Conditional branching.</li>
     <li><strong>Else clause</strong> (<code>ELSE</code>) — Alternative branch of a conditional.</li>
@@ -59,9 +59,9 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Composition Keywords</h2>
 
   <ul>
-    <li><strong>USE</strong> (<code>USE ~/skill/x TO /task/</code>) — Invoke a skill to perform a task.</li>
-    <li><strong>EXECUTE</strong> (<code>EXECUTE ~/tool/x TO /action/</code>) — Execute a tool.</li>
-    <li><strong>DELEGATE</strong> (<code>DELEGATE /task/ TO ~/agent/x</code>) — Delegate to an autonomous agent.</li>
+    <li><strong>USE</strong> (<code>USE ~/skill/x TO task</code>) — Invoke a skill to perform a task.</li>
+    <li><strong>EXECUTE</strong> (<code>EXECUTE ~/tool/x TO action</code>) — Execute a tool.</li>
+    <li><strong>DELEGATE</strong> (<code>DELEGATE task TO ~/agent/x</code>) — Delegate to an autonomous agent.</li>
     <li><strong>GOTO</strong> (<code>GOTO #section</code>) — Jump to a section anchor.</li>
     <li><strong>WITH</strong> (<code>WITH #anchor</code>) — Pass a template section.</li>
     <li><strong>TO</strong> — Target specifier in composition statements.</li>
@@ -124,7 +124,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <ul>
     <li><strong>Block</strong> — Indented content after <code>:</code> belonging to a control flow statement.</li>
     <li><strong>Condition</strong> — Boolean expression in <code>WHILE</code>/<code>IF</code> (deterministic or semantic).</li>
-    <li><strong>Semantic condition</strong> (<code>NOT /diminishing returns/</code>) — Natural language condition interpreted by LLM.</li>
+    <li><strong>Semantic condition</strong> (<code>NOT diminishing returns</code>) — Natural language condition interpreted by LLM.</li>
     <li><strong>Deterministic condition</strong> (<code>$x &lt; 5</code>) — Computable boolean expression.</li>
     <li><strong>Destructuring</strong> (<code>($a, $b) IN $tuples</code>) — Unpacking tuple elements in iteration.</li>
   </ul>
@@ -132,9 +132,9 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
   <h2>Composition</h2>
 
   <ul>
-    <li><strong>Skill invocation</strong> (<code>USE ~/skill/x TO /task/</code>) — Invoking another skill.</li>
-    <li><strong>Tool execution</strong> (<code>EXECUTE ~/tool/x TO /action/</code>) — Running an external tool.</li>
-    <li><strong>Agent delegation</strong> (<code>DELEGATE /task/ TO ~/agent/x</code>) — Spawning autonomous subagent.</li>
+    <li><strong>Skill invocation</strong> (<code>USE ~/skill/x TO task</code>) — Invoking another skill.</li>
+    <li><strong>Tool execution</strong> (<code>EXECUTE ~/tool/x TO action</code>) — Running an external tool.</li>
+    <li><strong>Agent delegation</strong> (<code>DELEGATE task TO ~/agent/x</code>) — Spawning autonomous subagent.</li>
     <li><strong>Section navigation</strong> (<code>GOTO #section</code>) — Jumping to a section anchor.</li>
   </ul>
 

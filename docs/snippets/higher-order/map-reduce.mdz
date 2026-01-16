@@ -1,5 +1,5 @@
 FOR $item IN $collection
-  DELEGATE /process item/ TO ~/agent/processor
+  DELEGATE process item TO ~/agent/processor
   Collect $result into $results
 END
 

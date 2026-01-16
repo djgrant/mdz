@@ -378,44 +378,40 @@ The ~/agent/explorer and ~/tool/browser work with ~/skill/validator at #methodol
 });
 
 // ============================================================================
-// Semantic Marker Tests
+// Semantic Span Tests
 // ============================================================================
 
-describe('Semantic Markers', () => {
-  test('parses semantic marker with new /content/ syntax', () => {
+describe('Semantic Spans', () => {
+  test('parses DO instruction span', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Write to /appropriate location/
+DO appropriate location
 `);
-    const paras = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    const doBlocks = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.DoStatement => b.kind === 'DoStatement')
     );
-    const markers = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
-    );
-    assertEqual(markers.length, 1);
-    assertEqual(markers[0].content, 'appropriate location');
+    assertEqual(doBlocks.length, 1);
+    assert(!!doBlocks[0].instruction, 'Should have instruction');
+    assertEqual(doBlocks[0].instruction?.content, 'appropriate location');
   });
 
-  test('parses semantic marker with variable', () => {
+  test('parses DELEGATE task span with variable', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Write to /path for $n/
+DELEGATE path for $n TO ~/agent/worker
 `);
-    const paras = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    const delegates = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.DelegateStatement => b.kind === 'DelegateStatement')
     );
-    const markers = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
-    );
-    assertEqual(markers.length, 1);
-    assert(markers[0].content.includes('$n'), 'Should contain variable');
+    assertEqual(delegates.length, 1);
+    assertEqual(delegates[0].task?.content, 'path for $n');
+    assertEqual(delegates[0].task?.interpolations.length ?? 0, 1);
   });
 
   test('parses inferred variable $/name/', () => {
@@ -426,10 +422,10 @@ description: test
 
 Process item at $/index/
 `);
-    const paras = doc.sections.flatMap(s => 
+    const paras = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
     );
-    const inferredVars = paras.flatMap(p => 
+    const inferredVars = paras.flatMap(p =>
       p.content.filter((c): c is AST.InferredVariable => c.kind === 'InferredVariable')
     );
     assertEqual(inferredVars.length, 1);
@@ -442,9 +438,9 @@ name: test
 description: test
 ---
 
-$path: /file path for output/ = "output.md"
+$path: file path for output = "output.md"
 `);
-    const vars = doc.sections.flatMap(s => 
+    const vars = doc.sections.flatMap(s =>
       s.content.filter((b): b is AST.VariableDeclaration => b.kind === 'VariableDeclaration')
     );
     assertEqual(vars.length, 1);
@@ -453,22 +449,24 @@ $path: /file path for output/ = "output.md"
     assertEqual((vars[0].typeAnnotation as AST.SemanticType).description, 'file path for output');
   });
 
-  test('legacy {~~} syntax still parses (backward compatibility)', () => {
+  test('parses semantic condition without markers', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Write to {~~appropriate location}
+IF diminishing returns THEN
+  DO stop
+END
 `);
-    const paras = doc.sections.flatMap(s => 
-      s.content.filter((b): b is AST.Paragraph => b.kind === 'Paragraph')
+    const ifs = doc.sections.flatMap(s =>
+      s.content.filter((b): b is AST.IfStatement => b.kind === 'IfStatement')
     );
-    const markers = paras.flatMap(p => 
-      p.content.filter((c): c is AST.SemanticMarker => c.kind === 'SemanticMarker')
-    );
-    assertEqual(markers.length, 1);
-    assertEqual(markers[0].content, 'appropriate location');
+    assertEqual(ifs.length, 1);
+    assert(ifs[0].condition.kind === 'SemanticCondition', 'Should parse semantic condition');
+    if (ifs[0].condition.kind === 'SemanticCondition') {
+      assertEqual(ifs[0].condition.text, 'diminishing returns');
+    }
   });
 });
 
@@ -540,7 +538,7 @@ name: test
 description: test
 ---
 
-WHILE NOT /diminishing returns/ DO
+WHILE NOT diminishing returns DO
   Continue
 END
 `);
@@ -557,7 +555,7 @@ name: test
 description: test
 ---
 
-WHILE NOT /complete/ AND $count < 5 DO
+WHILE NOT complete AND $count < 5 DO
   Process
 END
 `);
@@ -677,11 +675,11 @@ name: test
 description: test
 ---
 
-IF /any critical findings/ THEN
+IF any critical findings THEN
   $outcome = "request-changes"
-ELSE IF /major findings > 3/ THEN
+ELSE IF major findings > 3 THEN
   $outcome = "request-changes"
-ELSE IF /any findings/ THEN
+ELSE IF any findings THEN
   $outcome = "comment"
 ELSE
   $outcome = "approve"
@@ -749,26 +747,13 @@ description: test
 // ============================================================================
 
 describe('Error Handling', () => {
-  test('recovers from unclosed semantic marker (new syntax)', () => {
+  test('recovers from unclosed inferred variable', () => {
     const doc = parse(`---
 name: test
 description: test
 ---
 
-Write to /unclosed marker
-Next line
-`);
-    // Should still parse, possibly with errors
-    assert(doc.sections.length > 0, 'Should have sections');
-  });
-
-  test('recovers from unclosed semantic marker (legacy syntax)', () => {
-    const doc = parse(`---
-name: test
-description: test
----
-
-Write to {~~unclosed
+Write to $/unclosed marker
 Next line
 `);
     // Should still parse, possibly with errors

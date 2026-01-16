@@ -18,7 +18,7 @@
     { "include": "#reference" },
     { "include": "#string" },
     { "include": "#template" },
-    { "include": "#semantic-marker" },
+    { "include": "#semantic-span" },
     { "include": "#number" },
     { "include": "#operator" },
     { "include": "#list-marker" }
@@ -79,7 +79,7 @@
         { "include": "#reference" },
         { "include": "#string" },
         { "include": "#template" },
-        { "include": "#semantic-marker" },
+        { "include": "#semantic-span" },
         { "include": "#number" },
         { "include": "#operator" }
       ]
@@ -100,7 +100,7 @@
         { "include": "#reference" },
         { "include": "#string" },
         { "include": "#template" },
-        { "include": "#semantic-marker" },
+        { "include": "#semantic-span" },
         { "include": "#number" },
         { "include": "#operator" }
       ]
@@ -148,18 +148,46 @@
         }
       ]
     },
-    "semantic-marker": {
+    "semantic-span": {
       "patterns": [
         {
-          "begin": "/(?=[^/\\n]+/)",
-          "end": "/",
-          "name": "string.interpolated.semantic.mdz",
-          "patterns": [
-            { "include": "#variable" }
-          ]
+          "comment": "DELEGATE instruction span",
+          "match": "^\\s*(?:ASYNC\\s+|AWAIT\\s+)?DELEGATE\\s+([^\\n]+?)(?=\\s+TO\\b|\\s+WITH\\b|\\s*:?$)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "USE/EXECUTE instruction span",
+          "match": "^\\s*(?:USE|EXECUTE)\\b.*?\\bTO\\b\\s+([^\\n:]+)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "DO instruction span",
+          "match": "^\\s*DO\\s+(.+)$",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "IF/WHILE semantic condition span",
+          "match": "^\\s*(?:IF|WHILE)\\b\\s+([^\\n]+?)(?=\\s+THEN\\b|\\s+DO\\b)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "Semantic type annotation",
+          "match": "^\\s*\\$[A-Za-z][A-Za-z0-9-]*\\s*:\\s+(?!\\$|\"|\\()([^=\\n]+)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
         }
       ]
     },
+
     "string": {
       "match": "\"([^\"]*)\"",
       "name": "string.quoted.double.mdz"

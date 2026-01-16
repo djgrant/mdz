@@ -18,7 +18,6 @@ const basePatterns: Array<{ regex: RegExp; type: string }> = [
   { regex: /\b-?\d+(?:\.\d+)?\b/g, type: "number" },
   { regex: /"[^"]*"/g, type: "string" },
   { regex: /\$\/[a-zA-Z0-9_-]+\//g, type: "semantic" },
-  { regex: /\/[^\n\/]+\//g, type: "semantic" },
   { regex: /~\/[a-zA-Z0-9/_-]+(?:#[a-zA-Z0-9_-]+)?/g, type: "reference" },
   { regex: /#[a-zA-Z][a-zA-Z0-9_-]*/g, type: "reference" },
   { regex: /\$[A-Z][a-zA-Z0-9]*/g, type: "type" },
@@ -100,6 +99,107 @@ function collectTokens(lines: string[]): Token[] {
           type: "string",
         });
       }
+    }
+
+    const findContentStart = (startIndex: number): number => {
+      let index = startIndex;
+      while (index < line.length && /\s/.test(line[index])) {
+        index += 1;
+      }
+      return index;
+    };
+
+    const addSemanticSpan = (startIndex: number, endIndex: number): void => {
+      if (endIndex <= startIndex) return;
+      const spanText = line.slice(startIndex, endIndex);
+      const varPattern = /\$\/[^\/\n]+\/|\$[A-Za-z][A-Za-z0-9-]*/g;
+      let cursor = startIndex;
+      let match: RegExpExecArray | null;
+      varPattern.lastIndex = 0;
+      while ((match = varPattern.exec(spanText))) {
+        const varStart = startIndex + match.index;
+        if (cursor < varStart) {
+          lineTokens.push({
+            line: lineIndex,
+            start: cursor,
+            length: varStart - cursor,
+            type: "semantic",
+          });
+        }
+        lineTokens.push({
+          line: lineIndex,
+          start: varStart,
+          length: match[0].length,
+          type: match[0].startsWith("$/") ? "semantic" : "variable",
+        });
+        cursor = varStart + match[0].length;
+      }
+      if (cursor < endIndex) {
+        lineTokens.push({
+          line: lineIndex,
+          start: cursor,
+          length: endIndex - cursor,
+          type: "semantic",
+        });
+      }
+    };
+
+    const delegateMatch = line.match(/^\s*(?:ASYNC\s+|AWAIT\s+)?DELEGATE\b/);
+    if (delegateMatch) {
+      const startIndex = delegateMatch[0].length;
+      const rest = line.slice(startIndex);
+      const stopMatch = rest.match(/\bTO\b|\bWITH\b|:/);
+      const endIndex = stopMatch ? startIndex + (stopMatch.index ?? 0) : line.length;
+      const contentStart = findContentStart(startIndex);
+      addSemanticSpan(contentStart, endIndex);
+    }
+
+    const useExecuteMatch = line.match(/^\s*(USE|EXECUTE)\b/);
+    if (useExecuteMatch) {
+      const toMatch = line.match(/\bTO\b/);
+      if (toMatch && toMatch.index !== undefined) {
+        const contentStart = findContentStart(toMatch.index + toMatch[0].length);
+        const rest = line.slice(contentStart);
+        const stopMatch = rest.match(/:/);
+        const endIndex = stopMatch ? contentStart + (stopMatch.index ?? 0) : line.length;
+        addSemanticSpan(contentStart, endIndex);
+      }
+    }
+
+    const doMatch = line.match(/^\s*DO\b/);
+    if (doMatch) {
+      const contentStart = findContentStart(doMatch[0].length);
+      addSemanticSpan(contentStart, line.length);
+    }
+
+    const conditionMatch = line.match(/^\s*(IF|WHILE)\b/);
+    if (conditionMatch) {
+      const stopPattern = conditionMatch[1] === "IF" ? /\bTHEN\b/ : /\bDO\b/;
+      const stopMatch = line.match(stopPattern);
+      if (stopMatch && stopMatch.index !== undefined) {
+        const conditionStart = conditionMatch[0].length;
+        const conditionEnd = stopMatch.index;
+        const conditionText = line.slice(conditionStart, conditionEnd);
+        const hasDeterministic = /\$[A-Za-z][A-Za-z0-9-]*\s*(?:=|!=|<=|>=|<|>)/.test(conditionText);
+        if (!hasDeterministic) {
+          addSemanticSpan(findContentStart(conditionStart), conditionEnd);
+        }
+      }
+    }
+
+    const typeAnnotationMatch = line.match(
+      /^\s*\$[A-Za-z][A-Za-z0-9-]*\s*:\s+(?!\$|"|\()([^=\n]+)(?:=.*)?$/,
+    );
+    if (typeAnnotationMatch && typeAnnotationMatch.index !== undefined) {
+      const fullMatch = typeAnnotationMatch[0];
+      const annotation = typeAnnotationMatch[1];
+      const annotationStart =
+        (typeAnnotationMatch.index ?? 0) + fullMatch.indexOf(annotation);
+      let annotationEnd = annotationStart + annotation.length;
+      while (annotationEnd > annotationStart && /\s/.test(line[annotationEnd - 1])) {
+        annotationEnd -= 1;
+      }
+      addSemanticSpan(annotationStart, annotationEnd);
     }
 
     const allPatterns = [
@@ -193,7 +293,7 @@ function decodeSemanticTokens(data: number[], legend: string[]): Token[] {
 
 function mapLspType(type: string): string {
   switch (type) {
-    case "semanticMarker":
+    case "semanticSpan":
       return "semantic";
     case "link":
     case "anchor":

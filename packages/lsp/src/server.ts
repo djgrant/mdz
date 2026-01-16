@@ -136,7 +136,7 @@ export interface DocumentState {
   types: Map<string, TypeInfo>;
   variables: Map<string, VariableInfo>;
   references: ReferenceInfo[];
-  semanticMarkers: SemanticMarkerInfo[];
+  semanticSpans: SemanticMarkerInfo[];
 }
 
 export interface TypeInfo {
@@ -183,7 +183,7 @@ export class ZenLanguageServer {
     'function',
     'parameter',
     'namespace',
-    'semanticMarker',
+    'semanticSpan',
     'link',
     'anchor',
     'frontmatter',
@@ -223,11 +223,11 @@ export class ZenLanguageServer {
     const types = new Map<string, TypeInfo>();
     const variables = new Map<string, VariableInfo>();
     const references: ReferenceInfo[] = [];
-    const semanticMarkers: SemanticMarkerInfo[] = [];
+    const semanticSpans: SemanticMarkerInfo[] = [];
 
     // Extract all definitions and references
     for (const section of ast.sections) {
-      this.analyzeBlocks(section.content, types, variables, references, semanticMarkers);
+      this.analyzeBlocks(section.content, types, variables, references, semanticSpans);
     }
 
     // Register as skill if it has a name
@@ -239,7 +239,7 @@ export class ZenLanguageServer {
         types,
         variables,
         references,
-        semanticMarkers,
+        semanticSpans,
       };
       this.skillRegistry.set(ast.frontmatter.name, state);
     }
@@ -251,7 +251,7 @@ export class ZenLanguageServer {
       types,
       variables,
       references,
-      semanticMarkers,
+      semanticSpans,
     };
   }
 
@@ -260,7 +260,7 @@ export class ZenLanguageServer {
     types: Map<string, TypeInfo>,
     variables: Map<string, VariableInfo>,
     references: ReferenceInfo[],
-    semanticMarkers: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[]
   ): void {
     for (const block of blocks) {
       switch (block.kind) {
@@ -284,7 +284,7 @@ export class ZenLanguageServer {
             isLambda: block.isLambda,
           });
           if (block.value) {
-            this.analyzeExpression(block.value, references, semanticMarkers);
+            this.analyzeExpression(block.value, references, semanticSpans);
           }
           break;
 
@@ -304,20 +304,20 @@ export class ZenLanguageServer {
               });
             }
           }
-          this.analyzeExpression(block.collection, references, semanticMarkers);
-          this.analyzeBlocks(block.body, types, variables, references, semanticMarkers);
+          this.analyzeExpression(block.collection, references, semanticSpans);
+          this.analyzeBlocks(block.body, types, variables, references, semanticSpans);
           break;
 
         case 'WhileStatement':
-          this.analyzeCondition(block.condition, references, semanticMarkers);
-          this.analyzeBlocks(block.body, types, variables, references, semanticMarkers);
+          this.analyzeCondition(block.condition, references, semanticSpans);
+          this.analyzeBlocks(block.body, types, variables, references, semanticSpans);
           break;
 
         case 'IfStatement':
-          this.analyzeCondition(block.condition, references, semanticMarkers);
-          this.analyzeBlocks(block.thenBody, types, variables, references, semanticMarkers);
+          this.analyzeCondition(block.condition, references, semanticSpans);
+          this.analyzeBlocks(block.thenBody, types, variables, references, semanticSpans);
           if (block.elseBody) {
-            this.analyzeBlocks(block.elseBody, types, variables, references, semanticMarkers);
+            this.analyzeBlocks(block.elseBody, types, variables, references, semanticSpans);
           }
           break;
 
@@ -340,8 +340,6 @@ export class ZenLanguageServer {
                 target: `#${item.name}`,
                 span: item.span,
               });
-            } else if (item.kind === 'SemanticMarker') {
-              semanticMarkers.push({ content: item.content, span: item.span });
             }
           }
           break;
@@ -352,7 +350,7 @@ export class ZenLanguageServer {
   private analyzeExpression(
     expr: AST.Expression,
     references: ReferenceInfo[],
-    semanticMarkers: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[]
   ): void {
     if (AST.isLink(expr)) {
       // v0.8: Link reference ~/path/to/file or ~/path/to/file#anchor
@@ -378,32 +376,29 @@ export class ZenLanguageServer {
     }
     
     switch (expr.kind) {
-      case 'SemanticMarker':
-        semanticMarkers.push({ content: expr.content, span: expr.span });
-        break;
       case 'ArrayLiteral':
         for (const el of expr.elements) {
-          this.analyzeExpression(el, references, semanticMarkers);
+          this.analyzeExpression(el, references, semanticSpans);
         }
         break;
       case 'TemplateLiteral':
         for (const part of expr.parts) {
           if (typeof part !== 'string') {
-            this.analyzeExpression(part, references, semanticMarkers);
+            this.analyzeExpression(part, references, semanticSpans);
           }
         }
         break;
       case 'BinaryExpression':
-        this.analyzeExpression(expr.left, references, semanticMarkers);
-        this.analyzeExpression(expr.right, references, semanticMarkers);
+        this.analyzeExpression(expr.left, references, semanticSpans);
+        this.analyzeExpression(expr.right, references, semanticSpans);
         break;
       case 'LambdaExpression':
-        this.analyzeExpression(expr.body, references, semanticMarkers);
+        this.analyzeExpression(expr.body, references, semanticSpans);
         break;
       case 'FunctionCall':
-        this.analyzeExpression(expr.callee, references, semanticMarkers);
+        this.analyzeExpression(expr.callee, references, semanticSpans);
         for (const arg of expr.args) {
-          this.analyzeExpression(arg, references, semanticMarkers);
+          this.analyzeExpression(arg, references, semanticSpans);
         }
         break;
     }
@@ -412,16 +407,19 @@ export class ZenLanguageServer {
   private analyzeCondition(
     cond: AST.Condition,
     references: ReferenceInfo[],
-    semanticMarkers: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[]
   ): void {
     switch (cond.kind) {
+      case 'SemanticCondition':
+        semanticSpans.push({ content: cond.text, span: cond.span });
+        break;
       case 'DeterministicCondition':
-        this.analyzeExpression(cond.left, references, semanticMarkers);
-        this.analyzeExpression(cond.right, references, semanticMarkers);
+        this.analyzeExpression(cond.left, references, semanticSpans);
+        this.analyzeExpression(cond.right, references, semanticSpans);
         break;
       case 'CompoundCondition':
-        this.analyzeCondition(cond.left, references, semanticMarkers);
-        this.analyzeCondition(cond.right, references, semanticMarkers);
+        this.analyzeCondition(cond.left, references, semanticSpans);
+        this.analyzeCondition(cond.right, references, semanticSpans);
         break;
     }
   }
@@ -562,7 +560,6 @@ export class ZenLanguageServer {
         { regex: /\$[A-Z][A-Za-z0-9]*/g, type: 'type' },
         { regex: /\$[a-z][A-Za-z0-9-]*/g, type: 'variable' },
         { regex: /"[^"]*"/g, type: 'string' },
-        { regex: /\/[^\n\/]+\//g, type: 'semanticMarker' },
         { regex: /\b-?\d+(?:\.\d+)?\b/g, type: 'number' },
       ];
       for (const { regex, type } of patterns) {
@@ -571,6 +568,17 @@ export class ZenLanguageServer {
         while ((match = regex.exec(line))) {
           addToken(lineIndex, match.index, match[0].length, type);
         }
+      }
+      const semanticTypeMatch = line.match(
+        /(\$[A-Za-z][A-Za-z0-9-]*\s*:\s+)(?!\$|"|\()([^\n=]+)/,
+      );
+      if (semanticTypeMatch && semanticTypeMatch.index !== undefined) {
+        const matchStart = semanticTypeMatch.index + semanticTypeMatch[1].length;
+        let matchEnd = semanticTypeMatch.index + semanticTypeMatch[0].length;
+        while (matchEnd > matchStart && /\s/.test(line[matchEnd - 1])) {
+          matchEnd -= 1;
+        }
+        addToken(lineIndex, matchStart, matchEnd - matchStart, 'semanticSpan');
       }
     };
 
@@ -666,6 +674,34 @@ export class ZenLanguageServer {
       addNameToken(lineIndex, span.start.column, span.end.column, `$${name}`, 'type', false);
     };
 
+    const addSemanticSpanTokens = (span: AST.SemanticMarker): void => {
+      if (span.span.start.line !== span.span.end.line) {
+        addSpanToken(span.span, 'semanticSpan');
+        return;
+      }
+      const lineIndex = span.span.start.line - 1;
+      const spanStart = span.span.start.column;
+      const spanEnd = span.span.end.column;
+      const interpolations = span.interpolations
+        .filter((interp) => interp.span.start.line === span.span.start.line)
+        .sort((a, b) => a.span.start.column - b.span.start.column);
+      let cursor = spanStart;
+      for (const interpolation of interpolations) {
+        const varStart = interpolation.span.start.column;
+        const varEnd = interpolation.span.end.column;
+        if (varStart > cursor) {
+          addToken(lineIndex, cursor, varStart - cursor, 'semanticSpan');
+        }
+        if (varEnd > varStart) {
+          addToken(lineIndex, varStart, varEnd - varStart, 'variable');
+        }
+        cursor = Math.max(cursor, varEnd);
+      }
+      if (cursor < spanEnd) {
+        addToken(lineIndex, cursor, spanEnd - cursor, 'semanticSpan');
+      }
+    };
+
     const addEnumTokens = (expr: AST.EnumType): void => {
       if (expr.span.start.line !== expr.span.end.line) return;
       const lineIndex = expr.span.start.line - 1;
@@ -687,7 +723,7 @@ export class ZenLanguageServer {
     const collectTypeExprTokens = (expr: AST.TypeExpr): void => {
       switch (expr.kind) {
         case 'SemanticType':
-          addSpanToken(expr.span, 'semanticMarker');
+          addSpanToken(expr.span, 'semanticSpan');
           break;
         case 'EnumType':
           addEnumTokens(expr);
@@ -723,9 +759,6 @@ export class ZenLanguageServer {
           break;
         case 'BooleanLiteral':
           addSpanToken(expr.span, 'keyword');
-          break;
-        case 'SemanticMarker':
-          addSpanToken(expr.span, 'semanticMarker');
           break;
         case 'Link':
           addSpanToken(expr.span, 'link');
@@ -774,7 +807,7 @@ export class ZenLanguageServer {
     const collectConditionTokens = (cond: AST.Condition): void => {
       switch (cond.kind) {
         case 'SemanticCondition':
-          addSpanToken(cond.span, 'semanticMarker');
+          addSpanToken(cond.span, 'semanticSpan');
           break;
         case 'DeterministicCondition':
           collectExpressionTokens(cond.left);
@@ -802,7 +835,7 @@ export class ZenLanguageServer {
               if (block.typeAnnotation.kind === 'TypeReference') {
                 addTypeNameToken(block.typeAnnotation.span, block.typeAnnotation.name);
               } else if (block.typeAnnotation.kind === 'SemanticType') {
-                addSpanToken(block.typeAnnotation.span, 'semanticMarker');
+                addSpanToken(block.typeAnnotation.span, 'semanticSpan');
               }
             }
             if (block.value) {
@@ -838,7 +871,7 @@ export class ZenLanguageServer {
           case 'DoStatement': {
             const doBlock = block as AST.DoStatement & { body?: AST.Block[] };
             if (doBlock.instruction) {
-              addSpanToken(doBlock.instruction.span, 'semanticMarker');
+              addSemanticSpanTokens(doBlock.instruction);
             }
             if (doBlock.body) {
               collectBlockTokens(doBlock.body);
@@ -855,7 +888,7 @@ export class ZenLanguageServer {
             collectExpressionTokens(block.value);
             break;
           case 'DelegateStatement':
-            if (block.task) addSpanToken(block.task.span, 'semanticMarker');
+            if (block.task) addSemanticSpanTokens(block.task);
             if (block.target) addSpanToken(block.target.span, 'link');
             if (block.withAnchor) addSpanToken(block.withAnchor.span, 'anchor');
             if (block.parameters) {
@@ -867,7 +900,7 @@ export class ZenLanguageServer {
             break;
           case 'UseStatement':
             addSpanToken(block.link.span, 'link');
-            addSpanToken(block.task.span, 'semanticMarker');
+            addSemanticSpanTokens(block.task);
             if (block.parameters) {
               for (const param of block.parameters.parameters) {
                 addVariableNameToken(param.span, param.name);
@@ -877,7 +910,7 @@ export class ZenLanguageServer {
             break;
           case 'ExecuteStatement':
             addSpanToken(block.link.span, 'link');
-            addSpanToken(block.task.span, 'semanticMarker');
+            addSemanticSpanTokens(block.task);
             break;
           case 'GotoStatement':
             addSpanToken(block.anchor.span, 'anchor');
@@ -892,9 +925,6 @@ export class ZenLanguageServer {
           case 'Paragraph':
             for (const item of block.content) {
               switch (item.kind) {
-                case 'SemanticMarker':
-                  addSpanToken(item.span, 'semanticMarker');
-                  break;
                 case 'VariableReference':
                 case 'InferredVariable':
                   addSpanToken(item.span, 'variable');

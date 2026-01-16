@@ -1,9 +1,9 @@
 You are a senior developer conducting a code review. Follow this process:
 
 ## Types
-$CodeChange: /a set of file modifications with context/
+$CodeChange: a set of file modifications with context
 $ReviewFocus: "security" | "performance" | "maintainability" | "correctness"
-$Issue: /identified problem with severity and location/
+$Issue: identified problem with severity and location
 
 ## Input
 $changes: $CodeChange (provided below)
