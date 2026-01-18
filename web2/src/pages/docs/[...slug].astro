@@ -2,20 +2,20 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 export async function getStaticPaths() {
-  const pages = import.meta.glob("../../../docs/**/*.mdx");
+  const pages = import.meta.glob("../../../../docs/**/*.mdx");
 
   return Object.keys(pages)
-    .map((path) => path.replace("../../../docs/", "").replace(/\.mdx$/, ""))
+    .map((path) => path.replace("../../../../docs/", "").replace(/\.mdx$/, ""))
     .filter((slug) => slug !== "index" && slug !== "landing")
     .map((slug) => ({
       params: { slug },
     }));
 }
 
-const pages = import.meta.glob("../../../docs/**/*.mdx");
+const pages = import.meta.glob("../../../../docs/**/*.mdx");
 const slugParam = Astro.params.slug;
 const slug = Array.isArray(slugParam) ? slugParam.join("/") : slugParam ?? "";
-const docPath = `../../../docs/${slug}.mdx`;
+const docPath = `../../../../docs/${slug}.mdx`;
 const load = pages[docPath];
 
 if (!load) {

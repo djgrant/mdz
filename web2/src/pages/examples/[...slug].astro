@@ -3,20 +3,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import MdzCodeBlock from "@web2/components/MdzCodeBlock.astro";
 
 export async function getStaticPaths() {
-  const files = import.meta.glob("../../../docs/examples/**/*.mdz");
+  const files = import.meta.glob("../../../../docs/examples/**/*.mdz");
   return Object.keys(files)
-    .map((path) => path.replace("../../../docs/examples/", "").replace(/\.mdz$/, ""))
+    .map((path) => path.replace("../../../../docs/examples/", "").replace(/\.mdz$/, ""))
     .map((slug) => ({ params: { slug } }));
 }
 
-const files = import.meta.glob("../../../docs/examples/**/*.mdz", {
+const files = import.meta.glob("../../../../docs/examples/**/*.mdz", {
   query: "?raw",
   import: "default",
 });
 
 const slugParam = Astro.params.slug;
 const slug = Array.isArray(slugParam) ? slugParam.join("/") : slugParam ?? "";
-const filePath = `../../../docs/examples/${slug}.mdz`;
+const filePath = `../../../../docs/examples/${slug}.mdz`;
 const load = files[filePath];
 
 if (!load) {

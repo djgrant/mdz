@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
-const examples = Object.keys(import.meta.glob("../../../docs/examples/**/*.mdz"))
-  .map((path) => path.replace("../../../docs/examples/", "").replace(/\.mdz$/, ""))
+const examples = Object.keys(import.meta.glob("../../../../docs/examples/**/*.mdz"))
+  .map((path) => path.replace("../../../../docs/examples/", "").replace(/\.mdz$/, ""))
   .sort();
 
 const grouped = new Map<string, string[]>();
