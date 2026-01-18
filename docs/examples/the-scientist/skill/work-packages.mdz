@@ -1,11 +1,21 @@
 ---
 name: work-packages
-description: When creating or completing a work package, use this skill for the correct structure.
+description: When creating or working on a work package (WP), load this skill to get templates and understand the WP lifecycle.
 ---
 
-Work packages persist task state between agent sessions.
+Work packages persist project/task state between agent sessions.
 
-## Structure
+Work packages can either by for the entire project (#master-work-package-template), or a scoped task (#scoped-work-package-template).
+
+## Work Package Lifecycle
+
+1. create in .opencode/work/drafts/wp-{name}.md
+2. move to /in-progress when starting
+3. record results
+4. iterate until 
+5. move to /completed when done
+
+## Master Work Package Template
 
 ```markdown
 # {Title}
@@ -13,19 +23,14 @@ Work packages persist task state between agent sessions.
 ## Goal
 {What needs to be solved}
 
-## Approach
-{How to do it}
-
 ## Hypothesis
-{Why you think this will work}
+{Why you think this will work (or not work)}
 
 ## Results
-{Filled out upon completion}
+{To be filled out upon completion. Can contain multiple iterations.}
+
+## Evaluation
+{What did your learn from the results? Was the hypothesis proved correct?}
 ```
 
-## Workflow
-
-DO /create in .opencode work todo wp-{name}.md/
-DO /move to in-progress when starting/
-DO /record results/
-DO /move to completed when done/
+## Scoped Work Package Template

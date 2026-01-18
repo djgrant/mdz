@@ -1,9 +1,9 @@
 ---
 name: divergent-thinking
-description: When exploring alternatives, use this skill to generate diverse ideas and avoid the obvious.
+description: When exploring alternatives, load this skill to generate diverse ideas and avoid the consensus center.
 ---
 
-Generate a range of answers ranked by how common they are.
+Generate a range of answers ranked by their pointless (ala the game show) score.
 
 100 = everyone gives this answer (avoid)
 0 = no one thought of this (find these)

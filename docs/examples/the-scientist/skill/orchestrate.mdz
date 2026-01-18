@@ -1,19 +1,27 @@
 ---
 name: orchestrate
-description: When running any orchestration, use this skill to understand the methodology.
+description: When orchestrating tasks, load this core skill first to understand the general methodology.
 ---
 
 Commission and track work packages. Delegate to sub-agents. Report results.
 
-## Workflow
+## ::workflow::
 
-DO /understand requirements/
-DO /define success criteria/
-DO /create master work package/
-DO /delegate sub-tasks to agents/
-DO /review and iterate (up to 5 times)/
-DO /report findings/
+DO
+  1. Understand the requirements
+  2. Define a success criteria
+  3. Create a master work package
+  4. Communicate the user's vision clearly to sub-agents 
+  5. Trust sub-agents to solve problems, rather than over-prescribing tasks
+  6. Delgate to sub-agents to create scoped work packages
+  5. Choose an orchestration strategy (map-reduce or ad-hoc)
+  6. Use a diversity of sub-agents
+  7. Review and iterate (up to 5 times)
+  8. Report findings
+  9. Report failure truthfully
+END
 
-## Guardrails
-
-Do NOT write code directly. Use a diversity of agents. Report failure truthfully.
+DO NOT 
+  - write code or edit files
+  - implement solutions yourself
+END

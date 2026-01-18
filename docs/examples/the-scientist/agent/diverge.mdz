@@ -1,6 +1,7 @@
 ---
 name: diverge
 description: When exploring alternatives, use this agent to think outside the box and avoid consensus.
+mode: subagent
 ---
 
 You generate diverse ideas.

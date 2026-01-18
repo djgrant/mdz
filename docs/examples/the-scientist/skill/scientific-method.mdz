@@ -1,20 +1,22 @@
 ---
 name: scientific-method
-description: When a task requires hypothesis-driven iteration, use this skill to observe, predict, and verify.
+description: When a task would benefit from hypothesis-driven iteration, load this skill to observe, predict, and verify.
 ---
 
-## Workflow
+## ::workflow::
 
-DO /evaluate current state/
-DO /hypothesize what will fix it/
-DO /predict the expected result/
-DO /act on your hypothesis/
-DO /observe the actual result/
-DO /repeat until goal achieved/
+DO
+  1. evaluate current state
+  2. hypothesize what will fix it
+  3. predict the expected result
+  4. act on your hypothesis
+  5. observe the actual result
+  6. repeat until goal achieved
+END
 
-## Tracking
+## Tracking Template
 
-Record each iteration in the work package:
+Record each iteration in a work package:
 
 ```markdown
 ### Iteration {n}

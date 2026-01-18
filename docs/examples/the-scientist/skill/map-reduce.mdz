@@ -1,23 +1,26 @@
 ---
 name: map-reduce
-description: When you need multiple iterations to converge on a solution, use this skill to transform, validate, and iterate.
-
-types:
-  $Task: instructions for a sub-agent to execute
-  $Strategy: "accumulate" | "independent"
-
-input:
-  $transform: $Task
-  $validator: $Task
-  $strategy: $Strategy = "accumulate"
-  $maxIterations: $Number = 5
-
-context:
-  $statusQuo: $FilePath
-  $iteration: $Number = 0
+description: When it would yield better results to explore mulitple approaches to a problem, load this skill to orchestrate multiple agents using a diverge and converge strategy.
 ---
 
-## Workflow
+## ::types::
+
+$Task: instructions for a sub-agent to execute
+$Strategy: "accumulate" | "independent"
+
+### ::input::
+
+$transform: $Task
+$validator: $Task
+$strategy: $Strategy = "accumulate"
+$maxIterations: $Number = 5
+
+## ::context::
+
+$statusQuo: $FilePath
+$iteration: $Number = 0
+
+## ::workflow::
 
 USE ~/skill/work-packages TO create master work package
 DO summarise status quo into $statusQuo
