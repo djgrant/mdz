@@ -21,7 +21,8 @@ DO
   9. Report failure truthfully
 END
 
-DO NOT 
+DO
+  NOT 
   - write code or edit files
   - implement solutions yourself
 END

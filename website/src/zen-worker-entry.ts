@@ -36,7 +36,7 @@ interface ValidateResult {
     uses: string[];
     types: Array<{ name: string; definition: string }>;
     variables: Array<{ name: string; type: string | null }>;
-    references: Array<{ kind: 'skill' | 'section'; target: string }>;
+    references: Array<{ kind: 'skill' | 'section' | 'agent' | 'tool' | 'anchor'; target: string }>;
     sections: Array<{ title: string; anchor: string; level: number }>;
   };
   dependencies: {
@@ -247,6 +247,12 @@ function handleValidateProject(id: number, files: Record<string, string>): void 
     const fileResults: Record<string, ValidateResult> = {};
     const allNodes = new Map<string, string | null>(); // skill name -> file name (null if external)
     const allEdges: Array<{ source: string; target: string; type: 'uses' | 'reference' | 'imports' }> = [];
+
+    // v0.10: First, register all files with the LSP server to warm up the registry.
+    // This enables cross-file completions and definitions immediately.
+    for (const [fileName, source] of Object.entries(files)) {
+      lspServer.updateDocument(fileName, source);
+    }
 
     // Build a map of skill names to file names
     const skillToFile = new Map<string, string>();

@@ -441,6 +441,94 @@ Execute ~/skill/test-skill WITH:
   });
 });
 
+describe('Validation - Contract Type Compatibility', () => {
+  test('errors on mismatched parameter type', () => {
+    const registry = createRegistry({
+      'skill/target-skill': `---
+name: skill/target-skill
+description: test
+---
+
+## Input
+
+$count: $Number
+`,
+    });
+
+    const result = compile(`---
+name: skill/caller
+description: test
+---
+
+use ~/skill/target-skill WITH:
+  count: "not-a-number"
+`, { validateContracts: true }, registry);
+
+    const typeErrors = result.diagnostics.filter(d => d.code === 'E020');
+    assertEqual(typeErrors.length, 1);
+    assertIncludes(typeErrors[0].message, 'count');
+  });
+
+  test('errors when enum candidate is not subset', () => {
+    const registry = createRegistry({
+      'skill/enum-target': `---
+name: skill/enum-target
+description: test
+---
+
+$Mode: "fast" | "slow"
+$ModeExtended: "fast" | "slow" | "turbo"
+
+## Input
+
+$mode: $Mode
+`,
+    });
+
+    const result = compile(`---
+name: skill/caller
+description: test
+---
+
+$mode: $ModeExtended = "fast"
+
+use ~/skill/enum-target WITH:
+  mode: $mode
+`, { validateContracts: true }, registry);
+
+    const typeErrors = result.diagnostics.filter(d => d.code === 'E020');
+    assertEqual(typeErrors.length, 1);
+  });
+
+  test('semantic types behave as Any', () => {
+    const registry = createRegistry({
+      'skill/any-target': `---
+name: skill/any-target
+description: test
+---
+
+$Task: any task
+
+## Input
+
+$task: $Task
+`,
+    });
+
+    const result = compile(`---
+name: skill/caller
+description: test
+---
+
+use ~/skill/any-target WITH:
+  task: 42
+`, { validateContracts: true }, registry);
+
+    const typeErrors = result.diagnostics.filter(d => d.code === 'E020');
+    assertEqual(typeErrors.length, 0);
+  });
+});
+
 // ============================================================================
 // Source Maps
 // ============================================================================
@@ -828,3 +916,4 @@ $custom: $CustomType = value
     assertIncludes(typeWarnings[0].message, 'CustomType');
   });
 });
+

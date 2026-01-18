@@ -52,3 +52,31 @@ export {
   DependencyGraph,
   DependencyEdge,
 } from "./compiler/compiler";
+
+export {
+  buildTypeEnv,
+  resolveType,
+  normalizeType,
+  isCompatible,
+  inferType,
+  makeSemanticType,
+  makeTypeReference,
+  TypeEnv,
+  ResolveOptions,
+  InferOptions,
+  CompatibilityResult,
+} from "./typecheck/typecheck";
+
+export {
+  buildTypeEnv as buildTypeEnvShared,
+  resolveType as resolveTypeShared,
+  normalizeType as normalizeTypeShared,
+  isCompatible as isCompatibleShared,
+  inferType as inferTypeShared,
+  makeSemanticType as makeSemanticTypeShared,
+  makeTypeReference as makeTypeReferenceShared,
+  TypeEnv as TypeEnvShared,
+  ResolveOptions as ResolveOptionsShared,
+  InferOptions as InferOptionsShared,
+  CompatibilityResult as CompatibilityResultShared,
+} from "./typecheck/index";

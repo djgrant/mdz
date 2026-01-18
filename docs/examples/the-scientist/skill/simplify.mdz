@@ -1,17 +1,13 @@
 ---
 name: simplify
 description: When a solution needs simplifying, load this skill with the map-reduce skill to find its essence.
+input:
+  $target: what to simplify
+  $essence: what must be preserved
+context:
+  $relevantHeuristics: a list of heuristics picked from #heuristics
 ---
 
-## ::input::
-
-$target: what to simplify
-$essence: what must be preserved
-
-## ::context::
-
-$relevantHeuristics: a list of heuristics picked from #heuristics
-  
 ## ::workflow::
 
 FOR $heuristic IN $relevantHeuristics

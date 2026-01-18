@@ -17,7 +17,8 @@
   },
   "include": [
     "src/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "packages/core/src/typecheck/typecheck.ts"
   ],
   "exclude": [
     "node_modules",

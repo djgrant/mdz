@@ -43,11 +43,15 @@ The parser produces:
 
 ## Stage 2: Type Validation
 
-The compiler checks that all type references resolve:
+The compiler checks that type references resolve and that declared contracts are structurally compatible:
 
 - Variable type annotations reference defined types
 - Built-in primitives (String, Number, Boolean) are automatically recognized
 - Undefined types trigger warnings (not errors, as semantic types are flexible)
+- Contract compatibility checks use structural matching (tuples/arrays/functions)
+- Enum compatibility follows the subset rule
+- Function types require an exact match (parameters and return)
+- `Any` is always compatible; semantic types resolve to `Any`
 
 ### Example Type Error
 
@@ -60,6 +64,16 @@ Produces warning:
 - **Diagnostic:** W008 - Undefined type
 - **Message:** "Type 'UnknownType' is not defined"
 - **Span:** Position of 'UnknownType'
+
+### Contract Compatibility Notes
+
+Compatibility rules apply when comparing a provided parameter value to an expected type from frontmatter:
+
+- Structural compatibility is recursive (tuples, arrays, nested types)
+- Enum values must be a subset of the expected enum
+- Function types must match exactly
+- `Any` and semantic types never error
+- Lambda returns are inferred shallowly; otherwise the return is treated as `Any`
 
 ## Stage 3: Scope Validation
 

@@ -9,7 +9,7 @@ import snippet_docs_snippets_types_typed_declarations_mdz from "./snippets/types
 
 # Type System
 
-Types in MDZ are contracts for tooling and semantic hints for LLMs--not runtime enforcement.
+Types in MDZ are contracts for tooling and semantic hints for LLMs--not runtime enforcement. Contract checks use structural compatibility rules aligned across the compiler and LSP.
 
 ## Philosophy
 
@@ -29,6 +29,23 @@ Types enable tooling to check that modules fit together correctly:
 This mismatch is caught at build time--before the LLM ever sees it. Without MDZ, you'd discover it at runtime with a confused LLM.
 
 ## Defining Types
+
+### Frontmatter Declarations (v0.9+)
+
+Type declarations live in frontmatter `types:`. Validators and the LSP read only frontmatter declarations for contract checks; legacy `## Types` sections are ignored.
+
+```mdz
+---
+name: format-items
+description: When formatting items for output
+types:
+  Strategy: "compact" | "verbose"
+  Formatter: ($String) => $String
+input:
+  strategy: $Strategy
+  formatter: $Formatter
+---
+```
 
 ### Semantic Types
 
@@ -62,6 +79,24 @@ Collections using the **array suffix** (`[]`):
 
 ## Using Types
 
+### Compatibility Rules
+
+MDZ uses structural compatibility when checking contracts between skills. Compatibility is conservative and aimed at avoiding noisy errors while still catching obvious mismatches.
+
+- **Structural match**: Tuples, arrays, and nested types are compared by shape, not by name alone.
+- **Enum subset**: A value of `"small" | "medium"` is compatible with a required `"small" | "medium" | "large"` (provided enum values are a subset of the expected enum).
+- **Function exact match**: Function types must match parameter arity and return type exactly.
+- **Any**: `Any` is always compatible. Semantic types (unquoted prose annotations) are treated as `Any` and never produce type errors.
+
+### Lambda Inference
+
+When a lambda is passed as a parameter, tooling uses shallow inference to guess its return type. Literal returns (`"text"`, `42`, `true`, `[]`) and direct variable references are inferred; anything more complex falls back to `Any`.
+
+```mdz
+$formatter = $item => "- " + $item        # return type falls back to Any
+$tagger = $item => "tag"                   # return type inferred as $String
+```
+
 ### Typed Declarations
 
 Use the **type annotation** (`:`) to declare variable types:
@@ -76,6 +111,8 @@ The MDZ validator performs static analysis on types:
 - **Contract mismatches** -- Passing wrong type across skill boundaries
 - **Typos** -- `$Numbr` flagged with "did you mean `$Number`?"
 
+Compatibility checks are applied to values passed into skill parameters and frontmatter declarations. Because semantic types and `Any` are always compatible, tooling only flags mismatches when both sides are concrete and structurally incompatible.
+
 The LLM sees the types as you wrote them--`$Task` stays `$Task`. Types are signals to both tooling and the LLM, not something that gets transformed.
 
 ## Built-in Types
@@ -85,10 +122,11 @@ These types are implicitly available:
 - `$String` -- text content
 - `$Number` -- numeric value
 - `$Boolean` -- true or false
+- `Any` -- universal compatibility fallback (semantic types resolve to `Any`)
 
 ## Best Practices
 
 - Use descriptive names: `$Hypothesis` not `$H`
 - Write clear descriptions: think "what would help an LLM understand this?"
 - Use enums for fixed sets of options
-- Define types at the top of your skill in a `## Types` section
+- Define types in frontmatter `types:` so tooling can validate contracts

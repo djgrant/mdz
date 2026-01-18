@@ -550,7 +550,8 @@ export type ErrorCode =
   | 'E016' // BREAK outside loop (v0.2)
   | 'E017' // CONTINUE outside loop (v0.2)
   | 'E018' // RETURN not at end of section/loop (v0.9)
-  | 'E019'; // Push target not array (v0.9)
+  | 'E019' // Push target not array (v0.9)
+  | 'E020'; // Parameter type mismatch (v0.9)
 
 // ============================================================================
 // Utilities

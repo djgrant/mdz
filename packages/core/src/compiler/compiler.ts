@@ -25,6 +25,15 @@
 
 import { parse } from '../parser/parser';
 import * as AST from '../parser/ast';
+import {
+  buildTypeEnv,
+  inferType,
+  isBuiltinTypeName,
+  isCompatible,
+  makeAnyType,
+  makeTypeReference,
+  resolveType,
+} from '../typecheck/typecheck';
 
 // ============================================================================
 // Types
@@ -150,16 +159,6 @@ export interface SkillContent {
 }
 
 // ============================================================================
-// Built-in Types
-// ============================================================================
-
-/**
- * Built-in primitive types that don't require explicit definition.
- * Using these types will not trigger "type not defined" warnings.
- */
-const BUILTIN_PRIMITIVES = new Set(['String', 'Number', 'Boolean']);
-
-// ============================================================================
 // Compiler
 // ============================================================================
 
@@ -175,6 +174,9 @@ export class Compiler {
   private declaredDeps: Set<string> = new Set();
   private declaredAgents: Set<string> = new Set();  // v0.7: Track declared agents from uses:
   private declaredTools: Set<string> = new Set();   // v0.7: Track declared tools from uses:
+  private typeEnv: Map<string, AST.TypeExpr> = new Map();
+  private variableTypeEnv: Map<string, AST.TypeExpr> = new Map();
+  private registryTypeEnvs: Map<string, Map<string, AST.TypeExpr>> = new Map();
 
   constructor(options: Partial<CompileOptions> = {}, registry?: SkillRegistry) {
     this.options = {
@@ -219,6 +221,9 @@ export class Compiler {
     this.declaredDeps.clear();
     this.declaredAgents.clear();
     this.declaredTools.clear();
+    this.typeEnv.clear();
+    this.variableTypeEnv.clear();
+    this.registryTypeEnvs.clear();
 
     // Parse source
     const ast = parse(source);
@@ -318,6 +323,7 @@ export class Compiler {
       // v0.9: Extract types from frontmatter
       for (const typeDecl of ast.frontmatter.types) {
         this.definedTypes.add(typeDecl.name);
+        this.typeEnv.set(typeDecl.name, typeDecl.typeExpr);
         this.metadata.types.push({
           name: typeDecl.name,
           definition: this.typeExprToString(typeDecl.typeExpr),
@@ -335,6 +341,9 @@ export class Compiler {
           isRequired: inputDecl.required,
           span: inputDecl.span,
         });
+        if (inputDecl.type) {
+          this.variableTypeEnv.set(inputDecl.name, inputDecl.type);
+        }
       }
 
       // v0.9: Extract context variables from frontmatter
@@ -347,6 +356,9 @@ export class Compiler {
           isRequired: false,
           span: contextDecl.span,
         });
+        if (contextDecl.type) {
+          this.variableTypeEnv.set(contextDecl.name, contextDecl.type);
+        }
       }
     }
 
@@ -450,6 +462,7 @@ export class Compiler {
     };
     this.metadata.types.push(typeInfo);
     this.definedTypes.add(def.name);
+    this.typeEnv.set(def.name, def.typeExpr);
 
     this.sourceMap.push({
       source: def.span,
@@ -487,6 +500,9 @@ export class Compiler {
     };
     this.metadata.variables.push(varInfo);
     this.definedVariables.add(decl.name);
+    if (decl.typeAnnotation) {
+      this.variableTypeEnv.set(decl.name, this.typeAnnotationToTypeExpr(decl.typeAnnotation));
+    }
 
     this.sourceMap.push({
       source: decl.span,
@@ -579,6 +595,7 @@ export class Compiler {
     if (deleg.parameters) {
       for (const param of deleg.parameters.parameters) {
         this.extractVariableDeclaration(param);
+        this.recordParameterType(param);
       }
     }
     
@@ -606,6 +623,7 @@ export class Compiler {
     if (stmt.parameters) {
       for (const param of stmt.parameters.parameters) {
         this.extractVariableDeclaration(param);
+        this.recordParameterType(param);
       }
     }
     
@@ -660,6 +678,9 @@ export class Compiler {
           isRequired: !block.value,
           span: block.span,
         });
+        if (block.typeAnnotation) {
+          this.variableTypeEnv.set(block.name, this.typeAnnotationToTypeExpr(block.typeAnnotation));
+        }
       }
     }
   }
@@ -671,6 +692,10 @@ export class Compiler {
     }
     // For SemanticType, return the description as the type name
     return typeAnnotation.description;
+  }
+
+  private typeAnnotationToTypeExpr(typeAnnotation: AST.TypeReference | AST.SemanticType): AST.TypeExpr {
+    return typeAnnotation;
   }
 
   private extractFromExpression(expr: AST.Expression): void {
@@ -785,12 +810,75 @@ export class Compiler {
   // Validation
   // ==========================================================================
 
-  private validateTypes(ast: AST.Document): void {
+  private buildDocumentTypeEnv(): Map<string, AST.TypeExpr> {
+    return buildTypeEnv(this.metadata.types.map(type => ({
+      kind: 'TypeDefinition',
+      name: type.name,
+      typeExpr: this.typeEnv.get(type.name) ?? makeAnyType(),
+      span: type.span,
+    })));
+  }
+
+  private buildVariableTypeEnv(): Map<string, AST.TypeExpr> {
+    return new Map(this.variableTypeEnv);
+  }
+
+  private buildTypeEnvFromAst(ast: AST.Document): Map<string, AST.TypeExpr> {
+    const types = new Map<string, AST.TypeExpr>();
+    if (ast.frontmatter) {
+      for (const typeDecl of ast.frontmatter.types) {
+        types.set(typeDecl.name, typeDecl.typeExpr);
+      }
+    }
+    for (const section of ast.sections) {
+      for (const block of section.content) {
+        if (block.kind === 'TypeDefinition') {
+          types.set(block.name, block.typeExpr);
+        }
+      }
+    }
+    return types;
+  }
+
+  private typeExprToStringResolved(expr: AST.TypeExpr, env: Map<string, AST.TypeExpr>): string {
+    return this.typeExprToString(resolveType(expr, env));
+  }
+
+  private parameterTypeExprFor(param: AST.VariableDeclaration): AST.TypeExpr | null {
+    if (param.typeAnnotation) {
+      return this.typeAnnotationToTypeExpr(param.typeAnnotation);
+    }
+    if (param.value) {
+      return inferType(param.value, this.variableTypeEnv);
+    }
+    return null;
+  }
+
+  private recordParameterType(param: AST.VariableDeclaration): void {
+    const typeExpr = this.parameterTypeExprFor(param);
+    if (typeExpr) {
+      this.variableTypeEnv.set(param.name, typeExpr);
+    }
+  }
+
+  private getRegistryTypeEnv(targetPath: string, skill: SkillContent): Map<string, AST.TypeExpr> {
+    if (this.registryTypeEnvs.has(targetPath)) {
+      return this.registryTypeEnvs.get(targetPath) ?? new Map();
+    }
+    const env = this.buildTypeEnvFromAst(skill.ast);
+    this.registryTypeEnvs.set(targetPath, env);
+    return env;
+  }
+
+  private validateTypes(_ast: AST.Document): void {
+    const typeEnv = this.buildDocumentTypeEnv();
+    this.variableTypeEnv = this.buildVariableTypeEnv();
+    this.typeEnv = typeEnv;
+
     // Check that type references resolve to defined types
     for (const varInfo of this.metadata.variables) {
       if (varInfo.type && !this.definedTypes.has(varInfo.type)) {
-        // Skip built-in primitive types - they don't need explicit definition
-        if (BUILTIN_PRIMITIVES.has(varInfo.type)) {
+        if (isBuiltinTypeName(varInfo.type)) {
           continue;
         }
         this.diagnostics.push({
@@ -1113,6 +1201,7 @@ export class Compiler {
     
     const targetPath = deleg.target.path.join('/');
     let skillParams: VariableInfo[] = [];
+    let skillTypeEnv = this.buildDocumentTypeEnv();
 
     // If it's the current document's skill, use this.metadata.parameters
     if (targetPath === this.metadata.name) {
@@ -1121,8 +1210,17 @@ export class Compiler {
       // Get from registry
       const skill = this.registry.get(targetPath);
       if (skill) {
+        const registryTypeEnv = this.getRegistryTypeEnv(targetPath, skill);
         const skillCompileResult = compile(skill.source, { validateReferences: false, validateContracts: false });
         skillParams = skillCompileResult.metadata.parameters;
+        skillTypeEnv = buildTypeEnv(
+          skillCompileResult.metadata.types.map(type => ({
+            kind: 'TypeDefinition',
+            name: type.name,
+            typeExpr: registryTypeEnv.get(type.name) ?? makeAnyType(),
+            span: type.span,
+          }))
+        );
       }
     }
 
@@ -1151,6 +1249,30 @@ export class Compiler {
             severity: 'warning',
             code: 'W002',
             message: `Parameter '${param.name}' is not defined for '${targetPath}'`,
+            span: param.span,
+          });
+          continue;
+        }
+        if (!expected.type) {
+          continue;
+        }
+        const candidateType = this.parameterTypeExprFor(param);
+        if (!candidateType) {
+          continue;
+        }
+        const expectedExpr = skillTypeEnv.has(expected.type) || isBuiltinTypeName(expected.type)
+          ? makeTypeReference(expected.type)
+          : makeAnyType();
+        const resolvedExpected = resolveType(expectedExpr, skillTypeEnv);
+        const resolvedCandidate = resolveType(candidateType, this.buildDocumentTypeEnv());
+        const compatibility = isCompatible(resolvedCandidate, resolvedExpected, new Map());
+        if (!compatibility.compatible) {
+          const expectedLabel = this.typeExprToStringResolved(resolvedExpected, skillTypeEnv);
+          const candidateLabel = this.typeExprToStringResolved(resolvedCandidate, skillTypeEnv);
+          this.diagnostics.push({
+            severity: 'error',
+            code: 'E020',
+            message: `Parameter '${param.name}' expects ${expectedLabel} but received ${candidateLabel}`,
             span: param.span,
           });
         }

@@ -1345,134 +1345,50 @@ const projectsJson = JSON.stringify(examplesData.projects);
     monaco.languages.registerCompletionItemProvider("zen", {
       triggerCharacters: ["$", "~", "#", "/"],
 
-      provideCompletionItems: (model, position) => {
-        const textUntilPosition = model.getValueInRange({
-          startLineNumber: 1,
-          startColumn: 1,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column,
+      provideCompletionItems: async (model, position) => {
+        const result = await sendToWorker("completions", {
+          uri: model.uri.toString(),
+          source: model.getValue(),
+          position: {
+            line: position.lineNumber - 1,
+            character: position.column - 1,
+          },
         });
 
-        const lineContent = model.getLineContent(position.lineNumber);
-        const lineUntilPosition = lineContent.substring(0, position.column - 1);
+        return {
+          suggestions: result.map((item) => ({
+            label: item.label,
+            kind: item.kind,
+            detail: item.detail,
+            documentation: item.documentation,
+            insertText: item.insertText || item.label,
+          })),
+        };
+      },
+    });
 
-        const suggestions = [];
-        const fullText = model.getValue();
+    monaco.languages.registerHoverProvider("zen", {
+      provideHover: async (model, position) => {
+        const result = await sendToWorker("hover", {
+          uri: model.uri.toString(),
+          source: model.getValue(),
+          position: {
+            line: position.lineNumber - 1,
+            character: position.column - 1,
+          },
+        });
 
-        // Check if we're completing after $ (types and variables)
-        if (lineUntilPosition.match(/\$[a-zA-Z]*$/)) {
-          // Extract types: $TypeName: ...
-          const typeMatches = fullText.matchAll(/\$([A-Z][a-zA-Z0-9]*)\s*:/g);
-          for (const match of typeMatches) {
-            suggestions.push({
-              label: "$" + match[1],
-              kind: monaco.languages.CompletionItemKind.Class,
-              insertText: match[1],
-              detail: "Type",
-              documentation: "Defined type",
-            });
-          }
+        if (!result) return null;
 
-          // Extract variables: $varName: $Type or $varName = ...
-          const varMatches = fullText.matchAll(
-            /\$([a-z][a-zA-Z0-9-]*)\s*[=:]/g,
-          );
-          const seenVars = new Set();
-          for (const match of varMatches) {
-            if (!seenVars.has(match[1])) {
-              seenVars.add(match[1]);
-              suggestions.push({
-                label: "$" + match[1],
-                kind: monaco.languages.CompletionItemKind.Variable,
-                insertText: match[1],
-                detail: "Variable",
-                documentation: "Defined variable",
-              });
-            }
-          }
-
-          // Add built-in types
-          const builtInTypes = [
-            "String",
-            "Number",
-            "Boolean",
-            "Array",
-            "Object",
-            "Any",
-          ];
-          for (const type of builtInTypes) {
-            suggestions.push({
-              label: "$" + type,
-              kind: monaco.languages.CompletionItemKind.Class,
-              insertText: type,
-              detail: "Built-in type",
-              documentation: "Built-in MDZ type",
-            });
-          }
-        }
-
-        // Check if we're completing a link path (after ~/)
-        const linkMatch = lineUntilPosition.match(/~\/([a-z\/]*)$/);
-        if (linkMatch) {
-          const partial = linkMatch[1];
-          // Suggest agent/skill/tool paths
-          const paths = ["agent/", "skill/", "tool/"];
-          for (const p of paths) {
-            if (p.startsWith(partial) || partial.startsWith(p.slice(0, -1))) {
-              suggestions.push({
-                label: "~/" + p,
-                kind: monaco.languages.CompletionItemKind.Folder,
-                insertText: p.slice(partial.length),
-                detail:
-                  p.slice(0, -1).charAt(0).toUpperCase() +
-                  p.slice(0, -1).slice(1) +
-                  " path",
-              });
-            }
-          }
-
-          // Also suggest declared dependencies as full paths
-          const usesMatch = fullText.match(
-            /uses:\s*\n((?:\s+-\s+\S+\s*\n?)*)/,
-          );
-          if (usesMatch) {
-            const depMatches = usesMatch[1].matchAll(/-\s+~\/(\S+)/g);
-            for (const match of depMatches) {
-              const depPath = match[1];
-              if (depPath.startsWith(partial)) {
-                suggestions.push({
-                  label: "~/" + depPath,
-                  kind: monaco.languages.CompletionItemKind.Module,
-                  insertText: depPath.slice(partial.length),
-                  detail: "Declared dependency",
-                  documentation: "Declared in uses:",
-                });
-              }
-            }
-          }
-        }
-
-        // Check if we're completing an anchor (after #)
-        const anchorMatch = lineUntilPosition.match(/#([a-z-]*)$/);
-        if (anchorMatch && !lineUntilPosition.match(/~\/[^\s]*#/)) {
-          // Same-file section completion
-          const sectionMatches = fullText.matchAll(/^##\s+(.+)$/gm);
-          for (const match of sectionMatches) {
-            const sectionName = match[1].trim();
-            const sectionId = sectionName
-              .toLowerCase()
-              .replace(/\s+/g, "-")
-              .replace(/[^a-z0-9-]/g, "");
-            suggestions.push({
-              label: "#" + sectionId,
-              kind: monaco.languages.CompletionItemKind.Reference,
-              insertText: sectionId,
-              detail: "Section: " + sectionName,
-            });
-          }
-        }
-
-        return { suggestions };
+        return {
+          contents: [{ value: result.contents }],
+          range: result.range ? {
+            startLineNumber: result.range.start.line + 1,
+            startColumn: result.range.start.character + 1,
+            endLineNumber: result.range.end.line + 1,
+            endColumn: result.range.end.character + 1,
+          } : undefined,
+        };
       },
     });
 
@@ -1490,6 +1406,8 @@ const projectsJson = JSON.stringify(examplesData.projects);
         "semanticSpan",
         "link",
         "anchor",
+        "frontmatter",
+        "heading",
       ],
       tokenModifiers: [],
     };

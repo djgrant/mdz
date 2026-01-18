@@ -10,7 +10,9 @@
  * - Document symbols
  */
 
-import { parse, AST } from '@zenmarkdown/core';
+import { parse } from '../../core/src/parser/parser';
+import * as AST from '../../core/src/parser/ast';
+import { inferType, isCompatible, makeAnyTypeReference, type TypeEnv } from '../../core/src/typecheck/typecheck';
 
 // ============================================================================
 // LSP Types (subset needed for implementation)
@@ -137,19 +139,33 @@ export interface DocumentState {
   variables: Map<string, VariableInfo>;
   references: ReferenceInfo[];
   semanticSpans: SemanticMarkerInfo[];
+  parameters: ParameterInfo[];
+  typeEnv: TypeEnv;
+  variableTypes: Map<string, AST.TypeExpr>;
 }
 
 export interface TypeInfo {
   name: string;
   definition: string;
   span: AST.Span;
+  typeExpr: AST.TypeExpr;
 }
+
+export type VariableSource = 'local' | 'input' | 'context';
 
 export interface VariableInfo {
   name: string;
-  typeName?: string;
+  typeExpr?: AST.TypeExpr;
   span: AST.Span;
   isLambda: boolean;
+  source: VariableSource;
+}
+
+export interface ParameterInfo {
+  name: string;
+  typeExpr: AST.TypeExpr;
+  isRequired: boolean;
+  span: AST.Span;
 }
 
 // v0.8: Link-based reference info
@@ -225,24 +241,64 @@ export class ZenLanguageServer {
     const references: ReferenceInfo[] = [];
     const semanticSpans: SemanticMarkerInfo[] = [];
 
-    // Extract all definitions and references
-    for (const section of ast.sections) {
-      this.analyzeBlocks(section.content, types, variables, references, semanticSpans);
+    const frontmatterSpans = this.collectFrontmatterDeclarationSpans(content);
+
+    if (ast.frontmatter) {
+      for (const typeDecl of ast.frontmatter.types) {
+        types.set(typeDecl.name, {
+          name: typeDecl.name,
+          definition: this.typeExprToString(typeDecl.typeExpr),
+          span: frontmatterSpans.types.get(typeDecl.name) ?? typeDecl.span,
+          typeExpr: typeDecl.typeExpr,
+        });
+      }
+
+      for (const inputDecl of ast.frontmatter.input) {
+        variables.set(inputDecl.name, {
+          name: inputDecl.name,
+          typeExpr: inputDecl.type,
+          span: frontmatterSpans.input.get(inputDecl.name) ?? inputDecl.span,
+          isLambda: false,
+          source: 'input',
+        });
+      }
+
+      for (const contextDecl of ast.frontmatter.context) {
+        variables.set(contextDecl.name, {
+          name: contextDecl.name,
+          typeExpr: contextDecl.type,
+          span: frontmatterSpans.context.get(contextDecl.name) ?? contextDecl.span,
+          isLambda: false,
+          source: 'context',
+        });
+      }
     }
 
-    // Register as skill if it has a name
-    if (ast.frontmatter?.name) {
-      const state: DocumentState = {
-        uri,
-        content,
-        ast,
-        types,
-        variables,
-        references,
-        semanticSpans,
-      };
-      this.skillRegistry.set(ast.frontmatter.name, state);
+    // Extract all definitions and references
+    for (const section of ast.sections) {
+      this.analyzeBlocks(section.title, section.content, types, variables, references, semanticSpans);
     }
+
+    const parameters = this.collectParameters(ast);
+    const typeEnv = this.buildTypeEnv(types, ast);
+    const variableTypes = this.buildVariableTypes(variables);
+
+    // Register as skill using its path (URI) as the key
+    // v0.10: Strip extension and use relative path as canonical key
+    const relativePath = uri.replace(/\.mdz$/, "");
+    const state: DocumentState = {
+      uri,
+      content,
+      ast,
+      types,
+      variables,
+      references,
+      semanticSpans,
+      parameters,
+      typeEnv,
+      variableTypes,
+    };
+    this.skillRegistry.set(relativePath, state);
 
     return {
       uri,
@@ -252,37 +308,44 @@ export class ZenLanguageServer {
       variables,
       references,
       semanticSpans,
+      parameters,
+      typeEnv,
+      variableTypes,
     };
   }
 
   private analyzeBlocks(
+    sectionTitle: string,
     blocks: AST.Block[],
     types: Map<string, TypeInfo>,
     variables: Map<string, VariableInfo>,
     references: ReferenceInfo[],
     semanticSpans: SemanticMarkerInfo[]
   ): void {
+    const isLegacySection = sectionTitle === 'Types' || sectionTitle === 'Input' || sectionTitle === 'Context';
+
     for (const block of blocks) {
       switch (block.kind) {
         case 'TypeDefinition':
-          types.set(block.name, {
-            name: block.name,
-            definition: this.typeExprToString(block.typeExpr),
-            span: block.span,
-          });
+          if (!isLegacySection) {
+            types.set(block.name, {
+              name: block.name,
+              definition: this.typeExprToString(block.typeExpr),
+              span: block.span,
+              typeExpr: block.typeExpr,
+            });
+          }
           break;
-
         case 'VariableDeclaration':
-          variables.set(block.name, {
-            name: block.name,
-            typeName: block.typeAnnotation?.kind === 'TypeReference' 
-              ? block.typeAnnotation.name 
-              : block.typeAnnotation?.kind === 'SemanticType'
-                ? block.typeAnnotation.description
-                : undefined,
-            span: block.span,
-            isLambda: block.isLambda,
-          });
+          if (!isLegacySection) {
+            variables.set(block.name, {
+              name: block.name,
+              typeExpr: block.typeAnnotation ?? undefined,
+              span: block.span,
+              isLambda: block.isLambda,
+              source: 'local',
+            });
+          }
           if (block.value) {
             this.analyzeExpression(block.value, references, semanticSpans);
           }
@@ -294,6 +357,7 @@ export class ZenLanguageServer {
               name: block.pattern.name,
               span: block.pattern.span,
               isLambda: false,
+              source: 'local',
             });
           } else {
             for (const name of block.pattern.names) {
@@ -301,23 +365,24 @@ export class ZenLanguageServer {
                 name,
                 span: block.pattern.span,
                 isLambda: false,
+                source: 'local',
               });
             }
           }
           this.analyzeExpression(block.collection, references, semanticSpans);
-          this.analyzeBlocks(block.body, types, variables, references, semanticSpans);
+          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans);
           break;
 
         case 'WhileStatement':
           this.analyzeCondition(block.condition, references, semanticSpans);
-          this.analyzeBlocks(block.body, types, variables, references, semanticSpans);
+          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans);
           break;
 
         case 'IfStatement':
           this.analyzeCondition(block.condition, references, semanticSpans);
-          this.analyzeBlocks(block.thenBody, types, variables, references, semanticSpans);
+          this.analyzeBlocks(sectionTitle, block.thenBody, types, variables, references, semanticSpans);
           if (block.elseBody) {
-            this.analyzeBlocks(block.elseBody, types, variables, references, semanticSpans);
+            this.analyzeBlocks(sectionTitle, block.elseBody, types, variables, references, semanticSpans);
           }
           break;
 
@@ -525,6 +590,17 @@ export class ZenLanguageServer {
       }
     };
 
+    const addSemanticMarkerFromLine = (lineIndex: number, line: string): void => {
+      if (codeLines.has(lineIndex + 1) || frontmatterLines.has(lineIndex + 1)) return;
+      // Match /semantic marker/
+      const markerPattern = /\/[^\/\n]+\//g;
+      let match: RegExpExecArray | null;
+      markerPattern.lastIndex = 0;
+      while ((match = markerPattern.exec(line))) {
+        addToken(lineIndex, match.index, match[0].length, 'semanticSpan');
+      }
+    };
+
     const addTemplateTokensFromLine = (lineIndex: number, line: string): void => {
       if (codeLines.has(lineIndex + 1)) return;
       const templatePattern = /`[^`]*`/g;
@@ -683,8 +759,8 @@ export class ZenLanguageServer {
       const spanStart = span.span.start.column;
       const spanEnd = span.span.end.column;
       const interpolations = span.interpolations
-        .filter((interp) => interp.span.start.line === span.span.start.line)
-        .sort((a, b) => a.span.start.column - b.span.start.column);
+        .filter((interp: AST.VariableReference) => interp.span.start.line === span.span.start.line)
+        .sort((a: AST.VariableReference, b: AST.VariableReference) => a.span.start.column - b.span.start.column);
       let cursor = spanStart;
       for (const interpolation of interpolations) {
         const varStart = interpolation.span.start.column;
@@ -822,20 +898,27 @@ export class ZenLanguageServer {
       }
     };
 
-    const collectBlockTokens = (blocks: AST.Block[]): void => {
+    const collectBlockTokens = (sectionTitle: string, blocks: AST.Block[]): void => {
+      const isLegacySection = sectionTitle === 'Types' || sectionTitle === 'Input' || sectionTitle === 'Context';
+
       for (const block of blocks) {
         switch (block.kind) {
           case 'TypeDefinition':
-            addTypeNameToken(block.span, block.name);
-            collectTypeExprTokens(block.typeExpr);
+            if (!isLegacySection) {
+              addTypeNameToken(block.span, block.name);
+              collectTypeExprTokens(block.typeExpr);
+            }
             break;
+
           case 'VariableDeclaration':
-            addVariableNameToken(block.span, block.name);
-            if (block.typeAnnotation) {
-              if (block.typeAnnotation.kind === 'TypeReference') {
-                addTypeNameToken(block.typeAnnotation.span, block.typeAnnotation.name);
-              } else if (block.typeAnnotation.kind === 'SemanticType') {
-                addSpanToken(block.typeAnnotation.span, 'semanticSpan');
+            if (!isLegacySection) {
+              addVariableNameToken(block.span, block.name);
+              if (block.typeAnnotation) {
+                if (block.typeAnnotation.kind === 'TypeReference') {
+                  addTypeNameToken(block.typeAnnotation.span, block.typeAnnotation.name);
+                } else if (block.typeAnnotation.kind === 'SemanticType') {
+                  addSpanToken(block.typeAnnotation.span, 'semanticSpan');
+                }
               }
             }
             if (block.value) {
@@ -851,21 +934,21 @@ export class ZenLanguageServer {
               }
             }
             collectExpressionTokens(block.collection);
-            collectBlockTokens(block.body);
+            collectBlockTokens(sectionTitle, block.body);
             break;
           case 'WhileStatement':
             collectConditionTokens(block.condition);
-            collectBlockTokens(block.body);
+            collectBlockTokens(sectionTitle, block.body);
             break;
           case 'IfStatement':
             collectConditionTokens(block.condition);
-            collectBlockTokens(block.thenBody);
+            collectBlockTokens(sectionTitle, block.thenBody);
             for (const clause of block.elseIf) {
               collectConditionTokens(clause.condition);
-              collectBlockTokens(clause.body);
+              collectBlockTokens(sectionTitle, clause.body);
             }
             if (block.elseBody) {
-              collectBlockTokens(block.elseBody);
+              collectBlockTokens(sectionTitle, block.elseBody);
             }
             break;
           case 'DoStatement': {
@@ -874,7 +957,7 @@ export class ZenLanguageServer {
               addSemanticSpanTokens(doBlock.instruction);
             }
             if (doBlock.body) {
-              collectBlockTokens(doBlock.body);
+              collectBlockTokens(sectionTitle, doBlock.body);
             }
             break;
           }
@@ -949,7 +1032,7 @@ export class ZenLanguageServer {
     };
 
     for (const section of state.ast.sections) {
-      collectBlockTokens(section.content);
+      collectBlockTokens(section.title, section.content);
     }
 
     addFrontmatterTokens();
@@ -958,6 +1041,7 @@ export class ZenLanguageServer {
       addHeadingFromLine(i, lines[i]);
       addKeywordFromLine(i, lines[i]);
       addInlineKeywordFromLine(i, lines[i]);
+      addSemanticMarkerFromLine(i, lines[i]);
       addTemplateTokensFromLine(i, lines[i]);
       addFrontmatterInlineTokens(i, lines[i]);
     }
@@ -1035,6 +1119,8 @@ export class ZenLanguageServer {
         }
       }
     }
+
+    this.validateDelegationContracts(state, diagnostics);
 
     return diagnostics;
   }
@@ -1129,15 +1215,25 @@ export class ZenLanguageServer {
     for (const [name, info] of state.variables) {
       if (this.positionInSpan(position, info.span)) {
         let contents = `**Variable** $${name}`;
-        if (info.typeName) {
-          const type = state.types.get(info.typeName);
-          contents += `: $${info.typeName}`;
-          if (type) {
-            contents += `\n\n${type.definition}`;
+        
+        // v0.9: Use the inference engine if no explicit type is provided
+        const typeExpr = info.typeExpr || this.inferVariableType(state, name);
+        
+        if (typeExpr) {
+          const typeLabel = this.typeExprToString(typeExpr);
+          contents += `: ${typeLabel}`;
+          if (typeExpr.kind === "TypeReference") {
+            const type = state.types.get(typeExpr.name);
+            if (type) {
+              contents += `\n\n${type.definition}`;
+            }
           }
         }
+        if (info.source !== "local") {
+          contents += `\n\n*${info.source}*`;
+        }
         if (info.isLambda) {
-          contents += '\n\n*Lambda function*';
+          contents += "\n\n*Lambda function*";
         }
         return {
           contents,
@@ -1169,6 +1265,13 @@ export class ZenLanguageServer {
             if (sections.length > 0) {
               contents += `\n\nSections: ${sections.join(', ')}`;
             }
+            
+            // v0.9: Show input contract if available
+            if (targetState.parameters.length > 0) {
+              contents += `\n\n**Input Contract:**\n` + targetState.parameters.map(p => 
+                `- $${p.name}: ${this.typeExprToString(p.typeExpr)}${p.isRequired ? '' : ' (optional)'}`
+              ).join('\n');
+            }
           }
         } else if (ref.kind === 'anchor') {
           // Anchor reference: #section
@@ -1189,6 +1292,23 @@ export class ZenLanguageServer {
     }
 
     return null;
+  }
+
+  private inferVariableType(state: DocumentState, name: string): AST.TypeExpr | undefined {
+    // 1. Check if we already have a type (from frontmatter or explicit annotation)
+    const existing = state.variableTypes.get(name);
+    if (existing) return existing;
+
+    // 2. Find the declaration to infer from value
+    for (const section of state.ast.sections) {
+      for (const block of section.content) {
+        if (block.kind === 'VariableDeclaration' && block.name === name && block.value) {
+          return inferType(block.value, state.typeEnv);
+        }
+      }
+    }
+
+    return undefined;
   }
 
   // ==========================================================================
@@ -1271,18 +1391,19 @@ export class ZenLanguageServer {
     return [];
   }
 
-  // v0.8: Path completion for ~/path/to/file
+  // v0.10: Path completion for ~/path/to/file
   private getPathCompletions(partial: string): CompletionItem[] {
     const items: CompletionItem[] = [];
-    
+
     for (const [key, docState] of this.skillRegistry) {
       if (key.startsWith(partial)) {
-        const kind = this.inferLinkKind(key.split('/'));
+        const kind = this.inferLinkKind(key.split("/"));
         items.push({
-          label: '~/' + key,
+          label: "~/" + key,
           kind: CompletionItemKind.File,
           detail: kind,
-          insertText: key.substring(partial.length),
+          // Use full key to avoid offset corruption
+          insertText: key,
         });
       }
     }
@@ -1332,10 +1453,11 @@ export class ZenLanguageServer {
     const items: CompletionItem[] = [];
 
     for (const [name, info] of state.variables) {
+      const typeExpr = info.typeExpr || this.inferVariableType(state, name);
       items.push({
         label: name,
         kind: info.isLambda ? CompletionItemKind.Function : CompletionItemKind.Variable,
-        detail: info.typeName ? `$${info.typeName}` : undefined,
+        detail: typeExpr ? this.typeExprToString(typeExpr) : undefined,
       });
     }
 
@@ -1411,17 +1533,14 @@ export class ZenLanguageServer {
 
     // Sections as symbols
     for (const section of state.ast.sections) {
+      if (section.title === 'Types' || section.title === 'Input' || section.title === 'Context') {
+        continue;
+      }
+
       const children: DocumentSymbol[] = [];
 
       for (const block of section.content) {
-        if (block.kind === 'TypeDefinition') {
-          children.push({
-            name: `$${block.name}`,
-            kind: SymbolKind.Class,
-            range: this.spanToRange(block.span),
-            selectionRange: this.spanToRange(block.span),
-          });
-        } else if (block.kind === 'VariableDeclaration') {
+        if (block.kind === 'VariableDeclaration') {
           children.push({
             name: `$${block.name}`,
             kind: block.isLambda ? SymbolKind.Function : SymbolKind.Variable,
@@ -1500,6 +1619,272 @@ export class ZenLanguageServer {
       }
     }
     return lines;
+  }
+
+  private collectParameters(ast: AST.Document): ParameterInfo[] {
+    const params: ParameterInfo[] = [];
+
+    if (ast.frontmatter) {
+      for (const inputDecl of ast.frontmatter.input) {
+        params.push({
+          name: inputDecl.name,
+          typeExpr: inputDecl.type ?? makeAnyTypeReference(),
+          isRequired: inputDecl.required,
+          span: inputDecl.span,
+        });
+      }
+    }
+
+    for (const section of ast.sections) {
+      if (section.title !== 'Input') continue;
+      for (const block of section.content) {
+        if (block.kind !== 'VariableDeclaration') continue;
+        params.push({
+          name: block.name,
+          typeExpr: block.typeAnnotation ?? makeAnyTypeReference(),
+          isRequired: block.isRequired ?? block.value === null,
+          span: block.span,
+        });
+      }
+    }
+
+    return params;
+  }
+
+  private buildTypeEnv(types: Map<string, TypeInfo>, ast: AST.Document): TypeEnv {
+    const env: TypeEnv = new Map();
+    for (const [name, info] of types) {
+      env.set(name, info.typeExpr);
+    }
+    if (ast.frontmatter) {
+      for (const typeDecl of ast.frontmatter.types) {
+        env.set(typeDecl.name, typeDecl.typeExpr);
+      }
+    }
+    return env;
+  }
+
+  private buildVariableTypes(variables: Map<string, VariableInfo>): Map<string, AST.TypeExpr> {
+    const map = new Map<string, AST.TypeExpr>();
+    for (const [name, info] of variables) {
+      if (info.typeExpr) {
+        map.set(name, info.typeExpr);
+        continue;
+      }
+      if (info.isLambda) {
+        map.set(name, makeAnyTypeReference());
+      }
+    }
+    return map;
+  }
+
+  private validateDelegationContracts(state: DocumentState, diagnostics: Diagnostic[]): void {
+    for (const section of state.ast.sections) {
+      this.validateContractsInBlocks(section.title, section.content, state, diagnostics);
+    }
+  }
+
+  private validateContractsInBlocks(
+    sectionTitle: string,
+    blocks: AST.Block[],
+    state: DocumentState,
+    diagnostics: Diagnostic[]
+  ): void {
+    const isLegacySection = sectionTitle === 'Types' || sectionTitle === 'Input' || sectionTitle === 'Context';
+
+    for (const block of blocks) {
+      switch (block.kind) {
+        case 'Delegation':
+          this.validateDelegation(block, state, diagnostics);
+          break;
+        case 'DelegateStatement':
+          this.validateDelegateStatement(block, state, diagnostics);
+          break;
+        case 'UseStatement':
+          this.validateUseStatement(block, state, diagnostics);
+          break;
+        case 'ForEachStatement':
+        case 'WhileStatement':
+          this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics);
+          break;
+        case 'IfStatement':
+          this.validateContractsInBlocks(sectionTitle, block.thenBody, state, diagnostics);
+          for (const clause of block.elseIf) {
+            this.validateContractsInBlocks(sectionTitle, clause.body, state, diagnostics);
+          }
+          if (block.elseBody) {
+            this.validateContractsInBlocks(sectionTitle, block.elseBody, state, diagnostics);
+          }
+          break;
+        case 'DoStatement':
+          if (block.body) {
+            this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics);
+          }
+          break;
+      }
+    }
+  }
+
+  private validateDelegation(
+    deleg: AST.Delegation,
+    state: DocumentState,
+    diagnostics: Diagnostic[]
+  ): void {
+    if (deleg.target.kind !== 'Link') return;
+    this.validateParameterBlock(deleg.parameters, deleg.target, state, diagnostics);
+  }
+
+  private validateDelegateStatement(
+    deleg: AST.DelegateStatement,
+    state: DocumentState,
+    diagnostics: Diagnostic[]
+  ): void {
+    if (!deleg.target || !deleg.parameters) return;
+    this.validateParameterBlock(deleg.parameters.parameters, deleg.target, state, diagnostics);
+  }
+
+  private validateUseStatement(
+    stmt: AST.UseStatement,
+    state: DocumentState,
+    diagnostics: Diagnostic[]
+  ): void {
+    if (!stmt.parameters) return;
+    this.validateParameterBlock(stmt.parameters.parameters, stmt.link, state, diagnostics);
+  }
+
+  private validateParameterBlock(
+    parameters: AST.VariableDeclaration[],
+    target: AST.LinkNode,
+    state: DocumentState,
+    diagnostics: Diagnostic[]
+  ): void {
+    const targetPath = target.path.join('/');
+    const targetState = this.skillRegistry.get(targetPath);
+    if (!targetState) return;
+
+    const requiredParams = targetState.parameters.filter((param) => param.isRequired);
+    const provided = new Set(parameters.map((param) => param.name));
+
+    for (const required of requiredParams) {
+      if (!provided.has(required.name)) {
+        diagnostics.push({
+          range: this.spanToRange(target.span),
+          severity: DiagnosticSeverity.Error,
+          message: `Required parameter "${required.name}" is missing for "${targetPath}"`,
+          source: 'zen',
+        });
+      }
+    }
+
+    for (const param of parameters) {
+      const expected = targetState.parameters.find((item) => item.name === param.name);
+      if (!expected) {
+        diagnostics.push({
+          range: this.spanToRange(param.span),
+          severity: DiagnosticSeverity.Warning,
+          message: `Parameter "${param.name}" is not defined for "${targetPath}"`,
+          source: 'zen',
+        });
+        continue;
+      }
+
+      const actualType = this.inferParameterType(param, state);
+      const compatibility = isCompatible(actualType, expected.typeExpr, targetState.typeEnv);
+      if (!compatibility.compatible) {
+        diagnostics.push({
+          range: this.spanToRange(param.span),
+          severity: DiagnosticSeverity.Error,
+          message: `Parameter "${param.name}" expects ${this.formatTypeExpr(expected.typeExpr)} but received ${this.formatTypeExpr(actualType)}`,
+          source: 'zen',
+        });
+      }
+    }
+  }
+
+  private inferParameterType(param: AST.VariableDeclaration, state: DocumentState): AST.TypeExpr {
+    if (param.typeAnnotation) {
+      return param.typeAnnotation;
+    }
+    if (param.value) {
+      return inferType(param.value, state.variableTypes);
+    }
+    return makeAnyTypeReference();
+  }
+
+  private formatTypeExpr(expr: AST.TypeExpr): string {
+    return this.typeExprToString(expr);
+  }
+
+  private inferExpressionType(expr: AST.Expression, state: DocumentState): AST.TypeExpr {
+    return inferType(expr, state.variableTypes);
+  }
+
+  private collectFrontmatterDeclarationSpans(content: string): {
+    types: Map<string, AST.Span>;
+    input: Map<string, AST.Span>;
+    context: Map<string, AST.Span>;
+  } {
+    const maps = {
+      types: new Map<string, AST.Span>(),
+      input: new Map<string, AST.Span>(),
+      context: new Map<string, AST.Span>(),
+    };
+
+    const lines = content.split('\n');
+    if (lines[0]?.trim() !== '---') return maps;
+
+    let offset = lines[0].length + 1;
+    let currentSection: keyof typeof maps | null = null;
+    let sectionIndent: number | null = null;
+
+    for (let index = 1; index < lines.length; index += 1) {
+      const line = lines[index] ?? '';
+      const trimmed = line.trim();
+      if (trimmed === '---') {
+        break;
+      }
+
+      const indentMatch = line.match(/^\s*/);
+      const indent = indentMatch ? indentMatch[0].length : 0;
+      const sectionMatch = line.match(/^\s*(types|input|context):\s*$/);
+      if (sectionMatch) {
+        currentSection = sectionMatch[1] as keyof typeof maps;
+        sectionIndent = indent;
+        offset += line.length + 1;
+        continue;
+      }
+
+      if (!currentSection) {
+        offset += line.length + 1;
+        continue;
+      }
+
+      if (sectionIndent !== null && indent <= sectionIndent) {
+        currentSection = null;
+        sectionIndent = null;
+        offset += line.length + 1;
+        continue;
+      }
+
+      const entryMatch = line.match(/^\s*(\$?[A-Za-z0-9_-]+)\s*:/);
+      if (entryMatch) {
+        const name = entryMatch[1].replace(/^\$/, "");
+        const startColumn = entryMatch.index ?? 0;
+        const endColumn = startColumn + entryMatch[0].length;
+        maps[currentSection].set(name, AST.createSpan(
+          index + 1,
+          startColumn,
+          offset + startColumn,
+          index + 1,
+          endColumn,
+          offset + endColumn,
+        ));
+      }
+
+      offset += line.length + 1;
+    }
+
+    return maps;
   }
 }
 
