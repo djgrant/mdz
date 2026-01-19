@@ -391,7 +391,7 @@ description: test
 
 $requiredParam: $String
 
-Execute ~/skill/test-skill
+EXECUTE ~/skill/test-skill TO do
 `;
 
     const result = compile(skillSource, { validateContracts: true });
@@ -412,7 +412,7 @@ description: test
 
 $requiredParam: $String
 
-Execute ~/skill/test-skill WITH:
+EXECUTE ~/skill/test-skill TO do WITH:
   requiredParam: "value"
 `;
 
@@ -428,7 +428,7 @@ name: skill/test-skill
 description: test
 ---
 
-Execute ~/skill/test-skill WITH:
+EXECUTE ~/skill/test-skill TO do WITH:
   extraParam: "value"
 `;
 
@@ -460,7 +460,7 @@ name: skill/caller
 description: test
 ---
 
-use ~/skill/target-skill WITH:
+USE ~/skill/target-skill TO do WITH:
   count: "not-a-number"
 `, { validateContracts: true }, registry);
 
@@ -492,7 +492,7 @@ description: test
 
 $mode: $ModeExtended = "fast"
 
-use ~/skill/enum-target WITH:
+USE ~/skill/enum-target TO do WITH:
   mode: $mode
 `, { validateContracts: true }, registry);
 
@@ -520,8 +520,8 @@ name: skill/caller
 description: test
 ---
 
-use ~/skill/any-target WITH:
-  task: 42
+USE ~/skill/enum-target TO do WITH:
+  mode: "very-fast"
 `, { validateContracts: true }, registry);
 
     const typeErrors = result.diagnostics.filter(d => d.code === 'E020');

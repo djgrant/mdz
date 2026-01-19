@@ -231,16 +231,15 @@ name: test
 description: test
 ---
 
-Execute ~/skill/orchestrate-map-reduce
+EXECUTE ~/skill/orchestrate-map-reduce TO orchestrate
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.ExecuteStatement => b.kind === 'ExecuteStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].target.kind, 'Link');
-    const link = delegs[0].target as AST.LinkNode;
-    assertEqual(link.path, ['skill', 'orchestrate-map-reduce']);
-    assertEqual(AST.getLinkKind(link), 'skill');
+    assertEqual(delegs[0].link.kind, 'Link');
+    assertEqual(delegs[0].link.path, ['skill', 'orchestrate-map-reduce']);
+    assertEqual(AST.getLinkKind(delegs[0].link), 'skill');
   });
 
   // v0.8: Delegation with skill reference and WITH parameters
@@ -250,19 +249,19 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process-data WITH:
-  input: $data
-  format: "json"
-`);
+    EXECUTE ~/skill/process-data TO process WITH:
+      input: $data
+      format: "json"
+    `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.ExecuteStatement => b.kind === 'ExecuteStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters.length, 2);
-    assertEqual(delegs[0].parameters[0].name, 'input');
-    assertEqual(delegs[0].parameters[1].name, 'format');
-    assertEqual(delegs[0].parameters[1].value!.kind, 'StringLiteral');
-    assertEqual((delegs[0].parameters[1].value as AST.StringLiteral).value, 'json');
+    assertEqual(delegs[0].parameters!.parameters.length, 2);
+    assertEqual(delegs[0].parameters!.parameters[0].name, 'input');
+    assertEqual(delegs[0].parameters!.parameters[1].name, 'format');
+    assertEqual(delegs[0].parameters!.parameters[1].value!.kind, 'StringLiteral');
+    assertEqual((delegs[0].parameters!.parameters[1].value as AST.StringLiteral).value, 'json');
   });
 
   // v0.8: Local section references use #section syntax (AnchorNode)
@@ -843,16 +842,14 @@ name: test
 description: test
 ---
 
-Execute ~/skill/other-skill
+USE ~/skill/other-skill TO do
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].verb, 'Execute');
-    assertEqual(delegs[0].parameters.length, 0);
-    assertEqual(delegs[0].target.kind, 'Link');
-    assertEqual(AST.getLinkKind(delegs[0].target as AST.LinkNode), 'skill');
+    assertEqual(delegs[0].link.kind, 'Link');
+    assertEqual(AST.getLinkKind(delegs[0].link), 'skill');
   });
 
   test('parses Call verb', () => {
@@ -876,13 +873,13 @@ name: test
 description: test
 ---
 
-Delegate ~/skill/sub-task
+DELEGATE task TO ~/agent/worker
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.DelegateStatement => b.kind === 'DelegateStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].verb, 'Delegate');
+    assertEqual(delegs[0].target?.raw, '~/agent/worker');
   });
 
   test('parses Use verb', () => {
@@ -891,13 +888,13 @@ name: test
 description: test
 ---
 
-Use ~/skill/utility-skill
+USE ~/skill/utility-skill TO use
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].verb, 'Use');
+    assertEqual(delegs[0].link.raw, '~/skill/utility-skill');
   });
 
   test('parses WITH clause with required parameter', () => {
@@ -906,17 +903,17 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process WITH:
+USE ~/skill/process TO process WITH:
   task:
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters.length, 1);
-    assertEqual(delegs[0].parameters[0].name, 'task');
-    assertEqual(delegs[0].parameters[0].isRequired, true);
-    assertEqual(delegs[0].parameters[0].value, null);
+    assertEqual(delegs[0].parameters!.parameters.length, 1);
+    assertEqual(delegs[0].parameters!.parameters[0].name, 'task');
+    assertEqual(delegs[0].parameters!.parameters[0].isRequired, true);
+    assertEqual(delegs[0].parameters!.parameters[0].value, null);
   });
 
   test('parses WITH clause with default value', () => {
@@ -925,17 +922,17 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process WITH:
+USE ~/skill/process TO process WITH:
   mode: "fast"
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters.length, 1);
-    assertEqual(delegs[0].parameters[0].name, 'mode');
-    assertEqual(delegs[0].parameters[0].isRequired, false);
-    assert(delegs[0].parameters[0].value!.kind === 'StringLiteral', 'Should have string value');
+    assertEqual(delegs[0].parameters!.parameters.length, 1);
+    assertEqual(delegs[0].parameters!.parameters[0].name, 'mode');
+    assertEqual(delegs[0].parameters!.parameters[0].isRequired, false);
+    assert(delegs[0].parameters!.parameters[0].value!.kind === 'StringLiteral', 'Should have string value');
   });
 
   test('parses WITH clause with number default value', () => {
@@ -944,16 +941,16 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process WITH:
+USE ~/skill/process TO process WITH:
   count: 10
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters[0].name, 'count');
-    assertEqual(delegs[0].parameters[0].isRequired, false);
-    assert(delegs[0].parameters[0].value!.kind === 'NumberLiteral', 'Should have number value');
+    assertEqual(delegs[0].parameters!.parameters[0].name, 'count');
+    assertEqual(delegs[0].parameters!.parameters[0].isRequired, false);
+    assert(delegs[0].parameters!.parameters[0].value!.kind === 'NumberLiteral', 'Should have number value');
   });
 
   test('parses WITH clause with multiple parameters', () => {
@@ -962,19 +959,19 @@ name: test
 description: test
 ---
 
-Execute ~/skill/orchestrate WITH:
+USE ~/skill/orchestrate TO orchestrate WITH:
   plan: $plan
   mode: $mode
   results: $results
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters.length, 3);
-    assertEqual(delegs[0].parameters[0].name, 'plan');
-    assertEqual(delegs[0].parameters[1].name, 'mode');
-    assertEqual(delegs[0].parameters[2].name, 'results');
+    assertEqual(delegs[0].parameters!.parameters.length, 3);
+    assertEqual(delegs[0].parameters!.parameters[0].name, 'plan');
+    assertEqual(delegs[0].parameters!.parameters[1].name, 'mode');
+    assertEqual(delegs[0].parameters!.parameters[2].name, 'results');
   });
 
   test('parses delegation to section reference (AnchorNode)', () => {
@@ -983,15 +980,13 @@ name: test
 description: test
 ---
 
-Execute #iteration-manager WITH:
-  iteration: 1
+GOTO #iteration-manager
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.GotoStatement => b.kind === 'GotoStatement')
     );
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].target.kind, 'Anchor');
-    assertEqual((delegs[0].target as AST.AnchorNode).name, 'iteration-manager');
+    assertEqual(delegs[0].anchor.name, 'iteration-manager');
   });
 
   test('parses WITH clause with variable reference value', () => {
@@ -1000,15 +995,15 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process WITH:
+USE ~/skill/process TO process WITH:
   input: $data
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assert(delegs[0].parameters[0].value!.kind === 'VariableReference', 'Should have variable reference');
-    assertEqual((delegs[0].parameters[0].value as AST.VariableReference).name, 'data');
+    assert(delegs[0].parameters!.parameters[0].value!.kind === 'VariableReference', 'Should have variable reference');
+    assertEqual((delegs[0].parameters!.parameters[0].value as AST.VariableReference).name, 'data');
   });
 
   test('parses WITH clause with array literal value', () => {
@@ -1017,14 +1012,14 @@ name: test
 description: test
 ---
 
-Execute ~/skill/process WITH:
+USE ~/skill/process TO process WITH:
   items: ["a", "b", "c"]
 `);
     const delegs = doc.sections.flatMap(s =>
-      s.content.filter((b): b is AST.Delegation => b.kind === 'Delegation')
+      s.content.filter((b): b is AST.UseStatement => b.kind === 'UseStatement')
     );
     assertEqual(delegs.length, 1);
-    assert(delegs[0].parameters[0].value!.kind === 'ArrayLiteral', 'Should have array value');
+    assert(delegs[0].parameters!.parameters[0].value!.kind === 'ArrayLiteral', 'Should have array value');
   });
 
   test('delegation inside FOR', () => {
@@ -1034,7 +1029,7 @@ description: test
 ---
 
 FOR $task IN $tasks
-  Execute ~/skill/sub-processor WITH:
+  USE ~/skill/sub-processor TO process WITH:
     current: $task
 END
 `);
@@ -1042,9 +1037,9 @@ END
       s.content.filter((b): b is AST.ForEachStatement => b.kind === 'ForEachStatement')
     );
     assertEqual(forEachs.length, 1);
-    const delegs = forEachs[0].body.filter((b): b is AST.Delegation => b.kind === 'Delegation');
+    const delegs = forEachs[0].body.filter((b): b is AST.UseStatement => b.kind === 'UseStatement');
     assertEqual(delegs.length, 1);
-    assertEqual(delegs[0].parameters.length, 1);
+    assertEqual(delegs[0].parameters!.parameters.length, 1);
   });
 });
 
