@@ -138,6 +138,8 @@ export interface DocumentState {
   types: Map<string, TypeInfo>;
   variables: Map<string, VariableInfo>;
   references: ReferenceInfo[];
+  variableRefs: Map<string, AST.Span[]>; // v0.10: Usage spans for variables
+  typeRefs: Map<string, AST.Span[]>;     // v0.10: Usage spans for types
   semanticSpans: SemanticMarkerInfo[];
   parameters: ParameterInfo[];
   typeEnv: TypeEnv;
@@ -189,6 +191,7 @@ export interface SemanticMarkerInfo {
 export class ZenLanguageServer {
   private documents: Map<string, DocumentState> = new Map();
   private skillRegistry: Map<string, DocumentState> = new Map();
+  private workspaceFolders: string[] = [];
   private semanticTokenTypes = [
     'keyword',
     'variable',
@@ -209,19 +212,38 @@ export class ZenLanguageServer {
     this.semanticTokenTypes.map((type, index) => [type, index])
   );
 
+  setWorkspaceFolders(uris: string[]): void {
+    this.workspaceFolders = uris;
+  }
+
   // ==========================================================================
   // Document Management
   // ==========================================================================
 
+  indexDocument(uri: string, content: string, registryKey?: string): void {
+    const state = this.analyzeDocument(uri, content);
+    this.documents.set(uri, state);
+    
+    const key = registryKey || this.computeRegistryKey(uri);
+    this.skillRegistry.set(key, state);
+  }
+
+  private computeRegistryKey(uri: string): string {
+    // Basic heuristic: strip file:// and extension
+    return uri.replace(/^file:\/\//, "").replace(/\.mdz$/, "");
+  }
+
   openDocument(uri: string, content: string): Diagnostic[] {
     const state = this.analyzeDocument(uri, content);
     this.documents.set(uri, state);
+    this.skillRegistry.set(this.computeRegistryKey(uri), state);
     return this.getDiagnostics(state);
   }
 
   updateDocument(uri: string, content: string): Diagnostic[] {
     const state = this.analyzeDocument(uri, content);
     this.documents.set(uri, state);
+    this.skillRegistry.set(this.computeRegistryKey(uri), state);
     return this.getDiagnostics(state);
   }
 
@@ -239,6 +261,8 @@ export class ZenLanguageServer {
     const types = new Map<string, TypeInfo>();
     const variables = new Map<string, VariableInfo>();
     const references: ReferenceInfo[] = [];
+    const variableRefs = new Map<string, AST.Span[]>();
+    const typeRefs = new Map<string, AST.Span[]>();
     const semanticSpans: SemanticMarkerInfo[] = [];
 
     const frontmatterSpans = this.collectFrontmatterDeclarationSpans(content);
@@ -251,6 +275,7 @@ export class ZenLanguageServer {
           span: frontmatterSpans.types.get(typeDecl.name) ?? typeDecl.span,
           typeExpr: typeDecl.typeExpr,
         });
+        this.analyzeTypeExpr(typeDecl.typeExpr, typeRefs);
       }
 
       for (const inputDecl of ast.frontmatter.input) {
@@ -261,6 +286,7 @@ export class ZenLanguageServer {
           isLambda: false,
           source: 'input',
         });
+        if (inputDecl.type) this.analyzeTypeExpr(inputDecl.type, typeRefs);
       }
 
       for (const contextDecl of ast.frontmatter.context) {
@@ -271,12 +297,13 @@ export class ZenLanguageServer {
           isLambda: false,
           source: 'context',
         });
+        if (contextDecl.type) this.analyzeTypeExpr(contextDecl.type, typeRefs);
       }
     }
 
     // Extract all definitions and references
     for (const section of ast.sections) {
-      this.analyzeBlocks(section.title, section.content, types, variables, references, semanticSpans);
+      this.analyzeBlocks(section.title, section.content, types, variables, references, semanticSpans, variableRefs, typeRefs);
     }
 
     const parameters = this.collectParameters(ast);
@@ -293,6 +320,8 @@ export class ZenLanguageServer {
       types,
       variables,
       references,
+      variableRefs,
+      typeRefs,
       semanticSpans,
       parameters,
       typeEnv,
@@ -300,18 +329,7 @@ export class ZenLanguageServer {
     };
     this.skillRegistry.set(relativePath, state);
 
-    return {
-      uri,
-      content,
-      ast,
-      types,
-      variables,
-      references,
-      semanticSpans,
-      parameters,
-      typeEnv,
-      variableTypes,
-    };
+    return state;
   }
 
   private analyzeBlocks(
@@ -320,7 +338,9 @@ export class ZenLanguageServer {
     types: Map<string, TypeInfo>,
     variables: Map<string, VariableInfo>,
     references: ReferenceInfo[],
-    semanticSpans: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[],
+    variableRefs: Map<string, AST.Span[]>,
+    typeRefs: Map<string, AST.Span[]>
   ): void {
     const isLegacySection = sectionTitle === 'Types' || sectionTitle === 'Input' || sectionTitle === 'Context';
 
@@ -335,6 +355,7 @@ export class ZenLanguageServer {
               typeExpr: block.typeExpr,
             });
           }
+          this.analyzeTypeExpr(block.typeExpr, typeRefs);
           break;
         case 'VariableDeclaration':
           if (!isLegacySection) {
@@ -346,8 +367,13 @@ export class ZenLanguageServer {
               source: 'local',
             });
           }
+          if (block.typeAnnotation) {
+            if (block.typeAnnotation.kind === 'TypeReference') {
+              this.addRef(typeRefs, block.typeAnnotation.name, block.typeAnnotation.span);
+            }
+          }
           if (block.value) {
-            this.analyzeExpression(block.value, references, semanticSpans);
+            this.analyzeExpression(block.value, references, semanticSpans, variableRefs, typeRefs);
           }
           break;
 
@@ -369,27 +395,30 @@ export class ZenLanguageServer {
               });
             }
           }
-          this.analyzeExpression(block.collection, references, semanticSpans);
-          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans);
+          this.analyzeExpression(block.collection, references, semanticSpans, variableRefs, typeRefs);
+          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans, variableRefs, typeRefs);
           break;
 
         case 'WhileStatement':
-          this.analyzeCondition(block.condition, references, semanticSpans);
-          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans);
+          this.analyzeCondition(block.condition, references, semanticSpans, variableRefs, typeRefs);
+          this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans, variableRefs, typeRefs);
           break;
 
         case 'IfStatement':
-          this.analyzeCondition(block.condition, references, semanticSpans);
-          this.analyzeBlocks(sectionTitle, block.thenBody, types, variables, references, semanticSpans);
+          this.analyzeCondition(block.condition, references, semanticSpans, variableRefs, typeRefs);
+          this.analyzeBlocks(sectionTitle, block.thenBody, types, variables, references, semanticSpans, variableRefs, typeRefs);
+          for (const clause of block.elseIf) {
+            this.analyzeCondition(clause.condition, references, semanticSpans, variableRefs, typeRefs);
+            this.analyzeBlocks(sectionTitle, clause.body, types, variables, references, semanticSpans, variableRefs, typeRefs);
+          }
           if (block.elseBody) {
-            this.analyzeBlocks(sectionTitle, block.elseBody, types, variables, references, semanticSpans);
+            this.analyzeBlocks(sectionTitle, block.elseBody, types, variables, references, semanticSpans, variableRefs, typeRefs);
           }
           break;
 
         case 'Paragraph':
           for (const item of block.content) {
             if (AST.isLink(item)) {
-              // v0.8: Link reference ~/path/to/file or ~/path/to/file#anchor
               references.push({
                 kind: 'link',
                 path: item.path,
@@ -398,27 +427,126 @@ export class ZenLanguageServer {
                 span: item.span,
               });
             } else if (AST.isAnchor(item)) {
-              // v0.8: Anchor reference #section
               references.push({
                 kind: 'anchor',
                 anchor: item.name,
                 target: `#${item.name}`,
                 span: item.span,
               });
+            } else if (item.kind === 'VariableReference') {
+              this.addRef(variableRefs, item.name, item.span);
             }
           }
           break;
+
+        case 'Delegation':
+        case 'UseStatement':
+        case 'ExecuteStatement':
+        case 'DelegateStatement':
+        case 'PushStatement':
+        case 'ReturnStatement':
+        case 'DoStatement':
+        case 'GotoStatement':
+          this.analyzeOtherBlock(block, references, semanticSpans, variableRefs, typeRefs, types, variables, sectionTitle);
+          break;
       }
+    }
+  }
+
+  private addRef(map: Map<string, AST.Span[]>, name: string, span: AST.Span): void {
+    if (!map.has(name)) map.set(name, []);
+    map.get(name)!.push(span);
+  }
+
+  private analyzeTypeExpr(expr: AST.TypeExpr, typeRefs: Map<string, AST.Span[]>): void {
+    switch (expr.kind) {
+      case 'TypeReference':
+        this.addRef(typeRefs, expr.name, expr.span);
+        break;
+      case 'ArrayType':
+        this.analyzeTypeExpr(expr.elementType, typeRefs);
+        break;
+      case 'CompoundType':
+        expr.elements.forEach(e => this.analyzeTypeExpr(e, typeRefs));
+        break;
+      case 'FunctionType':
+        this.analyzeTypeExpr(expr.returnType, typeRefs);
+        break;
+    }
+  }
+
+  private analyzeOtherBlock(
+    block: AST.Block,
+    references: ReferenceInfo[],
+    semanticSpans: SemanticMarkerInfo[],
+    variableRefs: Map<string, AST.Span[]>,
+    typeRefs: Map<string, AST.Span[]>,
+    types: Map<string, TypeInfo>,
+    variables: Map<string, VariableInfo>,
+    sectionTitle: string
+  ): void {
+    switch (block.kind) {
+      case 'Delegation':
+        if (block.target.kind === 'Link') {
+          references.push({ kind: 'link', path: block.target.path, anchor: block.target.anchor ?? undefined, target: block.target.raw, span: block.target.span });
+        } else {
+          references.push({ kind: 'anchor', anchor: block.target.name, target: `#${block.target.name}`, span: block.target.span });
+        }
+        for (const param of block.parameters) {
+          if (param.typeAnnotation && param.typeAnnotation.kind === 'TypeReference') {
+            this.addRef(typeRefs, param.typeAnnotation.name, param.typeAnnotation.span);
+          }
+          if (param.value) this.analyzeExpression(param.value, references, semanticSpans, variableRefs, typeRefs);
+        }
+        break;
+      case 'UseStatement':
+      case 'ExecuteStatement': {
+        const link = (block as any).link as AST.LinkNode;
+        references.push({ kind: 'link', path: link.path, anchor: link.anchor ?? undefined, target: link.raw, span: link.span });
+        if (block.kind === 'UseStatement' && block.parameters) {
+          for (const param of block.parameters.parameters) {
+             if (param.value) this.analyzeExpression(param.value, references, semanticSpans, variableRefs, typeRefs);
+          }
+        }
+        break;
+      }
+      case 'DelegateStatement':
+        if (block.target) {
+          references.push({ kind: 'link', path: block.target.path, anchor: block.target.anchor ?? undefined, target: block.target.raw, span: block.target.span });
+        }
+        if (block.withAnchor) {
+          references.push({ kind: 'anchor', anchor: block.withAnchor.name, target: `#${block.withAnchor.name}`, span: block.withAnchor.span });
+        }
+        if (block.parameters) {
+          for (const param of block.parameters.parameters) {
+            if (param.value) this.analyzeExpression(param.value, references, semanticSpans, variableRefs, typeRefs);
+          }
+        }
+        break;
+      case 'PushStatement':
+        this.analyzeExpression(block.target, references, semanticSpans, variableRefs, typeRefs);
+        this.analyzeExpression(block.value, references, semanticSpans, variableRefs, typeRefs);
+        break;
+      case 'ReturnStatement':
+        if (block.value) this.analyzeExpression(block.value, references, semanticSpans, variableRefs, typeRefs);
+        break;
+      case 'DoStatement':
+        if (block.body) this.analyzeBlocks(sectionTitle, block.body, types, variables, references, semanticSpans, variableRefs, typeRefs);
+        break;
+      case 'GotoStatement':
+        references.push({ kind: 'anchor', anchor: block.anchor.name, target: `#${block.anchor.name}`, span: block.anchor.span });
+        break;
     }
   }
 
   private analyzeExpression(
     expr: AST.Expression,
     references: ReferenceInfo[],
-    semanticSpans: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[],
+    variableRefs: Map<string, AST.Span[]>,
+    typeRefs: Map<string, AST.Span[]>
   ): void {
     if (AST.isLink(expr)) {
-      // v0.8: Link reference ~/path/to/file or ~/path/to/file#anchor
       references.push({
         kind: 'link',
         path: expr.path,
@@ -430,7 +558,6 @@ export class ZenLanguageServer {
     }
     
     if (AST.isAnchor(expr)) {
-      // v0.8: Anchor reference #section
       references.push({
         kind: 'anchor',
         anchor: expr.name,
@@ -441,30 +568,36 @@ export class ZenLanguageServer {
     }
     
     switch (expr.kind) {
+      case 'VariableReference':
+        this.addRef(variableRefs, expr.name, expr.span);
+        break;
       case 'ArrayLiteral':
         for (const el of expr.elements) {
-          this.analyzeExpression(el, references, semanticSpans);
+          this.analyzeExpression(el, references, semanticSpans, variableRefs, typeRefs);
         }
         break;
       case 'TemplateLiteral':
         for (const part of expr.parts) {
           if (typeof part !== 'string') {
-            this.analyzeExpression(part, references, semanticSpans);
+            this.analyzeExpression(part, references, semanticSpans, variableRefs, typeRefs);
           }
         }
         break;
       case 'BinaryExpression':
-        this.analyzeExpression(expr.left, references, semanticSpans);
-        this.analyzeExpression(expr.right, references, semanticSpans);
+        this.analyzeExpression(expr.left, references, semanticSpans, variableRefs, typeRefs);
+        this.analyzeExpression(expr.right, references, semanticSpans, variableRefs, typeRefs);
         break;
       case 'LambdaExpression':
-        this.analyzeExpression(expr.body, references, semanticSpans);
+        this.analyzeExpression(expr.body, references, semanticSpans, variableRefs, typeRefs);
         break;
       case 'FunctionCall':
-        this.analyzeExpression(expr.callee, references, semanticSpans);
+        this.analyzeExpression(expr.callee, references, semanticSpans, variableRefs, typeRefs);
         for (const arg of expr.args) {
-          this.analyzeExpression(arg, references, semanticSpans);
+          this.analyzeExpression(arg, references, semanticSpans, variableRefs, typeRefs);
         }
+        break;
+      case 'MemberAccess':
+        this.analyzeExpression(expr.object, references, semanticSpans, variableRefs, typeRefs);
         break;
     }
   }
@@ -472,19 +605,21 @@ export class ZenLanguageServer {
   private analyzeCondition(
     cond: AST.Condition,
     references: ReferenceInfo[],
-    semanticSpans: SemanticMarkerInfo[]
+    semanticSpans: SemanticMarkerInfo[],
+    variableRefs: Map<string, AST.Span[]>,
+    typeRefs: Map<string, AST.Span[]>
   ): void {
     switch (cond.kind) {
       case 'SemanticCondition':
         semanticSpans.push({ content: cond.text, span: cond.span });
         break;
       case 'DeterministicCondition':
-        this.analyzeExpression(cond.left, references, semanticSpans);
-        this.analyzeExpression(cond.right, references, semanticSpans);
+        this.analyzeExpression(cond.left, references, semanticSpans, variableRefs, typeRefs);
+        this.analyzeExpression(cond.right, references, semanticSpans, variableRefs, typeRefs);
         break;
       case 'CompoundCondition':
-        this.analyzeCondition(cond.left, references, semanticSpans);
-        this.analyzeCondition(cond.right, references, semanticSpans);
+        this.analyzeCondition(cond.left, references, semanticSpans, variableRefs, typeRefs);
+        this.analyzeCondition(cond.right, references, semanticSpans, variableRefs, typeRefs);
         break;
     }
   }
@@ -512,7 +647,6 @@ export class ZenLanguageServer {
   // Semantic Tokens
   // ==========================================================================
 
-  // -- MDZ_SEMANTIC_TOKENS_START
   getSemanticTokensLegend(): SemanticTokensLegend {
     return {
       tokenTypes: [...this.semanticTokenTypes],
@@ -592,7 +726,6 @@ export class ZenLanguageServer {
 
     const addSemanticMarkerFromLine = (lineIndex: number, line: string): void => {
       if (codeLines.has(lineIndex + 1) || frontmatterLines.has(lineIndex + 1)) return;
-      // Match /semantic marker/
       const markerPattern = /\/[^\/\n]+\//g;
       let match: RegExpExecArray | null;
       markerPattern.lastIndex = 0;
@@ -1061,7 +1194,6 @@ export class ZenLanguageServer {
 
     return { data };
   }
-  // -- MDZ_SEMANTIC_TOKENS_END
 
   // ==========================================================================
   // Diagnostics
@@ -1070,7 +1202,6 @@ export class ZenLanguageServer {
   private getDiagnostics(state: DocumentState): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
 
-    // Parse errors
     for (const error of state.ast.errors) {
       diagnostics.push({
         range: this.spanToRange(error.span),
@@ -1080,14 +1211,12 @@ export class ZenLanguageServer {
       });
     }
 
-    // v0.8: Check link references
     for (const ref of state.references) {
       if (ref.kind === 'link' && ref.path) {
         const linkPath = ref.path.join('/');
         const targetState = this.skillRegistry.get(linkPath);
         
         if (!targetState) {
-          // Only warn, don't error - file might be external
           diagnostics.push({
             range: this.spanToRange(ref.span),
             severity: DiagnosticSeverity.Information,
@@ -1095,7 +1224,6 @@ export class ZenLanguageServer {
             source: 'zen',
           });
         } else if (ref.anchor) {
-          // Check if anchor exists in target file
           const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
           if (!section) {
             diagnostics.push({
@@ -1107,7 +1235,6 @@ export class ZenLanguageServer {
           }
         }
       } else if (ref.kind === 'anchor' && ref.anchor) {
-        // Check same-file anchor
         const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
         if (!section) {
           diagnostics.push({
@@ -1133,27 +1260,41 @@ export class ZenLanguageServer {
     const state = this.documents.get(uri);
     if (!state) return null;
 
-    // Check if position is on a variable reference
+    // 1. Check variable references (usage first)
+    for (const [name, spans] of state.variableRefs) {
+      for (const span of spans) {
+        if (this.positionInSpan(position, span)) {
+          const info = state.variables.get(name);
+          if (info) return { uri, range: this.spanToRange(info.span) };
+        }
+      }
+    }
+
+    // 2. Check variable declarations
     for (const [name, info] of state.variables) {
       if (this.positionInSpan(position, info.span)) {
-        return {
-          uri,
-          range: this.spanToRange(info.span),
-        };
+        return { uri, range: this.spanToRange(info.span) };
       }
     }
 
-    // Check if position is on a type reference
+    // 3. Check type references (usage first)
+    for (const [name, spans] of state.typeRefs) {
+      for (const span of spans) {
+        if (this.positionInSpan(position, span)) {
+          const info = state.types.get(name);
+          if (info) return { uri, range: this.spanToRange(info.span) };
+        }
+      }
+    }
+
+    // 4. Check type declarations
     for (const [name, info] of state.types) {
       if (this.positionInSpan(position, info.span)) {
-        return {
-          uri,
-          range: this.spanToRange(info.span),
-        };
+        return { uri, range: this.spanToRange(info.span) };
       }
     }
 
-    // v0.8: Check if position is on a link or anchor reference
+    // 5. Check link or anchor reference
     for (const ref of state.references) {
       if (!this.positionInSpan(position, ref.span)) continue;
       
@@ -1162,31 +1303,15 @@ export class ZenLanguageServer {
         const targetState = this.skillRegistry.get(linkPath);
         
         if (targetState) {
-          // If anchor specified, find that section
           if (ref.anchor) {
             const section = targetState.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
-            if (section) {
-              return {
-                uri: targetState.uri,
-                range: this.spanToRange(section.span),
-              };
-            }
+            if (section) return { uri: targetState.uri, range: this.spanToRange(section.span) };
           }
-          // Otherwise return start of document
-          return {
-            uri: targetState.uri,
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
-          };
+          return { uri: targetState.uri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
         }
       } else if (ref.kind === 'anchor' && ref.anchor) {
-        // Same-file anchor reference
         const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
-        if (section) {
-          return {
-            uri,
-            range: this.spanToRange(section.span),
-          };
-        }
+        if (section) return { uri, range: this.spanToRange(section.span) };
       }
     }
 
@@ -1201,9 +1326,11 @@ export class ZenLanguageServer {
     const state = this.documents.get(uri);
     if (!state) return null;
 
-    // Check types
+    // Check types (usage and decl)
     for (const [name, info] of state.types) {
-      if (this.positionInSpan(position, info.span)) {
+      const spans = state.typeRefs.get(name) || [];
+      const matchesUsage = spans.some(s => this.positionInSpan(position, s));
+      if (matchesUsage || this.positionInSpan(position, info.span)) {
         return {
           contents: `**Type** $${name}\n\n${info.definition}`,
           range: this.spanToRange(info.span),
@@ -1211,62 +1338,40 @@ export class ZenLanguageServer {
       }
     }
 
-    // Check variables
+    // Check variables (usage and decl)
     for (const [name, info] of state.variables) {
-      if (this.positionInSpan(position, info.span)) {
+      const spans = state.variableRefs.get(name) || [];
+      const matchesUsage = spans.some(s => this.positionInSpan(position, s));
+      if (matchesUsage || this.positionInSpan(position, info.span)) {
         let contents = `**Variable** $${name}`;
-        
-        // v0.9: Use the inference engine if no explicit type is provided
         const typeExpr = info.typeExpr || this.inferVariableType(state, name);
-        
         if (typeExpr) {
-          const typeLabel = this.typeExprToString(typeExpr);
-          contents += `: ${typeLabel}`;
+          contents += `: ${this.typeExprToString(typeExpr)}`;
           if (typeExpr.kind === "TypeReference") {
             const type = state.types.get(typeExpr.name);
-            if (type) {
-              contents += `\n\n${type.definition}`;
-            }
+            if (type) contents += `\n\n${type.definition}`;
           }
         }
-        if (info.source !== "local") {
-          contents += `\n\n*${info.source}*`;
-        }
-        if (info.isLambda) {
-          contents += "\n\n*Lambda function*";
-        }
-        return {
-          contents,
-          range: this.spanToRange(info.span),
-        };
+        if (info.source !== "local") contents += `\n\n*${info.source}*`;
+        if (info.isLambda) contents += "\n\n*Lambda function*";
+        return { contents, range: this.spanToRange(info.span) };
       }
     }
 
-    // v0.8: Check link and anchor references
     for (const ref of state.references) {
       if (this.positionInSpan(position, ref.span)) {
         let contents: string;
-        
         if (ref.kind === 'link' && ref.path) {
           const linkPath = ref.path.join('/');
           const linkKind = this.inferLinkKind(ref.path);
           const targetState = this.skillRegistry.get(linkPath);
-          
           if (!targetState) {
             contents = `**${linkKind}:** ${ref.target}\n\n*Not found in workspace*`;
           } else {
             contents = `**${linkKind}:** ${ref.target}`;
-            if (targetState.ast.frontmatter?.description) {
-              contents += `\n\n${targetState.ast.frontmatter.description}`;
-            }
-            const sections = targetState.ast.sections
-              .filter((s: AST.Section) => s.anchor)
-              .map((s: AST.Section) => s.anchor);
-            if (sections.length > 0) {
-              contents += `\n\nSections: ${sections.join(', ')}`;
-            }
-            
-            // v0.9: Show input contract if available
+            if (targetState.ast.frontmatter?.description) contents += `\n\n${targetState.ast.frontmatter.description}`;
+            const sections = targetState.ast.sections.filter((s: AST.Section) => s.anchor).map((s: AST.Section) => s.anchor);
+            if (sections.length > 0) contents += `\n\nSections: ${sections.join(', ')}`;
             if (targetState.parameters.length > 0) {
               contents += `\n\n**Input Contract:**\n` + targetState.parameters.map(p => 
                 `- $${p.name}: ${this.typeExprToString(p.typeExpr)}${p.isRequired ? '' : ' (optional)'}`
@@ -1274,20 +1379,11 @@ export class ZenLanguageServer {
             }
           }
         } else if (ref.kind === 'anchor') {
-          // Anchor reference: #section
           const section = state.ast.sections.find((s: AST.Section) => s.anchor === ref.anchor);
           contents = `**Anchor** ${ref.target}`;
-          if (section?.title) {
-            contents += `\n\nSection: ${section.title}`;
-          }
-        } else {
-          continue;
-        }
-        
-        return {
-          contents,
-          range: this.spanToRange(ref.span),
-        };
+          if (section?.title) contents += `\n\nSection: ${section.title}`;
+        } else continue;
+        return { contents, range: this.spanToRange(ref.span) };
       }
     }
 
@@ -1295,11 +1391,8 @@ export class ZenLanguageServer {
   }
 
   private inferVariableType(state: DocumentState, name: string): AST.TypeExpr | undefined {
-    // 1. Check if we already have a type (from frontmatter or explicit annotation)
     const existing = state.variableTypes.get(name);
     if (existing) return existing;
-
-    // 2. Find the declaration to infer from value
     for (const section of state.ast.sections) {
       for (const block of section.content) {
         if (block.kind === 'VariableDeclaration' && block.name === name && block.value) {
@@ -1307,7 +1400,6 @@ export class ZenLanguageServer {
         }
       }
     }
-
     return undefined;
   }
 
@@ -1322,170 +1414,71 @@ export class ZenLanguageServer {
     const lineContent = state.content.split('\n')[position.line] || '';
     const beforeCursor = lineContent.substring(0, position.character);
 
-    // v0.8: After ~/ - trigger link path completion
-    if (beforeCursor.endsWith('~/')) {
-      return this.getPathCompletions('');
-    }
-
-    // v0.8: After ~/ with partial path
+    if (beforeCursor.endsWith('~/')) return this.getPathCompletions('');
     const linkMatch = beforeCursor.match(/~\/([a-z0-9\/-]*)$/);
     if (linkMatch) {
       const partial = linkMatch[1];
-      
-      // Check if we're completing an anchor after a link path
       const anchorInLink = partial.match(/^([^#]+)#([a-z0-9-]*)$/);
-      if (anchorInLink) {
-        const [, linkPath, anchorPrefix] = anchorInLink;
-        return this.getCrossFileAnchorCompletions(linkPath, anchorPrefix);
-      }
-      
+      if (anchorInLink) return this.getCrossFileAnchorCompletions(anchorInLink[1], anchorInLink[2]);
       return this.getPathCompletions(partial);
     }
 
-    // v0.8: After # - trigger same-file anchor completion
-    // But only if not after ~/ (handled above)
-    if (beforeCursor.endsWith('#') && !beforeCursor.match(/~\/[^#]*#$/)) {
-      return this.getAnchorCompletions(state);
-    }
-
-    // v0.8: After # with partial text (same-file anchor)
+    if (beforeCursor.endsWith('#') && !beforeCursor.match(/~\/[^#]*#$/)) return this.getAnchorCompletions(state);
     const anchorMatch = beforeCursor.match(/(?<!~\/[^#]*)#([a-z0-9-]+)$/);
     if (anchorMatch) {
-      const prefix = anchorMatch[1];
-      return this.getAnchorCompletions(state).filter(c =>
-        c.label.toLowerCase().startsWith(prefix.toLowerCase())
-      );
+      return this.getAnchorCompletions(state).filter(c => c.label.toLowerCase().startsWith(anchorMatch[1].toLowerCase()));
     }
 
-    // After $
-    if (beforeCursor.endsWith('$')) {
-      return [
-        ...this.getVariableCompletions(state),
-        ...this.getTypeCompletions(state),
-      ];
-    }
-
-    // After $ with partial text
+    if (beforeCursor.endsWith('$')) return [...this.getVariableCompletions(state), ...this.getTypeCompletions(state)];
     const varMatch = beforeCursor.match(/\$([a-zA-Z0-9-]*)$/);
     if (varMatch) {
-      const prefix = varMatch[1];
-      const all = [
-        ...this.getVariableCompletions(state),
-        ...this.getTypeCompletions(state),
-      ];
-      return all.filter(c => 
-        c.label.toLowerCase().startsWith(prefix.toLowerCase())
-      );
+      const prefix = varMatch[1].toLowerCase();
+      return [...this.getVariableCompletions(state), ...this.getTypeCompletions(state)].filter(c => c.label.toLowerCase().startsWith(prefix));
     }
 
-    // After /
-    if (beforeCursor.endsWith('/')) {
-      return this.getSemanticCompletions();
-    }
-
-    // Control flow keywords at start of line
-    if (/^\s*$/.test(beforeCursor)) {
-      return this.getKeywordCompletions();
-    }
+    if (beforeCursor.endsWith('/')) return this.getSemanticCompletions();
+    if (/^\s*$/.test(beforeCursor)) return this.getKeywordCompletions();
 
     return [];
   }
 
-  // v0.10: Path completion for ~/path/to/file
   private getPathCompletions(partial: string): CompletionItem[] {
     const items: CompletionItem[] = [];
-
-    for (const [key, docState] of this.skillRegistry) {
+    for (const key of this.skillRegistry.keys()) {
       if (key.startsWith(partial)) {
-        const kind = this.inferLinkKind(key.split("/"));
-        items.push({
-          label: "~/" + key,
-          kind: CompletionItemKind.File,
-          detail: kind,
-          // Use full key to avoid offset corruption
-          insertText: key,
-        });
+        items.push({ label: "~/" + key, kind: CompletionItemKind.File, detail: this.inferLinkKind(key.split("/")), insertText: key });
       }
     }
-
     return items;
   }
 
-  // v0.8: Anchor completion for cross-file references (~/path#anchor)
   private getCrossFileAnchorCompletions(linkPath: string, prefix: string): CompletionItem[] {
     const targetState = this.skillRegistry.get(linkPath);
     if (!targetState) return [];
-    
-    const items: CompletionItem[] = [];
-    for (const section of targetState.ast.sections) {
-      if (section.anchor && section.anchor.startsWith(prefix)) {
-        items.push({
-          label: '#' + section.anchor,
-          kind: CompletionItemKind.Reference,
-          detail: section.title || 'Section',
-          insertText: section.anchor.substring(prefix.length),
-        });
-      }
-    }
-    
-    return items;
+    return targetState.ast.sections
+      .filter(s => s.anchor && s.anchor.startsWith(prefix))
+      .map(s => ({ label: '#' + s.anchor, kind: CompletionItemKind.Reference, detail: s.title || 'Section', insertText: s.anchor!.substring(prefix.length) }));
   }
 
-  // v0.8: Anchor completion for same-file references (#anchor)
   private getAnchorCompletions(state: DocumentState): CompletionItem[] {
-    const items: CompletionItem[] = [];
-    
-    for (const section of state.ast.sections) {
-      if (section.anchor) {
-        items.push({
-          label: '#' + section.anchor,
-          kind: CompletionItemKind.Reference,
-          detail: section.title || 'Section',
-          insertText: section.anchor,
-        });
-      }
-    }
-
-    return items;
+    return state.ast.sections
+      .filter(s => s.anchor)
+      .map(s => ({ label: '#' + s.anchor, kind: CompletionItemKind.Reference, detail: s.title || 'Section', insertText: s.anchor! }));
   }
 
   private getVariableCompletions(state: DocumentState): CompletionItem[] {
     const items: CompletionItem[] = [];
-
     for (const [name, info] of state.variables) {
       const typeExpr = info.typeExpr || this.inferVariableType(state, name);
-      items.push({
-        label: name,
-        kind: info.isLambda ? CompletionItemKind.Function : CompletionItemKind.Variable,
-        detail: typeExpr ? this.typeExprToString(typeExpr) : undefined,
-      });
+      items.push({ label: name, kind: info.isLambda ? CompletionItemKind.Function : CompletionItemKind.Variable, detail: typeExpr ? this.typeExprToString(typeExpr) : undefined });
     }
-
     return items;
   }
 
   private getTypeCompletions(state: DocumentState): CompletionItem[] {
     const items: CompletionItem[] = [];
-
-    // User-defined types
-    for (const [name, info] of state.types) {
-      items.push({
-        label: name,
-        kind: CompletionItemKind.Class,
-        detail: info.definition,
-      });
-    }
-
-    // Built-in types
-    const builtins = ['FilePath', 'String', 'Number', 'Boolean'];
-    for (const name of builtins) {
-      items.push({
-        label: name,
-        kind: CompletionItemKind.Class,
-        detail: `Built-in type`,
-      });
-    }
-
+    for (const [name, info] of state.types) items.push({ label: name, kind: CompletionItemKind.Class, detail: info.definition });
+    for (const name of ['FilePath', 'String', 'Number', 'Boolean']) items.push({ label: name, kind: CompletionItemKind.Class, detail: `Built-in type` });
     return items;
   }
 
@@ -1509,10 +1502,6 @@ export class ZenLanguageServer {
     ];
   }
 
-  // ==========================================================================
-  // Link Helpers
-  // ==========================================================================
-
   private inferLinkKind(path: string[]): string {
     const folder = path[0];
     if (folder === 'agent' || folder === 'agents') return 'agent';
@@ -1521,44 +1510,20 @@ export class ZenLanguageServer {
     return 'link';
   }
 
-  // ==========================================================================
-  // Document Symbols
-  // ==========================================================================
-
   getDocumentSymbols(uri: string): DocumentSymbol[] {
     const state = this.documents.get(uri);
     if (!state) return [];
-
     const symbols: DocumentSymbol[] = [];
-
-    // Sections as symbols
     for (const section of state.ast.sections) {
-      if (section.title === 'Types' || section.title === 'Input' || section.title === 'Context') {
-        continue;
-      }
-
+      if (section.title === 'Types' || section.title === 'Input' || section.title === 'Context') continue;
       const children: DocumentSymbol[] = [];
-
       for (const block of section.content) {
         if (block.kind === 'VariableDeclaration') {
-          children.push({
-            name: `$${block.name}`,
-            kind: block.isLambda ? SymbolKind.Function : SymbolKind.Variable,
-            range: this.spanToRange(block.span),
-            selectionRange: this.spanToRange(block.span),
-          });
+          children.push({ name: `$${block.name}`, kind: block.isLambda ? SymbolKind.Function : SymbolKind.Variable, range: this.spanToRange(block.span), selectionRange: this.spanToRange(block.span) });
         }
       }
-
-      symbols.push({
-        name: section.title || '(untitled)',
-        kind: SymbolKind.Namespace,
-        range: this.spanToRange(section.span),
-        selectionRange: this.spanToRange(section.span),
-        children: children.length > 0 ? children : undefined,
-      });
+      symbols.push({ name: section.title || '(untitled)', kind: SymbolKind.Namespace, range: this.spanToRange(section.span), selectionRange: this.spanToRange(section.span), children: children.length > 0 ? children : undefined });
     }
-
     return symbols;
   }
 
@@ -1567,43 +1532,32 @@ export class ZenLanguageServer {
   // ==========================================================================
 
   private spanToRange(span: AST.Span): Range {
-    return {
-      start: { line: span.start.line - 1, character: span.start.column },
-      end: { line: span.end.line - 1, character: span.end.column },
-    };
+    return { start: { line: span.start.line - 1, character: span.start.column }, end: { line: span.end.line - 1, character: span.end.column } };
   }
 
   private positionInSpan(pos: Position, span: AST.Span): boolean {
-    const line = pos.line + 1; // LSP is 0-based, our spans are 1-based
+    const line = pos.line + 1;
     const char = pos.character;
-
     if (line < span.start.line || line > span.end.line) return false;
     if (line === span.start.line && char < span.start.column) return false;
     if (line === span.end.line && char > span.end.column) return false;
-
     return true;
   }
 
   private buildLineOffsets(content: string): number[] {
-    const offsets: number[] = [];
+    const offsets: number[] = [0];
     let current = 0;
-    offsets.push(0);
     for (const char of content) {
       current += 1;
-      if (char === '\n') {
-        offsets.push(current);
-      }
+      if (char === '\n') offsets.push(current);
     }
     return offsets;
   }
 
   private offsetToPosition(offset: number, lineOffsets: number[]): Position {
     let line = 0;
-    while (line + 1 < lineOffsets.length && lineOffsets[line + 1] <= offset) {
-      line += 1;
-    }
-    const lineOffset = lineOffsets[line] ?? 0;
-    return { line, character: offset - lineOffset };
+    while (line + 1 < lineOffsets.length && lineOffsets[line + 1] <= offset) line += 1;
+    return { line, character: offset - (lineOffsets[line] ?? 0) };
   }
 
   private collectCodeBlockLines(ast: AST.Document): Set<number> {
@@ -1611,11 +1565,7 @@ export class ZenLanguageServer {
     for (const section of ast.sections) {
       for (const block of section.content) {
         if (block.kind !== 'CodeBlock') continue;
-        const start = block.span.start.line;
-        const end = block.span.end.line;
-        for (let line = start; line <= end; line += 1) {
-          lines.add(line);
-        }
+        for (let l = block.span.start.line; l <= block.span.end.line; l++) lines.add(l);
       }
     }
     return lines;
@@ -1623,43 +1573,26 @@ export class ZenLanguageServer {
 
   private collectParameters(ast: AST.Document): ParameterInfo[] {
     const params: ParameterInfo[] = [];
-
     if (ast.frontmatter) {
       for (const inputDecl of ast.frontmatter.input) {
-        params.push({
-          name: inputDecl.name,
-          typeExpr: inputDecl.type ?? makeAnyTypeReference(),
-          isRequired: inputDecl.required,
-          span: inputDecl.span,
-        });
+        params.push({ name: inputDecl.name, typeExpr: inputDecl.type ?? makeAnyTypeReference(), isRequired: inputDecl.required, span: inputDecl.span });
       }
     }
-
     for (const section of ast.sections) {
       if (section.title !== 'Input') continue;
       for (const block of section.content) {
         if (block.kind !== 'VariableDeclaration') continue;
-        params.push({
-          name: block.name,
-          typeExpr: block.typeAnnotation ?? makeAnyTypeReference(),
-          isRequired: block.isRequired ?? block.value === null,
-          span: block.span,
-        });
+        params.push({ name: block.name, typeExpr: block.typeAnnotation ?? makeAnyTypeReference(), isRequired: block.isRequired ?? block.value === null, span: block.span });
       }
     }
-
     return params;
   }
 
   private buildTypeEnv(types: Map<string, TypeInfo>, ast: AST.Document): TypeEnv {
     const env: TypeEnv = new Map();
-    for (const [name, info] of types) {
-      env.set(name, info.typeExpr);
-    }
+    for (const [name, info] of types) env.set(name, info.typeExpr);
     if (ast.frontmatter) {
-      for (const typeDecl of ast.frontmatter.types) {
-        env.set(typeDecl.name, typeDecl.typeExpr);
-      }
+      for (const typeDecl of ast.frontmatter.types) env.set(typeDecl.name, typeDecl.typeExpr);
     }
     return env;
   }
@@ -1667,13 +1600,8 @@ export class ZenLanguageServer {
   private buildVariableTypes(variables: Map<string, VariableInfo>): Map<string, AST.TypeExpr> {
     const map = new Map<string, AST.TypeExpr>();
     for (const [name, info] of variables) {
-      if (info.typeExpr) {
-        map.set(name, info.typeExpr);
-        continue;
-      }
-      if (info.isLambda) {
-        map.set(name, makeAnyTypeReference());
-      }
+      if (info.typeExpr) map.set(name, info.typeExpr);
+      else if (info.isLambda) map.set(name, makeAnyTypeReference());
     }
     return map;
   }
@@ -1684,213 +1612,98 @@ export class ZenLanguageServer {
     }
   }
 
-  private validateContractsInBlocks(
-    sectionTitle: string,
-    blocks: AST.Block[],
-    state: DocumentState,
-    diagnostics: Diagnostic[]
-  ): void {
-    const isLegacySection = sectionTitle === 'Types' || sectionTitle === 'Input' || sectionTitle === 'Context';
-
+  private validateContractsInBlocks(sectionTitle: string, blocks: AST.Block[], state: DocumentState, diagnostics: Diagnostic[]): void {
     for (const block of blocks) {
       switch (block.kind) {
-        case 'Delegation':
-          this.validateDelegation(block, state, diagnostics);
-          break;
-        case 'DelegateStatement':
-          this.validateDelegateStatement(block, state, diagnostics);
-          break;
-        case 'UseStatement':
-          this.validateUseStatement(block, state, diagnostics);
-          break;
+        case 'Delegation': this.validateDelegation(block, state, diagnostics); break;
+        case 'DelegateStatement': this.validateDelegateStatement(block, state, diagnostics); break;
+        case 'UseStatement': this.validateUseStatement(block, state, diagnostics); break;
         case 'ForEachStatement':
-        case 'WhileStatement':
-          this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics);
-          break;
+        case 'WhileStatement': this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics); break;
         case 'IfStatement':
           this.validateContractsInBlocks(sectionTitle, block.thenBody, state, diagnostics);
-          for (const clause of block.elseIf) {
-            this.validateContractsInBlocks(sectionTitle, clause.body, state, diagnostics);
-          }
-          if (block.elseBody) {
-            this.validateContractsInBlocks(sectionTitle, block.elseBody, state, diagnostics);
-          }
+          for (const clause of block.elseIf) this.validateContractsInBlocks(sectionTitle, clause.body, state, diagnostics);
+          if (block.elseBody) this.validateContractsInBlocks(sectionTitle, block.elseBody, state, diagnostics);
           break;
-        case 'DoStatement':
-          if (block.body) {
-            this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics);
-          }
-          break;
+        case 'DoStatement': if (block.body) this.validateContractsInBlocks(sectionTitle, block.body, state, diagnostics); break;
       }
     }
   }
 
-  private validateDelegation(
-    deleg: AST.Delegation,
-    state: DocumentState,
-    diagnostics: Diagnostic[]
-  ): void {
-    if (deleg.target.kind !== 'Link') return;
-    this.validateParameterBlock(deleg.parameters, deleg.target, state, diagnostics);
+  private validateDelegation(deleg: AST.Delegation, state: DocumentState, diagnostics: Diagnostic[]): void {
+    if (deleg.target.kind === 'Link') this.validateParameterBlock(deleg.parameters, deleg.target, state, diagnostics);
   }
 
-  private validateDelegateStatement(
-    deleg: AST.DelegateStatement,
-    state: DocumentState,
-    diagnostics: Diagnostic[]
-  ): void {
-    if (!deleg.target || !deleg.parameters) return;
-    this.validateParameterBlock(deleg.parameters.parameters, deleg.target, state, diagnostics);
+  private validateDelegateStatement(deleg: AST.DelegateStatement, state: DocumentState, diagnostics: Diagnostic[]): void {
+    if (deleg.target && deleg.parameters) this.validateParameterBlock(deleg.parameters.parameters, deleg.target, state, diagnostics);
   }
 
-  private validateUseStatement(
-    stmt: AST.UseStatement,
-    state: DocumentState,
-    diagnostics: Diagnostic[]
-  ): void {
-    if (!stmt.parameters) return;
-    this.validateParameterBlock(stmt.parameters.parameters, stmt.link, state, diagnostics);
+  private validateUseStatement(stmt: AST.UseStatement, state: DocumentState, diagnostics: Diagnostic[]): void {
+    if (stmt.parameters) this.validateParameterBlock(stmt.parameters.parameters, stmt.link, state, diagnostics);
   }
 
-  private validateParameterBlock(
-    parameters: AST.VariableDeclaration[],
-    target: AST.LinkNode,
-    state: DocumentState,
-    diagnostics: Diagnostic[]
-  ): void {
+  private validateParameterBlock(parameters: AST.VariableDeclaration[], target: AST.LinkNode, state: DocumentState, diagnostics: Diagnostic[]): void {
     const targetPath = target.path.join('/');
     const targetState = this.skillRegistry.get(targetPath);
     if (!targetState) return;
-
-    const requiredParams = targetState.parameters.filter((param) => param.isRequired);
-    const provided = new Set(parameters.map((param) => param.name));
-
-    for (const required of requiredParams) {
-      if (!provided.has(required.name)) {
-        diagnostics.push({
-          range: this.spanToRange(target.span),
-          severity: DiagnosticSeverity.Error,
-          message: `Required parameter "${required.name}" is missing for "${targetPath}"`,
-          source: 'zen',
-        });
+    const requiredParams = targetState.parameters.filter(p => p.isRequired);
+    const provided = new Set(parameters.map(p => p.name));
+    for (const req of requiredParams) {
+      if (!provided.has(req.name)) {
+        diagnostics.push({ range: this.spanToRange(target.span), severity: DiagnosticSeverity.Error, message: `Required parameter "${req.name}" is missing for "${targetPath}"`, source: 'zen' });
       }
     }
-
     for (const param of parameters) {
-      const expected = targetState.parameters.find((item) => item.name === param.name);
+      const expected = targetState.parameters.find(p => p.name === param.name);
       if (!expected) {
-        diagnostics.push({
-          range: this.spanToRange(param.span),
-          severity: DiagnosticSeverity.Warning,
-          message: `Parameter "${param.name}" is not defined for "${targetPath}"`,
-          source: 'zen',
-        });
+        diagnostics.push({ range: this.spanToRange(param.span), severity: DiagnosticSeverity.Warning, message: `Parameter "${param.name}" is not defined for "${targetPath}"`, source: 'zen' });
         continue;
       }
-
       const actualType = this.inferParameterType(param, state);
       const compatibility = isCompatible(actualType, expected.typeExpr, targetState.typeEnv);
       if (!compatibility.compatible) {
-        diagnostics.push({
-          range: this.spanToRange(param.span),
-          severity: DiagnosticSeverity.Error,
-          message: `Parameter "${param.name}" expects ${this.formatTypeExpr(expected.typeExpr)} but received ${this.formatTypeExpr(actualType)}`,
-          source: 'zen',
-        });
+        diagnostics.push({ range: this.spanToRange(param.span), severity: DiagnosticSeverity.Error, message: `Parameter "${param.name}" expects ${this.typeExprToString(expected.typeExpr)} but received ${this.typeExprToString(actualType)}`, source: 'zen' });
       }
     }
   }
 
   private inferParameterType(param: AST.VariableDeclaration, state: DocumentState): AST.TypeExpr {
-    if (param.typeAnnotation) {
-      return param.typeAnnotation;
-    }
-    if (param.value) {
-      return inferType(param.value, state.variableTypes);
-    }
+    if (param.typeAnnotation) return param.typeAnnotation;
+    if (param.value) return inferType(param.value, state.variableTypes);
     return makeAnyTypeReference();
   }
 
-  private formatTypeExpr(expr: AST.TypeExpr): string {
-    return this.typeExprToString(expr);
-  }
-
-  private inferExpressionType(expr: AST.Expression, state: DocumentState): AST.TypeExpr {
-    return inferType(expr, state.variableTypes);
-  }
-
-  private collectFrontmatterDeclarationSpans(content: string): {
-    types: Map<string, AST.Span>;
-    input: Map<string, AST.Span>;
-    context: Map<string, AST.Span>;
-  } {
-    const maps = {
-      types: new Map<string, AST.Span>(),
-      input: new Map<string, AST.Span>(),
-      context: new Map<string, AST.Span>(),
-    };
-
+  private collectFrontmatterDeclarationSpans(content: string): { types: Map<string, AST.Span>; input: Map<string, AST.Span>; context: Map<string, AST.Span>; } {
+    const maps = { types: new Map<string, AST.Span>(), input: new Map<string, AST.Span>(), context: new Map<string, AST.Span>(), };
     const lines = content.split('\n');
     if (lines[0]?.trim() !== '---') return maps;
-
     let offset = lines[0].length + 1;
     let currentSection: keyof typeof maps | null = null;
     let sectionIndent: number | null = null;
-
-    for (let index = 1; index < lines.length; index += 1) {
-      const line = lines[index] ?? '';
-      const trimmed = line.trim();
-      if (trimmed === '---') {
-        break;
-      }
-
-      const indentMatch = line.match(/^\s*/);
-      const indent = indentMatch ? indentMatch[0].length : 0;
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i] ?? '';
+      if (line.trim() === '---') break;
+      const indent = line.search(/\S/);
       const sectionMatch = line.match(/^\s*(types|input|context):\s*$/);
       if (sectionMatch) {
         currentSection = sectionMatch[1] as keyof typeof maps;
         sectionIndent = indent;
-        offset += line.length + 1;
-        continue;
-      }
-
-      if (!currentSection) {
-        offset += line.length + 1;
-        continue;
-      }
-
-      if (sectionIndent !== null && indent <= sectionIndent) {
+      } else if (currentSection && (sectionIndent === null || indent > sectionIndent)) {
+        const entryMatch = line.match(/^\s*(\$?[A-Za-z0-9_-]+)\s*:/);
+        if (entryMatch) {
+          const name = entryMatch[1].replace(/^\$/, "");
+          const start = entryMatch.index ?? 0;
+          maps[currentSection].set(name, AST.createSpan(i + 1, start, offset + start, i + 1, start + entryMatch[0].length, offset + start + entryMatch[0].length));
+        }
+      } else {
         currentSection = null;
         sectionIndent = null;
-        offset += line.length + 1;
-        continue;
       }
-
-      const entryMatch = line.match(/^\s*(\$?[A-Za-z0-9_-]+)\s*:/);
-      if (entryMatch) {
-        const name = entryMatch[1].replace(/^\$/, "");
-        const startColumn = entryMatch.index ?? 0;
-        const endColumn = startColumn + entryMatch[0].length;
-        maps[currentSection].set(name, AST.createSpan(
-          index + 1,
-          startColumn,
-          offset + startColumn,
-          index + 1,
-          endColumn,
-          offset + endColumn,
-        ));
-      }
-
       offset += line.length + 1;
     }
-
     return maps;
   }
 }
-
-// ============================================================================
-// Exports
-// ============================================================================
 
 export function createLanguageServer(): ZenLanguageServer {
   return new ZenLanguageServer();
