@@ -1,1 +1,0 @@
-$workPackagePath = $n => `/work package directory//wp-experiment-$n.md`

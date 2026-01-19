@@ -1,3 +1,0 @@
-FOR $item IN $items
-  ASYNC DELEGATE process $item TO ~/agent/worker
-END

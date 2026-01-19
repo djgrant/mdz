@@ -1,2 +1,0 @@
-$name: $Type = value   <!-- typed declaration -->
-$name = value              <!-- simple declaration -->

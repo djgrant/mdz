@@ -1,6 +1,0 @@
-packages:
-  - "."
-  - "packages/*"
-  - "editors/*"
-  - "website"
-  - "web2"

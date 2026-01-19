@@ -1,5 +1,0 @@
-~/skill/code-review           <!-- skill reference -->
-~/agent/architect             <!-- agent reference -->
-~/tool/browser                <!-- tool reference -->
-#validation-prompt            <!-- local anchor -->
-~/skill/review#checklist      <!-- link with anchor -->

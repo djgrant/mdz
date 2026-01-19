@@ -1,9 +1,0 @@
-FOR $item IN $items
-  IF $item.invalid = true THEN
-    CONTINUE              # Skip to next iteration
-  END
-  IF $found = true THEN
-    BREAK                 # Exit the loop
-  END
-  Process normally
-END

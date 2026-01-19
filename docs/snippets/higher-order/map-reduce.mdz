@@ -1,6 +1,0 @@
-FOR $item IN $collection
-  DELEGATE process item TO ~/agent/processor
-  Collect $result into $results
-END
-
-Synthesize $results into final output

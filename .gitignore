@@ -3,23 +3,6 @@ node_modules/
 
 # Build outputs
 dist/
-website/dist/
-*.js.map
-*.d.ts.map
 
 # OS files
 .DS_Store
-
-# IDE
-.idea/
-*.swp
-
-# OpenCode workspace (except work packages)
-.opencode/*
-!.opencode/work/
-
-# Test artifacts
-test-execution.js
-test-loop.mdz
-logo-concepts.html
-.screenshots/

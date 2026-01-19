@@ -1,5 +1,0 @@
-FOR $skill IN $skills
-  Load $skill source
-  USE ~/skill/orchestrate TO coordinate execution
-  Collect results
-END

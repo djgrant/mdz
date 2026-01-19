@@ -1,2 +1,0 @@
-$TaskWithPriority: ($Task, $Priority)
-$Transform: ($Task, $Strategy)

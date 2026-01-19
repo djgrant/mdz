@@ -1,9 +1,0 @@
-IF $strategy = "accumulate" THEN
-  Validate incrementally
-  Update on success
-  Log progress
-ELSE
-  Collect all candidates
-  Validate at end
-  Report summary
-END

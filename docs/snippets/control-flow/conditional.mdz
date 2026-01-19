@@ -1,5 +1,0 @@
-IF condition THEN
-  Do this
-ELSE
-  Do that
-END

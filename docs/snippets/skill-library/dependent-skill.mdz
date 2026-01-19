@@ -1,8 +1,0 @@
----
-name: dependent-skill
-description: When processing with base functionality
----
-
-## Workflow
-
-USE ~/skill/base-skill TO perform base operation

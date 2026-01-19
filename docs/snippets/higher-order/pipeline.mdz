@@ -1,3 +1,0 @@
-USE ~/skill/analyze TO analyze input
-USE ~/skill/transform TO transform results
-USE ~/skill/validate TO validate output

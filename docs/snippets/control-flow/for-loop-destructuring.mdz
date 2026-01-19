@@ -1,6 +1,0 @@
-FOR ($task, $priority) IN $items
-  Execute $task
-  IF $priority = "high" THEN
-    Expedite processing
-  END
-END

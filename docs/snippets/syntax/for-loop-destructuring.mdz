@@ -1,3 +1,0 @@
-FOR ($task, $strategy) IN $transforms
-  Execute $task with $strategy
-END

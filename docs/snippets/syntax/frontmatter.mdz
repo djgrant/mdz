@@ -1,4 +1,0 @@
----
-name: skill-name              # Required: identifier (kebab-case)
-description: When...          # Required: trigger description
----
