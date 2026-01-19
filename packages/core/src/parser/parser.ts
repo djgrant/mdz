@@ -495,10 +495,17 @@ export class Parser {
     }
 
     if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
-      // v0.9: Check for push operator <<
-      const lookahead = this.peek(1);
-      if (lookahead?.type === 'PUSH') {
-        return this.parsePushStatement();
+      // v0.9: Check for push operator << on the same line
+      let i = 1;
+      while (this.peek(i) && this.peek(i)!.type !== 'NEWLINE' && this.peek(i)!.type !== 'EOF') {
+        if (this.peek(i)!.type === 'PUSH') {
+          return this.parsePushStatement();
+        }
+        // Stop if we hit something that clearly isn't part of an L-value
+        if (['ASSIGN', 'FOR', 'IF', 'WHILE', 'DELEGATE'].includes(this.peek(i)!.type)) {
+          break;
+        }
+        i++;
       }
       return this.parseVariableOrType();
     }
@@ -579,7 +586,7 @@ export class Parser {
     // Delegation - v0.8: check for link-based references
     if (this.check('LOWER_IDENT') || this.check('UPPER_IDENT')) {
       const verb = this.current().value.toLowerCase();
-      if (verb === 'execute' || verb === 'call' || verb === 'run' || verb === 'invoke' || verb === 'delegate' || verb === 'use') {
+      if (verb === 'call' || verb === 'run' || verb === 'invoke') {
         // Check for "verb (ref)" or "verb to (ref)" patterns with LINK or ANCHOR
         const lookahead1 = this.peek(1);
         const lookahead2 = this.peek(2);
@@ -822,6 +829,9 @@ export class Parser {
         };
       } else {
         typeAnnotation = this.parseSemanticTypeAnnotation(['ASSIGN', 'NEWLINE', 'END', 'ELSE']);
+        if (typeAnnotation.description.trim() === '') {
+          this.error('E020', 'Malformed type annotation: expected type name or description');
+        }
       }
     }
 
@@ -1213,12 +1223,13 @@ export class Parser {
   }
 
   private parseInlineText(): AST.InlineText {
-    let text = '';
-    const start = this.current();
+    const startToken = this.current();
+    let lastToken = startToken;
 
     while (
       !this.isAtEnd() &&
       !this.check('NEWLINE') &&
+      !this.check('HEADING') &&
       // v0.8: link-based references
       !this.check('LINK') &&
       !this.check('ANCHOR') &&
@@ -1226,14 +1237,15 @@ export class Parser {
       !this.check('DOLLAR_IDENT') &&
       !this.check('TYPE_IDENT')
     ) {
-      if (text) text += ' ';
-      text += this.advance().value;
+      lastToken = this.advance();
     }
+
+    const text = this.source.slice(startToken.span.start.offset, lastToken.span.end.offset);
 
     return {
       kind: 'InlineText',
-      text: text.trim(),
-      span: AST.mergeSpans(start.span, this.previous().span),
+      text,
+      span: AST.mergeSpans(startToken.span, lastToken.span),
     };
   }
 
@@ -1404,6 +1416,20 @@ export class Parser {
     if (!this.check('NEWLINE') && !this.isAtEnd() && !this.check('END') && !this.check('ELSE')) {
       value = this.parseExpression();
     }
+
+    // E018: RETURN must be the last statement
+    // Skip newlines to see what's next
+    let nextPos = this.pos;
+    while (nextPos < this.tokens.length && this.tokens[nextPos].type === 'NEWLINE') {
+      nextPos++;
+    }
+    
+    const nextToken = nextPos < this.tokens.length ? this.tokens[nextPos] : { type: 'EOF' };
+    const isLast = ['END', 'ELSE', 'EOF', 'HEADING'].includes(nextToken.type as string);
+
+    if (!isLast) {
+      this.error('E018', 'RETURN must be the last statement in a block or section');
+    }
     
     return {
       kind: 'ReturnStatement',
@@ -1414,13 +1440,18 @@ export class Parser {
 
   // v0.9: Push statement ($array << value)
   private parsePushStatement(): AST.PushStatement {
-    const target = this.parseVariableReference() as AST.VariableReference;
+    const target = this.parseVariableReference();
+    
+    if (target.kind !== 'VariableReference') {
+      this.error('E019', 'Push target must be a variable');
+    }
+
     this.expect('PUSH');  // consume <<
     const value = this.parseExpression();
     
     return {
       kind: 'PushStatement',
-      target,
+      target: target as AST.VariableReference,
       value,
       span: AST.mergeSpans(target.span, value.span),
     };
@@ -1461,6 +1492,7 @@ export class Parser {
 
   // v0.9: DELEGATE statement for agent delegation
   // Syntax: [ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/x] [WITH #template | WITH: params]
+  //         AWAIT $handle
   private parseDelegateStatement(): AST.DelegateStatement {
     const start = this.current();
     
@@ -1476,6 +1508,17 @@ export class Parser {
       this.advance();
     }
     
+    // v0.9: Support AWAIT $handle
+    if (awaited && this.check('DOLLAR_IDENT')) {
+      const handle = this.parseVariableReference() as AST.VariableReference;
+      return {
+        kind: 'DelegateStatement',
+        handle,
+        awaited: true,
+        span: AST.mergeSpans(start.span, handle.span),
+      };
+    }
+
     this.expect('DELEGATE');
     
     // Task is optional positional span
@@ -1801,30 +1844,59 @@ export class Parser {
 
   private parseParagraph(): AST.Paragraph {
     const content: AST.InlineContent[] = [];
-    const start = this.current();
+    const startToken = this.current();
+    let lastEndOffset = this.pos === 0 ? 0 : this.previous().span.end.offset;
+
+    const captureGap = () => {
+      const cur = this.current();
+      if (cur.span.start.offset > lastEndOffset) {
+        content.push({
+          kind: 'InlineText',
+          text: this.source.slice(lastEndOffset, cur.span.start.offset),
+          span: {
+            start: this.pos === 0 ? { line: 1, column: 0, offset: 0 } : this.previous().span.end,
+            end: cur.span.start,
+          },
+        });
+      }
+    };
 
     while (!this.isAtEnd() && !this.check('NEWLINE') && !this.check('HEADING')) {
-      // v0.8: link-based references
       if (this.check('LINK')) {
-        content.push(this.parseLink());
+        captureGap();
+        const link = this.parseLink();
+        content.push(link);
+        lastEndOffset = link.span.end.offset;
       } else if (this.check('ANCHOR')) {
-        content.push(this.parseAnchor());
+        captureGap();
+        const anchor = this.parseAnchor();
+        content.push(anchor);
+        lastEndOffset = anchor.span.end.offset;
       } else if (this.check('INFERRED_VAR')) {
-        content.push(this.parseInferredVariable());
+        captureGap();
+        const invar = this.parseInferredVariable();
+        content.push(invar);
+        lastEndOffset = invar.span.end.offset;
       } else if (this.check('DOLLAR_IDENT') || this.check('TYPE_IDENT')) {
+        captureGap();
         const varToken = this.advance();
         content.push({
           kind: 'VariableReference',
           name: varToken.value.slice(1),
           span: varToken.span,
         });
+        lastEndOffset = varToken.span.end.offset;
       } else {
+        captureGap();
         const textContent = this.parseInlineText();
         if (textContent.text) {
           content.push(textContent);
         }
+        lastEndOffset = this.previous().span.end.offset;
       }
     }
+
+    captureGap(); // Trailing gap
 
     if (this.check('NEWLINE')) {
       this.advance();
@@ -1833,10 +1905,9 @@ export class Parser {
     return {
       kind: 'Paragraph',
       content,
-      span: AST.mergeSpans(start.span, this.previous().span),
+      span: AST.mergeSpans(startToken.span, this.previous().span),
     };
   }
-
   private parseCodeBlock(): AST.CodeBlock {
     const start = this.advance();
     const langMatch = start.value.match(/^```(\w*)$/);
