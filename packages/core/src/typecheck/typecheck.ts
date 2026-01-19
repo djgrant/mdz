@@ -42,7 +42,7 @@ function normalizeEnumValues(values: string[]): string[] {
 }
 
 export function isAnyType(expr: AST.TypeExpr): boolean {
-  if (expr.kind === 'SemanticType') {
+  if (expr.kind === 'SemanticType' && expr.description.toLowerCase() === 'any') {
     return true;
   }
   return expr.kind === 'TypeReference' && expr.name === 'Any';

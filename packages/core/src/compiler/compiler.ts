@@ -788,10 +788,9 @@ export class Compiler {
     const edges: DependencyEdge[] = [];
 
     // v0.8: Dependencies are inferred from link references
-    // No longer using frontmatter uses:
+    // Only skill links are considered formal dependencies for the graph
     for (const ref of this.metadata.references) {
-      // Only link-based references (not anchors) create dependencies
-      if (ref.path && ref.path.length > 0) {
+      if (ref.kind === 'skill' && ref.path && ref.path.length > 0) {
         const depPath = ref.path.join('/');
         nodes.add(depPath);
         edges.push({ target: depPath, type: 'reference', span: ref.span });
@@ -800,10 +799,6 @@ export class Compiler {
 
     this.dependencies.nodes = Array.from(nodes);
     this.dependencies.edges = edges;
-
-    // Cycle detection would require the full graph of all skills
-    // For now, we just report the local dependency structure
-    // Full cycle detection requires the registry to have all skills loaded
   }
 
   // ==========================================================================
@@ -923,9 +918,15 @@ export class Compiler {
         }
         this.checkScopeInBlocks(block.body, usedBeforeDefined);
       } else if (block.kind === 'WhileStatement') {
+        this.checkConditionScope(block.condition, usedBeforeDefined);
         this.checkScopeInBlocks(block.body, usedBeforeDefined);
       } else if (block.kind === 'IfStatement') {
+        this.checkConditionScope(block.condition, usedBeforeDefined);
         this.checkScopeInBlocks(block.thenBody, usedBeforeDefined);
+        for (const elseIf of block.elseIf) {
+          this.checkConditionScope(elseIf.condition, usedBeforeDefined);
+          this.checkScopeInBlocks(elseIf.body, usedBeforeDefined);
+        }
         if (block.elseBody) {
           this.checkScopeInBlocks(block.elseBody, usedBeforeDefined);
         }
@@ -1004,6 +1005,29 @@ export class Compiler {
       for (const el of expr.elements) {
         this.checkExpressionScope(el, usedBeforeDefined);
       }
+    } else if (expr.kind === 'MemberAccess') {
+      this.checkExpressionScope(expr.object, usedBeforeDefined);
+    } else if (expr.kind === 'FunctionCall') {
+      this.checkExpressionScope(expr.callee, usedBeforeDefined);
+      for (const arg of expr.args) {
+        this.checkExpressionScope(arg, usedBeforeDefined);
+      }
+    }
+  }
+
+  private checkConditionScope(cond: AST.Condition, usedBeforeDefined: Set<string>): void {
+    switch (cond.kind) {
+      case 'DeterministicCondition':
+        this.checkExpressionScope(cond.left, usedBeforeDefined);
+        this.checkExpressionScope(cond.right, usedBeforeDefined);
+        break;
+      case 'CompoundCondition':
+        this.checkConditionScope(cond.left, usedBeforeDefined);
+        this.checkConditionScope(cond.right, usedBeforeDefined);
+        break;
+      case 'SemanticCondition':
+        // Semantic conditions are prose
+        break;
     }
   }
 
@@ -1117,17 +1141,17 @@ export class Compiler {
   // v0.9: Validate RETURN statement placement
   private validateReturnStatements(ast: AST.Document): void {
     for (const section of ast.sections) {
-      this.validateReturnInBlocks(section.content, section.content.length);
+      this.validateReturnInBlocks(section.content);
     }
   }
 
-  private validateReturnInBlocks(blocks: AST.Block[], parentLength: number): void {
+  private validateReturnInBlocks(blocks: AST.Block[]): void {
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
       
       if (block.kind === 'ReturnStatement') {
         // RETURN must be last in its block (end of section or loop iteration)
-        const isLast = i === parentLength - 1;
+        const isLast = i === blocks.length - 1;
         if (!isLast) {
           this.addDiagnostic({
             severity: 'error',
@@ -1137,14 +1161,14 @@ export class Compiler {
           });
         }
       } else if (block.kind === 'ForEachStatement' || block.kind === 'WhileStatement') {
-        this.validateReturnInBlocks(block.body, block.body.length);
+        this.validateReturnInBlocks(block.body);
       } else if (block.kind === 'IfStatement') {
-        this.validateReturnInBlocks(block.thenBody, block.thenBody.length);
+        this.validateReturnInBlocks(block.thenBody);
         for (const elseIf of block.elseIf) {
-          this.validateReturnInBlocks(elseIf.body, elseIf.body.length);
+          this.validateReturnInBlocks(elseIf.body);
         }
         if (block.elseBody) {
-          this.validateReturnInBlocks(block.elseBody, block.elseBody.length);
+          this.validateReturnInBlocks(block.elseBody);
         }
       }
     }
@@ -1156,27 +1180,36 @@ export class Compiler {
 
   private validateContracts(ast: AST.Document): void {
     // Find all Delegation blocks
-    const delegations: AST.Delegation[] = [];
+    const delegations: (AST.Delegation | AST.UseStatement | AST.ExecuteStatement | AST.DelegateStatement)[] = [];
     this.findDelegations(ast.sections, delegations);
 
     for (const deleg of delegations) {
       // v0.8: Delegation target is LinkNode or AnchorNode
-      if (deleg.target.kind === 'Link') {
+      let target: AST.LinkNode | AST.AnchorNode | undefined;
+      if (deleg.kind === 'Delegation') {
+        target = deleg.target;
+      } else if (deleg.kind === 'UseStatement' || deleg.kind === 'ExecuteStatement') {
+        target = deleg.link;
+      } else if (deleg.kind === 'DelegateStatement') {
+        target = deleg.target;
+      }
+
+      if (target && target.kind === 'Link') {
         this.validateDelegationParameters(deleg);
       }
       // Anchor delegations are same-file, no parameter validation needed
     }
   }
 
-  private findDelegations(sections: AST.Section[], delegations: AST.Delegation[]): void {
+  private findDelegations(sections: AST.Section[], delegations: (AST.Delegation | AST.UseStatement | AST.ExecuteStatement | AST.DelegateStatement)[]): void {
     for (const section of sections) {
       this.findDelegationsInBlocks(section.content, delegations);
     }
   }
 
-  private findDelegationsInBlocks(blocks: AST.Block[], delegations: AST.Delegation[]): void {
+  private findDelegationsInBlocks(blocks: AST.Block[], delegations: (AST.Delegation | AST.UseStatement | AST.ExecuteStatement | AST.DelegateStatement)[]): void {
     for (const block of blocks) {
-      if (block.kind === 'Delegation') {
+      if (block.kind === 'Delegation' || block.kind === 'UseStatement' || block.kind === 'ExecuteStatement' || block.kind === 'DelegateStatement') {
         delegations.push(block);
       } else if (block.kind === 'ForEachStatement') {
         this.findDelegationsInBlocks(block.body, delegations);
@@ -1192,14 +1225,23 @@ export class Compiler {
     }
   }
 
-  private validateDelegationParameters(deleg: AST.Delegation): void {
+  private validateDelegationParameters(deleg: AST.Delegation | AST.UseStatement | AST.ExecuteStatement | AST.DelegateStatement): void {
     // v0.8: Only Link targets have external parameters to validate
-    if (deleg.target.kind !== 'Link') {
+    let target: AST.LinkNode | undefined;
+    if (deleg.kind === 'Delegation') {
+      if (deleg.target.kind === 'Link') target = deleg.target;
+    } else if (deleg.kind === 'UseStatement' || deleg.kind === 'ExecuteStatement') {
+      target = deleg.link;
+    } else if (deleg.kind === 'DelegateStatement') {
+      target = deleg.target;
+    }
+
+    if (!target) {
       // Anchor delegations are same-file, no external parameter validation
       return;
     }
     
-    const targetPath = deleg.target.path.join('/');
+    const targetPath = target.path.join('/');
     let skillParams: VariableInfo[] = [];
     let skillTypeEnv = this.buildDocumentTypeEnv();
 
@@ -1225,7 +1267,14 @@ export class Compiler {
     }
 
     // Check provided parameters
-    const providedParams = new Set(deleg.parameters.map(p => p.name));
+    let paramsList: AST.VariableDeclaration[] = [];
+    if (deleg.kind === 'Delegation') {
+      paramsList = deleg.parameters;
+    } else if (deleg.parameters) {
+      paramsList = deleg.parameters.parameters;
+    }
+
+    const providedParams = new Set(paramsList.map(p => p.name));
     const requiredParams = skillParams.filter(p => p.isRequired);
 
     // Check missing required parameters
@@ -1241,8 +1290,8 @@ export class Compiler {
     }
 
     // Check extra parameters (only if parameters are provided)
-    if (deleg.parameters.length > 0) {
-      for (const param of deleg.parameters) {
+    if (paramsList.length > 0) {
+      for (const param of paramsList) {
         const expected = skillParams.find(p => p.name === param.name);
         if (!expected) {
           this.diagnostics.push({
@@ -1268,7 +1317,7 @@ export class Compiler {
         const compatibility = isCompatible(resolvedCandidate, resolvedExpected, new Map());
         if (!compatibility.compatible) {
           const expectedLabel = this.typeExprToStringResolved(resolvedExpected, skillTypeEnv);
-          const candidateLabel = this.typeExprToStringResolved(resolvedCandidate, skillTypeEnv);
+          const candidateLabel = this.typeExprToStringResolved(resolvedCandidate, this.buildDocumentTypeEnv());
           this.diagnostics.push({
             severity: 'error',
             code: 'E020',
