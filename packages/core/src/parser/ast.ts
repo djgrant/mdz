@@ -122,11 +122,23 @@ export type Block =
   | UseStatement              // v0.8: USE ~/skill/x TO task
   | ExecuteStatement          // v0.8: EXECUTE ~/tool/x TO action
   | GotoStatement             // v0.8: GOTO #section
+  | Heading
   | Delegation
   | Paragraph
   | CodeBlock
   | List
   | HorizontalRule;
+
+// ============================================================================
+// Blocks (Continued)
+// ============================================================================
+
+export interface Heading extends BaseNode {
+  kind: 'Heading';
+  level: number;
+  title: string;
+  anchor: string;
+}
 
 // ============================================================================
 // Type System
@@ -200,6 +212,7 @@ export type Expression =
   | NumberLiteral
   | BooleanLiteral
   | ArrayLiteral
+  | ObjectLiteral
   | TemplateLiteral
   | VariableReference
   | FunctionCall
@@ -235,6 +248,17 @@ export interface BooleanLiteral extends BaseNode {
 export interface ArrayLiteral extends BaseNode {
   kind: 'ArrayLiteral';
   elements: Expression[];
+}
+
+export interface ObjectLiteral extends BaseNode {
+  kind: 'ObjectLiteral';
+  fields: ObjectField[];
+}
+
+export interface ObjectField {
+  key: string;
+  value: Expression;
+  span: Span;
 }
 
 export interface TemplateLiteral extends BaseNode {
@@ -383,6 +407,7 @@ export interface DelegateStatement extends BaseNode {
   kind: 'DelegateStatement';
   task?: SemanticMarker;             // Task being delegated (positional span)
   target?: LinkNode;                 // Target agent: ~/agent/architect (v0.9: optional for AWAIT)
+  handle?: VariableReference;        // v0.9: Handle for AWAIT $handle
   withAnchor?: AnchorNode;           // Optional template: WITH #template
   parameters?: ParameterBlock;       // Optional parameters block
   async?: boolean;                   // v0.9: Fire-and-forget delegation
@@ -404,6 +429,7 @@ export interface ExecuteStatement extends BaseNode {
   kind: 'ExecuteStatement';
   link: LinkNode;                     // Tool to execute: ~/tool/browser
   task: SemanticMarker;              // Action description (positional span)
+  parameters?: ParameterBlock;        // Optional parameters block
 }
 
 // v0.8: GOTO statement for same-file navigation

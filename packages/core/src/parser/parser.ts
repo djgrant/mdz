@@ -569,17 +569,17 @@ export class Parser {
     }
 
     // v0.8: USE statement
-    if (this.check('UPPER_IDENT') && this.current().value === 'USE') {
+    if (this.check('USE')) {
       return this.parseUseStatement();
     }
 
     // v0.8: EXECUTE statement
-    if (this.check('UPPER_IDENT') && this.current().value === 'EXECUTE') {
+    if (this.check('EXECUTE')) {
       return this.parseExecuteStatement();
     }
 
     // v0.8: GOTO statement
-    if (this.check('UPPER_IDENT') && this.current().value === 'GOTO') {
+    if (this.check('GOTO')) {
       return this.parseGotoStatement();
     }
 
@@ -1591,7 +1591,7 @@ export class Parser {
   }
 
   // v0.8: EXECUTE statement for tool invocation
-  // Syntax: EXECUTE ~/tool/x TO action
+  // Syntax: EXECUTE ~/tool/x TO action [WITH: params]
   private parseExecuteStatement(): AST.ExecuteStatement {
     const start = this.advance();  // consume EXECUTE
     
@@ -1602,12 +1602,19 @@ export class Parser {
     this.expect('TO');
     
     // Parse task: positional semantic span
-    const task = this.parseSemanticSpan(['NEWLINE', 'EOF']);
+    const task = this.parseSemanticSpan(['COLON', 'NEWLINE', 'EOF']);
+    
+    // Optional parameter block with colon
+    let parameters: AST.ParameterBlock | undefined;
+    if (this.check('COLON')) {
+      parameters = this.parseParameterBlock();
+    }
     
     return {
       kind: 'ExecuteStatement',
       link,
       task,
+      parameters,
       span: AST.mergeSpans(start.span, this.previous().span),
     };
   }
