@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the formal grammar for MDZ v0.10 in Extended Backus-Naur Form (EBNF).
+This document defines the formal grammar for MDZ v0.11 in Extended Backus-Naur Form (EBNF).
 
 **Core principle:** The source document is the execution format. The grammar defines what tooling can validate—not what gets transformed.
 
@@ -29,6 +29,11 @@ lower_letter    = 'a'..'z' ;
 whitespace      = ' ' | '\t' ;
 newline         = '\n' | '\r\n' ;
 any_char        = ? any unicode character ? ;
+
+reserved_delimiter = TO | WITH | THEN | DO ;
+
+/* Rule: semantic_expression ends before reserved delimiters at line-level */
+semantic_char   = ? any_char except newline and reserved delimiters ? ;
 ```
 
 ### Identifiers
@@ -38,6 +43,10 @@ ident           = letter { letter | digit | '-' } ;
 upper_ident     = upper_letter { letter | digit } ;
 lower_ident     = lower_letter { letter | digit | '-' } ;
 kebab_ident     = lower_letter { lower_letter | digit | '-' } ;
+/* Note: Links require kebab_ident in segments; variables allow letters/digits/hyphen.
+   Error messages should distinguish: "expected kebab-ident in link segment". */
+
+param_list      = var_name | lparen var_name { comma var_name } rparen ;
 ```
 
 ### Literals
@@ -50,6 +59,7 @@ escape_seq      = '\\' ( '"' | '\\' | 'n' | 't' ) ;
 number_literal  = [ '-' ] digit { digit } [ '.' digit { digit } ] ;
 
 template_literal = '`' { template_char | template_expr } '`' ;
+/* Note: template_char excludes '`' and '${'. This multi-char exclusion is handled by the scanner. */
 template_char   = ? any char except '`' and '${' ? ;
 template_expr   = '${' expression '}' ;
 ```
@@ -61,7 +71,7 @@ template_expr   = '${' expression '}' ;
 FOR             = "FOR" ;
 IN              = "IN" ;
 WHILE           = "WHILE" ;
-DO              = "DO" ;           /* v0.3: WHILE...DO syntax; v0.9: standalone prose; v0.10: block delimiter */
+DO              = "DO" ;           /* v0.10: block delimiter / standalone instruction */
 IF              = "IF" ;
 THEN            = "THEN" ;
 ELSE            = "ELSE" ;
@@ -74,7 +84,7 @@ BREAK           = "BREAK" ;        /* v0.2 */
 CONTINUE        = "CONTINUE" ;     /* v0.2 */
 RETURN          = "RETURN" ;       /* v0.9 */
 DELEGATE        = "DELEGATE" ;     /* v0.6 */
-TO              = "TO" ;           /* v0.6 */
+TO              = "TO" ;           /* v0.6: Hard delimiter in statements */
 ASYNC           = "ASYNC" ;        /* v0.9 */
 AWAIT           = "AWAIT" ;        /* v0.9 */
 USE             = "USE" ;          /* v0.8 */
@@ -85,7 +95,7 @@ GOTO            = "GOTO" ;         /* v0.8 */
 ### Operators
 
 ```ebnf
-assign_op       = '=' ;
+assign_op       = '=' ;            /* Also used for equality in conditions */
 colon           = ':' ;
 arrow           = "=>" ;
 pipe            = '|' ;
@@ -111,10 +121,32 @@ link_prefix     = '~/' ;                /* v0.8: Link prefix */
 ```ebnf
 comment         = "<!--" { any_char } "-->" ;  /* Standard HTML/Markdown comment */
 heading         = '#' { '#' } whitespace heading_text newline ;
+
+/* Heading normalization algorithm for anchor generation:
+   1. Convert to lowercase
+   2. Replace spaces/underscores with hyphens
+   3. Strip all non-alphanumeric/non-hyphen characters
+   4. Trim consecutive hyphens
+*/
 heading_text    = { any_char } ;
+
 list_marker     = ( '-' | digit '.' ) whitespace ;
 horizontal_rule = "---" newline ;
 ```
+
+## Parsing Phases
+
+Tooling follows a two-phase approach to resolve the interplay between Markdown and MDZ constructs.
+
+### Phase A: Line/Block Classification
+Identify major document structures before parsing MDZ logic:
+1.  **Frontmatter**: Fenced by `---` at document start.
+2.  **Fenced Code**: Standard Markdown ``` blocks (ignored by MDZ parser).
+3.  **MDZ Statement Lines**: Lines starting with CAPS keywords or `$`.
+4.  **Markdown/Prose**: Everything else (paragraphs, lists, headings).
+
+### Phase B: Statement-level Parsing
+Parse the contents of MDZ lines identified in Phase A, handling `END` nesting and expression evaluation.
 
 ## Syntactic Grammar
 
@@ -135,6 +167,7 @@ block           = type_definition
                 | list
                 ;
 ```
+
 
 ### Frontmatter Schema
 
@@ -177,15 +210,13 @@ type_definition = type_name colon type_expr newline ;
 
 type_name       = dollar upper_ident ;
 
-type_expr       = semantic_type
-                | enum_type
+type_expr       = enum_type
                 | compound_type
                 | array_type
                 | function_type
                 | type_reference
+                | semantic_expression
                 ;
-
-semantic_type   = { any_char } ;  /* Natural language description */
 
 enum_type       = enum_value { pipe enum_value } ;
 enum_value      = string_literal ;
@@ -195,7 +226,6 @@ compound_type   = lparen type_expr { comma type_expr } rparen ;
 array_type      = ( type_reference | compound_type ) "[]" ;
 
 function_type   = param_list arrow type_expr ;
-param_list      = var_name | lparen var_name { comma var_name } rparen ;
 
 type_reference  = dollar upper_ident ;
 ```
@@ -205,40 +235,35 @@ type_reference  = dollar upper_ident ;
 ```ebnf
 variable_declaration = var_decl [ comment ] newline ;
 
-var_decl        = var_name [ type_annotation ] [ assign_op default_value ] ;
+var_decl        = var_name [ type_annotation ] [ assign_op default_value_body ] ;
 
 var_name        = dollar ident ;
 
 type_annotation = colon type_reference
-                | semantic_type
+                | colon semantic_expression
                 ;
 
-/* Default values must be literal values, not prose descriptions */
-default_value   = literal
-                | var_reference
-                | lambda_expr
-                ;
+/* Body vars: defaults can be any value_expr (including semantic_expression). */
+default_value_body   = value_expr ;
+
+/* Input params: defaults are literal only. */
+default_value_input  = literal ;
 
 /* In WITH clauses, typed param without value is required */
 required_param  = var_name type_annotation ;  /* No assign_op or default_value */
-
-/* Inline comments for documentation (ignored by parser) */
-comment         = "<!--" { any_char } "-->" ;  /* Standard HTML/Markdown comment */
 
 expression      = lambda_expr
                 | value_expr
                 ;
 
 lambda_expr     = param_list arrow expr_body ;
-param_list      = var_name | lparen var_name { comma var_name } rparen ;
 expr_body       = template_literal | { any_char } ;
 
 value_expr      = literal
                 | var_reference
                 | function_call
-                | skill_reference
-                | section_reference
-                | inline_text
+                | reference
+                | semantic_expression
                 ;
 
 literal         = string_literal | number_literal | boolean_literal | array_literal ;
@@ -256,7 +281,7 @@ function_call   = var_name lparen [ expression { comma expression } ] rparen ;
 In the conventional `## Input` section (or `input:` frontmatter in v0.9), parameters follow interface semantics:
 
 ```ebnf
-input_param     = var_name type_annotation [ assign_op literal ] [ comment ] ;
+input_param     = var_name type_annotation [ assign_op default_value_input ] [ comment ] ;
 ```
 
 Examples:
@@ -290,12 +315,16 @@ anchor            = '#' kebab_ident ;                        /* #section-name (s
 */
 ```
 
-### Semantic Spans and Inferred Variables
+### Semantic Expressions
 
 ```ebnf
-/* Semantic spans are positional: they are parsed from the surrounding grammar
-   (e.g., after DELEGATE, after TO in USE/EXECUTE, or as a fallback condition). */
-semantic_span     = { any_char } ;
+/* Semantic expressions are positional prose. To ensure deterministic parsing, 
+   they end before reserved keywords (TO, WITH, THEN, DO) when those 
+   keywords appear as standalone tokens at the same line level. 
+   
+   Reserved delimiters are recognized only as standalone tokens (word-boundary, 
+   same line level), not substrings. */
+semantic_expression = { semantic_char } ;
 
 /* Inferred variables - value derived by LLM at runtime */
 inferred_var      = dollar inferred_delim inferred_content inferred_delim ;
@@ -304,7 +333,7 @@ inferred_content  = { any_char } ;
 
 ### Control Flow
 
-MDZ distinguishes between **runtime control flow** (CAPS keywords executed by the LLM) and **macros** (not yet implemented, but conceptually `{{IF}}` for build-time expansion).
+MDZ distinguishes between **runtime control flow** (CAPS keywords executed by the LLM) and **macros** (build-time expansion).
 
 ```ebnf
 /* Runtime control flow - LLM interprets at execution time */
@@ -313,13 +342,13 @@ control_flow      = for_stmt
                   | if_stmt
                   | break_stmt
                   | continue_stmt
-                  | return_stmt             /* v0.9 */
-                  | do_stmt                 /* v0.9, v0.10 */
-                  | push_stmt               /* v0.9 */
-                  | delegate_stmt           /* v0.8, updated v0.9 */
-                  | use_stmt                /* v0.8 */
-                  | execute_stmt            /* v0.8 */
-                  | goto_stmt               /* v0.8 */
+                  | return_stmt
+                  | do_stmt
+                  | push_stmt
+                  | delegate_stmt
+                  | use_stmt
+                  | execute_stmt
+                  | goto_stmt
                   ;
 
 for_stmt          = FOR pattern IN collection [ DO ] newline block_body END newline ;
@@ -330,9 +359,10 @@ pattern           = var_name
 
 collection        = var_reference | array_literal ;
 
+/* WHILE condition ends before DO if present, otherwise ends at newline */
 while_stmt        = WHILE condition [ DO ] newline block_body END newline ;
 
-/* IF uses optional THEN delimiter - parentheses are optional (not required) */
+/* IF condition ends before THEN if present, otherwise ends at newline */
 if_stmt           = IF condition [ THEN ] newline block_body { else_if_clause } [ else_clause ] END newline ;
 else_if_clause    = ELSE IF condition [ THEN ] newline block_body ;
 else_clause       = ELSE newline block_body ;
@@ -340,56 +370,44 @@ else_clause       = ELSE newline block_body ;
 break_stmt        = BREAK newline ;
 continue_stmt     = CONTINUE newline ;
 
-/* v0.9: Return statement - valid only at end of section or loop iteration */
+/* RETURN always exits the entire prompt/skill, not just the current loop iteration.
+   It is valid as the last statement in any block. */
 return_stmt       = RETURN [ expression ] newline ;
 
-/* v0.9/v0.10: DO statement - standalone or block instruction */
-do_stmt           = DO semantic_span newline
+/* DO at line start is a standalone instruction. */
+do_stmt           = DO semantic_expression newline
                   | DO newline block_body END newline
                   ;
 
-/* v0.9: Push statement - collect values into arrays */
+/* Push statement - collect values into arrays */
 push_stmt         = var_reference push_op expression newline ;
 
-/* v0.8/v0.9: Link-based statements */
-
-/* v0.9: DELEGATE - spawn agent with task
-   - TO target is now optional (uses default/inferred target)
-   - ASYNC modifier = fire-and-forget
-   - AWAIT modifier = wait for result (default behavior)
+/* DELEGATE - spawn agent with task
+   - semantic_expression ends before TO or WITH keywords.
+   - TO and WITH are hard delimiters.
 */
-delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_span ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline
-                  ;
-/* Examples:
-   DELEGATE task TO ~/agent/x                    -- inline, no params
-   DELEGATE task TO ~/agent/x WITH #template     -- inline with anchor
-   DELEGATE task TO ~/agent/x WITH:              -- inline with params
-     param: value
-   DELEGATE task                                 -- no target (v0.9)
-   ASYNC DELEGATE task TO ~/agent/x              -- fire-and-forget (v0.9)
-   AWAIT DELEGATE task TO ~/agent/x              -- wait for result (v0.9)
-*/
+delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_expression ] [ TO link ] [ WITH delegate_context ] newline ;
 
-/* USE - follow skill instructions */
-use_stmt          = USE link TO semantic_span newline ;                     /* USE ~/skill/x TO task */
+delegate_context  = anchor | colon newline with_params ;
 
-/* EXECUTE - invoke tool */
-execute_stmt      = EXECUTE link TO semantic_span newline ;                 /* EXECUTE ~/tool/x TO action */
+/* USE - follow skill instructions. TO is a hard delimiter. */
+use_stmt          = USE link TO semantic_expression [ colon newline with_params ] newline ;
+
+/* EXECUTE - invoke tool. TO is a hard delimiter. */
+execute_stmt      = EXECUTE link TO semantic_expression newline ;
 
 /* GOTO - control flow to section */
-goto_stmt         = GOTO anchor newline ;                                     /* GOTO #section */
-
-dollar_ident      = dollar ident ;
+goto_stmt         = GOTO anchor newline ;
 
 condition         = comparison_expr { logical_op comparison_expr } ;
-comparison_expr   = simple_condition | lparen condition rparen ;
-simple_condition  = semantic_condition | deterministic_condition ;
+comparison_expr   = deterministic_condition | semantic_condition | lparen condition rparen ;
 
-/* Semantic conditions: LLM interprets the meaning (positional fallback) */
-semantic_condition = [ NOT ] semantic_span ;  /* e.g., diminishing returns */
+/* Semantic conditions: fallback when deterministic grammar doesn't match.
+   Ends before THEN/DO delimiters. */
+semantic_condition = [ NOT ] semantic_expression ;
 
 /* Deterministic conditions: compiler can validate */
-deterministic_condition = var_reference comparison_op value_expr ;
+deterministic_condition = value_expr comparison_op value_expr ;
 
 comparison_op     = '=' | "!=" | '<' | '>' | "<=" | ">=" ;
 logical_op        = AND | OR ;
@@ -413,47 +431,16 @@ block_line        = block newline ;
 ### Composition
 
 ```ebnf
-/* v0.8: Skill composition using USE statement */
-use_stmt          = USE link TO semantic_span [ colon newline with_params ] ;
-
-with_clause       = WITH colon newline { with_param } ;
-
-/* v0.9: WITH param syntax uses colon instead of equals, no $ prefix */
-with_param        = whitespace whitespace ident colon expression [ comment ] newline ;
+/* v0.9: Parameters are passed using colon syntax without $ prefix */
 with_params       = { with_param } ;
+with_param        = whitespace whitespace ident colon expression [ comment ] newline ;
 
-/* Old syntax (v0.8):
-   - $param = value
-   
-   New syntax (v0.9):
-     param: value
-*/
-```
-
-### Agent Delegation (v0.9)
-
-Agent delegation spawns a subagent with a task. This is distinct from skill composition:
-- **Skill composition** (`USE ~/skill/x TO task`) follows skill logic in the current context
-- **Agent delegation** (`DELEGATE task TO ~/agent/x`) spawns an independent subagent
-- **Tool execution** (`EXECUTE ~/tool/x TO action`) invokes an external tool
-
-```ebnf
 /* v0.9: Agent delegation - spawning subagents
    - ASYNC modifier: fire-and-forget (don't wait for result)
    - AWAIT modifier: wait for result (default behavior)
    - TO target is optional (uses default/inferred target)
 */
-delegate_stmt     = [ ASYNC | AWAIT ] DELEGATE [ semantic_span ] [ TO link ] [ WITH ( anchor | colon newline with_params ) ] newline ;
-
-/* Examples:
-   DELEGATE task TO ~/agent/explorer              -- spawn and wait (default)
-   ASYNC DELEGATE task TO ~/agent/explorer        -- fire-and-forget
-   AWAIT DELEGATE task TO ~/agent/explorer        -- explicit wait
-   DELEGATE task                                  -- inferred target
-   DELEGATE task TO ~/agent/x WITH #template      -- with context template
-   DELEGATE task TO ~/agent/x WITH:               -- with inline params
-     param: value
-*/
+/* Note: delegate_stmt is defined in Control Flow section. */
 ```
 
 ### Prose Content
@@ -489,11 +476,11 @@ nested_list       = { whitespace whitespace list_item } ;
 1. **Grouping**: `( )` - Parenthesized expressions
 2. **Member access**: `.` - Property/member access
 3. **Function call**: `()` - Function invocation
-4. **Push**: `<<` - Array push operator (v0.9)
-5. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=`
-6. **Logical NOT**: `NOT`
-7. **Logical AND**: `AND`
-8. **Logical OR**: `OR`
+4. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=` (Note: `=` is both assignment and equality)
+5. **Logical NOT**: `NOT`
+6. **Logical AND**: `AND`
+7. **Logical OR**: `OR`
+8. **Push**: `<<` - Array push operator (v0.9)
 9. **Lambda**: `=>` - Binds loosest for expression body
 
 ### Disambiguation Rules
@@ -522,18 +509,18 @@ $fn = $x => expression       → Lambda
 $fn = value                  → Assignment
 ```
 
-#### Rule 3: Semantic Span Boundaries
+#### Rule 3: Semantic Expression Boundaries
 
-Semantic spans are positional and derived from grammar context:
-- Instructions follow keywords like `DELEGATE`, `DO`, or `TO`
-- Conditions become semantic when they don't match deterministic grammar
-- Inferred variables still use `$/.../`
+Semantic expressions are positional and end before reserved delimiters (`TO`, `WITH`, `THEN`, `DO`) or a newline:
+- Instructions follow keywords like `DELEGATE`, `USE`, `EXECUTE`, `DO`, or `TO`.
+- `DELEGATE` instruction span ends before `TO` or `WITH`.
+- `USE`/`EXECUTE` instruction span ends before newline (but `TO` is a hard delimiter).
+- `IF`/`WHILE` conditions end before `THEN`/`DO`.
 
 ```
-DELEGATE process item TO ~/agent/worker   → Instruction span
-IF diminishing returns THEN              → Semantic condition
-$/inferred name/                          → Inferred variable (LLM derives value)
-$var: description = value                 → Semantic type annotation
+DELEGATE process item TO ~/agent/worker   → Instruction ends before TO
+IF diminishing returns THEN              → Semantic condition ends before THEN
+$var: description = value                 → Semantic expression annotation
 ```
 
 #### Rule 4: Control Flow Blocks
@@ -571,20 +558,19 @@ BREAK and CONTINUE are only valid within loops:
 - FOR loops
 - WHILE loops
 
-RETURN is only valid at the end of:
-- A section (last statement)
-- A loop iteration (last statement in loop body)
+RETURN is valid at the end of any block (section, loop, or conditional). It always returns out of the entire prompt/skill.
 
 ```
 FOR $item IN $items
   IF $done THEN
     BREAK                   ← Valid: inside FOR
   END
+  IF $invalid THEN
+    RETURN "error"          ← Valid: exits entire skill
+  END
   $results << $item         ← Push to array
-  RETURN $item              ← Valid: end of loop iteration
 END
 
-BREAK                       ← Error: outside loop
 RETURN $value               ← Valid: end of section
 ```
 
@@ -611,6 +597,8 @@ Keywords affected: FOR, IN, WHILE, DO, IF, THEN, ELSE, END, AND, OR, NOT, WITH, 
 - After `FOR`: optional delimiter for the collection
 - At line start: standalone instruction (single-line or block)
 
+The tokenizer distinguishes "DO at line start" (Phase A classification) from "DO delimiter" within a statement.
+
 ```
 WHILE $x < 5 DO
   DO process
@@ -626,6 +614,7 @@ DO
   summarize findings
 END
 ```
+
 
 Invalid (single-line DO inside a fence):
 ````md
@@ -721,7 +710,7 @@ The grammar enables deterministic validation:
 | Link path resolves | File system / registry | E009 (error) |
 | Anchor reference valid | Heading extraction | E010 (error) |
 | BREAK/CONTINUE in loop | Loop depth tracking | E011 (error) |
-| RETURN at end position | Block analysis | E015 (error) |
+| RETURN at end position | Block analysis | E013 (error) |
 | Dependency cycles | Graph analysis | E012 (error) |
 | Link folder convention | Path prefix check | W002 (warning) |
 | Keyword placement | Line position check | W003 (warning) |
@@ -815,11 +804,12 @@ Strategy: $strategy
 Grammar version: 0.11
 Aligned with: language-spec.md v0.11
 
-### Changes from v0.11
+### Changes in v0.11
 
-- **Breaking change**: Removed `/.../` semantic markers in favor of positional instruction/condition spans
-- Semantic type annotations are now unquoted prose after `:`
-- Inferred variables keep `$/.../` syntax
+- **Breaking change**: Removed `/.../` semantic markers for instructions and conditions in favor of positional semantic expressions
+- Inferred variables keep `$/.../` syntax (e.g., `$/inferred value/`)
+- Semantic expressions after `:` are now unquoted prose
+- Relaxed `RETURN` rule: valid as long as it is the last statement in its block (enabling guard clauses)
 
 ### Changes from v0.10
 
@@ -859,8 +849,9 @@ Aligned with: language-spec.md v0.11
   - DO disambiguation: WHILE...DO vs standalone DO
   - RETURN scope: only at end of section or loop iteration
 - **New error codes**:
-  - E015: RETURN not at end position
-  - W003: Keyword placement warning
+- E013: RETURN not at end position
+- W003: Keyword placement warning
+
 
 ### Changes from v0.7
 

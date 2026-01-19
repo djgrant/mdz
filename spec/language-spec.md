@@ -1,4 +1,4 @@
-# MDZ Language Specification v0.10
+# MDZ Language Specification v0.11
 
 > A markdown extension language for multi-agent systems
 
@@ -63,7 +63,7 @@ input:
 
 context:
   currentFile: $FilePath              # Context variable
-  workPackage: /relevant work package path/
+  workPackage: relevant work package path
 ---
 ```
 
@@ -106,7 +106,7 @@ Context variable declarations that were previously in `## Context` sections:
 ```yaml
 context:
   currentFile: $FilePath
-  workPackage: /relevant work package/
+  workPackage: relevant work package
 ```
 
 Context variables are populated by the runtime environment.
@@ -153,6 +153,7 @@ The following types are implicitly available:
 - `$String` - text content
 - `$Number` - numeric value
 - `$Boolean` - true or false
+- `$SemanticExpression` - opaque prose interpreted by the LLM at runtime. Tooling treats it as uninterpreted text; runtime interprets/evaluates it according to context (instruction, condition, data payload).
 
 ### Type Philosophy
 
@@ -173,6 +174,8 @@ $name: $Type = value
 $name = value
 ```
 
+Literal defaults are static; semantic-expression defaults (when a variable is typed as `$SemanticExpression`) are runtime-evaluated by the LLM. Tooling may warn or display these differently to avoid implying determinism.
+
 Examples:
 ```
 $current: $FilePath = $SolutionPath(0)
@@ -185,7 +188,7 @@ $result: $ValidationResult
 In WITH clauses, typed parameters without a default value are considered required:
 
 ```
-USE ~/skill/x TO /task/:
+USE ~/skill/x TO task:
   param: $Type = value     # Optional with default
   required: $Task          # Required (no default)
 ```
@@ -240,7 +243,7 @@ The push operator is used to collect values during iteration:
 
 ```
 FOR $item IN $items
-  $processed << /process $item/
+  $processed << process $item
 END
 ```
 
@@ -338,13 +341,13 @@ Agents are referenced using link syntax with the `agent/` folder prefix:
 Agents are used with the `DELEGATE` statement:
 
 ```
-DELEGATE /find related patterns/ TO ~/agent/explorer
+DELEGATE find related patterns TO ~/agent/explorer
 ```
 
 Or with a context template:
 
 ```
-DELEGATE /analyze these findings/ TO ~/agent/analyzer WITH #analysis-context
+DELEGATE analyze these findings TO ~/agent/analyzer WITH #analysis-context
 ```
 
 ### Agent vs Skill
@@ -375,9 +378,9 @@ Common patterns:
 
 MDZ treats prose as the default. Semantic interpretation is positional: tooling infers intent based on where text appears.
 
-### Instruction Spans
+### Instruction Expressions
 
-Instruction spans appear after control keywords and targets:
+Instruction expressions appear after control keywords and targets:
 
 ```
 DELEGATE process item TO ~/agent/worker
@@ -405,9 +408,9 @@ $/the user's primary goal/
 $/current file path based on context/
 ```
 
-Inferred variables combine variable declaration with semantic interpretation. The LLM derives the value based on context.
+Inferred variables combine variable declaration with semantic interpretation. The LLM derives the value based on context. Note: `/.../` semantic markers for instructions were removed in v0.11, but are retained for inferred variables (`$/.../`).
 
-### Semantic Type Annotations
+### Semantic Expression Annotations
 
 Use unquoted prose as a type annotation to describe what a value should be:
 
@@ -487,38 +490,31 @@ FOR $item IN $items
   IF $found = true THEN
     BREAK                   # Exit the loop
   END
-  DO /process normally/
+  DO process normally
 END
 ```
 
 ### RETURN (v0.9)
 
-Exit a section or loop iteration with an optional value:
+Exit the entire prompt or skill execution with an optional value:
 
 ```
 RETURN [expression]
 ```
 
-RETURN is valid only at the end of a section or as the last statement in a loop iteration:
+RETURN is valid at the end of any block (section, loop, or conditional). Control flow must not be reachable after a RETURN statement in the same block. This enables guard clauses:
 
 ```
 ## Validate Input
 
 IF $input.empty THEN
-  RETURN "invalid"
+  RETURN "invalid"          # Valid guard clause - exits skill
 END
-DO /process $input/
-RETURN "valid"
+DO normalize $input
+RETURN "valid"              # End of section - exits skill
 ```
 
-In loops, RETURN exits the current iteration (similar to yielding a value):
-
-```
-FOR $item IN $items
-  DO /process $item/
-  RETURN $item.result      # Yield result for this iteration
-END
-```
+**Note**: Unlike some languages where `RETURN` might only exit a loop iteration, in MDZ it always returns control out of the entire prompt.
 
 **Implicit return**: A section without an explicit RETURN completes naturally. The absence of RETURN means natural completion, not an error.
 
@@ -527,17 +523,17 @@ END
 The `DO` keyword introduces a standalone instruction, either single-line or as a block:
 
 ```
-DO /prose instruction/
+DO prose instruction
 ```
 
 Examples:
 ```
-DO /analyze the current state and determine next steps/
-DO /summarize findings into a report/
+DO analyze the current state and determine next steps
+DO summarize findings into a report
 
 DO
-  /summarize findings/
-  /return a report/
+  summarize findings
+  return a report
 END
 ```
 
@@ -552,22 +548,22 @@ MDZ v0.8 introduces four key statement types for working with external resources
 The `DELEGATE` keyword spawns a subagent to handle a task. In v0.9, the `TO` target is optional and `ASYNC`/`AWAIT` modifiers control execution:
 
 ```
-[ASYNC|AWAIT] DELEGATE [/task/] [TO ~/agent/name] [WITH context]
+[ASYNC|AWAIT] DELEGATE [semantic_expression] [TO ~/agent/name] [WITH context]
 ```
 
 Basic forms:
 
 ```
-DELEGATE /task description/ TO ~/agent/name
-DELEGATE /task description/                    # Target inferred from context (v0.9)
+DELEGATE task description TO ~/agent/name
+DELEGATE task description                    # Target inferred from context (v0.9)
 DELEGATE TO ~/agent/name                       # Task in WITH block
 ```
 
 With modifiers (v0.9):
 
 ```
-ASYNC DELEGATE /explore the codebase/ TO ~/agent/explorer   # Fire-and-forget
-AWAIT DELEGATE /analyze findings/ TO ~/agent/analyzer       # Wait for result
+ASYNC DELEGATE explore the codebase TO ~/agent/explorer   # Fire-and-forget
+AWAIT DELEGATE analyze findings TO ~/agent/analyzer       # Wait for result
 ```
 
 - **ASYNC**: Fire-and-forget. The delegation starts but execution continues immediately without waiting.
@@ -577,13 +573,13 @@ AWAIT DELEGATE /analyze findings/ TO ~/agent/analyzer       # Wait for result
 With a context template (passes a section as context):
 
 ```
-DELEGATE /explore the codebase/ TO ~/agent/explorer WITH #context-template
+DELEGATE explore the codebase TO ~/agent/explorer WITH #context-template
 ```
 
 With inline parameters (v0.9 syntax):
 
 ```
-DELEGATE /analyze file for issues/ TO ~/agent/code-analyzer WITH:
+DELEGATE analyze file for issues TO ~/agent/code-analyzer WITH:
   filename: $filename
   diff: $diff
   learnings: applicable learnings
@@ -595,7 +591,7 @@ With task in parameters:
 DELEGATE TO ~/agent/attacker WITH:
   proposal: $proposal
   vector: $vector
-  task: /find genuine flaws/
+  task: find genuine flaws
 ```
 
 ### USE - Follow Skill
@@ -603,7 +599,7 @@ DELEGATE TO ~/agent/attacker WITH:
 The `USE` keyword loads and follows a skill's instructions:
 
 ```
-USE ~/skill/validator TO /validate the current state/
+USE ~/skill/validator TO validate the current state
 ```
 
 ### EXECUTE - Invoke Tool
@@ -611,8 +607,8 @@ USE ~/skill/validator TO /validate the current state/
 The `EXECUTE` keyword invokes an external tool:
 
 ```
-EXECUTE ~/tool/browser TO /take a screenshot of the page/
-EXECUTE ~/tool/database TO /query user records/
+EXECUTE ~/tool/browser TO take a screenshot of the page
+EXECUTE ~/tool/database TO query user records
 ```
 
 ### GOTO - Control Flow
@@ -642,7 +638,7 @@ This section covers skill composition using `USE` and parameter passing.
 Skills compose through the `USE` statement:
 
 ```
-USE ~/skill/orchestrate-map-reduce TO /apply transforms/:
+USE ~/skill/orchestrate-map-reduce TO apply transforms:
   transforms: [("Apply heuristic", "accumulate")]
   validator: #validate-essence
   return: "Report findings"
@@ -653,7 +649,7 @@ USE ~/skill/orchestrate-map-reduce TO /apply transforms/:
 Parameters are passed using colon syntax without `$` prefix or `-` list marker:
 
 ```
-USE ~/skill/name TO /task/:
+USE ~/skill/name TO task:
   param1: value1
   param2: value2
 ```
@@ -665,7 +661,7 @@ USE ~/skill/name TO /task/:
 Pass a section as context using the `WITH` clause:
 
 ```
-DELEGATE /task/ TO ~/agent/explorer WITH #context-template
+DELEGATE task TO ~/agent/explorer WITH #context-template
 ```
 
 The section content becomes part of the agent's instructions.
@@ -701,8 +697,8 @@ Blocks are closed with `END`, and indentation is cosmetic only:
 
 ```
 FOR $item IN $items
-  DO /process $item/
-  DO /next step/
+  DO process $item
+  DO next step
 END
 ```
 
@@ -750,7 +746,7 @@ MDZ tooling validates source documents without transforming them. The compiler:
 6. **Scope** - Tracks variable definitions (informational)
 7. **Dependency cycles** - Detects circular dependencies across skills
 8. **Link conventions** - Warns when link doesn't follow folder conventions (agent/, skill/, tool/)
-9. **RETURN placement** - Errors when RETURN is not at end of section/iteration (v0.9)
+9. **RETURN placement** - Errors when RETURN is not at end of its block (v0.9)
 10. **Keyword placement** - Warns when keywords are not at line start (v0.10)
 
 ### Error Codes
@@ -763,7 +759,11 @@ MDZ tooling validates source documents without transforming them. The compiler:
 | E010 | Error | Anchor reference broken |
 | E011 | Error | BREAK/CONTINUE outside loop |
 | E012 | Error | Dependency cycle detected |
-| E013 | Error | RETURN not at end of section/iteration (v0.9) |
+| E013 | Error | RETURN not at end of its block (v0.9) |
+| E014 | Error | Missing required parameter (v0.9) |
+| E015 | Error | Type mismatch in parameter (v0.9) |
+| E016 | Error | Unclosed frontmatter (v0.2) |
+| E017 | Error | Invalid heading format |
 | W002 | Warning | Link doesn't follow folder conventions |
 | W003 | Warning | Keyword not at line start (v0.10) |
 
@@ -781,6 +781,8 @@ This enables build tools to:
 
 ## Runtime Semantics
 
+When a value is typed as $SemanticExpression, the runtime does not treat it as plain text; it is passed to the LLM as an interpretable semantic payload (but tooling does not validate its contents beyond boundary rules).
+
 ### Execution Model
 
 An MDZ skill executes as:
@@ -791,10 +793,10 @@ An MDZ skill executes as:
 
 ### Semantic Interpretation
 
-Instruction spans and semantic conditions are interpreted by the LLM:
+Instruction expressions and semantic conditions are interpreted by the LLM:
 - Consider current context
 - Derive appropriate concrete value
-- The result replaces the semantic span in execution
+- The result replaces the semantic expression in execution
 
 ### Error Handling
 
@@ -814,7 +816,7 @@ A compliant parser must extract:
 - Type definitions (from frontmatter)
 - Variable declarations
 - Links (`~/path/to/resource`) and anchors (`#section`)
-- Instruction spans, semantic conditions, inferred variables
+- Instruction expressions, semantic conditions, inferred variables
 - Control flow constructs (including BREAK, CONTINUE, RETURN, DELEGATE, USE, EXECUTE, GOTO, DO)
 
 ### Validator Requirements
@@ -847,7 +849,7 @@ Syntax highlighting should distinguish:
 - Variables (`$varName`)
 - Links (`~/path/to/resource`)
 - Anchors (`#section`)
-- Instruction spans / semantic conditions (positional)
+- Instruction expressions / semantic conditions (positional)
 - Inferred variables (`$/name/`)
 - Control flow keywords (`FOR`, `WHILE`, `DO`, `IF`, `THEN`, `ELSE`, `END`, `BREAK`, `CONTINUE`, `RETURN`, `DELEGATE`, `TO`, `USE`, `EXECUTE`, `GOTO`, `WITH`, `ASYNC`, `AWAIT`)
 - Operators (`<<`)
@@ -908,7 +910,7 @@ The IF statement does **not** require parentheses around conditions:
 ```
 IF $result = "progress" THEN         # Valid - no parens
 IF ($result = "progress") THEN       # Valid - with parens
-IF /condition/ AND /other/ THEN      # Valid - semantic condition
+IF condition AND other THEN      # Valid - semantic condition
 ```
 
 Both IF and WHILE use keyword delimiters (`THEN` and `DO` respectively), so parentheses are optional for both.
@@ -1013,48 +1015,37 @@ IF ($x = 1) AND ($y = 2) THEN        # Same meaning
 | Compound type | **Yes** | `($A, $B)` |
 | Expression grouping | No | `($a AND $b) OR $c` |
 
-## Grammar Summary
+## Grammar Reference
 
-### Tokens
+For the formal EBNF grammar specification, see [grammar.md](./grammar.md). The grammar is the single source of truth for the language's parse structure.
 
-```
-FRONTMATTER     = '---\n' YAML '\n---'
-FM_TYPES        = 'types:' YAML_BLOCK                          <!-- v0.9 -->
-FM_INPUT        = 'input:' YAML_BLOCK                          <!-- v0.9 -->
-FM_CONTEXT      = 'context:' YAML_BLOCK                        <!-- v0.9 -->
-TYPE_DEF        = '$' UPPER_IDENT ':' /.+/
-VAR_DECL        = '$' IDENT (':' TYPE)? '=' EXPR
-VAR_REF         = '$' IDENT
-PUSH            = '$' IDENT '<<' EXPR                          <!-- v0.9 -->
-LINK            = '~/' PATH ('#' IDENT)?
-ANCHOR          = '#' IDENT
-PATH            = IDENT ('/' IDENT)*
-INFERRED_VAR    = '$/' /[^\/\n]+/ '/'
-FOR             = 'FOR' PATTERN 'IN' EXPR ['DO']
-WHILE           = 'WHILE' CONDITION ['DO']
-IF_THEN         = 'IF' CONDITION ['THEN']
-ELSE_IF         = 'ELSE IF' CONDITION ['THEN']
-ELSE            = 'ELSE'
-END             = 'END'
-BREAK           = 'BREAK'
-CONTINUE        = 'CONTINUE'
-RETURN          = 'RETURN' EXPR?                               <!-- v0.9 -->
-DO_STMT         = 'DO' INSTRUCTION | 'DO' BLOCK 'END'          <!-- v0.9, v0.10 -->
-DELEGATE        = ['ASYNC'|'AWAIT'] 'DELEGATE' [INSTRUCTION] ['TO' LINK] ['WITH' (ANCHOR | ':' PARAMS)]  <!-- v0.9 -->
-USE             = 'USE' LINK 'TO' INSTRUCTION (':' PARAMS)?
-EXECUTE         = 'EXECUTE' LINK 'TO' INSTRUCTION
-GOTO            = 'GOTO' ANCHOR
-LAMBDA          = '$' IDENT '=' PARAMS '=>' EXPR
-WITH_PARAM      = IDENT ':' EXPR                               <!-- v0.9 -->
-```
+### Operator Precedence
 
-### Identifier Patterns
+From highest to lowest (aligned with `grammar.md`):
 
-```
-UPPER_IDENT     = /[A-Z][a-zA-Z0-9]*/
-IDENT           = /[a-zA-Z][a-zA-Z0-9-]*/
-PATH            = /[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)*/
-```
+1. **Grouping**: `( )` — parenthesized expressions
+2. **Member access**: `.` — property access like `$item.property`
+3. **Function call**: `()` — invocation like `$fn($x)`
+4. **Comparison**: `=`, `!=`, `<`, `>`, `<=`, `>=`
+5. **Logical NOT**: `NOT` — unary negation
+6. **Logical AND**: `AND` — conjunction
+7. **Logical OR**: `OR` — disjunction
+8. **Push**: `<<` — array append (v0.9)
+9. **Lambda arrow**: `=>` — binds loosest
+
+### Quick Reference
+
+| Construct | Parens Required? | Example |
+|-----------|-----------------|---------|
+| WHILE condition | No | `WHILE $x < 5 DO` |
+| IF condition | No | `IF $x = 1 THEN` |
+| FOR single var | No | `FOR $item IN $list` |
+| FOR destructure | **Yes** | `FOR ($a, $b) IN $pairs` |
+| Lambda single param | No | `$x => expr` |
+| Lambda multi params | **Yes** | `($a, $b) => expr` |
+| Function call | **Yes** | `$fn($x)` |
+| Compound type | **Yes** | `($A, $B)` |
+| Expression grouping | No | `($a AND $b) OR $c` |
 
 ## Appendix: Design Decisions
 
@@ -1132,7 +1123,7 @@ The `PARALLEL FOR EACH` construct was removed in favor of the `ASYNC DELEGATE` p
 **Migration path**: Replace `PARALLEL FOR EACH $item IN $items:` with:
 ```
 FOR $item IN $items
-  - ASYNC DELEGATE /process $item/ TO ~/agent/worker
+  ASYNC DELEGATE process $item TO ~/agent/worker
 END
 ```
 
@@ -1262,9 +1253,9 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 ### Delimiters
 
 - **Frontmatter fence** (`---`) — YAML frontmatter delimiter (opening and closing).
-- **Instruction span** (positional) — Content for LLM interpretation based on placement.
+- **Instruction expression** (positional) — Content for LLM interpretation based on placement.
 - **Inferred variable** (`$/name/`) — Variable whose value is derived by LLM at runtime.
-- **Semantic type annotation** (`: description`) — Type annotation using natural language description.
+- **Semantic expression annotation** (`: description`) — Type annotation using natural language description.
 - **Tuple** (`(a, b)`) — Grouping of multiple values. Used in types and destructuring.
 - **Array literal** (`[a, b]`) — Collection of values.
 - **Array suffix** (`$Type[]`) — Type modifier indicating a collection.
@@ -1357,7 +1348,7 @@ This glossary provides canonical names for MDZ syntax elements. Use these terms 
 
 ## Version History
 
-- **v0.11** (2026-01-16): Positional semantics for instructions/conditions; removed `/.../` semantic markers; semantic type annotations are unquoted prose; inferred variables keep `$/.../`
+- **v0.11** (2026-01-16): Positional semantics for instructions/conditions; removed `/.../` semantic markers; semantic expressions are unquoted prose; inferred variables keep `$/.../`
 - **v0.10** (2026-01-14): END-delimited blocks (indentation cosmetic); `FOR $x IN $y` replaces `FOR EACH`; optional `DO` for `FOR`/`WHILE`; optional `THEN` for `IF`/`ELSE IF`; `DO` supports single-line and block forms; removed `THEN:`/`DO:` colon delimiters
 - **v0.9** (2026-01-13): RETURN keyword (end of section/iteration only); ASYNC/AWAIT modifiers for DELEGATE; optional TO target in DELEGATE; push operator `<<` for array collection; WITH parameter syntax changed to `param: value`; removed PARALLEL FOR EACH (use ASYNC DELEGATE pattern); DO as standalone prose instruction; frontmatter declarations (types/input/context move from sections to YAML); colon rule (line-ending colon = indented block); keyword placement rule (CAPS at line start or indented)
 - **v0.8** (2026-01-13): Breaking change: Link-based references `~/path` replacing sigil-based `(reference)` syntax; removed `uses:` frontmatter (dependencies inferred from statements); new keywords `USE`, `EXECUTE`, `GOTO`; `WITH #anchor` for passing context templates; folder conventions (`agent/`, `skill/`, `tool/`)
