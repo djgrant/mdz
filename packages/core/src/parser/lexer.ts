@@ -13,7 +13,7 @@ import { Position, Span, createSpan } from './ast';
 // ============================================================================
 
 export type TokenType =
-  | 'FRONTMATTER_START' | 'FRONTMATTER_END' | 'HEADING' | 'LIST_MARKER'
+  | 'FRONTMATTER_START' | 'FRONTMATTER_END' | 'HEADING'
   | 'HORIZONTAL_RULE' | 'NEWLINE' | 'EOF'
   // Control flow keywords
   | 'FOR' | 'IN' | 'WHILE' | 'DO' | 'IF' | 'THEN' | 'ELSE' | 'END'
@@ -25,6 +25,9 @@ export type TokenType =
   | 'RETURN'    // v0.9
   | 'ASYNC'     // v0.9
   | 'AWAIT'     // v0.9
+  | 'USE'       // v0.8
+  | 'EXECUTE'   // v0.8
+  | 'GOTO'      // v0.8
   // Literals
   | 'STRING' | 'NUMBER' | 'TRUE' | 'FALSE'
   | 'TEMPLATE_START' | 'TEMPLATE_PART' | 'TEMPLATE_END'
@@ -60,6 +63,10 @@ export class Lexer {
   private line: number = 1;
   private column: number = 0;
   private tokens: Token[] = [];
+  private lineStartColumn: number = -1; // Track column where MDZ content starts on each line
+  private inCodeBlock: boolean = false; // Track if inside fenced code block
+  private inFrontmatter: boolean = false; // Track if inside frontmatter
+  private isCurrentLineMdz: boolean = false; // Track if current line started as MDZ statement
   constructor(source: string) {
     this.source = source;
   }
@@ -76,11 +83,13 @@ export class Lexer {
   private scanToken(): void {
     // Start of line - handle special constructs
     if (this.column === 0) {
+      this.lineStartColumn = -1; // Reset for new line
       // Frontmatter start
       if (this.line === 1 && this.lookAhead('---\n')) {
         this.consumeChars(3);
         this.addToken('FRONTMATTER_START', '---');
         this.consumeNewline();
+        this.inFrontmatter = true;
         this.scanFrontmatter();
         return;
       }
@@ -93,7 +102,29 @@ export class Lexer {
         return;
       }
 
+      // Code Block
+      if (this.lookAhead('```')) {
+        this.scanCodeBlock();
+        return;
+      }
+
+      // Blockquote
+      if (this.peek() === '>') {
+        this.scanBlockquote();
+        return;
+      }
     }
+
+    // Track line start: skip leading whitespace, then mark where content starts
+    if (this.lineStartColumn === -1) {
+      if (this.peek() === ' ' || this.peek() === '\t') {
+        this.advance();
+        return; // Keep consuming leading whitespace
+      } else {
+        this.lineStartColumn = this.column; // Mark start of content after indentation
+      }
+    }
+
     const char = this.peek();
 
     // Whitespace (not at line start)
@@ -104,6 +135,8 @@ export class Lexer {
 
     // Newline
     if (char === '\n') {
+      this.lineStartColumn = -1; // Reset for next line
+      this.isCurrentLineMdz = false; // Reset for next line
       this.consumeNewline();
       return;
     }
@@ -125,57 +158,15 @@ export class Lexer {
       }
     }
 
-    // List marker
-    if (char === '-' && this.peekAt(1) === ' ') {
-      this.advance();
-      this.advance();
-      this.addToken('LIST_MARKER', '- ');
-      return;
-    }
-
-    // Numbered list
-    if (this.isDigit(char) && this.peekAt(1) === '.' && this.peekAt(2) === ' ') {
-      const num = this.advance();
-      this.advance();
-      this.advance();
-      this.addToken('LIST_MARKER', num + '. ');
-      return;
-    }
-
-    // Code block
-    if (this.column === 0 && this.lookAhead('```')) {
-      this.scanCodeBlock();
-      return;
-    }
-
-    // Blockquote
-    if (this.column === 0 && char === '>') {
-      this.scanBlockquote();
-      return;
-    }
-
-
-    // v0.8: Link-based references: ~/path/to/file or ~/path/to/file#anchor
-    if (char === '~' && this.peekAt(1) === '/') {
-      const result = this.tryScanLink();
-      if (result) return;
-    }
-
-    // v0.8: Anchor references: #section (same-file reference)
-    // Must come before hash identifier scanning for inline anchors
-    if (char === '#') {
-      const result = this.tryScanAnchor();
-      if (result) return;
-    }
-
-    // Arrow
-    if (this.lookAhead('=>')) {
+    // Numbered list handled by scanNumber or fallback to TEXT
+    
+    // Multi-character operators
+    if (this.lookAhead('->') || this.lookAhead('=>')) {
+      const op = this.lookAhead('->') ? '->' : '=>';
       this.consumeChars(2);
-      this.addToken('ARROW', '=>');
+      this.addToken('ARROW', op);
       return;
     }
-
-    // Comparison operators
     if (this.lookAhead('!=')) {
       this.consumeChars(2);
       this.addToken('NEQ', '!=');
@@ -219,6 +210,16 @@ export class Lexer {
       return;
     }
 
+    // Link reference: ~/path
+    if (this.lookAhead('~/')) {
+      if (this.scanLink()) return;
+    }
+
+    // Anchor reference: #section
+    if (char === '#') {
+      if (this.scanAnchor()) return;
+    }
+
     // String literal
     if (char === '"') {
       this.scanString();
@@ -256,6 +257,7 @@ export class Lexer {
       if (this.column === 0 && this.lookAhead('---')) {
         this.consumeChars(3);
         this.addToken('FRONTMATTER_END', '---');
+        this.inFrontmatter = false;
         if (!this.isAtEnd() && this.peek() === '\n') {
           this.consumeNewline();
         }
@@ -300,6 +302,7 @@ export class Lexer {
       lang += this.advance();
     }
     this.addToken('CODE_BLOCK_START', '```' + lang);
+    this.inCodeBlock = true;
     if (!this.isAtEnd()) this.consumeNewlineRaw();
 
     let content = '';
@@ -308,6 +311,7 @@ export class Lexer {
         if (content) this.addToken('CODE_BLOCK_CONTENT', content);
         this.consumeChars(3);
         this.addToken('CODE_BLOCK_END', '```');
+        this.inCodeBlock = false;
         if (!this.isAtEnd() && this.peek() === '\n') this.consumeNewlineRaw();
         return;
       }
@@ -338,15 +342,13 @@ export class Lexer {
    * 
    * Token value is a JSON object: { path: string[], anchor: string | null }
    */
-  private tryScanLink(): boolean {
+  private scanLink(): boolean {
     const startPos = this.pos;
-    const startLine = this.line;
     const startColumn = this.column;
+    const startLine = this.line;
 
-    this.advance(); // ~
-    this.advance(); // /
-
-    // Scan path segments: identifier(/identifier)*
+    this.consumeChars(2); // ~/
+    
     const path: string[] = [];
     
     // First segment is required
@@ -394,6 +396,26 @@ export class Lexer {
     return true;
   }
 
+  private scanAnchor(): boolean {
+    const startPos = this.pos;
+    const startColumn = this.column;
+    const startLine = this.line;
+
+    this.advance(); // #
+    
+    const name = this.scanLinkSegment();
+    if (!name) {
+      // Not a valid anchor identifier - rewind
+      this.pos = startPos;
+      this.column = startColumn;
+      this.line = startLine;
+      return false;
+    }
+
+    this.addToken('ANCHOR', name, this.pos - startPos);
+    return true;
+  }
+
   /**
    * Scans a link segment (kebab-case identifier).
    * Returns the segment or empty string if not valid.
@@ -410,50 +432,11 @@ export class Lexer {
     return segment;
   }
 
-  /**
-   * v0.8: Tries to scan an anchor reference: #section
-   * Assumes current position is at '#' and we're NOT at column 0 (not a heading).
-   * Returns true if an anchor was found and tokenized.
-   * 
-   * Token value is the anchor name string.
-   */
-  private tryScanAnchor(): boolean {
-    const startPos = this.pos;
-    const startLine = this.line;
-    const startColumn = this.column;
-
-    // Check for # followed by identifier start
-    if (this.peek() !== '#') {
-      return false;
-    }
-    
-    const nextChar = this.peekAt(1);
-    if (!this.isAlpha(nextChar) && nextChar !== '_') {
-      return false;
-    }
-
-    this.advance(); // #
-    
-    // Scan identifier (kebab-case)
-    let name = '';
-    while (this.isAlphaNumeric(this.peek()) || this.peek() === '-' || this.peek() === '_') {
-      name += this.advance();
-    }
-
-    if (!name) {
-      // No valid identifier - rewind
-      this.pos = startPos;
-      this.column = startColumn;
-      this.line = startLine;
-      return false;
-    }
-
-    const rawLength = this.pos - startPos;
-    this.addToken('ANCHOR', name, rawLength);
-    return true;
-  }
-
   private scanDollarIdent(): void {
+    const isAtLineStart = (this.column) === this.lineStartColumn;
+    if (isAtLineStart && !this.inCodeBlock && !this.inFrontmatter) {
+      this.isCurrentLineMdz = true;
+    }
     this.advance(); // $
     
     // Check for inferred variable: $/name/
@@ -518,18 +501,27 @@ export class Lexer {
     
     let part = '';
     while (!this.isAtEnd() && this.peek() !== '`') {
-      if (this.lookAhead('${')) {
+      if (this.lookAhead('\\`')) {
+        part += '`';
+        this.consumeChars(2);
+      } else if (this.lookAhead('\\${')) {
+        part += '${';
+        this.consumeChars(3);
+      } else if (this.lookAhead('${')) {
         if (part) { this.addToken('TEMPLATE_PART', part); part = ''; }
         this.consumeChars(2);
-        let expr = '';
-        let depth = 1;
-        while (!this.isAtEnd() && depth > 0) {
-          if (this.peek() === '{') depth++;
-          if (this.peek() === '}') depth--;
-          if (depth > 0) expr += this.advance();
+        
+        let ident = '';
+        while (this.isAlphaNumeric(this.peek()) || this.peek() === '-') {
+          ident += this.advance();
         }
-        if (this.peek() === '}') this.advance();
-        this.addToken('DOLLAR_IDENT', expr);
+        
+        if (ident && this.peek() === '}') {
+          this.advance();
+          this.addToken('DOLLAR_IDENT', '$' + ident);
+        } else {
+          this.addToken('ERROR', '${' + ident);
+        }
       } else if (this.lookAhead('$/')) {
         // Inferred variable in template: $/name/
         if (part) { this.addToken('TEMPLATE_PART', part); part = ''; }
@@ -588,12 +580,38 @@ export class Lexer {
       'RETURN': 'RETURN',
       'ASYNC': 'ASYNC',
       'AWAIT': 'AWAIT',
+      'USE': 'USE',
+      'EXECUTE': 'EXECUTE',
+      'GOTO': 'GOTO',
       'true': 'TRUE', 'false': 'FALSE',
     };
 
-    const type = keywords[ident] || 
-      (ident[0] >= 'A' && ident[0] <= 'Z' ? 'UPPER_IDENT' : 'LOWER_IDENT');
-    this.addToken(type, ident);
+    const keywordType = keywords[ident];
+
+    // Phase A: Control-flow statement openers require line start
+    // Secondary keywords (IN, THEN, WITH, TO) can appear mid-statement
+    const isControlFlowKeyword = ['FOR', 'WHILE', 'DO', 'IF', 'ELSE', 'END', 'BREAK', 'CONTINUE', 'RETURN', 'DELEGATE', 'USE', 'EXECUTE', 'GOTO', 'ASYNC', 'AWAIT'].includes(ident);
+    const isSecondaryKeyword = ['IN', 'THEN', 'WITH', 'TO', 'AND', 'OR', 'NOT', 'true', 'false', 'IF', 'DELEGATE', 'DO', 'ELSE'].includes(ident);
+
+    const isAtLineStart = (this.column - ident.length) === this.lineStartColumn;
+    const isMdzStatementLine = isAtLineStart && !this.inCodeBlock && !this.inFrontmatter;
+
+    if (keywordType) {
+      if (isMdzStatementLine || (this.isCurrentLineMdz && isSecondaryKeyword)) {
+        if (isControlFlowKeyword && isMdzStatementLine) {
+          this.isCurrentLineMdz = true;
+        }
+        this.addToken(keywordType, ident);
+      } else if (ident[0] >= 'A' && ident[0] <= 'Z') {
+        this.addToken('UPPER_IDENT', ident);
+      } else {
+        this.addToken('LOWER_IDENT', ident);
+      }
+    } else if (ident[0] >= 'A' && ident[0] <= 'Z') {
+      this.addToken('UPPER_IDENT', ident);
+    } else {
+      this.addToken('LOWER_IDENT', ident);
+    }
   }
 
   // Helpers
@@ -626,6 +644,8 @@ export class Lexer {
       this.pos++;
       this.line++;
       this.column = 0;
+      this.lineStartColumn = -1; // Reset line tracking
+      this.isCurrentLineMdz = false; // Reset line tracking
     }
   }
   private isDigit(c: string): boolean { return c >= '0' && c <= '9'; }
