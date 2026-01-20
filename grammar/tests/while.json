@@ -1,0 +1,13 @@
+[
+  {
+    "type": "while",
+    "condition": "$x < 5",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$x"
+      }
+    ]
+  }
+]

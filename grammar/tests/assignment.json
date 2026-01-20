@@ -1,0 +1,13 @@
+[
+  {
+    "type": "assign",
+    "target": "$count",
+    "value": "5"
+  },
+  {
+    "type": "assign",
+    "target": "$name",
+    "annotatedType": "$String",
+    "value": "\"value\""
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "assign",
+    "target": "$fn",
+    "value": {
+      "type": "lambda",
+      "params": ["$x"],
+      "body": ""hello " + $x"
+    }
+  }
+]

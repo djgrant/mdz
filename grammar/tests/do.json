@@ -1,0 +1,10 @@
+[
+  { "type": "stmt", "keyword": "DO", "text": "single step instruction" },
+  {
+    "type": "do",
+    "blocks": [
+      { "type": "host", "text": "  step 1\n" },
+      { "type": "host", "text": "  step 2\n" }
+    ]
+  }
+]

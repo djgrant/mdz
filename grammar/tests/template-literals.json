@@ -1,0 +1,10 @@
+[
+  {
+    "type": "assign",
+    "target": "$path",
+    "value": {
+      "type": "template",
+      "parts": ["output-", { "type": "var", "name": "$n" }, ".md"]
+    }
+  }
+]

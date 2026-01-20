@@ -1,0 +1,21 @@
+[
+  {
+    "type": "if",
+    "condition": "$condition",
+    "then": [{ "type": "stmt", "keyword": "RETURN", "text": "true" }],
+    "else": [{ "type": "stmt", "keyword": "RETURN", "text": "false" }]
+  },
+  {
+    "type": "if",
+    "condition": {
+      "type": "binary", "op": "OR",
+      "left": {
+        "type": "binary", "op": "AND",
+        "left": { "type": "comparison", "op": "=", "left": "$x", "right": "1" },
+        "right": { "type": "comparison", "op": "!=", "left": "$y", "right": "2" }
+      },
+      "right": { "type": "not", "expression": "diminishing returns" }
+    },
+    "then": [{ "type": "stmt", "keyword": "RETURN", "text": "true" }]
+  }
+]

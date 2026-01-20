@@ -1,0 +1,10 @@
+[
+  {
+    "type": "assign",
+    "target": "$user",
+    "value": {
+      "type": "inferred",
+      "text": "the user's name"
+    }
+  }
+]

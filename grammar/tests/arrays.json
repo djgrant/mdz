@@ -1,0 +1,15 @@
+[
+  {
+    "type": "push",
+    "target": "$items",
+    "value": ""new item""
+  },
+  {
+    "type": "assign",
+    "target": "$list",
+    "value": {
+      "type": "array",
+      "elements": [""a"", ""b""]
+    }
+  }
+]
