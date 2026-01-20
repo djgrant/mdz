@@ -12,12 +12,19 @@ This project aims to:
 
 The language is designed to be:
 
-- **Readable** as natural prose
-- **Parseable** by deterministic tools
-- **Interpretable** by LLMs as executable instructions
-- **Composable** through references to sub-agents and skills
+- Readable as natural prose
+- Unconstrained by deterministic paradigms
+- Parseable by deterministic tools (for syntax highlighting, quality checks, observability etc.)
+- Interpretable by LLMs as executable instructions
+- Composable through references to sub-agents and skills
 
 ## Syntax
+
+MDZ is "prose first", meaning that you write prompts as normal, and use MDZ keywords to opt-in to programmatic control flow. The language is very flexible around mixing prose and programmatic statements (reflecting that LLMs ability to interpret and contextualise instructions).
+
+To disambiguate from regular prose, the language leans on all-caps keywords. These notify a contractual obligation.
+
+To provide clarity to LLMs, MDZ uses `END` to delimit blocks. MDZ is indentation insensitive.
 
 <img alt="MDZ code sample" src=".github/assets/mdz-code-sample.png" width="773">
 
@@ -31,13 +38,13 @@ The proz parser segments the document into a block stream containing either:
 - unparsed blocks belonging to the host grammar e.g. raw markdown strings
 - blocks of proz AST nodes
 
-Proz kicks in when a delimiter like `FOR` or `DELEGATE` is detected. This means MDZ defaults to being prose first. You opt-in to programmatic control flow.
+Proz kicks in when a delimiter like `FOR` or `DELEGATE` is detected
 
 In the case of MDZ, you end up with a block stream that looks like this:
 
 ```json
 [
-  { "type": "host", "text": "---\nname: example-doc\n---" },
+  { "type": "host", "text": "---\nname: example-doc\n---\n\n# MDZ" },
   {
     "type": "for",
     "target": "item",
@@ -49,6 +56,7 @@ In the case of MDZ, you end up with a block stream that looks like this:
   }
 ]
 ```
+
 
 ## Explorations
 
@@ -76,7 +84,7 @@ At the end of each turn the LLM could call itself with an updated version of the
 
 Contributions from the community are warmly welcomed. 
 
-While the language spec is being discovered, the most valuable contribution is sharing data from your experiences using MDZ. 
+While the language spec is being discovered, the most valuable contribution is sharing data from real-world usage MDZ.
 
 If there is a feature you think should belong in MDZ, it is recommended that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
 
