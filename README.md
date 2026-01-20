@@ -1,7 +1,5 @@
 # MDZ
 
-[![Experimental](https://img.shields.io/badge/status-experimental-orange.svg)](https://github.com/djgrant/mdz)
-
 MDZ is a superset of markdown designed to exploit LLM's inherent ability to evaluate programs.
 
 ## Vision
@@ -25,10 +23,10 @@ The language is designed to be:
 
 MDZ is an amalgam of two grammars: markdown and proz. 
 
-Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any text document can be host langauge.
+Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any text document can be host language.
 
 The proz parser segments the document into a block stream containing either:
-- unparsed blocks beloning to the host grammar e.g. raw markdown strings
+- unparsed blocks belonging to the host grammar e.g. raw markdown strings
 - blocks of proz AST nodes
 
 Proz kicks in when a delimiter like `FOR` or `DELEGATE` is detected. This means MDZ defaults to being prose first. You opt-in to programmatic control flow.
@@ -52,7 +50,7 @@ In the case of MDZ, you end up with a block stream that looks like this:
 
 ## Explorations
 
-There are few different ways MDZ could be deployed:
+There are a few different ways MDZ could be deployed:
 
 ### 1. LLM runs program, tracking state internally
 
@@ -78,7 +76,7 @@ Contributions from the community are warmly welcomed.
 
 While the language spec is being discovered, the most valuable contribution is sharing data from your experiences using MDZ. 
 
-If there is a feature you think should belong in MDZ, it is recommend that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
+If there is a feature you think should belong in MDZ, it is recommended that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
 
 ## License
 
