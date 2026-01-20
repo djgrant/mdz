@@ -1,0 +1,48 @@
+{
+  "name": "mdz",
+  "displayName": "mdz",
+  "description": "Markdown for LLMs",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "notationlabs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djgrant/mdz"
+  },
+  "icon": "images/mdz-logo-square.png",
+  "engines": {
+    "vscode": "^1.108.1"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mdz",
+        "aliases": [
+          "MDZ",
+          "mdz"
+        ],
+        "extensions": [
+          ".mdz"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mdz",
+        "scopeName": "source.mdz",
+        "path": "./syntaxes/mdz.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.mdz",
+        "path": "./syntaxes/mdz.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ]
+      }
+    ]
+  }
+}

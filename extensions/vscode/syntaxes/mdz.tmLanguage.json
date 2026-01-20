@@ -1,0 +1,229 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MDZ",
+  "scopeName": "source.mdz",
+  "injectionSelector": "L:text.html.markdown",
+  "fileTypes": ["md"],
+  "patterns": [
+    { "include": "#code-block" },
+    { "include": "#block-if-for-while" },
+    { "include": "#block-do" },
+    { "include": "#keyword" },
+    { "include": "#control-flow" },
+    { "include": "#type-definition" },
+    { "include": "#variable" },
+    { "include": "#type" },
+    { "include": "#reference" },
+    { "include": "#string" },
+    { "include": "#template" },
+    { "include": "#semantic-span" },
+    { "include": "#number" },
+    { "include": "#operator" },
+    { "include": "#list-marker" }
+  ],
+  "repository": {
+    "control-flow": {
+      "patterns": [
+        {
+          "match": "^\\s*(ELSE\\s+IF|ELSE|IF|FOR|WHILE|DO|END|RETURN|BREAK|CONTINUE|ASYNC|AWAIT)\\b",
+          "name": "keyword.control.mdz"
+        },
+        {
+          "match": "^\\s*(DELEGATE|USE|EXECUTE|GOTO)\\b",
+          "name": "keyword.control.mdz"
+        },
+        {
+          "match": "\\b(THEN|IN|AND|OR|NOT|WITH|TO)\\b",
+          "name": "keyword.operator.word.mdz"
+        }
+      ]
+    },
+    "block-if-for-while": {
+      "begin": "^\\s*(IF|FOR|WHILE)\\b",
+      "end": "^\\s*END\\b",
+      "name": "meta.block.control.mdz",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.mdz" }
+      },
+      "patterns": [
+        { "include": "#block-do" },
+        { "include": "#block-if-for-while" },
+        { "include": "#control-flow" },
+        { "include": "#type-definition" },
+        { "include": "#variable" },
+        { "include": "#type" },
+        { "include": "#reference" },
+        { "include": "#string" },
+        { "include": "#template" },
+        { "include": "#semantic-span" },
+        { "include": "#number" },
+        { "include": "#operator" }
+      ]
+    },
+    "block-do": {
+      "begin": "^\\s*DO\\s*$",
+      "end": "^\\s*END\\b",
+      "name": "meta.block.do.mdz",
+      "beginCaptures": {
+        "0": { "name": "keyword.control.mdz" }
+      },
+      "patterns": [
+        { "include": "#block-if-for-while" },
+        { "include": "#control-flow" },
+        { "include": "#type-definition" },
+        { "include": "#variable" },
+        { "include": "#type" },
+        { "include": "#reference" },
+        { "include": "#string" },
+        { "include": "#template" },
+        { "include": "#semantic-span" },
+        { "include": "#number" },
+        { "include": "#operator" }
+      ]
+    },
+    "type-definition": {
+      "match": "^(\\s*)(\\$[A-Z][a-zA-Z0-9]*)\\s*(:)",
+      "captures": {
+        "2": { "name": "entity.name.type.definition.mdz" },
+        "3": { "name": "keyword.operator.assignment.mdz" }
+      }
+    },
+    "variable": {
+      "patterns": [
+        {
+          "comment": "Inferred variable: $/name/",
+          "match": "\\$/[^/\\n]+/",
+          "name": "variable.other.inferred.mdz"
+        },
+        {
+          "match": "\\$[a-z][a-zA-Z0-9-]*",
+          "name": "variable.other.mdz"
+        }
+      ]
+    },
+    "type": {
+      "match": "\\$[A-Z][a-zA-Z0-9]*",
+      "name": "entity.name.type.mdz"
+    },
+    "reference": {
+      "patterns": [
+        {
+          "comment": "Link reference: ~/path/to/file or ~/path/to/file#section",
+          "match": "(~/)([a-z][a-z0-9/-]*)(#[a-z][a-z0-9-]*)?",
+          "name": "meta.reference.link.mdz",
+          "captures": {
+            "1": { "name": "punctuation.definition.link.mdz" },
+            "2": { "name": "entity.name.type.skill.mdz" },
+            "3": { "name": "entity.name.type.section.mdz" }
+          }
+        },
+        {
+          "comment": "Standalone anchor reference: #section",
+          "match": "(?<!~/)#[a-z][a-z0-9-]*",
+          "name": "entity.name.type.section.mdz"
+        }
+      ]
+    },
+    "semantic-span": {
+      "patterns": [
+        {
+          "comment": "DELEGATE instruction span",
+          "match": "^\\s*(?:ASYNC\\s+|AWAIT\\s+)?DELEGATE\\s+([^\\n]+?)(?=\\s+TO\\b|\\s+WITH\\b|\\s*:?$)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "USE/EXECUTE instruction span",
+          "match": "^\\s*(?:USE|EXECUTE)\\b.*?\\bTO\\b\\s+([^\\n:]+)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "DO instruction span",
+          "match": "^\\s*DO\\s+(.+)$",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "IF/WHILE semantic condition span",
+          "match": "^\\s*(?:IF|WHILE)\\b\\s+([^\\n]+?)(?=\\s+THEN\\b|\\s+DO\\b)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        },
+        {
+          "comment": "Semantic type annotation",
+          "match": "^\\s*\\$[A-Za-z][A-Za-z0-9-]*\\s*:\\s+(?!\\$|\"|\\()([^=\\n]+)",
+          "captures": {
+            "1": { "name": "string.interpolated.semantic.mdz" }
+          }
+        }
+      ]
+    },
+
+    "string": {
+      "match": "\"([^\"]*)\"",
+      "name": "string.quoted.double.mdz"
+    },
+    "template": {
+      "begin": "`",
+      "end": "`",
+      "name": "string.template.mdz",
+      "patterns": [
+        {
+          "match": "\\$\\{[^}]*\\}",
+          "name": "variable.other.interpolated.mdz"
+        },
+        { "include": "#variable" }
+      ]
+    },
+    "number": {
+      "match": "-?\\d+(\\.\\d+)?",
+      "name": "constant.numeric.mdz"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "match": "=>",
+          "name": "keyword.operator.arrow.mdz"
+        },
+        {
+          "match": "!=|<=|>=|<|>|=",
+          "name": "keyword.operator.comparison.mdz"
+        },
+        {
+          "match": ":",
+          "name": "keyword.operator.assignment.mdz"
+        },
+        {
+          "match": "\\|",
+          "name": "keyword.operator.type.union.mdz"
+        },
+        {
+          "match": "<<",
+          "name": "keyword.operator.push.mdz"
+        },
+        {
+          "match": "\\.",
+          "name": "keyword.operator.accessor.mdz"
+        }
+      ]
+    },
+    "code-block": {
+      "begin": "^\\s*```(\\w*)$",
+      "end": "^\\s*```$",
+      "name": "markup.fenced_code.mdz",
+      "beginCaptures": {
+        "1": { "name": "variable.parameter.mdz" }
+      },
+      "contentName": "meta.embedded.block.mdz"
+    },
+    "list-marker": {
+      "match": "^\\s*(-|\\d+\\.)\\s",
+      "name": "punctuation.definition.list_item.mdz"
+    }
+  }
+}
