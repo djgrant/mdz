@@ -1,0 +1,23 @@
+[
+  {
+    "type": "for",
+    "target": "$item",
+    "iterable": "$items",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "CONTINUE",
+        "text": ""
+      },
+      {
+        "type": "host",
+        "text": "  This is just prose\n  This is more prose\n"
+      },
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$item"
+      }
+    ]
+  }
+]
