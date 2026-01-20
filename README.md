@@ -1,11 +1,11 @@
-# MDZ
+<a href="mdz.notation.dev"><img alt="MDZ Logo" src=".github/assets/mdz-logo.svg" height="52"></a>
 
-MDZ is a superset of markdown designed to exploit LLM's inherent ability to evaluate programs.
+A superset of Markdown designed to exploit LLM's ability to evaluate programs.
 
 ## Vision
 
 This project aims to:
-1. Provide an LLM-human interface for writing programs not possible with traditional programming languages
+1. Enable the creation of programs not possible with traditional programming languages
 2. Find and codify LLM's emergent capabilities to evaluate such programs
 
 ## Goals
@@ -16,6 +16,10 @@ The language is designed to be:
 - **Parseable** by deterministic tools
 - **Interpretable** by LLMs as executable instructions
 - **Composable** through references to sub-agents and skills
+
+## Syntax
+
+<img alt="MDZ code sample" src=".github/assets/mdz-code-sample.png" width="773">
 
 ## Language Design
 
