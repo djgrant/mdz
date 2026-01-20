@@ -21,7 +21,7 @@ The language is designed to be:
 
 ## Language Design
 
-MDZ is an amalgam of two grammars: markdown and proz. 
+Under the hood, MDZ is an amalgam of two grammars: markdown and proz. 
 
 Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any text document can be host language.
 
