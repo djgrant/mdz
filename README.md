@@ -1,6 +1,6 @@
 <a href="https://mdz.notation.dev"><img alt="MDZ Logo" src=".github/assets/mdz-logo.svg" height="52"></a>
 
-A superset of Markdown designed to exploit LLM's ability to evaluate programs.
+A superset of Markdown designed to exploit LLMs' ability to evaluate programs.
 
 ## Vision
 
