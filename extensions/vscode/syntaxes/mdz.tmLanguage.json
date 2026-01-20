@@ -45,6 +45,9 @@
       "beginCaptures": {
         "1": { "name": "keyword.control.mdz" }
       },
+      "endCaptures": {
+        "0": { "name": "keyword.control.mdz" }
+      },
       "patterns": [
         { "include": "#block-do" },
         { "include": "#block-if-for-while" },
@@ -65,6 +68,9 @@
       "end": "^\\s*END\\b",
       "name": "meta.block.do.mdz",
       "beginCaptures": {
+        "0": { "name": "keyword.control.mdz" }
+      },
+      "endCaptures": {
         "0": { "name": "keyword.control.mdz" }
       },
       "patterns": [
