@@ -10,8 +10,6 @@ This project aims to:
 
 ## Goals
 
-The current version of MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. 
-
 The language is designed to be:
 
 - **Readable** as natural prose
@@ -52,21 +50,21 @@ In the case of MDZ, you end up with a block stream that looks like this:
 
 There are a few different ways MDZ could be deployed:
 
-### 1. LLM runs program, tracking state internally
+#### 1. LLM runs program, tracking state internally
 
 LLMs are capable of holding state both internally and in context between turns. In some quick benchmarks I found MDZ outperformed prose, and used fewer tokens. However, LLMs can forget things and they do get distracted.
 
-### 2. LLM runs program, tracking state externally
+#### 2. LLM runs program, tracking state externally
 
 In this model, the LLM still runs the program, but uses a tool to update and store its internal pointer and program state. 
 
 A pre-processing step could annotate the program with statement addresses for the LLM to reference.
 
-### 3. LLM requests programs from a REPL
+#### 3. LLM requests programs from a REPL
 
 Similar to the ideas in [recursive language models](https://arxiv.org/abs/2512.24601) (RLMs), the LLM would call out to a REPL to request a module, or part of the program. The evaluation of the program could itself be a recursive call to prevent context rot.
 
-### 4. LLM rewrites program in tail recursive loop
+#### 4. LLM rewrites program in tail recursive loop
 
 At the end of each turn the LLM could call itself with an updated version of the program containing its remaining steps and the program's internal state. This is most likely a bad idea, because one mistake corrupts the program, but it will be fun to explore.
 
