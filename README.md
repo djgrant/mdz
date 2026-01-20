@@ -35,7 +35,7 @@ To provide clarity to LLMs, MDZ uses the `END` keyword to delimit blocks. MDZ is
 
 Under the hood, MDZ is an amalgam of two grammars: markdown and proz. 
 
-Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any text document can be host language.
+Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any document format can in theory be a host language.
 
 The proz parser segments the document into a block stream containing either:
 - unparsed blocks belonging to the host grammar e.g. raw markdown strings
@@ -59,7 +59,6 @@ In the case of MDZ, you end up with a block stream that looks like this:
   }
 ]
 ```
-
 
 ## Explorations
 
@@ -85,7 +84,7 @@ At the end of each turn the LLM could call itself with an updated version of the
 
 Contributions from the community are warmly welcomed. 
 
-While the language spec is being discovered, the most valuable contribution is sharing data from real-world usage MDZ.
+While the language spec is being discovered, the most valuable contribution is sharing data from real-world usage of MDZ.
 
 If there is a feature you think should belong in MDZ, it is recommended that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
 
