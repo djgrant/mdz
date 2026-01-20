@@ -1,0 +1,6 @@
+[
+  {
+    "type": "host",
+    "text": "---\nname: frontmatter\ntest: that frontmatter is ignored by the parser\n---\n\n# Frontmatter Test\n"
+  }
+]

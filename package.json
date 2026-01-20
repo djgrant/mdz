@@ -1,0 +1,14 @@
+{
+  "name": "mdz-monorepo",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@pokit/core": "^0.0.19",
+    "@pokit/prompter-clack": "^0.0.19",
+    "@pokit/reporter-clack": "^0.0.19",
+    "glob": "^13.0.0",
+    "peggy": "^5.0.6",
+    "vitest": "^4.0.17"
+  }
+}
