@@ -17,25 +17,7 @@
     "Programming Languages"
   ],
   "contributes": {
-    "languages": [
-      {
-        "id": "mdz",
-        "aliases": [
-          "MDZ",
-          "mdz"
-        ],
-        "extensions": [
-          ".mdz"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
     "grammars": [
-      {
-        "language": "mdz",
-        "scopeName": "source.mdz",
-        "path": "./syntaxes/mdz.tmLanguage.json"
-      },
       {
         "scopeName": "source.mdz",
         "path": "./syntaxes/mdz.tmLanguage.json",

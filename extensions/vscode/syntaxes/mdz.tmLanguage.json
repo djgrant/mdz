@@ -3,12 +3,9 @@
   "name": "MDZ",
   "scopeName": "source.mdz",
   "injectionSelector": "L:text.html.markdown",
-  "fileTypes": ["md"],
   "patterns": [
-    { "include": "#code-block" },
     { "include": "#block-if-for-while" },
     { "include": "#block-do" },
-    { "include": "#keyword" },
     { "include": "#control-flow" },
     { "include": "#type-definition" },
     { "include": "#variable" },
@@ -18,8 +15,7 @@
     { "include": "#template" },
     { "include": "#semantic-span" },
     { "include": "#number" },
-    { "include": "#operator" },
-    { "include": "#list-marker" }
+    { "include": "#operator" }
   ],
   "repository": {
     "control-flow": {
@@ -217,19 +213,6 @@
           "name": "keyword.operator.accessor.mdz"
         }
       ]
-    },
-    "code-block": {
-      "begin": "^\\s*```(\\w*)$",
-      "end": "^\\s*```$",
-      "name": "markup.fenced_code.mdz",
-      "beginCaptures": {
-        "1": { "name": "variable.parameter.mdz" }
-      },
-      "contentName": "meta.embedded.block.mdz"
-    },
-    "list-marker": {
-      "match": "^\\s*(-|\\d+\\.)\\s",
-      "name": "punctuation.definition.list_item.mdz"
     }
   }
 }
