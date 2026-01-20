@@ -10,6 +10,46 @@ This project aims to:
 1. Provide an LLM-human interface for writing programs not possible with traditional programming languages
 2. Find and codify LLM's emergent capabilities to evaluate such programs
 
+## Goals
+
+The current version of MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. 
+
+The language is designed to be:
+
+- **Readable** as natural prose
+- **Parseable** by deterministic tools
+- **Interpretable** by LLMs as executable instructions
+- **Composable** through references to sub-agents and skills
+
+## Language Design
+
+MDZ is an amalgam of two grammars: markdown and proz. 
+
+Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any text document can be host langauge.
+
+The proz parser segments the document into a block stream containing either:
+- unparsed blocks beloning to the host grammar e.g. raw markdown strings
+- blocks of proz AST nodes
+
+Proz kicks in when a delimiter like `FOR` or `DELEGATE` is detected. This means MDZ defaults to being prose first. You opt-in to programmatic control flow.
+
+In the case of MDZ, you end up with a block stream that looks like this:
+
+```json
+[
+  { "type": "host", "text": "---\nname: example-doc\n---" },
+  {
+    "type": "for",
+    "target": "item",
+    "iterable": "items",
+    "blocks": [
+      { "type": "host", "text": "prose inside for loop\n" },
+      { "type": "stmt", "keyword": "CONTINUE" }
+    ]
+  }
+]
+```
+
 ## Explorations
 
 There are few different ways MDZ could be deployed:
@@ -32,24 +72,13 @@ Similar to the ideas in [recursive language models](https://arxiv.org/abs/2512.2
 
 At the end of each turn the LLM could call itself with an updated version of the program containing its remaining steps and the program's internal state. This is most likely a bad idea, because one mistake corrupts the program, but it will be fun to explore.
 
-## Current Status
-
-The current version of MDZ extends markdown with constructs for expressing agent behaviors, composition, and orchestration patterns. 
-
-The language is designed to be:
-
-- **Readable** as natural prose
-- **Parseable** by deterministic tools
-- **Interpretable** by LLMs as executable instructions
-- **Composable** through references to sub-agents and skills
-
 ## Contributions
 
 Contributions from the community are warmly welcomed. 
 
-While the language spec is being discovered, the most valuable contribution is sharing data about your experience using MDZ. 
+While the language spec is being discovered, the most valuable contribution is sharing data from your experiences using MDZ. 
 
-If there is a feature you think should belong in MDZ, I recommend forking the repo, adding it to your fork, and reporting back your findings.
+If there is a feature you think should belong in MDZ, it is recommend that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
 
 ## License
 
