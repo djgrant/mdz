@@ -1,4 +1,4 @@
-<a href="mdz.notation.dev"><img alt="MDZ Logo" src=".github/assets/mdz-logo.svg" height="52"></a>
+<a href="https://mdz.notation.dev"><img alt="MDZ Logo" src=".github/assets/mdz-logo.svg" height="52"></a>
 
 A superset of Markdown designed to exploit LLM's ability to evaluate programs.
 
@@ -20,13 +20,16 @@ The language is designed to be:
 
 ## Syntax
 
-MDZ is "prose first", meaning that you write prompts as normal, and use MDZ keywords to opt-in to programmatic control flow. The language is very flexible around mixing prose and programmatic statements (reflecting that LLMs ability to interpret and contextualise instructions).
+MDZ is "prose first", meaning that you write prompts as normal, and use MDZ keywords to opt-in to programmatic control flow. 
 
-To disambiguate from regular prose, the language leans on all-caps keywords. These notify a contractual obligation.
-
-To provide clarity to LLMs, MDZ uses `END` to delimit blocks. MDZ is indentation insensitive.
+The language is very flexible about mixing prose and programmatic statements (reflecting LLMs' ability to interpret and contextualise instructions).
 
 <img alt="MDZ code sample" src=".github/assets/mdz-code-sample.png" width="773">
+  
+To disambiguate from regular prose, the language leans on all-caps keywords. These notify a contractual obligation.
+
+To provide clarity to LLMs, MDZ uses the `END` keyword to delimit blocks. MDZ is indentation insensitive.
+
 
 ## Language Design
 
@@ -68,9 +71,7 @@ LLMs are capable of holding state both internally and in context between turns. 
 
 #### 2. LLM runs program, tracking state externally
 
-In this model, the LLM still runs the program, but uses a tool to update and store its internal pointer and program state. 
-
-A pre-processing step could annotate the program with statement addresses for the LLM to reference.
+In this model, the LLM still runs the program, but uses a tool to update and store its internal pointer and program state. A pre-processing step could annotate the program with statement addresses for the LLM to reference.
 
 #### 3. LLM requests programs from a REPL
 
