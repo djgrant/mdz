@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs
 dist/
+*.vsix
 
 # OS files
 .DS_Store

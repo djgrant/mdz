@@ -2,3 +2,4 @@
 .vscode-test/**
 .gitignore
 .DS_Store
+*.vsix
