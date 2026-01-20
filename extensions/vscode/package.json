@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/djgrant/mdz"
   },
-  "icon": "images/mdz-logo-square.png",
+  "icon": "assets/mdz-logo-square.png",
   "engines": {
     "vscode": "^1.108.1"
   },
