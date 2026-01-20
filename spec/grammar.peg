@@ -1,0 +1,173 @@
+Start = blocks:Blocks
+
+Blocks
+  = parts:TopBlock* tail:HostTail? {
+      const out = parts;
+      if (tail !== null) out.push(tail);
+      return out;
+    }
+
+TopBlock
+  = ForBlock
+  / StatementLine
+  / HostBlock
+
+
+/* --------- One-line Statment ------- */
+
+StatementLine
+  = Indent kw:StatementKeyword rest:LineText? LineEnd {
+      return {
+        type: "stmt",
+        keyword: kw,
+        text: (rest ?? "").trim()
+      };
+    }
+
+StatementStartLine
+ = Indent StatementKeyword
+
+StatementKeyword
+  = Kw_BREAK
+  / Kw_CONTINUE
+  / Kw_RETURN
+  / Kw_DELEGATE
+  / Kw_ASYNC
+  / Kw_AWAIT
+  / Kw_USE
+  / Kw_GOTO
+
+
+/* ---------- Inner blocks ---------- */
+
+InnerBlocks =
+  blocks:InnerBlock* {
+    return blocks;
+  }
+
+InnerBlock =
+  &NotEnd innerBlock:(
+    ForBlock /
+    StatementLine /
+    HostInnerBlock
+  ) {
+    return innerBlock;
+  }
+
+NotEnd = !EndLine
+
+EndLine
+  = Indent "END" WordBoundary (Newline / End) {
+  	return "END";
+  }
+
+
+/* ---------- Sigils ---------- */
+
+BlockStartLine = Indent Kw_FOR __
+
+
+/* ---------- FOR Statement ---------- */
+
+ForBlock
+  = header:ForHeader inner:InnerBlocks EndLine {
+      return {
+        type: "for",
+        target: header.target,
+        iterable: header.iterable,
+        blocks: inner
+      };
+    }
+
+ForHeader
+  = Indent
+    Kw_FOR __ target:ExprUntilIn __ Kw_IN __ iterable:LineText?
+    Newline {
+      return {
+        target: target.trim(),
+        iterable: (iterable ?? "").trim()
+      };
+    }
+
+ExprUntilIn
+  = $( ( !(__ Kw_IN) . )+ )
+
+
+/* ---------- Host blocks ---------- */
+
+HostBlock
+  = lines:HostLineTop+ {
+      return { type: "host", text: lines.join("") };
+    }
+
+HostInnerBlock
+  = lines:HostLineInner+ {
+      return { type: "host", text: lines.join("") };
+    }
+
+HostLineTop
+  = !BlockStartLine
+  	!StatementStartLine
+    !EndLine
+    s:LineText?
+    Newline {
+    	return (s ?? "") + "\n";
+}
+
+HostLineInner
+  = !BlockStartLine
+    !StatementStartLine
+    !EndLine
+    line:LineText?
+    Newline {
+      return (line ?? "") + "\n";
+    }
+
+HostTail
+  = !BlockStartLine
+    !StatementStartLine
+    !EndLine
+    line:LineTextNonEmpty
+    End {
+      return { type: "host", text: line };
+    }
+
+
+/* ---------- Keywords ---------- */
+
+Kw_FOR       = "FOR" WordBoundary { return "FOR" }
+Kw_IN        = "IN" WordBoundary { return "IN" }
+Kw_WHILE     = "WHILE" WordBoundary { return "WHILE" }
+Kw_DO        = "DO" WordBoundary { return "DO" }
+Kw_IF        = "IF" WordBoundary { return "IF" }
+Kw_THEN      = "THEN" WordBoundary { return "THEN" }
+Kw_ELSE      = "ELSE" WordBoundary { return "ELSE" }
+Kw_AND       = "AND" WordBoundary { return "AND" }
+Kw_OR        = "OR" WordBoundary { return "OR" }
+Kw_NOT       = "NOT" WordBoundary { return "NOT" }
+Kw_WITH      = "WITH" WordBoundary { return "WITH" }
+Kw_BREAK     = "BREAK" WordBoundary { return "BREAK" }
+Kw_CONTINUE  = "CONTINUE" WordBoundary { return "CONTINUE" }
+Kw_RETURN    = "RETURN" WordBoundary { return "RETURN" }
+Kw_DELEGATE  = "DELEGATE" WordBoundary { return "DELEGATE" }
+Kw_TO        = "TO" WordBoundary { return "TO" }
+Kw_ASYNC     = "ASYNC" WordBoundary { return "ASYNC" }
+Kw_AWAIT     = "AWAIT" WordBoundary { return "AWAIT" }
+Kw_USE       = "USE" WordBoundary { return "USE" }
+Kw_GOTO      = "GOTO" WordBoundary { return "GOTO" }
+
+
+/* ---------- Helpers ---------- */
+
+Newline = "\r\n" / "\n"
+End     = !.
+
+WordBoundary = ![a-zA-Z0-9_-]
+
+LineText         = $( (!Newline .)* )
+LineTextNonEmpty = $( (!Newline .)+ )
+LineEnd          = Newline / End
+
+Indent = [ \t]*
+_      = [ \t]*
+__     = [ \t]+
