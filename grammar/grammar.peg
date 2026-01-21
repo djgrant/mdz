@@ -126,9 +126,10 @@ HostLineInner
     !AssignStartLine
     !StatementStartLine
     !EndLine
+    indent:$(Indent ListMarker?)
     line:LineText?
     Newline {
-      return (line ?? "") + "\n";
+      return indent + (line ?? "") + "\n";
     }
 
 HostTail
