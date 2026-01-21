@@ -1,0 +1,11 @@
+[
+  {
+    "type": "assign",
+    "target": "$snippet",
+    "value": "#code-snippet"
+  },
+  {
+    "type": "host",
+    "text": "```html\n<div>hello!</div>\n```"
+  }
+]

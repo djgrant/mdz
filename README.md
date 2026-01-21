@@ -41,7 +41,7 @@ The proz parser segments the document into a block stream containing:
 - unparsed blocks belonging to the host grammar e.g. raw markdown strings
 - blocks of proz AST nodes
 
-Proz kicks in when a delimiter like `FOR` or `DELEGATE` is detected
+Proz kicks in when a delimiter like `FOR` or `SPAWN` is detected
 
 In the case of MDZ, you end up with a block stream that looks like this:
 

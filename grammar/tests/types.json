@@ -1,5 +1,6 @@
 [
   { "type": "assign", "target": "$pair", "annotatedType": { "type": "tuple", "elements": ["$Task", "$Strategy"] } },
   { "type": "assign", "target": "$status", "annotatedType": { "type": "enum", "variants": ["\"active\"", "\"inactive\""] } },
-  { "type": "assign", "target": "$goal", "annotatedType": "the primary user intent", "value": "\"find bugs\"" }
+  { "type": "assign", "target": "$goal", "annotatedType": "the primary user intent", "value": "\"find bugs\"" },
+  { "type": "assign", "target": "$formatter", "annotatedType": "($String) => $String" }
 ]

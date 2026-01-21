@@ -1,0 +1,22 @@
+[
+  {
+    "type": "assign",
+    "target": "$greeting",
+    "value": "\"hello\""
+  },
+  {
+    "type": "assign",
+    "target": "$path",
+    "value": {
+      "type": "template",
+      "parts": [
+        "output-",
+        {
+          "type": "expr",
+          "expression": "$n"
+        },
+        ".md"
+      ]
+    }
+  }
+]

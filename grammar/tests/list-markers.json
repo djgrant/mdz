@@ -36,5 +36,9 @@
         "text": "$x"
       }
     ]
+  },
+  {
+    "type": "host",
+    "text": "<!-- this will be treated as host language -->\n1. FOR $n IN $nums\n2. CONTINUE\n3. RETURN $n\n4. END\n"
   }
 ]

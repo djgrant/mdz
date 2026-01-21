@@ -4,8 +4,26 @@
     "target": "$fn",
     "value": {
       "type": "lambda",
-      "params": ["$x"],
-      "body": "\"hello \" + $x"
+      "params": ["$name"],
+      "body": "\"hello #{$name}\""
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$fn",
+    "value": {
+      "type": "lambda",
+      "params": ["$name"],
+      "body": "\"hello #{$name}\""
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$fn",
+    "value": {
+      "type": "lambda",
+      "params": ["$title", "$name"],
+      "body": "\"hello #{$title} #{$name}\""
     }
   }
 ]
