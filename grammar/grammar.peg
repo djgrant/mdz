@@ -9,6 +9,7 @@ Blocks
 
 TopBlock
   = ForBlock
+  / AssignLine
   / StatementLine
   / HostBlock
 
@@ -48,6 +49,7 @@ InnerBlocks =
 InnerBlock =
   &NotEnd innerBlock:(
     ForBlock /
+    AssignLine /
     StatementLine /
     HostInnerBlock
   ) {
@@ -107,6 +109,7 @@ HostInnerBlock
 
 HostLineTop
   = !BlockStartLine
+  	!AssignStartLine
   	!StatementStartLine
     !EndLine
     s:LineText?
@@ -116,6 +119,7 @@ HostLineTop
 
 HostLineInner
   = !BlockStartLine
+    !AssignStartLine
     !StatementStartLine
     !EndLine
     line:LineText?
@@ -125,12 +129,37 @@ HostLineInner
 
 HostTail
   = !BlockStartLine
+    !AssignStartLine
     !StatementStartLine
     !EndLine
     line:LineTextNonEmpty
     End {
       return { type: "host", text: line };
     }
+
+
+/* ---------- Assignments ---------- */
+
+AssignLine
+  = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ "=" _ value:LineText? LineEnd {
+      return {
+        type: "assign",
+        target,
+        ...(typeAnn ? { annotatedType: typeAnn } : {}),
+        value: (value ?? "").trim()
+      };
+    }
+
+AssignStartLine
+  = MdZIndent Var _ (":" / "=")
+
+TypeAnnotation
+  = ":" _ typeText:TypeExprUntilEq {
+      return typeText.trim();
+    }
+
+TypeExprUntilEq
+  = $( ( !(_ "=") . )+ )
 
 
 /* ---------- Keywords ---------- */
@@ -158,6 +187,8 @@ Kw_GOTO      = "GOTO" WordBoundary { return "GOTO" }
 
 
 /* ---------- Helpers ---------- */
+
+Var = $("$" [a-zA-Z_][a-zA-Z0-9_]*)
 
 Newline = "\r\n" / "\n"
 End     = !.
