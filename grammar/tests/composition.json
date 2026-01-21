@@ -2,10 +2,10 @@
   {
     "type": "stmt",
     "keyword": "USE",
-    "text": "~/skill/validator TO validate",
+    "text": "~/skill/validator TO check if meets criteria",
     "params": [
-      { "name": "threshold", "value": "0.8" },
-      { "name": "mode", "value": "\"strict\"" }
+      { "name": "threshold", "value": "lax" },
+      { "name": "mode", "value": "strict" }
     ]
   }
 ]
