@@ -184,6 +184,7 @@ TypeExprUntilEq
 
 Value
   = ArrayLiteral
+  / InferredValue
   / valueText:LineText { return valueText.trim(); }
 
 ArrayLiteral
@@ -199,6 +200,11 @@ ArrayElements
 ArrayElement
   = text:$( (!("," / "]") .)+ ) {
       return text.trim();
+    }
+
+InferredValue
+  = "$/" text:$( (!"/" .)* ) "/" {
+      return { type: "inferred", text };
     }
 
 
