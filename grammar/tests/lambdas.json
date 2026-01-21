@@ -5,7 +5,7 @@
     "value": {
       "type": "lambda",
       "params": ["$x"],
-      "body": ""hello " + $x"
+      "body": "\"hello \" + $x"
     }
   }
 ]

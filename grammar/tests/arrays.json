@@ -2,14 +2,14 @@
   {
     "type": "push",
     "target": "$items",
-    "value": ""new item""
+    "value": "\"new item\""
   },
   {
     "type": "assign",
     "target": "$list",
     "value": {
       "type": "array",
-      "elements": [""a"", ""b""]
+      "elements": ["\"a\"", "\"b\""]
     }
   }
 ]
