@@ -37,7 +37,7 @@ Under the hood, MDZ is an amalgam of two grammars: markdown and proz.
 
 Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any document format can in theory be a host language.
 
-The proz parser segments the document into a block stream containing either:
+The proz parser segments the document into a block stream containing:
 - unparsed blocks belonging to the host grammar e.g. raw markdown strings
 - blocks of proz AST nodes
 
