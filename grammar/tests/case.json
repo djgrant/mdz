@@ -1,0 +1,40 @@
+[
+  {
+    "type": "case",
+    "expression": "$status",
+    "whens": [
+      {
+        "condition": {
+          "type": "binary",
+          "op": "OR",
+          "left": "\"draft\"",
+          "right": "\"pending\""
+        },
+        "blocks": [
+          {
+            "type": "stmt",
+            "keyword": "RETURN",
+            "text": "\"needs review\""
+          }
+        ]
+      },
+      {
+        "condition": "\"published\"",
+        "blocks": [
+          {
+            "type": "stmt",
+            "keyword": "RETURN",
+            "text": "\"announce\""
+          }
+        ]
+      }
+    ],
+    "else": [
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "\"ignore\""
+      }
+    ]
+  }
+]
