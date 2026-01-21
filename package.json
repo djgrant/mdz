@@ -39,6 +39,9 @@
   "devDependencies": {
     "@ai-sdk/provider": "^3.0.2",
     "@ai-sdk/provider-utils": "^4.0.4",
+    "@pokit/core": "^0.0.20",
+    "@pokit/prompter-clack": "^0.0.20",
+    "@pokit/reporter-clack": "^0.0.20",
     "@types/node": "^20.0.0",
     "ai": "^4.3.19",
     "tsx": "^4.21.0",
