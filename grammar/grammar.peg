@@ -9,6 +9,7 @@ Blocks
 
 TopBlock
   = ForBlock
+  / PushLine
   / AssignLine
   / StatementLine
   / HostBlock
@@ -49,6 +50,7 @@ InnerBlocks =
 InnerBlock =
   &NotEnd innerBlock:(
     ForBlock /
+    PushLine /
     AssignLine /
     StatementLine /
     HostInnerBlock
@@ -109,6 +111,7 @@ HostInnerBlock
 
 HostLineTop
   = !BlockStartLine
+  	!PushStartLine
   	!AssignStartLine
   	!StatementStartLine
     !EndLine
@@ -119,6 +122,7 @@ HostLineTop
 
 HostLineInner
   = !BlockStartLine
+    !PushStartLine
     !AssignStartLine
     !StatementStartLine
     !EndLine
@@ -129,6 +133,7 @@ HostLineInner
 
 HostTail
   = !BlockStartLine
+    !PushStartLine
     !AssignStartLine
     !StatementStartLine
     !EndLine
@@ -138,15 +143,30 @@ HostTail
     }
 
 
+/* ---------- Push ---------- */
+
+PushLine
+  = MdZIndent target:Var _ "<<" _ value:LineText? LineEnd {
+      return {
+        type: "push",
+        target,
+        value: (value ?? "").trim()
+      };
+    }
+
+PushStartLine
+  = MdZIndent Var _ "<<"
+
+
 /* ---------- Assignments ---------- */
 
 AssignLine
-  = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ "=" _ value:LineText? LineEnd {
+  = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ "=" _ value:Value? LineEnd {
       return {
         type: "assign",
         target,
         ...(typeAnn ? { annotatedType: typeAnn } : {}),
-        value: (value ?? "").trim()
+        value: value ?? ""
       };
     }
 
@@ -160,6 +180,25 @@ TypeAnnotation
 
 TypeExprUntilEq
   = $( ( !(_ "=") . )+ )
+
+Value
+  = ArrayLiteral
+  / valueText:LineText { return valueText.trim(); }
+
+ArrayLiteral
+  = "[" _ elements:ArrayElements? _ "]" {
+      return { type: "array", elements: elements ?? [] };
+    }
+
+ArrayElements
+  = head:ArrayElement tail:(_ "," _ ArrayElement)* {
+      return [head, ...tail.map(([, , , element]) => element)];
+    }
+
+ArrayElement
+  = text:$( (!("," / "]") .)+ ) {
+      return text.trim();
+    }
 
 
 /* ---------- Keywords ---------- */
