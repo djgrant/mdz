@@ -23,6 +23,12 @@
         "blocks": [
           {
             "type": "stmt",
+            "keyword": "SPAWN",
+            "target": "~/agent/report",
+            "text": "note that post is published"
+          },
+          {
+            "type": "stmt",
             "keyword": "RETURN",
             "text": "\"announce\""
           }

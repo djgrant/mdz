@@ -8,6 +8,12 @@
   {
     "type": "stmt",
     "keyword": "SPAWN",
+    "target": "~/agent/alpha",
+    "text": "note that post is published"
+  },
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
     "modifier": "ASYNC",
     "target": "~/agent/alpha",
     "text": "explore",

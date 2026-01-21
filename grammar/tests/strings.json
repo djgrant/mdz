@@ -13,7 +13,7 @@
         "output-",
         {
           "type": "expr",
-          "expression": "$n"
+          "expression": "current index"
         },
         ".md"
       ]

@@ -30,7 +30,6 @@ To disambiguate from regular prose, the language leans on all-caps keywords. The
 
 To provide clarity to LLMs, MDZ uses the `END` keyword to delimit blocks. MDZ is indentation insensitive.
 
-
 ## Language Design
 
 Under the hood, MDZ is an amalgam of two grammars: markdown and proz. 
