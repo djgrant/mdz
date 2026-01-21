@@ -185,6 +185,7 @@ TypeExprUntilEq
 Value
   = ArrayLiteral
   / InferredValue
+  / TemplateLiteral
   / valueText:LineText { return valueText.trim(); }
 
 ArrayLiteral
@@ -205,6 +206,28 @@ ArrayElement
 InferredValue
   = "$/" text:$( (!"/" .)* ) "/" {
       return { type: "inferred", text };
+    }
+
+TemplateLiteral
+  = "`" parts:TemplateParts "`" {
+      return { type: "template", parts };
+    }
+
+TemplateParts
+  = parts:TemplatePart* { return parts; }
+
+TemplatePart
+  = TemplateExpr
+  / TemplateText
+
+TemplateExpr
+  = "${" name:Var "}" {
+      return { type: "var", name };
+    }
+
+TemplateText
+  = text:$( (!("`" / "${") .)+ ) {
+      return text;
     }
 
 
