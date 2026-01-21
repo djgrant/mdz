@@ -162,6 +162,10 @@ PushStartLine
 /* ---------- Assignments ---------- */
 
 AssignLine
+  = AssignLineWithValue
+  / AssignLineTypeOnly
+
+AssignLineWithValue
   = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ "=" _ value:Value? LineEnd {
       return {
         type: "assign",
@@ -171,16 +175,51 @@ AssignLine
       };
     }
 
+AssignLineTypeOnly
+  = MdZIndent target:Var _ typeAnn:TypeAnnotation LineEnd {
+      return {
+        type: "assign",
+        target,
+        annotatedType: typeAnn
+      };
+    }
+
 AssignStartLine
   = MdZIndent Var _ (":" / "=")
 
 TypeAnnotation
-  = ":" _ typeText:TypeExprUntilEq {
-      return typeText.trim();
+  = ":" _ typeValue:TypeValue {
+      return typeValue;
     }
 
 TypeExprUntilEq
-  = $( ( !(_ "=") . )+ )
+  = $( ( !(_ "=") !Newline . )+ )
+
+TypeValue
+  = TypeTuple
+  / TypeEnum
+  / typeText:TypeExprUntilEq { return typeText.trim(); }
+
+TypeTuple
+  = "(" _ elements:TypeElements? _ ")" {
+      return { type: "tuple", elements: elements ?? [] };
+    }
+
+TypeElements
+  = head:TypeElement tail:(_ "," _ TypeElement)* {
+      return [head, ...tail.map(([, , , element]) => element)];
+    }
+
+TypeElement
+  = text:$( (!("," / ")") .)+ ) { return text.trim(); }
+
+TypeEnum
+  = head:TypeEnumVariant tail:(_ "|" _ TypeEnumVariant)+ {
+      return { type: "enum", variants: [head, ...tail.map(([, , , variant]) => variant)] };
+    }
+
+TypeEnumVariant
+  = text:$( (!("|" / Newline / End) .)+ ) { return text.trim(); }
 
 Value
   = ArrayLiteral
