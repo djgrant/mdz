@@ -1,3 +1,13 @@
+{
+  const sectionAnchors = new Set();
+  const sectionHeadingRe = /^\s*#{1,6}\s+([A-Za-z_][A-Za-z0-9_-]*)\s*$/;
+  function isSectionHeading(line) {
+    const match = sectionHeadingRe.exec(line ?? "");
+    if (!match) return false;
+    return sectionAnchors.has(match[1]);
+  }
+}
+
 Start = blocks:Blocks
 
 Blocks
@@ -11,8 +21,9 @@ TopBlock
   = ForBlock
   / WhileBlock
   / IfBlock
+  / CaseBlock
   / DoBlock
-  / DelegateBlock
+  / SpawnBlock
   / UseBlock
   / PushLine
   / AssignLine
@@ -34,11 +45,14 @@ StatementLine
 StatementStartLine
  = MdZIndent StatementKeyword
 
+SpawnStartLine
+  = MdZIndent (Kw_ASYNC / Kw_AWAIT) __ Kw_SPAWN
+  / MdZIndent Kw_SPAWN
+
 StatementKeyword
   = Kw_BREAK
   / Kw_CONTINUE
   / Kw_RETURN
-  / Kw_DELEGATE
   / Kw_ASYNC
   / Kw_AWAIT
   / Kw_USE
@@ -58,8 +72,9 @@ InnerBlock =
     ForBlock /
     WhileBlock /
     IfBlock /
+    CaseBlock /
     DoBlock /
-    DelegateBlock /
+    SpawnBlock /
     UseBlock /
     PushLine /
     AssignLine /
@@ -73,6 +88,8 @@ NotEnd = !EndLine
 
 NotEndOrElse = !EndLine !ElseLine
 
+NotEndOrElseOrWhen = !EndLine !ElseLine !WhenStartLine
+
 EndLine
   = MdZIndent "END" WordBoundary (Newline / End) {
   	return "END";
@@ -83,9 +100,10 @@ EndLine
 
 BlockStartLine
   = MdZIndent (
-      Kw_FOR __ ExprUntilIn __ Kw_IN __ /
-      Kw_WHILE __ ExprUntilDo __ Kw_DO /
+      Kw_FOR __ /
+      Kw_WHILE __ /
       Kw_IF __ /
+      Kw_CASE __ /
       Kw_DO
     )
 
@@ -93,6 +111,9 @@ ElseLine
   = MdZIndent Kw_ELSE WordBoundary (Newline / End) {
       return "ELSE";
     }
+
+WhenStartLine
+  = MdZIndent Kw_WHEN WordBoundary
 
 
 /* ---------- FOR Statement ---------- */
@@ -110,9 +131,19 @@ ForBlock
 ForHeader
   = MdZIndent
     Kw_FOR __ target:ExprUntilIn __ Kw_IN __ iterable:LineText?
-    Newline {
+    LineEnd {
       return {
         target: target.trim(),
+        iterable: (iterable ?? "").trim()
+      };
+    }
+  / MdZIndent
+    Kw_FOR __ target:LineText?
+    Newline
+    MdZIndent Kw_IN __ iterable:LineText?
+    LineEnd {
+      return {
+        target: (target ?? "").trim(),
         iterable: (iterable ?? "").trim()
       };
     }
@@ -157,8 +188,15 @@ IfBlock
 
 IfHeader
   = MdZIndent
-    Kw_IF __ condition:IfCondition __ Kw_THEN
-    Newline {
+    Kw_IF __ condition:IfCondition If__ Kw_THEN
+    LineEnd {
+      return { condition };
+    }
+  / MdZIndent
+    Kw_IF __ condition:IfCondition
+    Newline
+    MdZIndent Kw_THEN
+    LineEnd {
       return { condition };
     }
 
@@ -171,6 +209,8 @@ IfThenBlock
     WhileBlock /
     IfBlock /
     DoBlock /
+    SpawnBlock /
+    UseBlock /
     PushLine /
     AssignLine /
     StatementLine /
@@ -182,6 +222,61 @@ IfThenBlock
 ElseBlock
   = ElseLine inner:InnerBlocks { return inner; }
 
+
+/* ---------- CASE Statement ---------- */
+
+CaseBlock
+  = header:CaseHeader whens:CaseWhen+ elseBlocks:CaseElseBlock? EndLine {
+      return {
+        type: "case",
+        expression: header.expression,
+        whens,
+        ...(elseBlocks ? { else: elseBlocks } : {})
+      };
+    }
+
+CaseHeader
+  = MdZIndent
+    Kw_CASE __ expression:LineText?
+    LineEnd {
+      return { expression: (expression ?? "").trim() };
+    }
+
+CaseWhen
+  = header:WhenLine blocks:CaseWhenBlocks {
+      return { condition: header.condition, blocks };
+    }
+
+WhenLine
+  = MdZIndent Kw_WHEN __ condition:IfCondition WhenThen? LineEnd {
+      return { condition };
+    }
+
+WhenThen
+  = _ Kw_THEN
+
+CaseWhenBlocks
+  = blocks:CaseWhenBlock* { return blocks; }
+
+CaseWhenBlock
+  = &NotEndOrElseOrWhen innerBlock:(
+    ForBlock /
+    WhileBlock /
+    IfBlock /
+    CaseBlock /
+    DoBlock /
+    SpawnBlock /
+    UseBlock /
+    PushLine /
+    AssignLine /
+    StatementLine /
+    HostInnerBlock
+  ) {
+    return innerBlock;
+  }
+
+CaseElseBlock
+  = ElseLine inner:InnerBlocks { return inner; }
 
 /* ---------- DO Statement ---------- */
 
@@ -206,8 +301,9 @@ DoInnerBlock
     ForBlock /
     WhileBlock /
     IfBlock /
+    CaseBlock /
     DoBlock /
-    DelegateBlock /
+    SpawnBlock /
     UseBlock /
     PushLine /
     AssignLine /
@@ -222,6 +318,7 @@ DoHostLine
     !PushStartLine
     !AssignStartLine
     !StatementStartLine
+    !SpawnStartLine
     !EndLine
     indent:$(Indent) ListMarker?
     line:LineText?
@@ -234,10 +331,10 @@ DoHostLine
 
 /* ---------- IF Expressions ---------- */
 
-IfCondition = OrExpr
+IfCondition = IfOrExpr
 
-OrExpr
-  = left:AndExpr tail:(_ Kw_OR _ AndExpr)* {
+IfOrExpr
+  = left:IfAndExpr tail:(If_ Kw_OR If_ IfAndExpr)* {
       return tail.reduce((acc, [, , , right]) => ({
         type: "binary",
         op: "OR",
@@ -246,8 +343,8 @@ OrExpr
       }), left);
     }
 
-AndExpr
-  = left:NotExpr tail:(_ Kw_AND _ NotExpr)* {
+IfAndExpr
+  = left:IfNotExpr tail:(If_ Kw_AND If_ IfNotExpr)* {
       return tail.reduce((acc, [, , , right]) => ({
         type: "binary",
         op: "AND",
@@ -256,14 +353,14 @@ AndExpr
       }), left);
     }
 
-NotExpr
-  = Kw_NOT __ expr:NotExpr {
+IfNotExpr
+  = Kw_NOT If__ expr:IfNotExpr {
       return { type: "not", expression: expr };
     }
-  / ComparisonExpr
+  / IfComparisonExpr
 
-ComparisonExpr
-  = left:ExprText _ op:CompOp _ right:ExprText {
+IfComparisonExpr
+  = left:IfExprText If_ op:CompOp If_ right:IfExprText {
       return {
         type: "comparison",
         op,
@@ -271,34 +368,51 @@ ComparisonExpr
         right: right.trim()
       };
     }
-  / expr:ExprText {
+  / expr:IfExprText {
       return expr.trim();
     }
 
 CompOp = "!=" / "="
 
-ExprText
-  = $( ( !(_ CompOp) !(__ Kw_AND) !(__ Kw_OR) !(__ Kw_THEN) . )+ )
+IfExprText
+  = $( ( !IfExprTerminator !Newline . )+ )
+
+IfExprTerminator
+  = If_ CompOp
+  / If__ Kw_AND
+  / If__ Kw_OR
+  / If__ Kw_THEN
 
 
-/* ---------- USE / DELEGATE Statements ---------- */
+/* ---------- USE / SPAWN Statements ---------- */
 
-DelegateBlock
-  = header:DelegateHeader details:StatementDetails? {
-      const toText = details?.to ? ` TO ${details.to}` : "";
-      const text = `${header.text}${toText}`.trim();
+SpawnBlock
+  = header:SpawnHeader details:StatementDetails? {
+      const toValue = header.inlineTo ?? details?.to;
       const out = {
         type: "stmt",
-        keyword: "DELEGATE",
-        text
+        keyword: "SPAWN",
+        target: header.target,
+        text: (toValue ?? "").trim()
       };
       if (header.modifier) out.modifier = header.modifier;
-      if (details?.with) out.with = details.with;
+      const inlineWith = header.inlineWith;
+      if (inlineWith) out.with = inlineWith;
+      if (!inlineWith && details?.with) out.with = details.with;
       return out;
     }
 
 UseBlock
-  = header:UseHeader details:StatementDetails? {
+  = header:UseHeaderWithParams params:WithParamLine+ {
+      const out = {
+        type: "stmt",
+        keyword: "USE",
+        text: header.text,
+        params
+      };
+      return out;
+    }
+  / header:UseHeader details:StatementDetails? {
       const toText = details?.to ? ` TO ${details.to}` : "";
       const text = `${header.text}${toText}`.trim();
       const out = {
@@ -310,25 +424,68 @@ UseBlock
       return out;
     }
 
-DelegateHeader
-  = MdZIndent modifier:(Kw_ASYNC / Kw_AWAIT) __ Kw_DELEGATE __ text:LineText? LineEnd {
-      return { modifier, text: (text ?? "").trim() };
+SpawnHeader
+  = MdZIndent modifier:(Kw_ASYNC / Kw_AWAIT) __ Kw_SPAWN __ target:AgentRef inline:SpawnInline LineEnd {
+      return { modifier, target, ...inline };
     }
-  / MdZIndent Kw_DELEGATE __ text:LineText? LineEnd {
-      return { modifier: null, text: (text ?? "").trim() };
+  / MdZIndent Kw_SPAWN __ target:AgentRef inline:SpawnInline LineEnd {
+      return { modifier: null, target, ...inline };
     }
+
+SpawnInline
+  = _ Kw_TO __ text:InlineToText? inlineWith:InlineWith? {
+      return { inlineTo: (text ?? "").trim(), inlineWith };
+    }
+  / _ Kw_WITH __ "#" name:AnchorName {
+      return { inlineTo: null, inlineWith: { type: "anchor", name } };
+    }
+  / _ Kw_WITH __ text:InlineToText? {
+      return { inlineTo: (text ?? "").trim(), inlineWith: null };
+    }
+  / "" {
+      return { inlineTo: null, inlineWith: null };
+    }
+
+AgentRef
+  = text:$( ( !(__ Kw_TO) !(__ Kw_WITH) !Newline . )+ ) { return text.trim(); }
+
+InlineTo
+  = _ Kw_TO __ text:InlineToText? { return (text ?? "").trim(); }
+
+InlineWith
+  = _ Kw_WITH __ "#" name:AnchorName {
+      return { type: "anchor", name };
+    }
+
+InlineWithParamsStart
+  = _ Kw_WITH
+
+InlineToText
+  = $( ( !(__ Kw_WITH) !Newline . )+ )
+
 
 UseHeader
   = MdZIndent Kw_USE __ text:LineText? LineEnd {
       return { text: (text ?? "").trim() };
     }
 
+UseHeaderWithParams
+  = MdZIndent Kw_USE __ text:UseText InlineWithParamsStart LineEnd {
+      return { text: text.trim() };
+    }
+  / MdZIndent Kw_USE __ InlineWithParamsStart LineEnd {
+      return { text: "" };
+    }
+
+UseText
+  = text:$( ( !(__ Kw_WITH) !Newline . )+ ) { return text; }
+
 StatementDetails
   = to:ToLine? withBlock:WithBlock? {
       return { to, with: withBlock };
     }
 
-DetailIndent = Indent ListMarker
+DetailIndent = Indent ListMarker?
 
 ToLine
   = DetailIndent Kw_TO __ text:LineText? LineEnd {
@@ -350,12 +507,12 @@ WithParams
     }
 
 WithParamLine
-  = Indent ListMarker name:ParamName _ ":" _ value:LineText? LineEnd {
+  = Indent ListMarker? name:ParamName _ ":" _ value:LineText? LineEnd {
       return { name: name.trim(), value: (value ?? "").trim() };
     }
 
 AnchorName = $( [a-zA-Z_][a-zA-Z0-9_-]* )
-ParamName = $( (!":" .)+ )
+ParamName = $( (!(":" / Newline) .)+ )
 
 
 /* ---------- Host blocks ---------- */
@@ -363,26 +520,31 @@ ParamName = $( (!":" .)+ )
 HostBlock
   = lines:HostLineTop+ {
       const text = lines.join("");
-      if (text.trim() === "") return null;
-      return { type: "host", text };
+      const trimmed = text.replace(/^(?:[ \t]*\n)+/, "");
+      if (trimmed.trim() === "") return null;
+      return { type: "host", text: trimmed };
     }
 
 HostInnerBlock
   = lines:HostLineInner+ {
       const text = lines.join("");
-      if (text.trim() === "") return null;
-      return { type: "host", text };
+      const trimmed = text.replace(/^(?:[ \t]*\n)+/, "");
+      if (trimmed.trim() === "") return null;
+      return { type: "host", text: trimmed };
     }
 
 HostLineTop
   = !BlockStartLine
   	!PushStartLine
   	!AssignStartLine
-  	!StatementStartLine
+    !StatementStartLine
+    !SpawnStartLine
     !EndLine
     s:LineText?
     Newline {
-    	return (s ?? "") + "\n";
+      const line = s ?? "";
+      if (isSectionHeading(line)) return "";
+    	return line + "\n";
 }
 
 HostLineInner
@@ -390,11 +552,14 @@ HostLineInner
     !PushStartLine
     !AssignStartLine
     !StatementStartLine
+    !SpawnStartLine
     !EndLine
     indent:$(Indent ListMarker?)
     line:LineText?
     Newline {
-      return indent + (line ?? "") + "\n";
+      const text = (line ?? "");
+      if (isSectionHeading(text)) return "";
+      return indent + text + "\n";
     }
 
 HostTail
@@ -402,9 +567,11 @@ HostTail
     !PushStartLine
     !AssignStartLine
     !StatementStartLine
+    !SpawnStartLine
     !EndLine
     line:LineTextNonEmpty
     End {
+      if (isSectionHeading(line)) return null;
       if (line.trim() === "") return null;
       return { type: "host", text: line };
     }
@@ -432,7 +599,11 @@ AssignLine
   / AssignLineTypeOnly
 
 AssignLineWithValue
-  = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ "=" _ value:Value? LineEnd {
+  = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ AssignEq _ value:Value? LineEnd {
+      if (typeof value === "string") {
+        const match = /^#([A-Za-z_][A-Za-z0-9_-]*)$/.exec(value.trim());
+        if (match) sectionAnchors.add(match[1]);
+      }
       return {
         type: "assign",
         target,
@@ -451,7 +622,7 @@ AssignLineTypeOnly
     }
 
 AssignStartLine
-  = MdZIndent Var _ (":" / "=")
+  = MdZIndent Var _ (":" / AssignEq)
 
 TypeAnnotation
   = ":" _ typeValue:TypeValue {
@@ -459,7 +630,7 @@ TypeAnnotation
     }
 
 TypeExprUntilEq
-  = $( ( !(_ "=") !Newline . )+ )
+  = $( ( !(_ AssignEq) !Newline . )+ )
 
 TypeValue
   = TypeTuple
@@ -467,7 +638,7 @@ TypeValue
   / typeText:TypeExprUntilEq { return typeText.trim(); }
 
 TypeTuple
-  = "(" _ elements:TypeElements? _ ")" {
+  = "(" _ elements:TypeElements? _ ")" !(_ "=>") {
       return { type: "tuple", elements: elements ?? [] };
     }
 
@@ -490,9 +661,19 @@ TypeEnumVariant
 Value
   = ArrayLiteral
   / InferredValue
-  / TemplateLiteral
+  / StringLiteral
   / LambdaValue
-  / valueText:LineText { return valueText.trim(); }
+  / PlainTextValue
+
+PlainTextValue
+  = !ValueLiteralStart valueText:LineText {
+      return valueText.trim();
+    }
+
+ValueLiteralStart
+  = "["
+  / "\""
+  / "$/"
 
 ArrayLiteral
   = "[" _ elements:ArrayElements? _ "]" {
@@ -514,25 +695,30 @@ InferredValue
       return { type: "inferred", text };
     }
 
-TemplateLiteral
-  = "`" parts:TemplateParts "`" {
+StringLiteral
+  = "\"" parts:StringParts "\"" {
+      const hasExpr = parts.some((part) => typeof part !== "string");
+      if (!hasExpr) return `"${parts.join("")}"`;
       return { type: "template", parts };
     }
 
-TemplateParts
-  = parts:TemplatePart* { return parts; }
+StringParts
+  = parts:StringPart* { return parts; }
 
-TemplatePart
-  = TemplateExpr
-  / TemplateText
+StringPart
+  = StringExpr
+  / StringText
 
-TemplateExpr
-  = "${" name:Var "}" {
-      return { type: "var", name };
+StringExpr
+  = "#{" expr:StringExprText "}" {
+      return { type: "expr", expression: expr.trim() };
     }
 
-TemplateText
-  = text:$( (!("`" / "${") .)+ ) {
+StringExprText
+  = $( (!"}" .)* )
+
+StringText
+  = text:$( (!("\"" / "#{") .)+ ) {
       return text;
     }
 
@@ -564,6 +750,8 @@ Kw_DO        = "DO" WordBoundary { return "DO" }
 Kw_IF        = "IF" WordBoundary { return "IF" }
 Kw_THEN      = "THEN" WordBoundary { return "THEN" }
 Kw_ELSE      = "ELSE" WordBoundary { return "ELSE" }
+Kw_CASE      = "CASE" WordBoundary { return "CASE" }
+Kw_WHEN      = "WHEN" WordBoundary { return "WHEN" }
 Kw_AND       = "AND" WordBoundary { return "AND" }
 Kw_OR        = "OR" WordBoundary { return "OR" }
 Kw_NOT       = "NOT" WordBoundary { return "NOT" }
@@ -571,15 +759,17 @@ Kw_WITH      = "WITH" WordBoundary { return "WITH" }
 Kw_BREAK     = "BREAK" WordBoundary { return "BREAK" }
 Kw_CONTINUE  = "CONTINUE" WordBoundary { return "CONTINUE" }
 Kw_RETURN    = "RETURN" WordBoundary { return "RETURN" }
-Kw_DELEGATE  = "DELEGATE" WordBoundary { return "DELEGATE" }
 Kw_TO        = "TO" WordBoundary { return "TO" }
 Kw_ASYNC     = "ASYNC" WordBoundary { return "ASYNC" }
 Kw_AWAIT     = "AWAIT" WordBoundary { return "AWAIT" }
 Kw_USE       = "USE" WordBoundary { return "USE" }
 Kw_GOTO      = "GOTO" WordBoundary { return "GOTO" }
+Kw_SPAWN     = "SPAWN" WordBoundary { return "SPAWN" }
 
 
 /* ---------- Helpers ---------- */
+
+AssignEq = "=" !">"
 
 Var = $("$" [a-zA-Z_][a-zA-Z0-9_]*)
 
@@ -597,3 +787,5 @@ MdZIndent  = Indent ListMarker?
 Indent     = [ \t]*
 _          = [ \t]*
 __         = [ \t]+
+If_        = ([ \t] / Newline)*
+If__       = ([ \t] / Newline)+
