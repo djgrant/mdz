@@ -1,3 +1,3 @@
-WHILE $x < 5 DO
-  RETURN $x
-END
+- WHILE $x < 5 DO
+  - RETURN $x
+- END

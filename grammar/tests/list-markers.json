@@ -1,0 +1,40 @@
+[
+  {
+    "type": "for",
+    "target": "$item",
+    "iterable": "$items",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "CONTINUE",
+        "text": ""
+      },
+      {
+        "type": "host",
+        "text": "  - This is prose\n"
+      },
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$item"
+      }
+    ]
+  },
+  {
+    "type": "for",
+    "target": "$x",
+    "iterable": "$xs",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "CONTINUE",
+        "text": ""
+      },
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$x"
+      }
+    ]
+  }
+]

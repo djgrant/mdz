@@ -1,21 +1,21 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, extname } from "node:path";
 import { glob } from "glob";
 import { generate } from "peggy";
 import { describe, it, expect } from "vitest";
 
 const grammarPath = join(import.meta.dirname, "grammar.peg");
 const grammar = await readFile(grammarPath, "utf-8");
-const testFiles = await glob("tests/*.md", { cwd: import.meta.dirname });
+const testFiles = await glob("tests/*.{md,mdz}", { cwd: import.meta.dirname });
 
 const parser = generate(grammar);
 describe("Grammar Parser Tests", () => {
   for (const mdzFile of testFiles) {
-    const testName = basename(mdzFile, ".md");
+    const testName = basename(mdzFile, extname(mdzFile));
 
     it(`should parse ${testName} correctly`, async () => {
       const mdzPath = join(import.meta.dirname, mdzFile);
-      const jsonPath = mdzPath.replace(/\.mdz$/, ".json");
+      const jsonPath = mdzPath.replace(/\.(md|mdz)$/, ".json");
 
       const input = await readFile(mdzPath, "utf-8");
       const expected = JSON.parse(await readFile(jsonPath, "utf-8"));

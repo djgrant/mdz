@@ -16,7 +16,7 @@ TopBlock
 /* --------- One-line Statment ------- */
 
 StatementLine
-  = Indent kw:StatementKeyword rest:LineText? LineEnd {
+  = MdZIndent kw:StatementKeyword rest:LineText? LineEnd {
       return {
         type: "stmt",
         keyword: kw,
@@ -25,7 +25,7 @@ StatementLine
     }
 
 StatementStartLine
- = Indent StatementKeyword
+ = MdZIndent StatementKeyword
 
 StatementKeyword
   = Kw_BREAK
@@ -57,14 +57,14 @@ InnerBlock =
 NotEnd = !EndLine
 
 EndLine
-  = Indent "END" WordBoundary (Newline / End) {
+  = MdZIndent "END" WordBoundary (Newline / End) {
   	return "END";
   }
 
 
 /* ---------- Sigils ---------- */
 
-BlockStartLine = Indent Kw_FOR __
+BlockStartLine = MdZIndent Kw_FOR __ ExprUntilIn __ Kw_IN __
 
 
 /* ---------- FOR Statement ---------- */
@@ -80,7 +80,7 @@ ForBlock
     }
 
 ForHeader
-  = Indent
+  = MdZIndent
     Kw_FOR __ target:ExprUntilIn __ Kw_IN __ iterable:LineText?
     Newline {
       return {
@@ -168,6 +168,8 @@ LineText         = $( (!Newline .)* )
 LineTextNonEmpty = $( (!Newline .)+ )
 LineEnd          = Newline / End
 
-Indent = [ \t]*
-_      = [ \t]*
-__     = [ \t]+
+ListMarker = "-" [ \t]+
+MdZIndent  = Indent ListMarker?
+Indent     = [ \t]*
+_          = [ \t]*
+__         = [ \t]+
