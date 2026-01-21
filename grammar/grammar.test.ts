@@ -6,13 +6,12 @@ import { describe, it, expect } from "vitest";
 
 const grammarPath = join(import.meta.dirname, "grammar.peg");
 const grammar = await readFile(grammarPath, "utf-8");
-const testFiles = await glob("tests/*.mdz", { cwd: import.meta.dirname });
+const testFiles = await glob("tests/*.md", { cwd: import.meta.dirname });
 
 const parser = generate(grammar);
-
 describe("Grammar Parser Tests", () => {
   for (const mdzFile of testFiles) {
-    const testName = basename(mdzFile, ".mdz");
+    const testName = basename(mdzFile, ".md");
 
     it(`should parse ${testName} correctly`, async () => {
       const mdzPath = join(import.meta.dirname, mdzFile);
