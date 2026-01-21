@@ -1,0 +1,45 @@
+[
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "text": "~/skill/alpha"
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "text": "~/skill/alpha",
+    "params": [
+      {
+        "name": "p1",
+        "value": "val"
+      }
+    ]
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "text": "~/skill/alpha TO do thing"
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "text": "~/skill/alpha TO do thing",
+    "params": [
+      {
+        "name": "p1",
+        "value": "val"
+      }
+    ]
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "text": "~/skill/alpha TO do thing",
+    "params": [
+      {
+        "name": "p1",
+        "value": "val"
+      }
+    ]
+  }
+]

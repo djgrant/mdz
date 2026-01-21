@@ -1,0 +1,27 @@
+[
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
+    "target": "~/agent/alpha",
+    "text": "task"
+  },
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
+    "modifier": "ASYNC",
+    "target": "~/agent/alpha",
+    "text": "explore",
+    "with": { "type": "anchor", "name": "context" }
+  },
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
+    "modifier": "AWAIT",
+    "target": "~/agent/alpha",
+    "text": "analyze",
+    "with": [
+      { "name": "depth", "value": "\"deep\"" },
+      { "name": "strict", "value": "true" }
+    ]
+  }
+]

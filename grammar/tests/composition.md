@@ -1,5 +1,0 @@
-- USE ~/skill/validator
-  - TO check if meets criteria
-  - WITH
-    - threshold: lax
-    - mode: strict

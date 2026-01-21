@@ -11,5 +11,19 @@
       "type": "array",
       "elements": ["\"a\"", "\"b\""]
     }
+  },
+  {
+    "type": "assign",
+    "target": "$mixed",
+    "value": {
+      "type": "array",
+      "elements": [
+        "\"exact\"",
+        "loose",
+        "$/infer/",
+        "`hi ${$name}`",
+        "$x => do thing"
+      ]
+    }
   }
 ]

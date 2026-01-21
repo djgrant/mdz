@@ -9,5 +9,55 @@
     "target": "$name",
     "annotatedType": "$String",
     "value": "\"value\""
+  },
+  {
+    "type": "assign",
+    "target": "$title_exact",
+    "value": "\"literal\""
+  },
+  {
+    "type": "assign",
+    "target": "$title_loose",
+    "value": "literal"
+  },
+  {
+    "type": "assign",
+    "target": "$from_inferred",
+    "value": {
+      "type": "inferred",
+      "text": "guess this"
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$from_template",
+    "value": {
+      "type": "template",
+      "parts": [
+        "hello ",
+        { "type": "var", "name": "$name" }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$from_lambda",
+    "value": {
+      "type": "lambda",
+      "params": ["$x"],
+      "body": "do thing"
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$from_array",
+    "value": {
+      "type": "array",
+      "elements": [
+        "\"a\"",
+        "b",
+        "3"
+      ]
+    }
   }
 ]
