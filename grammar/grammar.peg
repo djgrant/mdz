@@ -186,6 +186,7 @@ Value
   = ArrayLiteral
   / InferredValue
   / TemplateLiteral
+  / LambdaValue
   / valueText:LineText { return valueText.trim(); }
 
 ArrayLiteral
@@ -228,6 +229,24 @@ TemplateExpr
 TemplateText
   = text:$( (!("`" / "${") .)+ ) {
       return text;
+    }
+
+LambdaValue
+  = params:LambdaParams _ "=>" _ body:LineText? {
+      return {
+        type: "lambda",
+        params,
+        body: (body ?? "").trim()
+      };
+    }
+
+LambdaParams
+  = LambdaParamList
+  / param:Var { return [param]; }
+
+LambdaParamList
+  = "(" _ head:Var tail:(_ "," _ Var)* _ ")" {
+      return [head, ...tail.map(([, , , param]) => param)];
     }
 
 
