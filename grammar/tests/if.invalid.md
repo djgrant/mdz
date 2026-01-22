@@ -1,2 +1,1 @@
-IF x
-END
+IF x THEN

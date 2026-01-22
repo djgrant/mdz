@@ -40,5 +40,29 @@
         "text": "$item"
       }
     ]
+  },
+  {
+    "type": "for",
+    "target": "$item",
+    "iterable": "$items",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$item"
+      }
+    ]
+  },
+  {
+    "type": "for",
+    "target": "$item",
+    "iterable": "$items",
+    "blocks": [
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$item"
+      }
+    ]
   }
 ]

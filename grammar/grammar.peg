@@ -137,10 +137,30 @@ ForBlock
 
 ForHeader
   = MdZIndent
+    Kw_FOR __ target:ExprUntilIn __ Kw_IN __ iterable:ExprUntilDo __ Kw_DO
+    LineEnd {
+      return {
+        target: target.trim(),
+        iterable: iterable.trim()
+      };
+    }
+  / MdZIndent
     Kw_FOR __ target:ExprUntilIn __ Kw_IN __ iterable:LineText?
     LineEnd {
       return {
         target: target.trim(),
+        iterable: (iterable ?? "").trim()
+      };
+    }
+  / MdZIndent
+    Kw_FOR __ target:LineText?
+    Newline
+    MdZIndent Kw_IN __ iterable:LineText?
+    Newline
+    MdZIndent Kw_DO
+    LineEnd {
+      return {
+        target: (target ?? "").trim(),
         iterable: (iterable ?? "").trim()
       };
     }
@@ -156,10 +176,10 @@ ForHeader
     }
 
 ExprUntilIn
-  = $( ( !(__ Kw_IN) . )+ )
+  = $( ( !(__ Kw_IN) !Newline . )+ )
 
 ExprUntilDo
-  = $( ( !(__ Kw_DO) . )+ )
+  = $( ( !(__ Kw_DO) !Newline . )+ )
 
 
 /* ---------- WHILE Statement ---------- */
@@ -208,6 +228,16 @@ IfBlock
 IfHeader
   = MdZIndent
     Kw_IF __ condition:IfCondition If__ Kw_THEN
+    LineEnd {
+      return { condition };
+    }
+  / MdZIndent
+    Kw_IF __ condition:IfCondition
+    LineEnd {
+      return { condition };
+    }
+  / MdZIndent
+    Kw_IF __ condition:IfCondition If__ Kw_THEN?
     LineEnd {
       return { condition };
     }
@@ -396,6 +426,7 @@ IfExprTerminator
   / If__ Kw_AND
   / If__ Kw_OR
   / If__ Kw_THEN
+  / If__ EndLine
 
 
 /* ---------- USE / SPAWN Statements ---------- */

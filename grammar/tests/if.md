@@ -10,3 +10,7 @@ IF $x = 1
 THEN
   RETURN true
 END
+
+IF $enabled
+  RETURN true
+END

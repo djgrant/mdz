@@ -50,5 +50,16 @@
         "text": "true"
       }
     ]
+  },
+  {
+    "type": "if",
+    "condition": "$enabled",
+    "then": [
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "true"
+      }
+    ]
   }
 ]
