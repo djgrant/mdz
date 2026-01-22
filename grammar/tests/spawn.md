@@ -1,13 +1,13 @@
-SPAWN ~/agent/alpha TO task
+SPAWN ~/agent/general TO task
 
-SPAWN ~/agent/alpha WITH note that post is published
+SPAWN ~/agent/reporter WITH note that post is published
 
-ASYNC SPAWN ~/agent/alpha
-TO explore
-WITH #context
+ASYNC SPAWN ~/agent/explore
+TO explore codebase
+WITH #explore-instructions
 
-AWAIT SPAWN ~/agent/alpha
-TO analyze
+AWAIT SPAWN ~/agent/analyst
+TO analyze report
 WITH
   depth: "deep"
   strict: true
