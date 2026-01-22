@@ -1,10 +1,6 @@
 {
-  const sectionAnchors = new Set();
-  const sectionHeadingRe = /^\s*#{1,6}\s+([A-Za-z_][A-Za-z0-9_-]*)\s*$/;
-  function isSectionHeading(line) {
-    const match = sectionHeadingRe.exec(line ?? "");
-    if (!match) return false;
-    return sectionAnchors.has(match[1]);
+  function trimText(value) {
+    return typeof value === "string" ? value.trim() : value;
   }
 }
 
@@ -404,11 +400,12 @@ IfExprTerminator
 SpawnBlock
   = header:SpawnHeader details:StatementDetails? {
       const toValue = header.inlineTo ?? details?.to;
+      const text = trimText(toValue ?? "");
       const out = {
         type: "stmt",
         keyword: "SPAWN",
         target: header.target,
-        text: (toValue ?? "").trim()
+        text
       };
       if (header.modifier) out.modifier = header.modifier;
       const inlineWith = header.inlineWith;
@@ -419,22 +416,25 @@ SpawnBlock
 
 UseBlock
   = header:UseHeaderWithParams params:WithParamLine+ {
+      const text = trimText(header.inlineTo);
       const out = {
         type: "stmt",
         keyword: "USE",
-        text: header.text,
+        target: header.target,
         params
       };
+      if (text !== null && text !== undefined && text !== "") out.text = text;
       return out;
     }
   / header:UseHeader details:StatementDetails? {
-      const toText = details?.to ? ` TO ${details.to}` : "";
-      const text = `${header.text}${toText}`.trim();
+      const toValue = header.inlineTo ?? details?.to;
+      const text = trimText(toValue);
       const out = {
         type: "stmt",
         keyword: "USE",
-        text
+        target: header.target
       };
+      if (text !== null && text !== undefined && text !== "") out.text = text;
       if (details?.with && Array.isArray(details.with)) out.params = details.with;
       return out;
     }
@@ -448,49 +448,67 @@ SpawnHeader
     }
 
 SpawnInline
-  = _ Kw_TO __ text:InlineToText? inlineWith:InlineWith? {
-      return { inlineTo: (text ?? "").trim(), inlineWith };
+  = _ Kw_TO __ value:InlineToValue? inlineWith:InlineWith? {
+      return { inlineTo: value ?? "", inlineWith };
     }
   / _ Kw_WITH __ "#" name:AnchorName {
-      return { inlineTo: null, inlineWith: { type: "anchor", name } };
+      return { inlineTo: null, inlineWith: { type: "link", kind: "anchor", value: `#${name}` } };
     }
-  / _ Kw_WITH __ text:InlineToText? {
-      return { inlineTo: (text ?? "").trim(), inlineWith: null };
+  / _ Kw_WITH __ value:InlineToValue? {
+      return { inlineTo: value ?? "", inlineWith: null };
     }
   / "" {
       return { inlineTo: null, inlineWith: null };
     }
 
 AgentRef
-  = text:$( ( !(__ Kw_TO) !(__ Kw_WITH) !Newline . )+ ) { return text.trim(); }
+  = link:LinkValue { return link; }
+  / text:$( ( !(__ Kw_TO) !(__ Kw_WITH) !Newline . )+ ) { return text.trim(); }
 
 InlineWith
   = _ Kw_WITH __ "#" name:AnchorName {
-      return { type: "anchor", name };
+      return { type: "link", kind: "anchor", value: `#${name}` };
     }
 
 InlineWithParamsStart
   = _ Kw_WITH
+
+InlineToValue
+  = AnchorValue
+  / LinkValue
+  / text:InlineToText { return text.trim(); }
 
 InlineToText
   = $( ( !(__ Kw_WITH) !Newline . )+ )
 
 
 UseHeader
-  = MdZIndent Kw_USE __ text:LineText? LineEnd {
-      return { text: (text ?? "").trim() };
+  = MdZIndent Kw_USE __ target:UseTarget inline:UseInlineTo LineEnd {
+      return { target, ...inline };
     }
 
 UseHeaderWithParams
-  = MdZIndent Kw_USE __ text:UseText InlineWithParamsStart LineEnd {
-      return { text: text.trim() };
+  = MdZIndent Kw_USE __ target:UseTarget inline:UseInlineTo InlineWithParamsStart LineEnd {
+      return { target, ...inline };
     }
   / MdZIndent Kw_USE __ InlineWithParamsStart LineEnd {
-      return { text: "" };
+      return { target: "", inlineTo: null };
     }
 
-UseText
-  = text:$( ( !(__ Kw_WITH) !Newline . )+ ) { return text; }
+UseInlineTo
+  = _ Kw_TO __ value:InlineToValue? {
+      return { inlineTo: value ?? "" };
+    }
+  / "" {
+      return { inlineTo: null };
+    }
+
+UseTarget
+  = LinkValue
+  / text:UseTargetText { return text.trim(); }
+
+UseTargetText
+  = $( ( !(__ Kw_TO) !(__ Kw_WITH) !Newline . )+ )
 
 StatementDetails
   = to:ToLine? withBlock:WithBlock? {
@@ -500,8 +518,8 @@ StatementDetails
 DetailIndent = Indent ListMarker?
 
 ToLine
-  = DetailIndent Kw_TO __ text:LineText? LineEnd {
-      return (text ?? "").trim();
+  = DetailIndent Kw_TO __ value:InlineToValue? LineEnd {
+      return value ?? "";
     }
 
 WithBlock
@@ -510,7 +528,7 @@ WithBlock
 
 WithAnchor
   = DetailIndent Kw_WITH __ "#" name:AnchorName LineEnd {
-      return { type: "anchor", name };
+      return { type: "link", kind: "anchor", value: `#${name}` };
     }
 
 WithParams
@@ -525,6 +543,11 @@ WithParamLine
 
 AnchorName = $( [a-zA-Z_][a-zA-Z0-9_-]* )
 ParamName = $( (!(":" / Newline) .)+ )
+
+LinkValue
+  = "~/" path:$( [a-zA-Z0-9_./-]+ ) {
+      return { type: "link", kind: "path", value: `~/${path}` };
+    }
 
 
 /* ---------- Host blocks ---------- */
@@ -550,7 +573,6 @@ HostLineTop
     s:LineText?
     Newline {
       const line = s ?? "";
-      if (isSectionHeading(line)) return "";
     	return line + "\n";
 }
 
@@ -560,7 +582,6 @@ HostLineInner
     line:LineText?
     Newline {
       const text = (line ?? "");
-      if (isSectionHeading(text)) return "";
       return indent + text + "\n";
     }
 
@@ -568,7 +589,6 @@ HostTail
   = !HostLineStart
     line:LineTextNonEmpty
     End {
-      if (isSectionHeading(line)) return null;
       if (line.trim() === "") return null;
       return { type: "host", text: line };
     }
@@ -597,10 +617,6 @@ AssignLine
 
 AssignLineWithValue
   = MdZIndent target:Var _ typeAnn:TypeAnnotation? _ AssignEq _ value:Value? LineEnd {
-      if (typeof value === "string") {
-        const match = /^#([A-Za-z_][A-Za-z0-9_-]*)$/.exec(value.trim());
-        if (match) sectionAnchors.add(match[1]);
-      }
       return {
         type: "assign",
         target,
@@ -657,6 +673,8 @@ TypeEnumVariant
 
 Value
   = ArrayLiteral
+  / AnchorValue
+  / LinkValue
   / InferredValue
   / StringLiteral
   / LambdaValue
@@ -669,8 +687,15 @@ PlainTextValue
 
 ValueLiteralStart
   = "["
+  / "#"
+  / "~/"
   / "\""
   / "$/"
+
+AnchorValue
+  = "#" name:AnchorName {
+      return { type: "link", kind: "anchor", value: `#${name}` };
+    }
 
 ArrayLiteral
   = "[" _ elements:ArrayElements? _ "]" {

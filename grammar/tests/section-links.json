@@ -2,10 +2,14 @@
   {
     "type": "assign",
     "target": "$snippet",
-    "value": "#code-snippet"
+    "value": {
+      "type": "link",
+      "kind": "anchor",
+      "value": "#code-snippet"
+    }
   },
   {
     "type": "host",
-    "text": "```html\n<div>hello!</div>\n```\n"
+    "text": "# code-snippet\n\n```html\n<div>hello!</div>\n```\n"
   }
 ]
