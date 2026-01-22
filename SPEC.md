@@ -223,8 +223,179 @@ $status: Status
 $pairs: Array<Pair>
 ```
 
-**Syntax:** `$name: Type` or `$name: Type = value`).
+**Syntax:** `$name: Type` or `$name: Type = value`.
 
 **Runtime behaviour:** Types can optionally be used at runtime for validation.
 
 **Design notes:** Types are primarily available as a developer tool to ensure program correctness.
+
+## 7. Control flow
+
+Control flow is heavily inspired by Ruby for its readability and obvious runtime behaviour. 
+
+### FOR
+
+```md
+FOR $item IN $items
+  SPAWN ~/agent/reporter WITH note that post is published
+END
+
+FOR $item
+IN $items
+  CONTINUE
+END
+```
+
+**Syntax:** `FOR <target> IN <iterable>` starts a loop block terminated by `END`. `DO` is optional. Headers may span multiple lines.
+
+**Runtime behaviour:** Iterates over the iterable expression, binding each item to the target for the loop body.
+
+### WHILE
+
+```md
+WHILE $remaining != 0
+  $remaining = $remaining - 1
+END
+
+WHILE diminishing returns DO
+  BREAK
+END
+```
+
+**Syntax:** `WHILE <condition>` starts a loop block terminated by `END`. `DO` is optional.
+
+**Runtime behaviour:** Repeats while the condition evaluates truthy.
+
+### BREAK
+
+```md
+BREAK
+```
+
+**Syntax:** `BREAK` is a standalone statement.
+
+**Runtime behaviour:** Exits the innermost loop immediately.
+
+### CONTINUE
+
+```md
+CONTINUE
+```
+
+**Syntax:** `CONTINUE` is a standalone statement.
+
+**Runtime behaviour:** Skips to the next iteration of the innermost loop.
+
+### IF
+
+```md
+IF $status = "draft" THEN
+  RETURN "needs review"
+ELSE
+  RETURN "publish"
+END
+
+IF $x = 1
+  AND $y != 2
+  OR NOT diminishing returns
+THEN
+  RETURN true
+END
+```
+
+**Syntax:** `IF <condition>` introduces a conditional block; `THEN` is optional and may appear on a new line. `ELSE` is optional.
+
+**Runtime behaviour:** Conditions evaluate as truthy/falsey expressions. If the condition is truthy, the `THEN` block runs; otherwise `ELSE` runs if present.
+
+### CASE
+
+```md
+CASE $status
+WHEN "draft" OR "pending"
+  RETURN "needs review"
+WHEN "published" THEN
+  SPAWN ~/agent/reporter WITH note that post is published
+ELSE
+  RETURN "ignore"
+END
+```
+
+**Syntax:** `CASE <expr>` introduces a case block with one or more `WHEN <condition>` clauses and optional `ELSE`. `WHEN` may include `THEN`.
+
+**Runtime behaviour:** Conditions evaluate as truthy/falsey expressions. The first matching `WHEN` executes, and no further `WHEN` clauses are evaluated. If no `WHEN` clause matches, `ELSE` runs, if present.
+
+### DO
+
+```md
+DO
+  Take out the trash
+  RETURN "ok"
+END
+```
+
+**Syntax:** `DO ... END` defines an explicit block with no additional semantics.
+
+**Runtime behaviour:** Executes its inner statements in order.
+
+**Design notes:** `DO` primarily exists to wrap prose instructions in a formal block.
+
+### END
+
+```md
+END
+```
+
+**Syntax:** `END` closes the most recent open block.
+
+**Runtime behaviour:** Terminates the current block scope.
+
+### RETURN
+
+```md
+RETURN
+RETURN result of analysis
+```
+
+**Syntax:** `RETURN` is a standalone statement with an optional value.
+
+**Runtime behaviour:** Defines the return value of the execution context i.e. the LLMs response.
+
+### GOTO
+
+```md
+GOTO next section
+```
+
+**Syntax:** `GOTO <target>` is a standalone statement.
+
+**Runtime behaviour:** Reserved for explicit control transfer.
+
+## 8. Composition
+
+### SPAWN
+
+```md
+SPAWN ~/agent/reporter TO summarize the findings
+
+FOR $instruction IN $instructions
+  ASYNC SPAWN ~/agent/explore
+    WITH $instruction
+END
+```
+
+**Syntax:** `SPAWN` requires a target, and supports optional `TO` and `WITH`, which may be an anchor or a parameter block.
+
+**Runtime behaviour:** Delegates work to an agent. `WITH` describes the prompt to be passed to the spawned agent. `ASYNC`/`AWAIT` determine whether or not to pause execution until the spawned agent responds. If omitted, the evaluator decides on async/await semantics.
+
+### USE
+
+```md
+USE ~/skill/debug
+
+USE ~/skill/debug TO do thing WITH
+  p1: val
+```
+
+**Syntax:** `USE` targets a skill and supports optional `TO` and `WITH`. `WITH` may be an anchor or a parameter block.
+
+**Runtime behaviour:** Composes a skill prompt into the current execution.
