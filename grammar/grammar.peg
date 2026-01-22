@@ -169,8 +169,20 @@ WhileBlock
 WhileHeader
   = MdZIndent
     Kw_WHILE __ condition:ExprUntilDo __ Kw_DO
-    Newline {
+    LineEnd {
       return { condition: condition.trim() };
+    }
+  / MdZIndent
+    Kw_WHILE __ condition:LineText?
+    Newline
+    MdZIndent Kw_DO
+    LineEnd {
+      return { condition: (condition ?? "").trim() };
+    }
+  / MdZIndent
+    Kw_WHILE __ condition:LineText?
+    LineEnd {
+      return { condition: (condition ?? "").trim() };
     }
 
 
