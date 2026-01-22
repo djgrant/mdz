@@ -31,7 +31,7 @@ TopBlock
   / HostBlock
 
 
-/* --------- One-line Statment ------- */
+/* --------- One-line Statement ------- */
 
 StatementLine
   = MdZIndent kw:StatementKeyword rest:LineText? LineEnd {
@@ -48,6 +48,14 @@ StatementStartLine
 SpawnStartLine
   = MdZIndent (Kw_ASYNC / Kw_AWAIT) __ Kw_SPAWN
   / MdZIndent Kw_SPAWN
+
+HostLineStart
+  = BlockStartLine
+  / PushStartLine
+  / AssignStartLine
+  / StatementStartLine
+  / SpawnStartLine
+  / EndLine
 
 StatementKeyword
   = Kw_BREAK
@@ -326,12 +334,7 @@ DoInnerBlock
   }
 
 DoHostLine
-  = !BlockStartLine
-    !PushStartLine
-    !AssignStartLine
-    !StatementStartLine
-    !SpawnStartLine
-    !EndLine
+  = !HostLineStart
     indent:$(Indent) ListMarker?
     line:LineText?
     Newline {
@@ -461,9 +464,6 @@ SpawnInline
 AgentRef
   = text:$( ( !(__ Kw_TO) !(__ Kw_WITH) !Newline . )+ ) { return text.trim(); }
 
-InlineTo
-  = _ Kw_TO __ text:InlineToText? { return (text ?? "").trim(); }
-
 InlineWith
   = _ Kw_WITH __ "#" name:AnchorName {
       return { type: "anchor", name };
@@ -546,12 +546,7 @@ HostInnerBlock
     }
 
 HostLineTop
-  = !BlockStartLine
-  	!PushStartLine
-  	!AssignStartLine
-    !StatementStartLine
-    !SpawnStartLine
-    !EndLine
+  = !HostLineStart
     s:LineText?
     Newline {
       const line = s ?? "";
@@ -560,12 +555,7 @@ HostLineTop
 }
 
 HostLineInner
-  = !BlockStartLine
-    !PushStartLine
-    !AssignStartLine
-    !StatementStartLine
-    !SpawnStartLine
-    !EndLine
+  = !HostLineStart
     indent:$(Indent ListMarker?)
     line:LineText?
     Newline {
@@ -575,12 +565,7 @@ HostLineInner
     }
 
 HostTail
-  = !BlockStartLine
-    !PushStartLine
-    !AssignStartLine
-    !StatementStartLine
-    !SpawnStartLine
-    !EndLine
+  = !HostLineStart
     line:LineTextNonEmpty
     End {
       if (isSectionHeading(line)) return null;
