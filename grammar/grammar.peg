@@ -59,8 +59,6 @@ StatementKeyword
   = Kw_BREAK
   / Kw_CONTINUE
   / Kw_RETURN
-  / Kw_ASYNC
-  / Kw_AWAIT
   / Kw_USE
   / Kw_GOTO
   / Kw_DO
