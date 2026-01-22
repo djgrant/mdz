@@ -9,5 +9,35 @@
         "text": "$x"
       }
     ]
+  },
+  {
+    "type": "while",
+    "condition": "$x < 5",
+    "blocks": [
+      {
+        "type": "host",
+        "text": "  This is prose\n"
+      },
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$x"
+      }
+    ]
+  },
+  {
+    "type": "while",
+    "condition": "$x < 5",
+    "blocks": [
+      {
+        "type": "host",
+        "text": "  This is prose\n"
+      },
+      {
+        "type": "stmt",
+        "keyword": "RETURN",
+        "text": "$x"
+      }
+    ]
   }
 ]
