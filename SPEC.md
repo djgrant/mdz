@@ -2,8 +2,7 @@
 
 ## 1. Overview
 
-MDZ extends a host text format e.g. Markdown with a small set of all-caps keywords that opt a line into programmatic control flow. Everything else remains
-host text and is preserved as-is.
+MDZ extends a host text format e.g. Markdown with a small and flexible grammar designed for evaluation by LLMs. Everything else remains host text and is preserved as-is.
 
 The parser yields a stream of blocks that alternate between:
 - host blocks (raw host text), and
@@ -13,7 +12,7 @@ MDZ is indentation-insensitive. Line breaks are meaningful for separating statem
 
 Conformance is defined by the fixture suite in `grammar/tests/`.
 
-MDZ differs from conventional programming languages  by its flexibility to express non-deterministic behaviours. The language is designed to be intuitive to both humans and LLMs.  
+MDZ differs from conventional programming languages by its flexibility to express non-deterministic behaviours. The language is designed to be intuitive to both humans and LLMs.  
 
 This spec documents both syntax and the intended runtime semantics.
 
@@ -49,18 +48,18 @@ Block boundaries are determined by construct grammar. Once a statement begins, i
 ### Semantic expressions
 
 ```md
-<!-- declartive for interpretation -->
+<!-- declarative for interpretation -->
 $summary = the main argument in one sentence
 
-<!-- impreative for instructions -->
+<!-- imperative for instructions -->
 USE ~/skill/debug TO find the root cause
 ```
 
-**Syntax:** any unquoted text in expression position (e.g. assignment RHS or condition) is treated as a semantic expression.
+**Syntax:** Any unquoted text in expression position (e.g. assignment RHS or condition) is treated as a semantic expression.
 
-**Runtime behaviour:** the executor infers the meaning within the current context.
+**Runtime behaviour:** The executor infers the meaning within the current context.
 
-**Design notes:** semantic expressions leverage LLMs' ability to infer meaning from context. They are the default syntax, because LLMs already default to interpreting text.
+**Design notes:** Semantic expressions leverage LLMs' ability to infer meaning from context. They are the default syntax, because LLMs already default to interpreting text.
 
 ### Literal strings
 
@@ -69,11 +68,11 @@ $title = "changelog"
 $message = "release #{version}"
 ```
 
-**Syntax:** double-quoted strings support interpolation via `#{expr}`; plain strings without interpolation remain a literal value.
+**Syntax:** Double-quoted strings support interpolation via `#{expr}`; plain strings without interpolation remain a literal value.
 
-**Runtime behaviour:** interpolated expressions are evaluated and substituted; the result is a single string value.
+**Runtime behaviour:** Interpolated expressions are evaluated and substituted; the result is a single string value.
 
-**Design notes:** explicit quoting clarifies when an _exact_ value must be used.
+**Design notes:** Explicit quoting clarifies when an _exact_ value must be used.
 
 ### Number literals
 
@@ -83,24 +82,24 @@ $ratio = 0.75
 $bytes = 1e3
 ```
 
-**Syntax:** numeric forms are written as plain text tokens (e.g. `5`, `0.75`, `1e3`) and are parsed as number literals when the entire value expression is a number.
+**Syntax:** Numeric forms are written as plain text tokens (e.g. `5`, `0.75`, `1e3`) and are parsed as number literals when the entire value expression is a number.
 
-**Runtime behaviour:** number literals are treated as exact number values.
+**Runtime behaviour:** Number literals are treated as exact number values.
 
-**Design notes:** number parsing is intentionally conservative to avoid interfering with semantic expressions that happen to include digits.
+**Design notes:** Number parsing is intentionally conservative to avoid interfering with semantic expressions that happen to include digits.
 
 ### Links
 
 ```md
 $snippet = #code-snippet
-USE ~/skill/alpha
+USE ~/skill/debugger
 ```
 
 **Syntax:** `#anchor` or `~/path`.
 
-**Runtime behaviour:** links are resolved by the executor (anchor to section content, path to a prompt file e.g. skill/agent/resource).
+**Runtime behaviour:** Links are resolved by the executor (anchor to section content, path to a prompt file e.g. skill/agent/resource).
 
-**Design notes:** links are the core primitve that enables modularity and composition of prompts, and enable compile-time checking of dependencies.
+**Design notes:** Links are the core primitive for splitting prompts into modules. They enable dependencies to be checked at compile time.
 
 ### Lambdas
 
@@ -108,13 +107,13 @@ USE ~/skill/alpha
 $format = (title, name) => "hello #{title} #{name}"
 ```
 
-**Syntax:** `param => body` or `(...args) => body`.
+**Syntax:** `param => expression` or `(param1, param2, ...) => expression`.
 
-**Runtime behaviour:** a callable value that executes `body` with bound parameters in the current context. A first-class type that can be passed around.
+**Runtime behaviour:** A callable value that evaluates `expression` with parameters bound to the current context. Lambdas are a first-class type that can be passed around.
 
-**Design notes:** lambdas enable developers to express simple deterministic behaviours concisely and clearly.
+**Design notes:** Lambdas exist to provide an explicit representation of simple deterministic computations.
 
-## Data Structures 
+## Data Structures
 
 ### Arrays
 
@@ -125,11 +124,11 @@ $approaches = [the question reframed, kill your darlings]
 
 **Syntax:** `[elem1, elem2, ...]` where elements are any value expression, including nested arrays.
 
-**Runtime behaviour:** yields an ordered list of values.
+**Runtime behaviour:** Yields an ordered list of values.
 
-## 5. Assignment and Types
+## 5. Variables and Types
 
-### Assignment
+### Variables
 
 ```md
 $count = 5
@@ -139,19 +138,4 @@ $status = "draft"
 
 **Syntax:** `$name = value` assigns a value expression to a variable. `$name: Type = value` includes a type annotation. `$name: Type` declares a variable with a type but no value.
 
-**Runtime behaviour:** assigns the resolved value into the current scope; uninitialized typed variables reserve a slot for later assignment.
-
-**Design notes:** assignment keeps syntax minimal and prose-friendly while allowing optional type hints for validation or downstream tooling.
-
-### Types
-
-```md
-$status: draft | pending | published = draft
-$pair: (String, Int)
-```
-
-**Syntax:** type annotations are introduced with `:` and may be a tuple `(t1, t2, ...)`, an enum `a | b | c`, or an arbitrary type expression.
-
-**Runtime behaviour:** type annotations are metadata for validators or executors; they do not change parsing of values.
-
-**Design notes:** types are lightweight and permissive to avoid constraining experimentation while enabling linting and schema-like checks.
+**Runtime behaviour:** Tracks the assigned value of the variable through evaluation.
