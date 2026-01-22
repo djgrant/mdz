@@ -1,6 +1,89 @@
 [
-  { "type": "assign", "target": "$pair", "annotatedType": { "type": "tuple", "elements": ["$Task", "$Strategy"] } },
-  { "type": "assign", "target": "$status", "annotatedType": { "type": "enum", "variants": ["\"active\"", "\"inactive\""] } },
-  { "type": "assign", "target": "$goal", "annotatedType": "the primary user intent", "value": "\"find bugs\"" },
-  { "type": "assign", "target": "$formatter", "annotatedType": "($String) => $String" }
+  {
+    "type": "assign",
+    "target": "$pair",
+    "annotatedType": {
+      "type": "tuple",
+      "elements": [
+        { "type": "ref", "name": "Task" },
+        { "type": "ref", "name": "Strategy" }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$status",
+    "annotatedType": {
+      "type": "enum",
+      "variants": [
+        { "type": "literal", "value": "active" },
+        { "type": "literal", "value": "inactive" }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$goal",
+    "annotatedType": { "type": "semantic", "text": "a random number" },
+    "value": "\"find bugs\""
+  },
+  {
+    "type": "assign",
+    "target": "$formatter",
+    "annotatedType": { "type": "semantic", "text": "(String) => String" }
+  },
+  {
+    "type": "assign",
+    "target": "$collection",
+    "annotatedType": {
+      "type": "ref",
+      "name": "Array",
+      "args": [
+        { "type": "ref", "name": "Pair" }
+      ]
+    }
+  },
+  {
+    "type": "type",
+    "name": "Status",
+    "value": {
+      "type": "enum",
+      "variants": [
+        { "type": "literal", "value": "active" },
+        { "type": "literal", "value": "inactive" }
+      ]
+    }
+  },
+  {
+    "type": "type",
+    "name": "Pair",
+    "value": {
+      "type": "tuple",
+      "elements": [
+        { "type": "ref", "name": "String" },
+        { "type": "ref", "name": "Number" }
+      ]
+    }
+  },
+  {
+    "type": "type",
+    "name": "Magnitude",
+    "value": {
+      "type": "literal",
+      "value": { "type": "number", "value": 123 }
+    }
+  },
+  {
+    "type": "type",
+    "name": "Agent",
+    "value": {
+      "type": "literal",
+      "value": { "type": "link", "kind": "path", "value": "~/agent/general" }
+    }
+  },
+  {
+    "type": "type",
+    "name": "Approx",
+    "value": { "type": "semantic", "text": "a random number" }
+  }
 ]

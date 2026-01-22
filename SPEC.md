@@ -126,9 +126,19 @@ $approaches = [the question reframed, kill your darlings]
 
 **Runtime behaviour:** Yields an ordered list of values.
 
-## 5. Variables and Types
+### Tuples
 
-### Variables
+```md
+$pair: (String, Number) = ("draft", 3)
+```
+
+**Syntax:** `(t1, t2, ...)` defines a fixed-length tuple type or value; tuple values accept any value expression.
+
+**Runtime behaviour:** Yields a fixed-length ordered value with positional typing.
+
+## 5. Variables
+
+### Variable declarations
 
 ```md
 $count = 5
@@ -139,3 +149,82 @@ $status = "draft"
 **Syntax:** `$name = value` assigns a value expression to a variable. `$name: Type = value` includes a type annotation. `$name: Type` declares a variable with a type but no value.
 
 **Runtime behaviour:** Tracks the assigned value of the variable through evaluation.
+
+### Variable references
+
+```md
+$log = "processing #{item}"
+SPAWN ~/agent/reporter WITH $log
+```
+
+**Syntax:** Variables are referenced by `$name` in expressions, and any prose.
+
+**Runtime behaviour:** Variable references resolve to the current bound value in scope.
+
+## 6. Types
+
+### Built-in types
+
+```md
+Number
+String
+Array<T>
+Tuple<T...>
+Link
+Lambda
+Expr
+```
+
+### User-defined types
+
+```md
+<!-- semantic -->
+a random number
+
+<!-- link literal -->
+~/agent/general
+
+<!-- string literal -->
+"draft"
+
+<!-- number literal -->
+123
+
+<!-- enum -->
+"draft" | "pending" | "published"
+
+<!-- ref -->
+MyType
+
+<!-- array -->
+Array<Number>
+Array<MyType>
+
+<!-- tuple -->
+(String, Number)
+```
+
+**Syntax:** Type parsing is ordered. Tuples and enums are matched first, then type references (identifiers with optional generic arguments), then literal types (string/number/link), and any remaining text is parsed as a semantic type expression.
+
+### Type declarations
+
+```md
+TYPE Status = "draft" | "pending" | "published"
+TYPE Pair = (String, Number)
+TYPE Agent = ~/agent/general
+```
+
+**Syntax:** `TYPE Name = TypeExpr`.
+
+### Type annotations
+
+```md
+$status: Status
+$pairs: Array<Pair>
+```
+
+**Syntax:** `$name: Type` or `$name: Type = value`).
+
+**Runtime behaviour:** Types can optionally be used at runtime for validation.
+
+**Design notes:** Types are primarily available as a developer tool to ensure program correctness.

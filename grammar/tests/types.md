@@ -1,7 +1,19 @@
-$pair: ($Task, $Strategy)
+$pair: (Task, Strategy)
 
 $status: "active" | "inactive"
 
-$goal: the primary user intent = "find bugs"
+$goal: a random number = "find bugs"
 
-$formatter: ($String) => $String
+$formatter: (String) => String
+
+$collection: Array<Pair>
+
+TYPE Status = "active" | "inactive"
+
+TYPE Pair = (String, Number)
+
+TYPE Magnitude = 123
+
+TYPE Agent = ~/agent/general
+
+TYPE Approx = a random number

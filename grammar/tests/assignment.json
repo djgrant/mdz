@@ -12,7 +12,7 @@
   {
     "type": "assign",
     "target": "$name",
-    "annotatedType": "$String",
+    "annotatedType": { "type": "ref", "name": "String" },
     "value": "\"value\""
   },
   {

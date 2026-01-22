@@ -21,6 +21,7 @@ TopBlock
   / DoBlock
   / SpawnBlock
   / UseBlock
+  / TypeDeclLine
   / PushLine
   / AssignLine
   / StatementLine
@@ -51,6 +52,7 @@ HostLineStart
   / AssignStartLine
   / StatementStartLine
   / SpawnStartLine
+  / TypeDeclStartLine
   / EndLine
 
 StatementKeyword
@@ -80,6 +82,7 @@ InnerBlock =
     DoBlock /
     SpawnBlock /
     UseBlock /
+    TypeDeclLine /
     PushLine /
     AssignLine /
     StatementLine /
@@ -439,6 +442,18 @@ UseBlock
       return out;
     }
 
+TypeDeclLine
+  = MdZIndent Kw_TYPE __ name:TypeName _ AssignEq _ value:TypeValue? LineEnd {
+      return {
+        type: "type",
+        name,
+        value: value ?? null
+      };
+    }
+
+TypeDeclStartLine
+  = MdZIndent Kw_TYPE __
+
 SpawnHeader
   = MdZIndent modifier:(Kw_ASYNC / Kw_AWAIT) __ Kw_SPAWN __ target:AgentRef inline:SpawnInline LineEnd {
       return { modifier, target, ...inline };
@@ -642,13 +657,12 @@ TypeAnnotation
       return typeValue;
     }
 
-TypeExprUntilEq
-  = $( ( !(_ AssignEq) !Newline . )+ )
-
 TypeValue
   = TypeTuple
   / TypeEnum
-  / typeText:TypeExprUntilEq { return typeText.trim(); }
+  / TypeLiteral
+  / TypeRef
+  / TypeSemantic
 
 TypeTuple
   = "(" _ elements:TypeElements? _ ")" !(_ "=>") {
@@ -661,7 +675,7 @@ TypeElements
     }
 
 TypeElement
-  = text:$( (!("," / ")") .)+ ) { return text.trim(); }
+  = TypeValue
 
 TypeEnum
   = head:TypeEnumVariant tail:(_ "|" _ TypeEnumVariant)+ {
@@ -669,10 +683,58 @@ TypeEnum
     }
 
 TypeEnumVariant
-  = text:$( (!("|" / Newline / End) .)+ ) { return text.trim(); }
+  = TypeLiteral
+  / TypeRef
+  / TypeSemanticVariant
+
+TypeSemantic
+  = text:TypeExprUntilEq { return { type: "semantic", text: text.trim() }; }
+
+TypeSemanticVariant
+  = text:$( (!("|" / Newline / End) .)+ ) { return { type: "semantic", text: text.trim() }; }
+
+TypeExprUntilEq
+  = $( ( !(_ AssignEq) !Newline . )+ )
+
+TypeLiteral
+  = TypeLiteralNumber
+  / TypeLiteralString
+  / TypeLiteralLink
+
+TypeLiteralNumber
+  = num:NumberText {
+      return { type: "literal", value: { type: "number", value: Number(num) } };
+    }
+
+TypeLiteralString
+  = "\"" text:$( (!("\"" / "#{") .)* ) "\"" {
+      return { type: "literal", value: text };
+    }
+
+TypeLiteralLink
+  = link:LinkValue {
+      return { type: "literal", value: link };
+    }
+
+TypeRef
+  = name:TypeName args:TypeArgs? &TypeRefTerminator {
+      return { type: "ref", name, ...(args ? { args } : {}) };
+    }
+
+TypeRefTerminator
+  = _ ("," / ")" / ">" / "|" / AssignEq / Newline / End)
+
+TypeName
+  = $( [A-Za-z_][A-Za-z0-9_]* )
+
+TypeArgs
+  = _ "<" _ head:TypeValue tail:(_ "," _ TypeValue)* _ ">" {
+      return [head, ...tail.map(([, , , value]) => value)];
+    }
 
 Value
   = ArrayLiteral
+  / TupleLiteral
   / NumberValue
   / AnchorValue
   / LinkValue
@@ -687,6 +749,7 @@ PlainTextValue
 
 ValueLiteralStart
   = "["
+  / "("
   / "#"
   / "~/"
   / "\""
@@ -711,6 +774,7 @@ ArrayElement
 
 ArrayValue
   = ArrayLiteral
+  / TupleLiteral
   / ArrayNumberValue
   / AnchorValue
   / LinkValue
@@ -747,6 +811,46 @@ ArrayLambdaValue
 
 ArrayInlineText
   = $( (!("," / "]") .)+ )
+
+TupleLiteral
+  = "(" _ elements:TupleElements? _ ")" !(_ "=>") {
+      return { type: "tuple", elements: elements ?? [] };
+    }
+
+TupleElements
+  = head:TupleElement tail:(_ "," _ TupleElement)* {
+      return [head, ...tail.map(([, , , element]) => element)];
+    }
+
+TupleElement
+  = TupleValue
+
+TupleValue
+  = ArrayLiteral
+  / TupleLiteral
+  / NumberValue
+  / AnchorValue
+  / LinkValue
+  / StringLiteral
+  / TupleLambdaValue
+  / TuplePlainTextValue
+
+TupleLambdaValue
+  = params:LambdaParams _ "=>" _ body:TupleInlineText? {
+      return {
+        type: "lambda",
+        params,
+        body: (body ?? "").trim()
+      };
+    }
+
+TupleInlineText
+  = $( (!("," / ")") .)+ )
+
+TuplePlainTextValue
+  = text:$( (!("," / ")") .)+ ) {
+      return text.trim();
+    }
 
 
 StringLiteral
@@ -819,6 +923,7 @@ Kw_AWAIT     = "AWAIT" WordBoundary { return "AWAIT" }
 Kw_USE       = "USE" WordBoundary { return "USE" }
 Kw_GOTO      = "GOTO" WordBoundary { return "GOTO" }
 Kw_SPAWN     = "SPAWN" WordBoundary { return "SPAWN" }
+Kw_TYPE      = "TYPE" WordBoundary { return "TYPE" }
 
 
 /* ---------- Helpers ---------- */

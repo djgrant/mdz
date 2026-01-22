@@ -1,0 +1,50 @@
+[
+  {
+    "type": "assign",
+    "target": "$pair",
+    "value": {
+      "type": "tuple",
+      "elements": ["\"draft\"", { "type": "number", "value": 3 }]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$mix",
+    "value": {
+      "type": "tuple",
+      "elements": [
+        { "type": "link", "kind": "path", "value": "~/skill/debugger" },
+        { "type": "lambda", "params": ["$x"], "body": "do thing" },
+        {
+          "type": "template",
+          "parts": [
+            "hi ",
+            { "type": "expr", "expression": "$name" }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$nested",
+    "value": {
+      "type": "tuple",
+      "elements": [
+        "one",
+        { "type": "tuple", "elements": ["two", "three"] }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$refs",
+    "value": {
+      "type": "tuple",
+      "elements": [
+        { "type": "link", "kind": "anchor", "value": "#code-snippet" },
+        { "type": "link", "kind": "path", "value": "~/skill/debugger" }
+      ]
+    }
+  }
+]

@@ -2,7 +2,7 @@ $count = 5
 
 $ratio = 0.75
 
-$name: $String = "value"
+$name: String = "value"
 
 $title_exact = "literal"
 
