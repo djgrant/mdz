@@ -673,9 +673,9 @@ TypeEnumVariant
 
 Value
   = ArrayLiteral
+  / NumberValue
   / AnchorValue
   / LinkValue
-  / InferredValue
   / StringLiteral
   / LambdaValue
   / PlainTextValue
@@ -690,7 +690,6 @@ ValueLiteralStart
   / "#"
   / "~/"
   / "\""
-  / "$/"
 
 AnchorValue
   = "#" name:AnchorName {
@@ -708,14 +707,47 @@ ArrayElements
     }
 
 ArrayElement
+  = ArrayValue
+
+ArrayValue
+  = ArrayLiteral
+  / ArrayNumberValue
+  / AnchorValue
+  / LinkValue
+  / StringLiteral
+  / ArrayLambdaValue
+  / ArrayPlainText
+
+ArrayPlainText
   = text:$( (!("," / "]") .)+ ) {
       return text.trim();
     }
 
-InferredValue
-  = "$/" text:$( (!"/" .)* ) "/" {
-      return { type: "inferred", text };
+NumberValue
+  = num:NumberText {
+      return { type: "number", value: Number(num) };
     }
+
+ArrayNumberValue
+  = num:NumberText {
+      return { type: "number", value: Number(num) };
+    }
+
+NumberText
+  = $( [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)? )
+
+ArrayLambdaValue
+  = params:LambdaParams _ "=>" _ body:ArrayInlineText? {
+      return {
+        type: "lambda",
+        params,
+        body: (body ?? "").trim()
+      };
+    }
+
+ArrayInlineText
+  = $( (!("," / "]") .)+ )
+
 
 StringLiteral
   = "\"" parts:StringParts "\"" {

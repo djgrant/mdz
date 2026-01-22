@@ -20,9 +20,38 @@
       "elements": [
         "\"exact\"",
         "loose",
-        "$/infer/",
-        "`hi ${$name}`",
-        "$x => do thing"
+        { "type": "link", "kind": "path", "value": "~/skill/browser" },
+        {
+          "type": "template",
+          "parts": [
+            "hi ",
+            { "type": "expr", "expression": "$name" }
+          ]
+        },
+        { "type": "lambda", "params": ["$x"], "body": "do thing" }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$nested",
+    "value": {
+      "type": "array",
+      "elements": [
+        "one",
+        { "type": "array", "elements": ["two", "three"] }
+      ]
+    }
+  },
+  {
+    "type": "assign",
+    "target": "$nums",
+    "value": {
+      "type": "array",
+      "elements": [
+        { "type": "number", "value": 1 },
+        { "type": "number", "value": 2.5 },
+        { "type": "number", "value": -3 }
       ]
     }
   }

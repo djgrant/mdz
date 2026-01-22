@@ -1,0 +1,8 @@
+[
+  { "type": "assign", "target": "$int", "value": { "type": "number", "value": 42 } },
+  { "type": "assign", "target": "$neg", "value": { "type": "number", "value": -7 } },
+  { "type": "assign", "target": "$float", "value": { "type": "number", "value": 3.14 } },
+  { "type": "assign", "target": "$exp", "value": { "type": "number", "value": 1000 } },
+  { "type": "assign", "target": "$exp_neg", "value": { "type": "number", "value": -0.025 } },
+  { "type": "assign", "target": "$not_number", "value": "version 2" }
+]

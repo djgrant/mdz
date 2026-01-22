@@ -2,7 +2,12 @@
   {
     "type": "assign",
     "target": "$count",
-    "value": "5"
+    "value": { "type": "number", "value": 5 }
+  },
+  {
+    "type": "assign",
+    "target": "$ratio",
+    "value": { "type": "number", "value": 0.75 }
   },
   {
     "type": "assign",
@@ -19,14 +24,6 @@
     "type": "assign",
     "target": "$title_loose",
     "value": "literal"
-  },
-  {
-    "type": "assign",
-    "target": "$from_inferred",
-    "value": {
-      "type": "inferred",
-      "text": "guess this"
-    }
   },
   {
     "type": "assign",
@@ -56,7 +53,7 @@
       "elements": [
         "\"a\"",
         "b",
-        "3"
+        { "type": "number", "value": 3 }
       ]
     }
   }
