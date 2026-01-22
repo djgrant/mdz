@@ -73,7 +73,7 @@ In this model, the LLM still runs the program, but uses a tool to update and sto
 
 #### 3. LLM requests programs from a REPL
 
-Similar to the ideas in [recursive language models](https://arxiv.org/abs/2512.24601) (RLMs), the LLM would call out to a REPL to request a module, or part of the program. The evaluation of the program could itself be a recursive call to prevent context rot.
+Similar to the ideas in [recursive language models](https://arxiv.org/abs/2512.24601), the LLM would call out to a REPL to request a module, or part of the program. The evaluation of the program could itself be a recursive call to prevent context rot.
 
 #### 4. LLM rewrites program in tail-recursive loop
 
