@@ -32,15 +32,15 @@ To provide clarity to LLMs, MDZ uses the `END` keyword to delimit blocks. MDZ is
 
 ## Language Design
 
-Under the hood, MDZ is an amalgam of two grammars: markdown and proz. 
+Under the hood, a .md or .mdz file parsed with MDZ is an amalgam of two grammars: Markdown and MDZ.
 
-Proz is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any document format can in theory be a host language.
+MDZ is the grammar that adds LLM-interpretable programmatic constructs to a host grammar (e.g. markdown, plain text etc). The focus is on extending Markdown, but architecturally any document format can in theory be a host language.
 
-The proz parser segments the document into a block stream containing:
+The MDZ parser segments the document into a block stream containing:
 - unparsed blocks belonging to the host grammar e.g. raw markdown strings
 - blocks of proz AST nodes
 
-Proz kicks in when a delimiter like `FOR` or `SPAWN` is detected
+MDZ kicks in when a delimiter like `FOR` or `SPAWN` is detected
 
 In the case of MDZ, you end up with a block stream that looks like this:
 
