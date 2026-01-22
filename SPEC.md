@@ -28,12 +28,24 @@ Statements start when a line begins with an MDZ keyword, optionally preceded by 
 
 Blank lines are preserved as host text unless inside an MDZ block, in which case they are ignored.
 
-List markers are optional in Markdown hosts to prevent formatters (e.g. Prettier) from stripping indentation. When present, a list marker immediately preceding an
-MDZ keyword is ignored by the parser. 
+MDZ does not define its own comment syntax. Host-language comments (e.g. `<!-- -->` in Markdown) can be used instead.
+
+Indentation is never required. Statements may appear at any indentation level.
+
+### List syntax
+
+MDZ can optionally be prefixed with list markers to prevent formatters (e.g. Prettier) from stripping indentation. 
+
+```md
+- FOR $instruction IN $instructions
+  - ASYNC SPAWN ~/agent/explore
+    - WITH $instruction
+- END
+```
+
+When present, a list marker immediately preceding an MDZ keyword is ignored by the parser.
 
 Numbered list markers are not treated as MDZ statements and are parsed as host text.
-
-MDZ does not define its own comment syntax. Use host-language comments (e.g. `<!-- -->` in Markdown).
 
 ## 3. Host Text and Block Stream
 
@@ -399,3 +411,29 @@ USE ~/skill/debug TO do thing WITH
 **Syntax:** `USE` targets a skill and supports optional `TO` and `WITH`. `WITH` may be an anchor or a parameter block.
 
 **Runtime behaviour:** Composes a skill prompt into the current execution.
+
+### WITH parameter blocks
+
+```md
+SPAWN ~/agent/reporter WITH #publish-note
+
+USE ~/skill/debug TO do thing WITH
+  p1: val
+  p2: "literal text"
+```
+
+**Syntax:** `WITH` accepts either an anchor (`WITH #anchor`) or a parameter block. Parameters are `name: value` lines, where values are line text expressions. `WITH` may appear inline or on a following indented block.
+
+**Runtime behaviour:** Anchors are resolved to heading reference in the current module. Parameter blocks are passed as key/value pairs to the target.
+
+## 9. Operators
+
+```md
+IF $status = "draft" OR $status != "published"
+  RETURN "needs review"
+END
+```
+
+**Syntax:** Comparisons use `=` and `!=`. Boolean operators are `AND`, `OR`, and `NOT`.
+
+**Runtime behaviour:** Operators are only parsed inside condition positions (e.g. `IF`, `WHILE`, `CASE WHEN`). Everywhere else, text is treated as a semantic expression.
