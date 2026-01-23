@@ -14,18 +14,12 @@
 
     "strict": true,
     "noImplicitAny": false,
-    // "verbatimModuleSyntax": true,
-    // "exactOptionalPropertyTypes": true,
-    // "noUncheckedIndexedAccess": true,
-    //
-    "types": ["bun"],
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@mdzlang/lsp-core": ["./packages/lsp-core/src/index.ts"],
-      "@mdzlang/lsp-vscode": ["./packages/lsp-vscode/src/index.ts"],
-      "@mdzlang/lsp-zed": ["./packages/lsp-zed/src/index.ts"]
+      "@mdzlang/lsp-server": ["./packages/lsp-server/src/index.ts"],
     },
   },
 }

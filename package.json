@@ -1,6 +1,7 @@
 {
   "name": "mdz-monorepo",
   "scripts": {
+    "build": "pnpm -r build",
     "test": "vitest run"
   },
   "repository": {

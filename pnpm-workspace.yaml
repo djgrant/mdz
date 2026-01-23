@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - grammar/*
+  - extensions/vscode
 
 onlyBuiltDependencies:
   - esbuild

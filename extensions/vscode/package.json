@@ -10,13 +10,40 @@
     "url": "https://github.com/djgrant/mdz"
   },
   "icon": "assets/mdz-logo-square.png",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "bun build src/extension.ts src/server.ts --outdir dist --target node --format cjs --external vscode"
+  },
+  "activationEvents": [
+    "onLanguage:mdz"
+  ],
   "engines": {
     "vscode": "^1.108.1"
   },
   "categories": [
     "Programming Languages"
   ],
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@mdzlang/lsp-server": "workspace:*",
+    "@types/node": "^22.5.0",
+    "@types/vscode": "^1.108.1",
+    "typescript": "^5.6.2"
+  },
   "contributes": {
+    "languages": [
+      {
+        "id": "mdz",
+        "aliases": [
+          "mdz"
+        ],
+        "extensions": [
+          ".mdz"
+        ]
+      }
+    ],
     "grammars": [
       {
         "scopeName": "source.mdz",

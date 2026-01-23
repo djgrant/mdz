@@ -1,5 +1,5 @@
 {
-  "name": "@mdzlang/lsp-vscode",
+  "name": "@mdzlang/lsp-server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
