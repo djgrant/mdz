@@ -12,6 +12,7 @@
     "@pokit/reporter-clack": "^0.0.19",
     "glob": "^13.0.0",
     "peggy": "^5.0.6",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "vite-tsconfig-paths": "^5.0.1"
   }
 }
