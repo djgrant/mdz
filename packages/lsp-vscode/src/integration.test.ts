@@ -95,4 +95,106 @@ describe("LSP integration", () => {
     clientConnection.dispose();
     serverConnection.dispose();
   });
+
+  it("reports missing config over JSON-RPC", async () => {
+    const { path: workspacePath, folder } = await createWorkspace();
+
+    const serverIn = new PassThrough();
+    const serverOut = new PassThrough();
+    const serverConnection = createConnection(
+      ProposedFeatures.all,
+      new StreamMessageReader(serverIn),
+      new StreamMessageWriter(serverOut)
+    );
+    registerHandlers(serverConnection);
+    serverConnection.listen();
+
+    const clientConnection = createMessageConnection(
+      new StreamMessageReader(serverOut),
+      new StreamMessageWriter(serverIn)
+    );
+    clientConnection.onRequest("workspace/workspaceFolders", () => [folder]);
+    clientConnection.listen();
+
+    await clientConnection.sendRequest("initialize", {
+      processId: null,
+      rootUri: folder.uri,
+      capabilities: {
+        workspace: { workspaceFolders: true }
+      },
+      workspaceFolders: [folder]
+    });
+
+    const docUri = pathToFileURL(join(workspacePath, "doc.mdz")).toString();
+    const diagnosticsPromise = waitForDiagnostics(clientConnection, docUri);
+
+    clientConnection.sendNotification("textDocument/didOpen", {
+      textDocument: {
+        uri: docUri,
+        languageId: "mdz",
+        version: 1,
+        text: "RETURN ok\n"
+      }
+    });
+
+    const diagnosticsParams = await diagnosticsPromise;
+    const codes = (diagnosticsParams as { diagnostics: { code?: unknown }[] }).diagnostics.map(
+      (diag) => String(diag.code)
+    );
+    expect(codes).toContain("MDZC0001_MISSING_CONFIG");
+
+    clientConnection.dispose();
+    serverConnection.dispose();
+  });
+
+  it("supports custom workspace roots for multi-root tests", async () => {
+    const workspaceA = await createWorkspace();
+    const workspaceB = await createWorkspace();
+    await writeFile(join(workspaceB.path, "mdz.config.json"), JSON.stringify({ root: "." }));
+
+    const serverIn = new PassThrough();
+    const serverOut = new PassThrough();
+    const serverConnection = createConnection(
+      ProposedFeatures.all,
+      new StreamMessageReader(serverIn),
+      new StreamMessageWriter(serverOut)
+    );
+    registerHandlers(serverConnection, {
+      getWorkspacePaths: async () => [workspaceA.path, workspaceB.path]
+    });
+    serverConnection.listen();
+
+    const clientConnection = createMessageConnection(
+      new StreamMessageReader(serverOut),
+      new StreamMessageWriter(serverIn)
+    );
+    clientConnection.listen();
+
+    await clientConnection.sendRequest("initialize", {
+      processId: null,
+      rootUri: workspaceB.folder.uri,
+      capabilities: {}
+    });
+
+    const docUri = pathToFileURL(join(workspaceB.path, "doc.mdz")).toString();
+    const diagnosticsPromise = waitForDiagnostics(clientConnection, docUri);
+
+    clientConnection.sendNotification("textDocument/didOpen", {
+      textDocument: {
+        uri: docUri,
+        languageId: "mdz",
+        version: 1,
+        text: "RETURN ok\n"
+      }
+    });
+
+    const diagnosticsParams = await diagnosticsPromise;
+    const codes = (diagnosticsParams as { diagnostics: { code?: unknown }[] }).diagnostics.map(
+      (diag) => String(diag.code)
+    );
+    expect(codes).not.toContain("MDZC0001_MISSING_CONFIG");
+
+    clientConnection.dispose();
+    serverConnection.dispose();
+  });
 });

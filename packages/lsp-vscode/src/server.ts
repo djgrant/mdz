@@ -11,7 +11,14 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import { uriToPath } from "@mdzlang/lsp-core";
 import { collectDiagnostics } from "./diagnostics.js";
 
-export const registerHandlers = (connection: Connection): void => {
+type RegisterOptions = {
+  getWorkspacePaths?: () => Promise<string[]>;
+};
+
+export const registerHandlers = (
+  connection: Connection,
+  options: RegisterOptions = {}
+): void => {
   const documents = new Map<string, TextDocument>();
 
   connection.onInitialize(() => {
@@ -23,15 +30,22 @@ export const registerHandlers = (connection: Connection): void => {
   });
 
   const validateTextDocument = async (document: TextDocument): Promise<void> => {
-    const workspaceFolders = await connection.workspace.getWorkspaceFolders();
     const workspacePaths =
-      workspaceFolders
-        ?.map((folder: WorkspaceFolder) => uriToPath(folder.uri))
-        .filter((path): path is string => Boolean(path)) ?? [];
+      options.getWorkspacePaths?.() ??
+      Promise.resolve(
+        connection.workspace
+          .getWorkspaceFolders()
+          .then((folders) =>
+            folders
+              ?.map((folder: WorkspaceFolder) => uriToPath(folder.uri))
+              .filter((path): path is string => Boolean(path)) ?? []
+          )
+      );
+    const resolvedWorkspacePaths = await workspacePaths;
     const diagnostics = await collectDiagnostics({
       text: document.getText(),
       uri: document.uri,
-      workspacePaths
+      workspacePaths: resolvedWorkspacePaths
     });
     connection.sendDiagnostics({ uri: document.uri, diagnostics });
   };
