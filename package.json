@@ -2,18 +2,19 @@
   "name": "mdz-monorepo",
   "scripts": {
     "build": "pnpm -r build",
+    "vscode": "pnpm -C extensions/vscode",
     "test": "vitest run"
   },
   "repository": {
     "url": "https://github.com/djgrant/mdz"
   },
   "devDependencies": {
-    "@pokit/core": "^0.0.19",
-    "@pokit/prompter-clack": "^0.0.19",
-    "@pokit/reporter-clack": "^0.0.19",
+    "@pokit/core": "latest",
+    "@pokit/prompter-clack": "latest",
+    "@pokit/reporter-clack": "latest",
     "glob": "^13.0.0",
     "peggy": "^5.0.6",
-    "vitest": "^4.0.17",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.18"
   }
 }

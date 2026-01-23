@@ -3,3 +3,10 @@
 .gitignore
 .DS_Store
 *.vsix
+src/**
+node_modules/**
+scripts/**
+tsconfig.json
+pnpm-lock.yaml
+*.tsbuildinfo
+**/*.test.*
