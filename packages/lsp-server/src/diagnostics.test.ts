@@ -40,4 +40,21 @@ describe("collectDiagnostics", () => {
     expect(codes).toContain("MDZL0001_MISSING_PATH");
     expect(codes).toContain("MDZL0002_MISSING_ANCHOR");
   });
+
+  it("reports invalid frontmatter", async () => {
+    const workspace = await createWorkspace();
+    const configPath = join(workspace, "mdz.config.json");
+    await writeFile(configPath, JSON.stringify({ root: "." }));
+
+    const filePath = join(workspace, "doc.mdz");
+    const uri = pathToFileURL(filePath).toString();
+    const diagnostics = await collectDiagnostics({
+      text: "---\nname: [demo\n---\nRETURN ok\n",
+      uri,
+      workspacePaths: [workspace]
+    });
+
+    const codes = diagnostics.map((diag) => String(diag.code));
+    expect(codes).toContain("MDZL0101_INVALID_FRONTMATTER");
+  });
 });

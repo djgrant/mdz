@@ -21,3 +21,10 @@ export {
   type LinkRange,
   type LinkKind
 } from "./links.js";
+export {
+  parseFrontmatter,
+  type FrontmatterResult,
+  type FrontmatterBlock,
+  type FrontmatterDiagnostic,
+  type FrontmatterLocation
+} from "./frontmatter.js";

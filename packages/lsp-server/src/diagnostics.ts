@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import {
   parseDocument,
+  parseFrontmatter,
   findWorkspaceRoot,
   loadConfig,
   uriToPath,
@@ -56,6 +57,16 @@ export const collectDiagnostics = async (
   input: CollectInput
 ): Promise<Diagnostic[]> => {
   const diagnostics: Diagnostic[] = [];
+  const frontmatterResult = parseFrontmatter(input.text);
+  if (!frontmatterResult.ok) {
+    diagnostics.push({
+      severity: DiagnosticSeverity.Error,
+      range: rangeFromLocation(frontmatterResult.diagnostic.location),
+      message: frontmatterResult.diagnostic.message,
+      code: frontmatterResult.diagnostic.code,
+      source: "mdz"
+    });
+  }
   const parseResult = await parseDocument(input.text);
 
   if (!parseResult.ok) {
