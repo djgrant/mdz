@@ -13,8 +13,9 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build": "bun build src/extension.ts src/server.ts --outdir dist --target node --format cjs --external vscode",
-    "package": "pnpm run build && vsce package --no-dependencies",
-    "publish": "pnpm run build && vsce publish --no-dependencies"
+    "dev": "code .",
+    "vsce:package": "pnpm run build && vsce package --no-dependencies",
+    "vsce:publish": "pnpm run build && vsce publish --no-dependencies"
   },
   "activationEvents": [
     "onLanguage:mdz"
