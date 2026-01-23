@@ -1,4 +1,9 @@
-export { parseDocument, type ParseResult } from "./parser.js";
+export {
+  parseDocument,
+  parseTypeValue,
+  type ParseResult,
+  type TypeValueResult
+} from "./parser.js";
 export { normalizePeggyError, type ParserDiagnostic } from "./diagnostics.js";
 export {
   loadConfig,
@@ -28,3 +33,10 @@ export {
   type FrontmatterDiagnostic,
   type FrontmatterLocation
 } from "./frontmatter.js";
+export {
+  analyzeFrontmatter,
+  type FrontmatterAnalysis,
+  type FrontmatterAnalysisResult,
+  type FrontmatterParamEntry,
+  type FrontmatterTypeEntry
+} from "./frontmatter-analysis.js";

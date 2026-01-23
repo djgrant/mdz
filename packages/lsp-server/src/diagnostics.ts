@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import {
   parseDocument,
   parseFrontmatter,
+  analyzeFrontmatter,
   findWorkspaceRoot,
   loadConfig,
   uriToPath,
@@ -66,6 +67,17 @@ export const collectDiagnostics = async (
       code: frontmatterResult.diagnostic.code,
       source: "mdz"
     });
+  } else if (frontmatterResult.frontmatter) {
+    const analysis = await analyzeFrontmatter(frontmatterResult.frontmatter);
+    for (const diagnostic of analysis.diagnostics) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        range: rangeFromLocation(diagnostic.location),
+        message: diagnostic.message,
+        code: diagnostic.code,
+        source: "mdz"
+      });
+    }
   }
   const parseResult = await parseDocument(input.text);
 

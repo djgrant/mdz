@@ -57,4 +57,21 @@ describe("collectDiagnostics", () => {
     const codes = diagnostics.map((diag) => String(diag.code));
     expect(codes).toContain("MDZL0101_INVALID_FRONTMATTER");
   });
+
+  it("reports invalid frontmatter declarations", async () => {
+    const workspace = await createWorkspace();
+    const configPath = join(workspace, "mdz.config.json");
+    await writeFile(configPath, JSON.stringify({ root: "." }));
+
+    const filePath = join(workspace, "doc.mdz");
+    const uri = pathToFileURL(filePath).toString();
+    const diagnostics = await collectDiagnostics({
+      text: "---\nname: demo\ndescription: When needed, does X\ntypes:\n  Task: $Number = 2\n---\nRETURN ok\n",
+      uri,
+      workspacePaths: [workspace]
+    });
+
+    const codes = diagnostics.map((diag) => String(diag.code));
+    expect(codes).toContain("MDZL0103_INVALID_FRONTMATTER_DECL");
+  });
 });

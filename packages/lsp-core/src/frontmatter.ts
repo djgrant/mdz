@@ -58,7 +58,7 @@ export const parseFrontmatter = (text: string): FrontmatterResult => {
   const location = createLocation(1, closingIndex + 1);
   const raw = lines.slice(0, closingIndex + 1).join("\n");
 
-  const doc = parseYamlDocument(content);
+  const doc = parseYamlDocument(content, { uniqueKeys: false });
   if (doc.errors.length > 0) {
     const first = doc.errors[0];
     const linePos = "linePos" in first ? first.linePos?.[0] : undefined;

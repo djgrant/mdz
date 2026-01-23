@@ -8,6 +8,10 @@ type ParseSuccess = { ok: true; ast: unknown };
 type ParseFailure = { ok: false; diagnostic: ParserDiagnostic };
 export type ParseResult = ParseSuccess | ParseFailure;
 
+type TypeValueSuccess = { ok: true; value: unknown };
+type TypeValueFailure = { ok: false; diagnostic: ParserDiagnostic };
+export type TypeValueResult = TypeValueSuccess | TypeValueFailure;
+
 let parserPromise: Promise<Parser> | null = null;
 
 const loadParser = async (): Promise<Parser> => {
@@ -16,7 +20,7 @@ const loadParser = async (): Promise<Parser> => {
       const currentDir = dirname(fileURLToPath(import.meta.url));
       const grammarPath = resolve(currentDir, "../../../grammar/grammar.peg");
       const grammar = await readFile(grammarPath, "utf-8");
-      return generate(grammar);
+      return generate(grammar, { allowedStartRules: ["Start", "TypeValue"] });
     })();
   }
   return parserPromise;
@@ -26,6 +30,15 @@ export const parseDocument = async (text: string): Promise<ParseResult> => {
   const parser = await loadParser();
   try {
     return { ok: true, ast: parser.parse(text) };
+  } catch (error) {
+    return { ok: false, diagnostic: normalizePeggyError(error) };
+  }
+};
+
+export const parseTypeValue = async (text: string): Promise<TypeValueResult> => {
+  const parser = await loadParser();
+  try {
+    return { ok: true, value: parser.parse(text, { startRule: "TypeValue" }) };
   } catch (error) {
     return { ok: false, diagnostic: normalizePeggyError(error) };
   }
