@@ -40,3 +40,17 @@ export {
   type FrontmatterParamEntry,
   type FrontmatterTypeEntry
 } from "./frontmatter-analysis.js";
+export {
+  DocumentRegistry,
+  type DocumentEntry,
+  type RegistryLookup
+} from "./registry.js";
+export {
+  TypeEnvironment,
+  inferTypeFromValue,
+  astValueToType,
+  BUILTIN_TYPES,
+  type MdzType,
+  type VariableBinding,
+  type TypeDeclaration
+} from "./types.js";
