@@ -62,3 +62,25 @@ export {
   type ExtractedTypeDecl,
   type AstLocation
 } from "./ast-analysis.js";
+export {
+  extractDocumentSymbols,
+  type DocumentSymbol,
+  type SymbolKind
+} from "./symbols.js";
+export {
+  getCompletions,
+  type CompletionItem,
+  type CompletionItemKind,
+  type CompletionContext
+} from "./completion.js";
+export {
+  getHover,
+  type HoverResult,
+  type HoverContext
+} from "./hover.js";
+export {
+  getDefinition,
+  type DefinitionLocation,
+  type DefinitionResult,
+  type DefinitionContext
+} from "./definition.js";
