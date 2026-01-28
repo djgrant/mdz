@@ -54,3 +54,11 @@ export {
   type VariableBinding,
   type TypeDeclaration
 } from "./types.js";
+export {
+  extractBindingsFromAst,
+  buildTypeEnvironment,
+  type AstAnalysisResult,
+  type ExtractedBinding,
+  type ExtractedTypeDecl,
+  type AstLocation
+} from "./ast-analysis.js";
