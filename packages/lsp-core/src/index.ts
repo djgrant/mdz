@@ -84,3 +84,12 @@ export {
   type DefinitionResult,
   type DefinitionContext
 } from "./definition.js";
+export {
+  extractSemanticTokens,
+  encodeSemanticTokens,
+  TOKEN_TYPES,
+  TOKEN_MODIFIERS,
+  type SemanticToken,
+  type SemanticTokenType,
+  type SemanticTokenModifier
+} from "./semantic-tokens.js";

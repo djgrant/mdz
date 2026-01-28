@@ -24,6 +24,10 @@ import {
   buildTypeEnvironment,
   findWorkspaceRoot,
   loadConfig,
+  extractSemanticTokens,
+  encodeSemanticTokens,
+  TOKEN_TYPES,
+  TOKEN_MODIFIERS,
   type DocumentSymbol,
   type SymbolKind,
   type CompletionItem
@@ -57,7 +61,14 @@ export const registerHandlers = (
           triggerCharacters: ["$", "#", "~", ":", "/"]
         },
         hoverProvider: true,
-        definitionProvider: true
+        definitionProvider: true,
+        semanticTokensProvider: {
+          legend: {
+            tokenTypes: TOKEN_TYPES,
+            tokenModifiers: TOKEN_MODIFIERS
+          },
+          full: true
+        }
       }
     };
   });
@@ -250,6 +261,16 @@ export const registerHandlers = (
         end: { line: result.range.end.line - 1, character: result.range.end.column - 1 }
       }
     };
+  });
+
+  connection.languages.semanticTokens.on(async (params) => {
+    const entry = registry.getDocument(params.textDocument.uri);
+    if (!entry) return { data: [] };
+
+    const tokens = extractSemanticTokens(entry.text);
+    const data = encodeSemanticTokens(tokens);
+
+    return { data };
   });
 
   return { registry };
