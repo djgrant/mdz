@@ -93,3 +93,11 @@ export {
   type SemanticTokenType,
   type SemanticTokenModifier
 } from "./semantic-tokens.js";
+export {
+  validateContract,
+  extractWithParams,
+  type ContractDiagnostic,
+  type WithParam,
+  type ContractValidationInput,
+  type ContractValidationResult
+} from "./contract-validation.js";
