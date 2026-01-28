@@ -8,7 +8,7 @@ import {
   type WorkspaceFolder
 } from "vscode-languageserver/node.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { uriToPath } from "@mdzlang/lsp-core";
+import { uriToPath, DocumentRegistry } from "@mdzlang/lsp-core";
 import { collectDiagnostics } from "./diagnostics.js";
 
 type RegisterOptions = {
@@ -18,8 +18,9 @@ type RegisterOptions = {
 export const registerHandlers = (
   connection: Connection,
   options: RegisterOptions = {}
-): void => {
+): { registry: DocumentRegistry } => {
   const documents = new Map<string, TextDocument>();
+  const registry = new DocumentRegistry();
 
   connection.onInitialize(() => {
     return {
@@ -42,6 +43,9 @@ export const registerHandlers = (
           )
       );
     const resolvedWorkspacePaths = await workspacePaths;
+
+    await registry.updateDocument(document.uri, document.getText(), document.version);
+
     const diagnostics = await collectDiagnostics({
       text: document.getText(),
       uri: document.uri,
@@ -77,6 +81,9 @@ export const registerHandlers = (
 
   connection.onDidCloseTextDocument(({ textDocument }: DidCloseTextDocumentParams) => {
     documents.delete(textDocument.uri);
+    registry.removeDocument(textDocument.uri);
     connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [] });
   });
+
+  return { registry };
 };
