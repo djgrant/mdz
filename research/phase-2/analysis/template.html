@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MDZ Analysis — Phase 2: accountable execution</title>
+<style>
+  :root {
+    --ink: #1c2733; --muted: #5a6b7b; --accent: #0b7261; --accent-2: #b3541e;
+    --card: #f6f8f9; --border: #e2e8ec; --code-bg: #10161d; --code-ink: #d8e2ea;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff;
+         font: 17px/1.65 Georgia, "Times New Roman", serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  h1, h2, .meta, figcaption, .stat, .note, .steps, .step, .verdict, .cols-label {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0.4rem 0; }
+  h2 { font-size: 1.3rem; margin: 2.8rem 0 0.4rem; }
+  .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .meta a { color: var(--muted); }
+  p { margin: 0.9rem 0; }
+  ul { margin: 0.9rem 0; padding-left: 1.2rem; }
+  li { margin: 0.55rem 0; }
+  .verdict { font-size: 1.02rem; color: var(--accent); font-weight: 600;
+              margin: 0.2rem 0 1.1rem; }
+  figure { margin: 1.6rem 0; }
+  figure img { width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+  figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.45rem; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem; margin: 1.8rem 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+           padding: 0.9rem 1rem; }
+  .stat b { display: block; font-size: 1.5rem; color: var(--accent); }
+  .stat span { font-size: 0.82rem; color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem; margin: 1.4rem 0; }
+  .step { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+           padding: 0.9rem 1rem; font-size: 0.92rem; }
+  .step b { display: block; margin-bottom: 0.3rem; color: var(--accent); }
+  .note { border-left: 4px solid var(--accent); background: var(--card);
+           padding: 0.8rem 1.1rem; border-radius: 0 8px 8px 0; margin: 1.4rem 0;
+           font-size: 0.95rem; }
+  .note b { color: var(--accent); }
+  .cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 0.75rem; margin: 1.4rem 0; }
+  .cols-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem;
+                 text-transform: uppercase; letter-spacing: 0.04em; }
+  table { border-collapse: collapse; width: 100%; margin: 1.2rem 0;
+           font-size: 0.92rem; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  th, td { border: 1px solid var(--border); padding: 0.45rem 0.65rem; text-align: left; }
+  th { background: var(--card); }
+  code { background: var(--card); border: 1px solid var(--border); border-radius: 4px;
+          padding: 0.05rem 0.3rem; font-size: 0.88em; }
+  pre { background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+         padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55;
+         margin: 1.2rem 0; }
+  pre code { background: none; border: none; padding: 0; color: inherit; }
+</style>
+</head>
+<body>
+<main>
+{{BODY}}
+</main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<h2>Method</h2>
+
+<p>Every run is scored against a reference trace through evidence the model cannot edit.
+The reference exists because a deterministic MDZ program has exactly one correct
+execution, which an interpreter computes; <strong>step accuracy</strong> is the fraction
+of that trace the model reproduced, in order. Three channels supply the evidence:</p>
+
+<div class="steps">
+  <div class="step"><b>Transcripts</b> The harness's session log records every tool call
+  and subagent spawn, with the full prompt each worker received.</div>
+  <div class="step"><b>State server</b> A <code>state</code> tool exposes
+  <code>get</code>/<code>set</code>; its server appends every call to a log the model
+  cannot edit.</div>
+  <div class="step"><b>Canaries</b> Each work item carries a unique token, so "did item 3
+  reach worker 3?" is an exact string match.</div>
+</div>
+
+<p>A state call, and the log line it leaves behind:</p>
+
+<pre><code>set("v1", "30")   →  "ok"
+
+# the server appends, beyond the model's reach:
+{ "tool": "set", "name": "v1", "value": "30", "result": "ok" }</code></pre>
+
+<p>Cheap models are the case of interest – a procedure that only runs on a frontier
+model is doing little work. Experiments are either single-turn (one prompt, one reply) or
+agentic (multi-step and tool-using). Haiku and gpt-5.4-mini carry the single-turn
+experiments; haiku and sonnet the agentic ones.<a href="#fn1">¹</a></p>

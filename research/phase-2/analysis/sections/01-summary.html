@@ -1,0 +1,49 @@
+<h2>Summary</h2>
+
+<p>Notation can hold a cheap model to account – for types, for delegated parameters, for
+following a written procedure – but not for anything the model must volunteer, such as a
+log of its own state. That is this report's finding, tested across four experiments.</p>
+
+<p>MDZ is a superset of Markdown that adds programmatic control flow – loops,
+conditionals, variables, calls to other documents – to prose prompts, with an LLM as the
+interpreter. The question here is whether its execution can be policed from outside.</p>
+
+<p>The evidence never relies on the model's account. Programs run inside a real agent
+harness (Claude Code): the session transcript records every tool call and subagent, a
+state server logs every read and write, and canary tokens – unique strings threaded
+through the data – prove where values travelled.</p>
+
+<div class="stats">
+  <div class="stat"><b>147</b><span>scored model runs</span></div>
+  <div class="stat"><b>44</b><span>agentic runs with captured transcripts</span></div>
+  <div class="stat"><b>40</b><span>LLM-judge verdicts</span></div>
+  <div class="stat"><b>4</b><span>experiments</span></div>
+</div>
+
+<p>One line of notation is enough to change behaviour. This fragment halted every run it
+appeared in:</p>
+
+<pre><code>PRAGMA STRICT
+
+$v0: String = 6   # declared String, given a number — strict mode halts here</code></pre>
+
+<p>Four experiments, four findings:</p>
+
+<ul>
+<li><b>Notation can enforce types, not syntax.</b> <code>PRAGMA STRICT</code> – a
+directive that turns silent repair into halting – stopped all ten programs carrying a
+type violation like the one above; without it, none stopped. Broken syntax sailed through
+in both modes: the model silently corrects malformed syntax as it reads, so no check ever
+sees a fault. (§1)</li>
+<li><b>Delegation corrupts nothing, but cheap models pick the wrong tool.</b> All 24
+fan-out runs – one skill spawning parallel worker agents – delivered every parameter
+intact. Haiku twice sent the work to a todo list instead of an agent, then quietly did it
+itself. (§2)</li>
+<li><b>Models will not volunteer their state.</b> Told to log every assignment to an
+external state tool, models recorded roughly a quarter of them. The programs' outputs
+stayed correct throughout. (§3)</li>
+<li><b>A procedure nearly triples compliance.</b> With the policy written as an MDZ
+procedure, models passed deterministic policy checks in 18 of 20 runs; given only a goal,
+7 of 20 – and only where the policy matched what the model would have done anyway.
+(§4)</li>
+</ul>

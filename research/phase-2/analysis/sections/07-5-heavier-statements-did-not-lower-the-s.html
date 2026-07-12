@@ -1,0 +1,13 @@
+<h2>5. Heavier statements did not lower the size ceiling</h2>
+
+<p>Making every statement heavier – giving each one a tool call to run – did not lower
+the accuracy ceiling in range: 200-statement programs still produced correct output at
+0.97 or better. A heavier statement looks like this:</p>
+
+<pre><code>$v9 = $v0 * 5      # the statement
+set("v9", "30")    # …plus the tool call the store arm adds to it</code></pre>
+
+<p>No dedicated size experiment ran; every record carries size metadata, and the question
+is read across the corpus. That data is too thin to move the known ~100-statement ceiling
+– the size beyond which phase 1 saw step accuracy degrade – but it shows heavier
+statements did not collapse it.</p>

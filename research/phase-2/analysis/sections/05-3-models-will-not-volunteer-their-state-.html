@@ -1,0 +1,47 @@
+<h2>3. Models will not volunteer their state, even to a tool</h2>
+
+<p class="verdict">Told to call a state tool after every assignment, models logged only
+about a quarter of them. The programs' outputs stayed correct throughout.</p>
+
+<p>This experiment asks whether program state can live outside the model. The model gets
+a <code>state</code> tool and one instruction: call <code>set</code> after every
+assignment. For comparison, a second set of runs has the model print its own trace
+instead, as phase 1 scored it.</p>
+
+<p>Assignments are scored from the server's log, which the model cannot edit. Here is
+haiku's log against a 200-statement program, next to the trace format it replaces:</p>
+
+<pre><code># self-reported trace: the model prints one line per step
+{ "step": 2, "action": "assign", "var": "v1", "value": 30 }
+
+# state-tool log: the server records each call the model chose to make
+{ "tool": "set", "name": "v1", "value": "30", "result": "ok" }
+
+…27 set calls logged. The reference trace has 57 assignments.</code></pre>
+
+<figure><img src="assets/e3-store.png" alt="External state tool vs self-reported trace, haiku. Both panels measure fidelity, so higher is better. Output stays correct either way; the external log captures only about a quarter of assignments."><figcaption>Figure 4. External state tool vs self-reported trace, haiku. Both panels measure fidelity, so higher is better. Output stays correct either way; the external log captures only about a quarter of assignments.</figcaption></figure>
+
+<table>
+<tr><th></th><th>Output correctness</th><th>State-log completeness</th></tr>
+<tr><td>Self-reported trace, haiku</td><td>1.00</td><td>1.00</td></tr>
+<tr><td>State tool, haiku</td><td>0.97–1.00</td><td>≈ 0.25</td></tr>
+<tr><td>State tool, sonnet</td><td>1.00</td><td>0.21–0.47</td></tr>
+</table>
+
+<p>The gap is behavioural, not mechanical. The transcript and the server log agree
+call-for-call in every run, so the log holds exactly what the model chose to send.</p>
+
+<p>Both tiers treat per-assignment logging as bookkeeping subordinate to the task, and
+shed it under load: against 57 reference assignments, haiku made 27 <code>set</code>
+calls. Sonnet showed the same instinct when printing its own trace, dropping assignments
+from one trace while emitting perfect output.</p>
+
+<p>The tool itself is not the obstacle. Logging through it proved cheaper than printing a
+trace, not dearer<a href="#fn1">¹</a> – the model simply declines to do it.</p>
+
+<div class="note">No instruction made state-logging complete at either tier. A reliable
+trace needs structural logging. Phase 3's candidate is an interpreter-as-tool: the server
+keeps the program counter (the pointer to the current statement) and reveals each next
+statement only in exchange for the result of the last. Sketched:
+<pre><code>next()            →  "statement 12: $v9 = $v0 * 5"
+report("v9", 30)  →  "statement 13: …"</code></pre></div>

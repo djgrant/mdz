@@ -1,0 +1,39 @@
+<h2>1. Strict mode enforces types; syntax is repaired before any check can run</h2>
+
+<p class="verdict"><code>PRAGMA STRICT</code> made type annotations binding: all ten
+type-faulted programs halted, against none without it. Syntax faults never reached the
+check on either model.</p>
+
+<p>Models do not stop when a program is broken. Handed damaged input, they repair it
+silently and carry on – in a compliance setting, the worst possible default. This
+experiment asks whether a single line of notation can change that.</p>
+
+<p>Each forty-statement program received one deliberate fault, and ran twice: once as
+written, once with <code>PRAGMA STRICT</code> as its first statement, as below. Strict
+mode's contract: validate before executing; on any violation, emit one halt step and
+stop.</p>
+
+<pre><code>PRAGMA STRICT              # strict variant only: validate first, halt on violation
+
+$v0: String = 6            # type fault: declared String, given a number
+FOR $v3 [1, 4, 0, 3, 7]    # syntax fault: IN is missing</code></pre>
+
+<figure><img src="assets/e1-halt.png" alt="How often the model stopped on a broken program. For type faults, 1.0 is the goal and the pragma reaches it. For syntax faults, low bars are expected, not bad: the fault is repaired during reading and never reaches the check."><figcaption>Figure 1. How often the model stopped on a broken program. For type faults, 1.0 is the goal and the pragma reaches it. For syntax faults, low bars are expected, not bad: the fault is repaired during reading and never reaches the check.</figcaption></figure>
+
+<p>The pragma is binding for exactly one fault class. A type fault leaves both halves of
+the contradiction on the page – <code>String</code>, then <code>6</code> – and comparing
+them is a local act a model can be instructed to perform.</p>
+
+<p>A missing <code>IN</code> gets no such chance: the model never sees the broken line.
+Repairing malformed text is what a language model's decoding does, so by the time any
+check could run, the model is already reading the corrected sentence.</p>
+
+<figure><img src="assets/e1-tax.png" alt="Step accuracy on clean programs (1.0 = perfect). Strict mode costs haiku nothing; the gpt-5.4-mini dip is one false halt in five runs, not degraded execution."><figcaption>Figure 2. Step accuracy on clean programs (1.0 = perfect). Strict mode costs haiku nothing; the gpt-5.4-mini dip is one false halt in five runs, not degraded execution.</figcaption></figure>
+
+<p>Strictness is nearly free. Haiku executed clean programs identically in both modes and
+never halted one by mistake. gpt-5.4-mini refused one clean program in five – that single
+false alarm is its entire visible cost.</p>
+
+<div class="note">As a design consequence, type contracts can live in the notation.
+Grammar contracts cannot: malformed-input safety must come from a deterministic validator
+gate before execution – which is exactly what the MDZ parser and LSP provide.</div>
