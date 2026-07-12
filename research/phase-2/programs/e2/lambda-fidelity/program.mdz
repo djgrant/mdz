@@ -1,0 +1,14 @@
+---
+name: e2-lambda-fidelity
+---
+
+# Classify the items
+
+$items = ["The northern warehouse reports a stock surplus of 400 units. CANARY-E2-lambda-fidelity-1", "The Bristol office lease is due for renewal in March. CANARY-E2-lambda-fidelity-2", "Customer churn rose by two points in the last quarter. CANARY-E2-lambda-fidelity-3"]
+
+$map = item => "Classify the item as URGENT or ROUTINE, citing the exact phrase PATTERN-BLUE-VERIFICATION, and quote the item's CANARY token. Item: #{item}"
+
+USE ~/skills/map-reduce WITH
+  items: $items
+  map: $map
+  reduce: Produce one line per item in the form <verdict> -- <CANARY token>

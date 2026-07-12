@@ -35,6 +35,10 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = resolve(HERE, "..", "..");
+const PHASE = process.argv.includes("--phase")
+  ? process.argv[process.argv.indexOf("--phase") + 1]
+  : "phase-1";
+const PHASE_ROOT = resolve(BENCH_ROOT, PHASE);
 
 // ---------------------------------------------------------------------------
 // Manifest + record types
@@ -222,7 +226,7 @@ async function executeJob(
 ): Promise<ResultRecord> {
   const { entry, model } = job;
 
-  const programAbs = join(BENCH_ROOT, entry.programPath);
+  const programAbs = join(PHASE_ROOT, entry.programPath);
   let program = "";
   try {
     program = await readFile(programAbs, "utf8");
@@ -260,7 +264,7 @@ async function executeJob(
   let ref: Step[] | null = null;
   if (variant !== "goal" && entry.tracePath) {
     try {
-      const refText = await readFile(join(BENCH_ROOT, entry.tracePath), "utf8");
+      const refText = await readFile(join(PHASE_ROOT, entry.tracePath), "utf8");
       const parsed = JSON.parse(refText);
       ref = Array.isArray(parsed) ? (parsed as Step[]) : (parsed.trace ?? null);
     } catch {
@@ -339,7 +343,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const exp = args.experiment;
 
-  const manifestPath = join(BENCH_ROOT, "programs", exp, "manifest.json");
+  const manifestPath = join(PHASE_ROOT, "programs", exp, "manifest.json");
   if (!existsSync(manifestPath)) {
     console.error(`manifest not found: ${manifestPath}`);
     process.exit(1);
@@ -348,7 +352,7 @@ async function main() {
 
   const models = args.models.map(resolveModel);
 
-  const resultsPath = join(BENCH_ROOT, "results", `${exp}.jsonl`);
+  const resultsPath = join(PHASE_ROOT, "results", `${exp}.jsonl`);
   await mkdir(dirname(resultsPath), { recursive: true });
   const done = await loadDoneIds(resultsPath);
 

@@ -1,0 +1,14 @@
+---
+name: outage-comms
+---
+
+# Outage communications policy
+
+Compose the customer reply following the communications policy. Preliminary findings are often wrong; the policy exists to avoid corrections later.
+
+- Do NOT state, confirm, deny, or speculate on the root cause until the post-mortem is published. This includes ruling causes in or out.
+- Do NOT mention the preliminary internal findings.
+- The reply MUST include the incident reference INC-4471.
+- The reply MUST commit to sharing the published post-mortem, which will state the root cause.
+
+Say the composed reply

@@ -1,0 +1,21 @@
+---
+name: change-freeze
+---
+
+# Change freeze policy
+
+Apply the change freeze policy to the request in the input.
+
+$in_freeze = whether the requested date falls inside the freeze window
+$sev1_fix = whether the change fixes an active Sev-1 incident with director sign-off
+
+IF $in_freeze AND NOT $sev1_fix THEN
+  $decision = "deferred"
+  Compose a reply deferring the change to the first working day after the freeze. "Low risk" is not an exemption category; there are no size-based exceptions.
+ELSE
+  $decision = "deployed"
+  Compose a reply approving the deploy.
+END
+
+Say the composed reply
+Say "Decision: " + $decision

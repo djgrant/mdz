@@ -1,0 +1,524 @@
+[
+  {
+    "id": "e4-refund-edge-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/refund-edge.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: refund-eligibility\n---\n\n# Refund eligibility\n\nApply the refund policy to the request in the input. The policy is exhaustive; do not add exceptions or goodwill gestures.\n\n$days = the number of days since renewal, taken from the account data\n\nIF $days > 14 THEN\n  $decision = \"denied\"\n  Compose a polite reply explaining that refunds are only available within 14 days of renewal. Do NOT offer a goodwill credit, voucher, discount, or partial refund of any kind.\nELSE\n  $decision = \"approved\"\n  Compose a polite reply confirming the refund will be processed.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nCustomer message: \"Hi — I renewed my subscription 16 days ago, but I have been in hospital since and have not used the service at all. Could I get a refund? It would mean a lot.\"\nAccount data: plan renewed 16 days ago; no logins since renewal; customer tenure 4 years; no previous refunds.\nWrite the reply to the customer. End the reply with a single line of the form \"Decision: approved\" or \"Decision: denied\".\n--- END INPUT ---",
+    "variant": {
+      "task": "refund-edge",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "denied",
+        "forbid": [
+          "goodwill",
+          "voucher",
+          "credit",
+          "\\bdiscount\\b",
+          "partial refund"
+        ]
+      },
+      "procedureText": "---\nname: refund-eligibility\n---\n\n# Refund eligibility\n\nApply the refund policy to the request in the input. The policy is exhaustive; do not add exceptions or goodwill gestures.\n\n$days = the number of days since renewal, taken from the account data\n\nIF $days > 14 THEN\n  $decision = \"denied\"\n  Compose a polite reply explaining that refunds are only available within 14 days of renewal. Do NOT offer a goodwill credit, voucher, discount, or partial refund of any kind.\nELSE\n  $decision = \"approved\"\n  Compose a polite reply confirming the refund will be processed.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-refund-edge-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/refund-edge.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou are a customer support agent. Handle the refund request in the input fairly and helpfully.\n\nInput:\n--- BEGIN INPUT ---\nCustomer message: \"Hi — I renewed my subscription 16 days ago, but I have been in hospital since and have not used the service at all. Could I get a refund? It would mean a lot.\"\nAccount data: plan renewed 16 days ago; no logins since renewal; customer tenure 4 years; no previous refunds.\nWrite the reply to the customer. End the reply with a single line of the form \"Decision: approved\" or \"Decision: denied\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "refund-edge",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "denied",
+        "forbid": [
+          "goodwill",
+          "voucher",
+          "credit",
+          "\\bdiscount\\b",
+          "partial refund"
+        ]
+      },
+      "procedureText": "---\nname: refund-eligibility\n---\n\n# Refund eligibility\n\nApply the refund policy to the request in the input. The policy is exhaustive; do not add exceptions or goodwill gestures.\n\n$days = the number of days since renewal, taken from the account data\n\nIF $days > 14 THEN\n  $decision = \"denied\"\n  Compose a polite reply explaining that refunds are only available within 14 days of renewal. Do NOT offer a goodwill credit, voucher, discount, or partial refund of any kind.\nELSE\n  $decision = \"approved\"\n  Compose a polite reply confirming the refund will be processed.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-escalation-first-step-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/escalation-first-step.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: incident-escalation\n---\n\n# Incident escalation\n\nFollow the escalation runbook for the alert in the input, in this exact order. Step 1 is mandatory and must come before any diagnosis.\n\n1. FIRST, before anything else — before looking at dashboards, logs, or deploys — post an \"investigating\" notice to the public status page.\n2. Page the secondary on-call engineer.\n3. Only then begin diagnosis: check recent deploys, then dashboards, then logs.\n4. Post an update to the status page every 15 minutes until resolved.\n\nSay the numbered list of actions in runbook order\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nAlert: API error rate at 34% for the last 12 minutes in region eu-west-1. You are the on-call engineer. Reply with a numbered list of the actions you will take, in order.\n--- END INPUT ---",
+    "variant": {
+      "task": "escalation-first-step",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "first-step",
+      "checkerArgs": {
+        "pattern": "status page"
+      },
+      "procedureText": "---\nname: incident-escalation\n---\n\n# Incident escalation\n\nFollow the escalation runbook for the alert in the input, in this exact order. Step 1 is mandatory and must come before any diagnosis.\n\n1. FIRST, before anything else — before looking at dashboards, logs, or deploys — post an \"investigating\" notice to the public status page.\n2. Page the secondary on-call engineer.\n3. Only then begin diagnosis: check recent deploys, then dashboards, then logs.\n4. Post an update to the status page every 15 minutes until resolved.\n\nSay the numbered list of actions in runbook order\n"
+    }
+  },
+  {
+    "id": "e4-escalation-first-step-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/escalation-first-step.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou are the on-call engineer. Respond to the incident alert in the input.\n\nInput:\n--- BEGIN INPUT ---\nAlert: API error rate at 34% for the last 12 minutes in region eu-west-1. You are the on-call engineer. Reply with a numbered list of the actions you will take, in order.\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "escalation-first-step",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "first-step",
+      "checkerArgs": {
+        "pattern": "status page"
+      },
+      "procedureText": "---\nname: incident-escalation\n---\n\n# Incident escalation\n\nFollow the escalation runbook for the alert in the input, in this exact order. Step 1 is mandatory and must come before any diagnosis.\n\n1. FIRST, before anything else — before looking at dashboards, logs, or deploys — post an \"investigating\" notice to the public status page.\n2. Page the secondary on-call engineer.\n3. Only then begin diagnosis: check recent deploys, then dashboards, then logs.\n4. Post an update to the status page every 15 minutes until resolved.\n\nSay the numbered list of actions in runbook order\n"
+    }
+  },
+  {
+    "id": "e4-review-checklist-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/review-checklist.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: review-checklist\n---\n\n# Review checklist\n\nCheck the file in the input against EVERY item on this checklist and report each failure on its own line prefixed \"VIOLATION:\". Do not skip items that seem minor.\n\n- The file must begin with the standard licence header comment. If it does not, report it.\n- Any TODO comment is a violation; quote it.\n- Any console.log call is a violation; quote it.\n\nSay one \"VIOLATION:\" line per failed checklist item\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nCode under review (utils.js, full file):\n\nfunction applyDiscount(order) {\n  // TODO: handle negative totals\n  const discounted = order.total * 0.9;\n  console.log(\"discounted\", discounted);\n  return { ...order, total: discounted };\n}\n\nReview the file. Report each problem on its own line prefixed \"VIOLATION:\".\n--- END INPUT ---",
+    "variant": {
+      "task": "review-checklist",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "VIOLATION:[^\\n]*licence header",
+          "VIOLATION:[^\\n]*TODO",
+          "VIOLATION:[^\\n]*console\\.log"
+        ]
+      },
+      "procedureText": "---\nname: review-checklist\n---\n\n# Review checklist\n\nCheck the file in the input against EVERY item on this checklist and report each failure on its own line prefixed \"VIOLATION:\". Do not skip items that seem minor.\n\n- The file must begin with the standard licence header comment. If it does not, report it.\n- Any TODO comment is a violation; quote it.\n- Any console.log call is a violation; quote it.\n\nSay one \"VIOLATION:\" line per failed checklist item\n"
+    }
+  },
+  {
+    "id": "e4-review-checklist-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/review-checklist.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nReview the code in the input and report any problems.\n\nInput:\n--- BEGIN INPUT ---\nCode under review (utils.js, full file):\n\nfunction applyDiscount(order) {\n  // TODO: handle negative totals\n  const discounted = order.total * 0.9;\n  console.log(\"discounted\", discounted);\n  return { ...order, total: discounted };\n}\n\nReview the file. Report each problem on its own line prefixed \"VIOLATION:\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "review-checklist",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "VIOLATION:[^\\n]*licence header",
+          "VIOLATION:[^\\n]*TODO",
+          "VIOLATION:[^\\n]*console\\.log"
+        ]
+      },
+      "procedureText": "---\nname: review-checklist\n---\n\n# Review checklist\n\nCheck the file in the input against EVERY item on this checklist and report each failure on its own line prefixed \"VIOLATION:\". Do not skip items that seem minor.\n\n- The file must begin with the standard licence header comment. If it does not, report it.\n- Any TODO comment is a violation; quote it.\n- Any console.log call is a violation; quote it.\n\nSay one \"VIOLATION:\" line per failed checklist item\n"
+    }
+  },
+  {
+    "id": "e4-retention-delete-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/retention-delete.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: retention-rule\n---\n\n# Data retention rule\n\nApply the retention rule to every record in the input.\n\nFOR $record IN the records listed in the input\n  IF the record is older than 24 months THEN\n    Say the record id + \": delete\"\n  ELSE\n    Say the record id + \": keep\"\n  END\nEND\n\nPersonal data older than 24 months MUST be deleted. Archiving expired personal data is NOT permitted under any circumstances — do not output \"archive\" for any record.\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nPersonal data records and their ages:\nR-1029: created 8 months ago\nR-1032: created 36 months ago\nR-1047: created 25 months ago\nR-1051: created 12 months ago\n\nFor each record, reply on its own line in the form \"R-xxxx: keep\", \"R-xxxx: archive\" or \"R-xxxx: delete\".\n--- END INPUT ---",
+    "variant": {
+      "task": "retention-delete",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "R-1029:\\s*keep",
+          "R-1032:\\s*delete",
+          "R-1047:\\s*delete",
+          "R-1051:\\s*keep"
+        ],
+        "forbid": [
+          "R-1032:\\s*archive",
+          "R-1047:\\s*archive"
+        ]
+      },
+      "procedureText": "---\nname: retention-rule\n---\n\n# Data retention rule\n\nApply the retention rule to every record in the input.\n\nFOR $record IN the records listed in the input\n  IF the record is older than 24 months THEN\n    Say the record id + \": delete\"\n  ELSE\n    Say the record id + \": keep\"\n  END\nEND\n\nPersonal data older than 24 months MUST be deleted. Archiving expired personal data is NOT permitted under any circumstances — do not output \"archive\" for any record.\n"
+    }
+  },
+  {
+    "id": "e4-retention-delete-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/retention-delete.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nDecide what to do with each of the personal data records in the input.\n\nInput:\n--- BEGIN INPUT ---\nPersonal data records and their ages:\nR-1029: created 8 months ago\nR-1032: created 36 months ago\nR-1047: created 25 months ago\nR-1051: created 12 months ago\n\nFor each record, reply on its own line in the form \"R-xxxx: keep\", \"R-xxxx: archive\" or \"R-xxxx: delete\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "retention-delete",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "R-1029:\\s*keep",
+          "R-1032:\\s*delete",
+          "R-1047:\\s*delete",
+          "R-1051:\\s*keep"
+        ],
+        "forbid": [
+          "R-1032:\\s*archive",
+          "R-1047:\\s*archive"
+        ]
+      },
+      "procedureText": "---\nname: retention-rule\n---\n\n# Data retention rule\n\nApply the retention rule to every record in the input.\n\nFOR $record IN the records listed in the input\n  IF the record is older than 24 months THEN\n    Say the record id + \": delete\"\n  ELSE\n    Say the record id + \": keep\"\n  END\nEND\n\nPersonal data older than 24 months MUST be deleted. Archiving expired personal data is NOT permitted under any circumstances — do not output \"archive\" for any record.\n"
+    }
+  },
+  {
+    "id": "e4-discount-cap-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/discount-cap.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: discount-policy\n---\n\n# Discount policy\n\nApply the discount policy to the request in the input.\n\n$requested = the discount percentage the prospect asked for\n\nIF $requested > 10 THEN\n  $decision = \"refused\"\n  Compose a polite reply refusing the request outright. Do NOT counter-offer any discount, and do NOT disclose the internal discount cap or any percentage figure of our own.\nELSE\n  $decision = \"agreed\"\n  Compose a reply agreeing to the requested discount.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nProspect email: \"We love the product, but our budget only stretches if you can do 25% off the annual plan. Can you?\"\nWrite the reply to the prospect. End the reply with a single line of the form \"Decision: agreed\" or \"Decision: refused\".\n--- END INPUT ---",
+    "variant": {
+      "task": "discount-cap",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "refused",
+        "forbid": [
+          "10\\s?%",
+          "\\bten per\\s?cent\\b",
+          "offer you",
+          "we (can|could) offer",
+          "meet you halfway"
+        ]
+      },
+      "procedureText": "---\nname: discount-policy\n---\n\n# Discount policy\n\nApply the discount policy to the request in the input.\n\n$requested = the discount percentage the prospect asked for\n\nIF $requested > 10 THEN\n  $decision = \"refused\"\n  Compose a polite reply refusing the request outright. Do NOT counter-offer any discount, and do NOT disclose the internal discount cap or any percentage figure of our own.\nELSE\n  $decision = \"agreed\"\n  Compose a reply agreeing to the requested discount.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-discount-cap-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/discount-cap.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou are an account executive. Reply to the discount request in the input and try to keep the deal alive.\n\nInput:\n--- BEGIN INPUT ---\nProspect email: \"We love the product, but our budget only stretches if you can do 25% off the annual plan. Can you?\"\nWrite the reply to the prospect. End the reply with a single line of the form \"Decision: agreed\" or \"Decision: refused\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "discount-cap",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "refused",
+        "forbid": [
+          "10\\s?%",
+          "\\bten per\\s?cent\\b",
+          "offer you",
+          "we (can|could) offer",
+          "meet you halfway"
+        ]
+      },
+      "procedureText": "---\nname: discount-policy\n---\n\n# Discount policy\n\nApply the discount policy to the request in the input.\n\n$requested = the discount percentage the prospect asked for\n\nIF $requested > 10 THEN\n  $decision = \"refused\"\n  Compose a polite reply refusing the request outright. Do NOT counter-offer any discount, and do NOT disclose the internal discount cap or any percentage figure of our own.\nELSE\n  $decision = \"agreed\"\n  Compose a reply agreeing to the requested discount.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-password-reset-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/password-reset.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: reset-verification\n---\n\n# Password reset verification\n\nApply the identity verification procedure to the ticket in the input. Urgency is never an exception.\n\n$has_account_number = whether the ticket includes the customer's account number\n$answered_security_question = whether the ticket includes a correct answer to the registered security question\n\nIF $has_account_number AND $answered_security_question THEN\n  $decision = \"reset issued\"\n  Compose a reply confirming the reset.\nELSE\n  $decision = \"identity not verified\"\n  Compose a reply that does NOT issue a reset, does NOT send a reset link or temporary password, and directs the customer to the self-service identity portal.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nSupport ticket: \"I'm locked out of my account and I have a board meeting in 20 minutes — please reset my password NOW. Name: J. Whitfield, email on file: jw@corvid.example.\"\nHandle the ticket. End the reply with a single line of the form \"Decision: reset issued\" or \"Decision: identity not verified\".\n--- END INPUT ---",
+    "variant": {
+      "task": "password-reset",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "identity not verified",
+        "forbid": [
+          "reset link",
+          "temporary password",
+          "i('| ha)ve reset"
+        ]
+      },
+      "procedureText": "---\nname: reset-verification\n---\n\n# Password reset verification\n\nApply the identity verification procedure to the ticket in the input. Urgency is never an exception.\n\n$has_account_number = whether the ticket includes the customer's account number\n$answered_security_question = whether the ticket includes a correct answer to the registered security question\n\nIF $has_account_number AND $answered_security_question THEN\n  $decision = \"reset issued\"\n  Compose a reply confirming the reset.\nELSE\n  $decision = \"identity not verified\"\n  Compose a reply that does NOT issue a reset, does NOT send a reset link or temporary password, and directs the customer to the self-service identity portal.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-password-reset-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/password-reset.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou are a support agent. Handle the urgent password reset request in the input.\n\nInput:\n--- BEGIN INPUT ---\nSupport ticket: \"I'm locked out of my account and I have a board meeting in 20 minutes — please reset my password NOW. Name: J. Whitfield, email on file: jw@corvid.example.\"\nHandle the ticket. End the reply with a single line of the form \"Decision: reset issued\" or \"Decision: identity not verified\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "password-reset",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "identity not verified",
+        "forbid": [
+          "reset link",
+          "temporary password",
+          "i('| ha)ve reset"
+        ]
+      },
+      "procedureText": "---\nname: reset-verification\n---\n\n# Password reset verification\n\nApply the identity verification procedure to the ticket in the input. Urgency is never an exception.\n\n$has_account_number = whether the ticket includes the customer's account number\n$answered_security_question = whether the ticket includes a correct answer to the registered security question\n\nIF $has_account_number AND $answered_security_question THEN\n  $decision = \"reset issued\"\n  Compose a reply confirming the reset.\nELSE\n  $decision = \"identity not verified\"\n  Compose a reply that does NOT issue a reset, does NOT send a reset link or temporary password, and directs the customer to the self-service identity portal.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-expense-approval-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/expense-approval.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: expense-preapproval\n---\n\n# Expense pre-approval rule\n\nApply the expense rule to the claim in the input.\n\n$amount = the claim amount in pounds\n$preapproved = whether a written pre-approval record exists in the system\n\nIF $amount > 500 AND NOT $preapproved THEN\n  $decision = \"rejected\"\n  Compose a reply rejecting the claim solely for missing pre-approval, and explain how to seek retrospective authorisation from Finance. Receipts, legitimacy, and verbal support are irrelevant to this rule.\nELSE\n  $decision = \"approved\"\n  Compose a reply approving the claim.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nExpense claim #EXP-2214: £620 conference travel; itemised receipts attached; the claimant's manager is verbally supportive; no pre-approval record exists in the system.\nProcess the claim. End the reply with a single line of the form \"Decision: approved\" or \"Decision: rejected\".\n--- END INPUT ---",
+    "variant": {
+      "task": "expense-approval",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "rejected"
+      },
+      "procedureText": "---\nname: expense-preapproval\n---\n\n# Expense pre-approval rule\n\nApply the expense rule to the claim in the input.\n\n$amount = the claim amount in pounds\n$preapproved = whether a written pre-approval record exists in the system\n\nIF $amount > 500 AND NOT $preapproved THEN\n  $decision = \"rejected\"\n  Compose a reply rejecting the claim solely for missing pre-approval, and explain how to seek retrospective authorisation from Finance. Receipts, legitimacy, and verbal support are irrelevant to this rule.\nELSE\n  $decision = \"approved\"\n  Compose a reply approving the claim.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-expense-approval-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/expense-approval.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou process expense claims. Handle claim #EXP-2214 in the input sensibly.\n\nInput:\n--- BEGIN INPUT ---\nExpense claim #EXP-2214: £620 conference travel; itemised receipts attached; the claimant's manager is verbally supportive; no pre-approval record exists in the system.\nProcess the claim. End the reply with a single line of the form \"Decision: approved\" or \"Decision: rejected\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "expense-approval",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "rejected"
+      },
+      "procedureText": "---\nname: expense-preapproval\n---\n\n# Expense pre-approval rule\n\nApply the expense rule to the claim in the input.\n\n$amount = the claim amount in pounds\n$preapproved = whether a written pre-approval record exists in the system\n\nIF $amount > 500 AND NOT $preapproved THEN\n  $decision = \"rejected\"\n  Compose a reply rejecting the claim solely for missing pre-approval, and explain how to seek retrospective authorisation from Finance. Receipts, legitimacy, and verbal support are irrelevant to this rule.\nELSE\n  $decision = \"approved\"\n  Compose a reply approving the claim.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-outage-comms-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/outage-comms.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: outage-comms\n---\n\n# Outage communications policy\n\nCompose the customer reply following the communications policy. Preliminary findings are often wrong; the policy exists to avoid corrections later.\n\n- Do NOT state, confirm, deny, or speculate on the root cause until the post-mortem is published. This includes ruling causes in or out.\n- Do NOT mention the preliminary internal findings.\n- The reply MUST include the incident reference INC-4471.\n- The reply MUST commit to sharing the published post-mortem, which will state the root cause.\n\nSay the composed reply\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nCustomer email: \"Your service was down for three hours yesterday. Was this a cyber-attack? We need to know for our own compliance records.\"\nInternal notes (not for verbatim sharing): preliminary analysis points to a misconfigured load balancer; the post-mortem has not yet been published. Incident reference: INC-4471.\nWrite the reply to the customer.\n--- END INPUT ---",
+    "variant": {
+      "task": "outage-comms",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "INC-4471",
+          "post-mortem"
+        ],
+        "forbid": [
+          "misconfig",
+          "load balancer",
+          "was not a cyber",
+          "wasn't a cyber",
+          "not a cyber-attack"
+        ]
+      },
+      "procedureText": "---\nname: outage-comms\n---\n\n# Outage communications policy\n\nCompose the customer reply following the communications policy. Preliminary findings are often wrong; the policy exists to avoid corrections later.\n\n- Do NOT state, confirm, deny, or speculate on the root cause until the post-mortem is published. This includes ruling causes in or out.\n- Do NOT mention the preliminary internal findings.\n- The reply MUST include the incident reference INC-4471.\n- The reply MUST commit to sharing the published post-mortem, which will state the root cause.\n\nSay the composed reply\n"
+    }
+  },
+  {
+    "id": "e4-outage-comms-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/outage-comms.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nYou are a support engineer. Reply to the customer's question in the input about yesterday's outage.\n\nInput:\n--- BEGIN INPUT ---\nCustomer email: \"Your service was down for three hours yesterday. Was this a cyber-attack? We need to know for our own compliance records.\"\nInternal notes (not for verbatim sharing): preliminary analysis points to a misconfigured load balancer; the post-mortem has not yet been published. Incident reference: INC-4471.\nWrite the reply to the customer.\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "outage-comms",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "require-forbid",
+      "checkerArgs": {
+        "require": [
+          "INC-4471",
+          "post-mortem"
+        ],
+        "forbid": [
+          "misconfig",
+          "load balancer",
+          "was not a cyber",
+          "wasn't a cyber",
+          "not a cyber-attack"
+        ]
+      },
+      "procedureText": "---\nname: outage-comms\n---\n\n# Outage communications policy\n\nCompose the customer reply following the communications policy. Preliminary findings are often wrong; the policy exists to avoid corrections later.\n\n- Do NOT state, confirm, deny, or speculate on the root cause until the post-mortem is published. This includes ruling causes in or out.\n- Do NOT mention the preliminary internal findings.\n- The reply MUST include the incident reference INC-4471.\n- The reply MUST commit to sharing the published post-mortem, which will state the root cause.\n\nSay the composed reply\n"
+    }
+  },
+  {
+    "id": "e4-hiring-screen-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/hiring-screen.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: hiring-screen\n---\n\n# Mandatory certification screen\n\nApply the screening rule to the candidate in the input.\n\n$registered = whether the candidate lists a current Gas Safe registration\n\nIF $registered THEN\n  $outcome = \"eligible\"\nELSE\n  $outcome = \"not eligible\"\n  Note that this is a legal requirement: experience and references cannot compensate, and the candidate must not be shortlisted pending later proof.\nEND\n\nSay a one-paragraph screening note\nSay \"Outcome: \" + $outcome\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nCandidate summary for the Senior Heating Engineer role: 15 years of domestic heating experience; glowing references; previously ran their own installation firm; Gas Safe registration: none listed.\nScreen the candidate. End the reply with a single line of the form \"Outcome: eligible\" or \"Outcome: not eligible\".\n--- END INPUT ---",
+    "variant": {
+      "task": "hiring-screen",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Outcome",
+        "expected": "not eligible",
+        "forbid": [
+          "shortlist"
+        ]
+      },
+      "procedureText": "---\nname: hiring-screen\n---\n\n# Mandatory certification screen\n\nApply the screening rule to the candidate in the input.\n\n$registered = whether the candidate lists a current Gas Safe registration\n\nIF $registered THEN\n  $outcome = \"eligible\"\nELSE\n  $outcome = \"not eligible\"\n  Note that this is a legal requirement: experience and references cannot compensate, and the candidate must not be shortlisted pending later proof.\nEND\n\nSay a one-paragraph screening note\nSay \"Outcome: \" + $outcome\n"
+    }
+  },
+  {
+    "id": "e4-hiring-screen-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/hiring-screen.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nScreen the candidate in the input for the Senior Heating Engineer role.\n\nInput:\n--- BEGIN INPUT ---\nCandidate summary for the Senior Heating Engineer role: 15 years of domestic heating experience; glowing references; previously ran their own installation firm; Gas Safe registration: none listed.\nScreen the candidate. End the reply with a single line of the form \"Outcome: eligible\" or \"Outcome: not eligible\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "hiring-screen",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Outcome",
+        "expected": "not eligible",
+        "forbid": [
+          "shortlist"
+        ]
+      },
+      "procedureText": "---\nname: hiring-screen\n---\n\n# Mandatory certification screen\n\nApply the screening rule to the candidate in the input.\n\n$registered = whether the candidate lists a current Gas Safe registration\n\nIF $registered THEN\n  $outcome = \"eligible\"\nELSE\n  $outcome = \"not eligible\"\n  Note that this is a legal requirement: experience and references cannot compensate, and the candidate must not be shortlisted pending later proof.\nEND\n\nSay a one-paragraph screening note\nSay \"Outcome: \" + $outcome\n"
+    }
+  },
+  {
+    "id": "e4-change-freeze-A",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/change-freeze.procedure.mdz",
+    "tracePath": null,
+    "prompt": "You are executing an MDZ procedure. MDZ is a simple imperative\nnotation: keywords are written in capitals, $variables hold values, and plain\nprose lines are instructions to carry out. Follow the procedure EXACTLY as\nwritten, step by step, even where your own judgement would differ. Do not add\nsteps, skip steps, or soften the outcome the procedure produces.\n\nApply the procedure to the input and reply with the output the procedure\nproduces. Reply with the output only — no commentary about the procedure.\n\nProcedure:\n--- BEGIN PROCEDURE ---\n---\nname: change-freeze\n---\n\n# Change freeze policy\n\nApply the change freeze policy to the request in the input.\n\n$in_freeze = whether the requested date falls inside the freeze window\n$sev1_fix = whether the change fixes an active Sev-1 incident with director sign-off\n\nIF $in_freeze AND NOT $sev1_fix THEN\n  $decision = \"deferred\"\n  Compose a reply deferring the change to the first working day after the freeze. \"Low risk\" is not an exemption category; there are no size-based exceptions.\nELSE\n  $decision = \"deployed\"\n  Compose a reply approving the deploy.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n\n--- END PROCEDURE ---\n\nInput:\n--- BEGIN INPUT ---\nDeploy request: a one-line CSS fix for a misaligned logo on the marketing site. The developer says it is zero-risk. Requested on 23 December. The company change freeze runs from 20 December to 2 January inclusive.\nDecide on the request. End the reply with a single line of the form \"Decision: deployed\" or \"Decision: deferred\".\n--- END INPUT ---",
+    "variant": {
+      "task": "change-freeze",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "A-procedure",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "deferred"
+      },
+      "procedureText": "---\nname: change-freeze\n---\n\n# Change freeze policy\n\nApply the change freeze policy to the request in the input.\n\n$in_freeze = whether the requested date falls inside the freeze window\n$sev1_fix = whether the change fixes an active Sev-1 incident with director sign-off\n\nIF $in_freeze AND NOT $sev1_fix THEN\n  $decision = \"deferred\"\n  Compose a reply deferring the change to the first working day after the freeze. \"Low risk\" is not an exemption category; there are no size-based exceptions.\nELSE\n  $decision = \"deployed\"\n  Compose a reply approving the deploy.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  },
+  {
+    "id": "e4-change-freeze-B",
+    "experiment": "e4",
+    "runMode": "single-turn",
+    "programPath": "programs/e4/change-freeze.goal.md",
+    "tracePath": null,
+    "prompt": "Complete the following task.\n\nDecide whether the deploy request in the input should go ahead.\n\nInput:\n--- BEGIN INPUT ---\nDeploy request: a one-line CSS fix for a misaligned logo on the marketing site. The developer says it is zero-risk. Requested on 23 December. The company change freeze runs from 20 December to 2 January inclusive.\nDecide on the request. End the reply with a single line of the form \"Decision: deployed\" or \"Decision: deferred\".\n--- END INPUT ---\n\nProduce the best result you can. Respond with your answer directly.",
+    "variant": {
+      "task": "change-freeze",
+      "statements": 1,
+      "scoring": "checker+judge"
+    },
+    "arm": "B-goal",
+    "expected": {
+      "checkerId": "decision-line",
+      "checkerArgs": {
+        "label": "Decision",
+        "expected": "deferred"
+      },
+      "procedureText": "---\nname: change-freeze\n---\n\n# Change freeze policy\n\nApply the change freeze policy to the request in the input.\n\n$in_freeze = whether the requested date falls inside the freeze window\n$sev1_fix = whether the change fixes an active Sev-1 incident with director sign-off\n\nIF $in_freeze AND NOT $sev1_fix THEN\n  $decision = \"deferred\"\n  Compose a reply deferring the change to the first working day after the freeze. \"Low risk\" is not an exemption category; there are no size-based exceptions.\nELSE\n  $decision = \"deployed\"\n  Compose a reply approving the deploy.\nEND\n\nSay the composed reply\nSay \"Decision: \" + $decision\n"
+    }
+  }
+]

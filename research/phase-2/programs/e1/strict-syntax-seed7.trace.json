@@ -1,0 +1,7 @@
+[
+  {
+    "step": 1,
+    "action": "halt",
+    "reason": "syntax error: FOR header missing IN"
+  }
+]

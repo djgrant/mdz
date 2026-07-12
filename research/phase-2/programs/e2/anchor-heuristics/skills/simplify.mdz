@@ -1,0 +1,13 @@
+---
+name: simplify
+input: $items
+---
+
+# Simplify
+
+Rewrite each item in plainer words.
+
+USE ~/skills/map-reduce WITH
+  items: $items
+  map: Rewrite the heuristic in plainer words, keeping its CANARY token verbatim at the end
+  reduce: Return the rewritten heuristics as a bullet list, one per item, each ending with its CANARY token verbatim

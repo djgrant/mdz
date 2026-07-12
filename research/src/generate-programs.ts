@@ -19,9 +19,13 @@ import { validateMdz } from "./interpreter/validate.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BENCH_ROOT = resolve(HERE, "..");
+const PHASE = process.argv.includes("--phase")
+  ? process.argv[process.argv.indexOf("--phase") + 1]
+  : "phase-1";
+export const PHASE_ROOT = join(BENCH_ROOT, PHASE);
 
 export interface ManifestEntry {
-  programPath: string; // relative to the benchmark package root
+  programPath: string; // relative to the phase root (e.g. phase-1/)
   tracePath: string | null;
   variant: Record<string, unknown>;
   seed: number;
@@ -34,13 +38,13 @@ interface Cli {
 }
 
 function parseArgs(argv: string[]): Cli {
-  const out = argv.includes("--out") ? argv[argv.indexOf("--out") + 1] : join(BENCH_ROOT, "programs");
+  const out = argv.includes("--out") ? argv[argv.indexOf("--out") + 1] : join(PHASE_ROOT, "programs");
   const seeds = argv.includes("--seeds") ? Number(argv[argv.indexOf("--seeds") + 1]) : 5;
   return { out: resolve(out), seeds };
 }
 
 function rel(absPath: string): string {
-  return absPath.slice(BENCH_ROOT.length + 1);
+  return absPath.slice(PHASE_ROOT.length + 1);
 }
 
 function writeText(absPath: string, content: string): void {

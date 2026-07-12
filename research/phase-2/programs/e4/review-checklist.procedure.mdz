@@ -1,0 +1,13 @@
+---
+name: review-checklist
+---
+
+# Review checklist
+
+Check the file in the input against EVERY item on this checklist and report each failure on its own line prefixed "VIOLATION:". Do not skip items that seem minor.
+
+- The file must begin with the standard licence header comment. If it does not, report it.
+- Any TODO comment is a violation; quote it.
+- Any console.log call is a violation; quote it.
+
+Say one "VIOLATION:" line per failed checklist item

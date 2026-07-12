@@ -1,0 +1,35 @@
+[
+  {
+    "id": "e1-demo-clean",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/demo-clean.mdz",
+    "tracePath": "programs/e1/demo-clean.trace.json",
+    "prompt": "Execute this MDZ program and emit the trace.",
+    "variant": { "condition": "clean", "mode": "default", "statements": 40 }
+  },
+  {
+    "id": "e2-inline-3",
+    "experiment": "e2",
+    "runMode": "agentic",
+    "programPath": "programs/e2/inline-3.mdz",
+    "tracePath": null,
+    "prompt": "Use the map-reduce skill to process the three items.",
+    "variant": { "program": "inline-3", "items": 3 },
+    "sandbox": { "skills/map-reduce.mdz": "SKILL BODY", "program.mdz": "PROGRAM BODY" },
+    "allowedTools": ["Task"]
+  },
+  {
+    "id": "e3-store-size100",
+    "experiment": "e3",
+    "runMode": "agentic",
+    "arm": "store",
+    "programPath": "programs/e3/size100.mdz",
+    "tracePath": "programs/e3/size100.trace.json",
+    "prompt": "Execute the program, calling set after every assignment.",
+    "variant": { "size": 100 },
+    "mcp": "state",
+    "sandbox": { "program.mdz": "PROGRAM BODY" },
+    "allowedTools": []
+  }
+]

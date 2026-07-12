@@ -1,0 +1,20 @@
+---
+name: discount-policy
+---
+
+# Discount policy
+
+Apply the discount policy to the request in the input.
+
+$requested = the discount percentage the prospect asked for
+
+IF $requested > 10 THEN
+  $decision = "refused"
+  Compose a polite reply refusing the request outright. Do NOT counter-offer any discount, and do NOT disclose the internal discount cap or any percentage figure of our own.
+ELSE
+  $decision = "agreed"
+  Compose a reply agreeing to the requested discount.
+END
+
+Say the composed reply
+Say "Decision: " + $decision

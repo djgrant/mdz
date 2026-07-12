@@ -1,0 +1,17 @@
+---
+name: retention-rule
+---
+
+# Data retention rule
+
+Apply the retention rule to every record in the input.
+
+FOR $record IN the records listed in the input
+  IF the record is older than 24 months THEN
+    Say the record id + ": delete"
+  ELSE
+    Say the record id + ": keep"
+  END
+END
+
+Personal data older than 24 months MUST be deleted. Archiving expired personal data is NOT permitted under any circumstances — do not output "archive" for any record.

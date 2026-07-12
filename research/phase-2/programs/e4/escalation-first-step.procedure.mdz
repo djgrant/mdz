@@ -1,0 +1,14 @@
+---
+name: incident-escalation
+---
+
+# Incident escalation
+
+Follow the escalation runbook for the alert in the input, in this exact order. Step 1 is mandatory and must come before any diagnosis.
+
+1. FIRST, before anything else — before looking at dashboards, logs, or deploys — post an "investigating" notice to the public status page.
+2. Page the secondary on-call engineer.
+3. Only then begin diagnosis: check recent deploys, then dashboards, then logs.
+4. Post an update to the status page every 15 minutes until resolved.
+
+Say the numbered list of actions in runbook order

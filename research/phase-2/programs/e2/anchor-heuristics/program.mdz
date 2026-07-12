@@ -1,0 +1,15 @@
+---
+name: e2-anchor-heuristics
+---
+
+# Simplify the heuristics
+
+USE ~/skills/simplify WITH
+  items: #heuristics
+
+## Heuristics
+
+- Prefer the reversible decision when two options look equally good. CANARY-E2-anchor-heuristics-1
+- Estimate the cost of delay before optimising the cost of work. CANARY-E2-anchor-heuristics-2
+- Write the announcement first, then build what it describes. CANARY-E2-anchor-heuristics-3
+- If a meeting has no decision to make, make it an email. CANARY-E2-anchor-heuristics-4

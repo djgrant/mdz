@@ -1,0 +1,44 @@
+---
+name: e1-seed7
+---
+
+# e1-seed7
+
+PRAGMA STRICT
+
+$v0: String = 0
+$v1 = $v0 * 3
+$v2 = "done"
+IF $v1 = 5 THEN
+  IF $v1 < 2 THEN
+    Say $v0
+  END
+END
+FOR $v3 IN [3, 2, 5, 2, 9]
+  Say $v3
+END
+FOR $v4 IN [8, 1, 1, 1, 2]
+  Say $v4
+END
+$v5 = $v2 + "red"
+$v6 = "blue"
+Say $v0
+IF $v1 != 7 THEN
+  $v7 = $v0 * 2
+END
+$v8 = $v0 + 5
+$v9 = 5
+WHILE $v9 != 0
+  Say $v9
+  $v9 = $v9 - 1
+END
+FOR $v10 IN [6, 3, 0, 6, 9]
+  Say $v10
+END
+$v11 = "hold"
+IF $v9 < 0 THEN
+  Say "hold"
+  Say $v11
+END
+$v12 = 5
+Say "red"

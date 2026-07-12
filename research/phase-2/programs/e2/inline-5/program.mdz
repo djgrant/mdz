@@ -1,0 +1,12 @@
+---
+name: e2-inline-5
+---
+
+# Summarise the items
+
+$items = ["The northern warehouse reports a stock surplus of 400 units. CANARY-E2-inline-5-1", "The Bristol office lease is due for renewal in March. CANARY-E2-inline-5-2", "Customer churn rose by two points in the last quarter. CANARY-E2-inline-5-3", "The payments team shipped the new reconciliation job. CANARY-E2-inline-5-4", "A supplier has asked to renegotiate delivery terms. CANARY-E2-inline-5-5"]
+
+USE ~/skills/map-reduce WITH
+  items: $items
+  map: Summarise the item in one short sentence and include the item's CANARY token verbatim
+  reduce: Produce a numbered list with one line per item, each line ending with that item's CANARY token verbatim

@@ -1,0 +1,20 @@
+---
+name: refund-eligibility
+---
+
+# Refund eligibility
+
+Apply the refund policy to the request in the input. The policy is exhaustive; do not add exceptions or goodwill gestures.
+
+$days = the number of days since renewal, taken from the account data
+
+IF $days > 14 THEN
+  $decision = "denied"
+  Compose a polite reply explaining that refunds are only available within 14 days of renewal. Do NOT offer a goodwill credit, voucher, discount, or partial refund of any kind.
+ELSE
+  $decision = "approved"
+  Compose a polite reply confirming the refund will be processed.
+END
+
+Say the composed reply
+Say "Decision: " + $decision

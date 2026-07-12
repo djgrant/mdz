@@ -7,17 +7,17 @@ scoring model traces against the reference.
 ## Directory layout
 
 ```
-benchmark/
-  DESIGN.md            this file
+research/
   package.json         workspace package "@mdz/benchmark" (TypeScript, vitest)
-  src/
+  src/                 shared infrastructure, evolves across phases
     generator/         random program generator (seeded, parameterised)
     interpreter/       reference interpreter -> canonical trace
     harness/           model runners (claude CLI, codex CLI), scoring, recording
-    experiments/       one config per research question (q1..q5)
-  programs/            generated programs + reference traces (committed artefacts)
-  results/             JSONL result records, one file per experiment run
-  analysis/            Jupyter notebook presenting results
+  phase-1/             frozen phase artefacts (scripts take --phase, default phase-1)
+    DESIGN.md          this file
+    programs/          generated programs + reference traces (committed artefacts)
+    results/           JSONL result records, one file per experiment run
+    analysis/          Jupyter notebook + built HTML presenting results
 ```
 
 ## Program design

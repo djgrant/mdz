@@ -1,0 +1,19 @@
+---
+name: hiring-screen
+---
+
+# Mandatory certification screen
+
+Apply the screening rule to the candidate in the input.
+
+$registered = whether the candidate lists a current Gas Safe registration
+
+IF $registered THEN
+  $outcome = "eligible"
+ELSE
+  $outcome = "not eligible"
+  Note that this is a legal requirement: experience and references cannot compensate, and the candidate must not be shortlisted pending later proof.
+END
+
+Say a one-paragraph screening note
+Say "Outcome: " + $outcome

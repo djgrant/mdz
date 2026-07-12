@@ -1,0 +1,130 @@
+[
+  {
+    "step": 1,
+    "action": "assign",
+    "var": "v0",
+    "value": 7
+  },
+  {
+    "step": 2,
+    "action": "assign",
+    "var": "v1",
+    "value": 2
+  },
+  {
+    "step": 3,
+    "action": "assign",
+    "var": "v2",
+    "value": "blue"
+  },
+  {
+    "step": 4,
+    "action": "assign",
+    "var": "v3",
+    "value": 3
+  },
+  {
+    "step": 5,
+    "action": "emit",
+    "value": "blue"
+  },
+  {
+    "step": 6,
+    "action": "emit",
+    "value": "next"
+  },
+  {
+    "step": 7,
+    "action": "emit",
+    "value": "hold"
+  },
+  {
+    "step": 8,
+    "action": "emit",
+    "value": "ok"
+  },
+  {
+    "step": 9,
+    "action": "assign",
+    "var": "v8",
+    "value": 4
+  },
+  {
+    "step": 10,
+    "action": "emit",
+    "value": "0"
+  },
+  {
+    "step": 11,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 12,
+    "action": "emit",
+    "value": "0"
+  },
+  {
+    "step": 13,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 14,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 15,
+    "action": "assign",
+    "var": "v10",
+    "value": 3
+  },
+  {
+    "step": 16,
+    "action": "emit",
+    "value": "blue"
+  },
+  {
+    "step": 17,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 18,
+    "action": "emit",
+    "value": "blue"
+  },
+  {
+    "step": 19,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 20,
+    "action": "emit",
+    "value": "done"
+  },
+  {
+    "step": 21,
+    "action": "assign",
+    "var": "v14",
+    "value": 28
+  },
+  {
+    "step": 22,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 23,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 24,
+    "action": "assign",
+    "var": "v15",
+    "value": "blueok"
+  }
+]

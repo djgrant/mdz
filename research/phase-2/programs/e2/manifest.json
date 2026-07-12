@@ -1,0 +1,122 @@
+[
+  {
+    "id": "e2-inline-3",
+    "experiment": "e2",
+    "runMode": "agentic",
+    "programPath": "programs/e2/inline-3/program.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ executor. MDZ is a simple imperative notation for\nprocedures. Execute the root program below EXACTLY as written, step by step.\nDo not optimise, summarise, skip, or \"improve\" the program.\n\nYou are running agentically in a working directory that contains the skill\nfiles the program references (for example ./skills/map-reduce.mdz). Read a\nskill file to resolve any USE target before executing it.\n\nExecution rules:\n- Every SPAWN statement MUST be performed as a real Task tool call: exactly\n  one Task call per spawned worker, one worker per item.\n- Each worker's Task prompt must contain the full WITH payload for its item:\n  the map instruction verbatim, and the item text including its CANARY token\n  verbatim.\n- Do not simulate, merge, or skip spawns, and do not answer on a worker's\n  behalf yourself.\n- After all workers return, apply the reduce step to their outputs.\n\nWhen finished, print the final reduced result as your answer.\n\nRoot program (also available as ./program.mdz):\n--- BEGIN PROGRAM ---\n---\nname: e2-inline-3\n---\n\n# Summarise the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-inline-3-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-inline-3-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-inline-3-3\"]\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: Summarise the item in one short sentence and include the item's CANARY token verbatim\n  reduce: Produce a numbered list with one line per item, each line ending with that item's CANARY token verbatim\n\n--- END PROGRAM ---",
+    "variant": {
+      "variant": "inline-3",
+      "statements": 3,
+      "items": 3
+    },
+    "expected": {
+      "spawnCount": 3,
+      "canaries": [
+        "CANARY-E2-inline-3-1",
+        "CANARY-E2-inline-3-2",
+        "CANARY-E2-inline-3-3"
+      ],
+      "lambda": null
+    },
+    "sandbox": {
+      "program.mdz": "---\nname: e2-inline-3\n---\n\n# Summarise the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-inline-3-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-inline-3-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-inline-3-3\"]\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: Summarise the item in one short sentence and include the item's CANARY token verbatim\n  reduce: Produce a numbered list with one line per item, each line ending with that item's CANARY token verbatim\n",
+      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $reduce\n---\n\n# Map reduce\n\nA higher-order skill. Apply the $map instruction to every item in $items,\ndelegating each item to its own worker, then combine the worker outputs with\nthe $reduce instruction.\n\nFOR $item IN $items\n  SPAWN ~/agents/worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every worker output, in the same order as $items\n$final = the result of applying $reduce to $results\n\nSay $final\n"
+    },
+    "allowedTools": [
+      "Task"
+    ]
+  },
+  {
+    "id": "e2-inline-5",
+    "experiment": "e2",
+    "runMode": "agentic",
+    "programPath": "programs/e2/inline-5/program.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ executor. MDZ is a simple imperative notation for\nprocedures. Execute the root program below EXACTLY as written, step by step.\nDo not optimise, summarise, skip, or \"improve\" the program.\n\nYou are running agentically in a working directory that contains the skill\nfiles the program references (for example ./skills/map-reduce.mdz). Read a\nskill file to resolve any USE target before executing it.\n\nExecution rules:\n- Every SPAWN statement MUST be performed as a real Task tool call: exactly\n  one Task call per spawned worker, one worker per item.\n- Each worker's Task prompt must contain the full WITH payload for its item:\n  the map instruction verbatim, and the item text including its CANARY token\n  verbatim.\n- Do not simulate, merge, or skip spawns, and do not answer on a worker's\n  behalf yourself.\n- After all workers return, apply the reduce step to their outputs.\n\nWhen finished, print the final reduced result as your answer.\n\nRoot program (also available as ./program.mdz):\n--- BEGIN PROGRAM ---\n---\nname: e2-inline-5\n---\n\n# Summarise the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-inline-5-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-inline-5-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-inline-5-3\", \"The payments team shipped the new reconciliation job. CANARY-E2-inline-5-4\", \"A supplier has asked to renegotiate delivery terms. CANARY-E2-inline-5-5\"]\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: Summarise the item in one short sentence and include the item's CANARY token verbatim\n  reduce: Produce a numbered list with one line per item, each line ending with that item's CANARY token verbatim\n\n--- END PROGRAM ---",
+    "variant": {
+      "variant": "inline-5",
+      "statements": 5,
+      "items": 5
+    },
+    "expected": {
+      "spawnCount": 5,
+      "canaries": [
+        "CANARY-E2-inline-5-1",
+        "CANARY-E2-inline-5-2",
+        "CANARY-E2-inline-5-3",
+        "CANARY-E2-inline-5-4",
+        "CANARY-E2-inline-5-5"
+      ],
+      "lambda": null
+    },
+    "sandbox": {
+      "program.mdz": "---\nname: e2-inline-5\n---\n\n# Summarise the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-inline-5-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-inline-5-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-inline-5-3\", \"The payments team shipped the new reconciliation job. CANARY-E2-inline-5-4\", \"A supplier has asked to renegotiate delivery terms. CANARY-E2-inline-5-5\"]\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: Summarise the item in one short sentence and include the item's CANARY token verbatim\n  reduce: Produce a numbered list with one line per item, each line ending with that item's CANARY token verbatim\n",
+      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $reduce\n---\n\n# Map reduce\n\nA higher-order skill. Apply the $map instruction to every item in $items,\ndelegating each item to its own worker, then combine the worker outputs with\nthe $reduce instruction.\n\nFOR $item IN $items\n  SPAWN ~/agents/worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every worker output, in the same order as $items\n$final = the result of applying $reduce to $results\n\nSay $final\n"
+    },
+    "allowedTools": [
+      "Task"
+    ]
+  },
+  {
+    "id": "e2-anchor-heuristics",
+    "experiment": "e2",
+    "runMode": "agentic",
+    "programPath": "programs/e2/anchor-heuristics/program.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ executor. MDZ is a simple imperative notation for\nprocedures. Execute the root program below EXACTLY as written, step by step.\nDo not optimise, summarise, skip, or \"improve\" the program.\n\nYou are running agentically in a working directory that contains the skill\nfiles the program references (for example ./skills/map-reduce.mdz). Read a\nskill file to resolve any USE target before executing it.\n\nExecution rules:\n- Every SPAWN statement MUST be performed as a real Task tool call: exactly\n  one Task call per spawned worker, one worker per item.\n- Each worker's Task prompt must contain the full WITH payload for its item:\n  the map instruction verbatim, and the item text including its CANARY token\n  verbatim.\n- Do not simulate, merge, or skip spawns, and do not answer on a worker's\n  behalf yourself.\n- After all workers return, apply the reduce step to their outputs.\n\nWhen finished, print the final reduced result as your answer.\n\nRoot program (also available as ./program.mdz):\n--- BEGIN PROGRAM ---\n---\nname: e2-anchor-heuristics\n---\n\n# Simplify the heuristics\n\nUSE ~/skills/simplify WITH\n  items: #heuristics\n\n## Heuristics\n\n- Prefer the reversible decision when two options look equally good. CANARY-E2-anchor-heuristics-1\n- Estimate the cost of delay before optimising the cost of work. CANARY-E2-anchor-heuristics-2\n- Write the announcement first, then build what it describes. CANARY-E2-anchor-heuristics-3\n- If a meeting has no decision to make, make it an email. CANARY-E2-anchor-heuristics-4\n\n--- END PROGRAM ---",
+    "variant": {
+      "variant": "anchor-heuristics",
+      "statements": 4,
+      "items": 4
+    },
+    "expected": {
+      "spawnCount": 4,
+      "canaries": [
+        "CANARY-E2-anchor-heuristics-1",
+        "CANARY-E2-anchor-heuristics-2",
+        "CANARY-E2-anchor-heuristics-3",
+        "CANARY-E2-anchor-heuristics-4"
+      ],
+      "lambda": null
+    },
+    "sandbox": {
+      "program.mdz": "---\nname: e2-anchor-heuristics\n---\n\n# Simplify the heuristics\n\nUSE ~/skills/simplify WITH\n  items: #heuristics\n\n## Heuristics\n\n- Prefer the reversible decision when two options look equally good. CANARY-E2-anchor-heuristics-1\n- Estimate the cost of delay before optimising the cost of work. CANARY-E2-anchor-heuristics-2\n- Write the announcement first, then build what it describes. CANARY-E2-anchor-heuristics-3\n- If a meeting has no decision to make, make it an email. CANARY-E2-anchor-heuristics-4\n",
+      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $reduce\n---\n\n# Map reduce\n\nA higher-order skill. Apply the $map instruction to every item in $items,\ndelegating each item to its own worker, then combine the worker outputs with\nthe $reduce instruction.\n\nFOR $item IN $items\n  SPAWN ~/agents/worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every worker output, in the same order as $items\n$final = the result of applying $reduce to $results\n\nSay $final\n",
+      "skills/simplify.mdz": "---\nname: simplify\ninput: $items\n---\n\n# Simplify\n\nRewrite each item in plainer words.\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: Rewrite the heuristic in plainer words, keeping its CANARY token verbatim at the end\n  reduce: Return the rewritten heuristics as a bullet list, one per item, each ending with its CANARY token verbatim\n"
+    },
+    "allowedTools": [
+      "Task"
+    ]
+  },
+  {
+    "id": "e2-lambda-fidelity",
+    "experiment": "e2",
+    "runMode": "agentic",
+    "programPath": "programs/e2/lambda-fidelity/program.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ executor. MDZ is a simple imperative notation for\nprocedures. Execute the root program below EXACTLY as written, step by step.\nDo not optimise, summarise, skip, or \"improve\" the program.\n\nYou are running agentically in a working directory that contains the skill\nfiles the program references (for example ./skills/map-reduce.mdz). Read a\nskill file to resolve any USE target before executing it.\n\nExecution rules:\n- Every SPAWN statement MUST be performed as a real Task tool call: exactly\n  one Task call per spawned worker, one worker per item.\n- Each worker's Task prompt must contain the full WITH payload for its item:\n  the map instruction verbatim, and the item text including its CANARY token\n  verbatim.\n- Do not simulate, merge, or skip spawns, and do not answer on a worker's\n  behalf yourself.\n- After all workers return, apply the reduce step to their outputs.\n\nWhen finished, print the final reduced result as your answer.\n\nRoot program (also available as ./program.mdz):\n--- BEGIN PROGRAM ---\n---\nname: e2-lambda-fidelity\n---\n\n# Classify the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-lambda-fidelity-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-lambda-fidelity-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-lambda-fidelity-3\"]\n\n$map = item => \"Classify the item as URGENT or ROUTINE, citing the exact phrase PATTERN-BLUE-VERIFICATION, and quote the item's CANARY token. Item: #{item}\"\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: $map\n  reduce: Produce one line per item in the form <verdict> -- <CANARY token>\n\n--- END PROGRAM ---",
+    "variant": {
+      "variant": "lambda-fidelity",
+      "statements": 3,
+      "items": 3
+    },
+    "expected": {
+      "spawnCount": 3,
+      "canaries": [
+        "CANARY-E2-lambda-fidelity-1",
+        "CANARY-E2-lambda-fidelity-2",
+        "CANARY-E2-lambda-fidelity-3"
+      ],
+      "lambda": "Classify the item as URGENT or ROUTINE, citing the exact phrase PATTERN-BLUE-VERIFICATION"
+    },
+    "sandbox": {
+      "program.mdz": "---\nname: e2-lambda-fidelity\n---\n\n# Classify the items\n\n$items = [\"The northern warehouse reports a stock surplus of 400 units. CANARY-E2-lambda-fidelity-1\", \"The Bristol office lease is due for renewal in March. CANARY-E2-lambda-fidelity-2\", \"Customer churn rose by two points in the last quarter. CANARY-E2-lambda-fidelity-3\"]\n\n$map = item => \"Classify the item as URGENT or ROUTINE, citing the exact phrase PATTERN-BLUE-VERIFICATION, and quote the item's CANARY token. Item: #{item}\"\n\nUSE ~/skills/map-reduce WITH\n  items: $items\n  map: $map\n  reduce: Produce one line per item in the form <verdict> -- <CANARY token>\n",
+      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $reduce\n---\n\n# Map reduce\n\nA higher-order skill. Apply the $map instruction to every item in $items,\ndelegating each item to its own worker, then combine the worker outputs with\nthe $reduce instruction.\n\nFOR $item IN $items\n  SPAWN ~/agents/worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every worker output, in the same order as $items\n$final = the result of applying $reduce to $results\n\nSay $final\n"
+    },
+    "allowedTools": [
+      "Task"
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+---
+name: expense-preapproval
+---
+
+# Expense pre-approval rule
+
+Apply the expense rule to the claim in the input.
+
+$amount = the claim amount in pounds
+$preapproved = whether a written pre-approval record exists in the system
+
+IF $amount > 500 AND NOT $preapproved THEN
+  $decision = "rejected"
+  Compose a reply rejecting the claim solely for missing pre-approval, and explain how to seek retrospective authorisation from Finance. Receipts, legitimacy, and verbal support are irrelevant to this rule.
+ELSE
+  $decision = "approved"
+  Compose a reply approving the claim.
+END
+
+Say the composed reply
+Say "Decision: " + $decision

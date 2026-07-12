@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
@@ -12,16 +11,16 @@ import {
   buildQ5,
   getValidationFailures,
   resetValidationFailures,
+  PHASE_ROOT,
   type ManifestEntry,
 } from "./generate-programs.ts";
 
-const BENCH_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-// Output inside the package so manifest paths remain relative to the package root.
-const OUT = join(BENCH_ROOT, "programs", ".test-out");
+// Output inside the phase folder so manifest paths remain relative to the phase root.
+const OUT = join(PHASE_ROOT, "programs", ".test-out");
 
 function absOf(entry: ManifestEntry, key: "programPath" | "tracePath"): string | null {
   const p = entry[key];
-  return p === null ? null : join(BENCH_ROOT, p);
+  return p === null ? null : join(PHASE_ROOT, p);
 }
 
 describe("generate-programs manifests", () => {

@@ -1,0 +1,7 @@
+[
+  {
+    "step": 1,
+    "action": "halt",
+    "reason": "type violation: annotation contradicts the assigned literal"
+  }
+]

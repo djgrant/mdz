@@ -1,0 +1,53 @@
+---
+name: e1-seed6
+---
+
+# e1-seed6
+
+PRAGMA STRICT
+
+$v0 = 5
+$v1 = $v0 + 3
+$v2 = "draft"
+IF $v0 != 0 THEN
+  IF $v0 > 9 THEN
+    Say $v2
+  END
+END
+CASE $v2
+WHEN "blue"
+  $v3 = $v1 * 2
+WHEN "hold"
+  Say $v2
+  Say "ok"
+ELSE
+  $v4 = $v0 * 3
+  Say $v2
+END
+$v5 = "blue"
+FOR $v6 IN [8, 8, 2, 4, 3]
+  Say $v6
+END
+$v7 = $v0 + 2
+FOR $v8 IN [3, 0, 3, 0, 9]
+  Say $v8
+END
+$v9 = $v1 + 3
+$v10 = $v9 + 1
+$v11 = "hold"
+IF $v7 != 3 THEN
+  $v12 = 1
+  $v13 = 0
+ELSE
+  $v14 = 5
+  Say $v1
+END
+$v15 = $v0 - 1
+Say $v0
+$v16 = 4
+Say $v11
+$v17 = 5
+WHILE $v17 != 0
+  Say $v17
+  $v17 = $v17 - 1
+END
