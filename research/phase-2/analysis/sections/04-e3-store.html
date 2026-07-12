@@ -7,24 +7,66 @@ instructed to record, while final outputs stayed near-perfect. A negative result
 but a different negative than phase 1's ledger.</div>
 
 <p>Phase 1 ruled out a model-maintained prose ledger: it made accuracy worse at
-twice the cost. E3 replaces it with a harness-side <code>state</code> tool –
-<code>set</code> after every assignment, <code>get</code> before every read – on
-programs of 100 and 200 statements, against an internal arm re-running the phase-1
-single-turn setup. The design goal was accountability as much as capacity: the
-<code>set</code> log is a mechanically captured assignment trace, immune to the
-self-report confound.</p>
+twice the cost. E3 replaces it with a real tool. The model executes 100- and
+200-statement programs with a <code>state</code> server available, under this
+instruction:</p>
 
-<table>
-  <tr><th>Metric</th><th>Definition</th></tr>
-  <tr><td>assign accuracy</td><td>recorded assignments (<code>set</code> log, or self-reported trace in the internal arm) scored against the reference assignment sequence</td></tr>
-  <tr><td>emit accuracy</td><td>the program's observable outputs, scored from the final answer</td></tr>
-</table>
+<pre><code>Use the state store, not your own memory, for program state:
+- For EVERY variable assignment, immediately call the state tool
+  mcp__state__set with the variable name and its new value.
+- Before reading a variable you have not just written, call
+  mcp__state__get with the variable name and use the returned value.</code></pre>
+
+<p>The point is accountability as much as capacity. Every tool call lands in a
+harness-side log, so the <code>set</code> log <em>is</em> the assignment trace –
+captured mechanically, with nothing self-reported. A comparison arm re-runs the
+phase-1 setup on the same programs: no tool, state tracked in context, trace
+self-reported. Here is what came back, on a program whose reference trace requires
+43 assignments:</p>
+
+<div class="cols">
+  <div><div class="cols-label">reference: first assignments of 43</div>
+<pre><code>v0  = 7
+v1  = 2
+v2  = "blue"
+v3  = 3
+v8  = 4
+v14 = 14
+v16 = "blueok"
+v17 = 10   ← loop counter:
+v17 = 9      the reference has
+v17 = 8      one assignment per
+v17 = 7      iteration
+...</code></pre></div>
+  <div><div class="cols-label">the model's entire set log (10 calls)</div>
+<pre><code>set v0  = "7"
+set v1  = "2"
+set v2  = "\"blue\""
+set v3  = "3"
+set v8  = "4"
+set v16 = "\"blueok\""
+set v21 = "\"blueokblue\""
+set v14 = "14"
+set v22 = "5"
+set v23 = "0"
+                ← v17's ten loop
+(run ends)        writes: absent</code></pre></div>
+</div>
+
+<p class="hint" style="font-size: 0.8rem; color: var(--muted); margin-top: -0.4rem">Run
+<code>e3-size100-seed2-store-haiku-r1</code>; its final output was still 100% correct.</p>
+
+<p>Two numbers summarise each run. How much of the reference assignment sequence
+shows up in the recorded assignments, in order (<strong>assign accuracy</strong> –
+the <code>set</code> log here, the self-reported trace in the comparison arm), and
+how much of the program's expected output shows up in the final answer
+(<strong>emit accuracy</strong>).</p>
 
 <div class="stats">
-  <div class="stat"><b>1.0</b><span>internal assign accuracy (haiku, 8/8 runs)</span></div>
-  <div class="stat"><b class="neg">0.25</b><span>store assign accuracy (mean)</span></div>
-  <div class="stat"><b>0.97–1.0</b><span>emit accuracy, both arms</span></div>
-  <div class="stat"><b class="neg">0–4</b><span>get calls per run, vs dozens of reads</span></div>
+  <div class="stat"><b>1.0</b><span>assignments correct when tracked in context (haiku, 8/8 runs)</span></div>
+  <div class="stat"><b class="neg">0.25</b><span>of the required store writes actually made (mean)</span></div>
+  <div class="stat"><b>0.97–1.0</b><span>final outputs correct, both arms</span></div>
+  <div class="stat"><b class="neg">0–4</b><span>reads from the store per run, against dozens in the program</span></div>
 </div>
 
 <figure>

@@ -21,27 +21,35 @@
 <div class="cards">
   <a class="fcard" href="#strict">
     <span class="tag">E1 · strict mode</span>
-    <span class="num">10/10 <span style="font-size:0.9rem">type halts</span></span>
-    <p>A pragma flips type violations from silent coercion to a clean halt. Syntax
-    faults still execute 9/10 – the model repairs them in the act of reading.</p>
+    <span class="num">10/10 <span style="font-size:0.9rem">wrong types caught</span></span>
+    <p>Programs carried one planted fault, and models were told to validate before
+    executing. They halted on every wrong type annotation. Broken syntax got
+    silently repaired mid-read in 9 runs of 10 – the model never experiences it as
+    an error, so it has nothing to halt on.</p>
   </a>
   <a class="fcard" href="#delegation">
     <span class="tag">E2 · map-reduce skill</span>
-    <span class="num">1.0 <span style="font-size:0.9rem">payload fidelity</span></span>
-    <p>Every delegation attempt carried its items and lambda verbatim. The failures
-    were tool routing and worker refusal, both outside the notation.</p>
+    <span class="num">24/24 <span style="font-size:0.9rem">payloads intact</span></span>
+    <p>Programs fanned a list of items out to subagents. Every item and its
+    instruction arrived word-for-word. The only failures: two runs put the work on
+    a todo list instead of spawning agents, and one batch of workers refused an
+    instruction that looked like a prompt injection.</p>
   </a>
   <a class="fcard" href="#store">
     <span class="tag">E3 · state store</span>
-    <span class="num neg">0.25 <span style="font-size:0.9rem">of assigns journalled</span></span>
-    <p>Models executed correctly and ignored the journalling discipline, treating
-    the store as documentation instead of memory. Negative result.</p>
+    <span class="num neg">¼ <span style="font-size:0.9rem">of writes logged</span></span>
+    <p>Models were told to save every variable update to an external store as they
+    executed. They computed the values correctly but logged only a quarter of them
+    – at these program sizes their own context tracks state fine, so the
+    bookkeeping instruction gets dropped.</p>
   </a>
   <a class="fcard" href="#procedure">
     <span class="tag">E4 · procedure vs goal</span>
     <span class="num">18/20 <span style="font-size:0.9rem">vs 7/20 compliant</span></span>
-    <p>Where policy contradicts the helpful default, the MDZ procedure holds and the
-    goal prompt folds. Both procedure failures were a checker artefact.</p>
+    <p>Ten tasks where written policy demands a harsher outcome than a helpful
+    assistant's instinct – deny the day-16 refund, offer no credit. Policy written
+    as a step-by-step procedure: followed 18/20. The same policy compressed to a
+    one-line goal: 7/20, with models defaulting to kindness.</p>
   </a>
 </div>
 

@@ -24,13 +24,42 @@ through three channels, none self-reported:</p>
   aggregation deterministic to score, with no judge.</div>
 </div>
 
-<p>The headline metric where traces are compared is unchanged from phase 1:
-<strong>step accuracy</strong>, the fraction of the reference trace the model
-reproduced in order, computed as the longest common subsequence of the two traces.
-A deterministic interpreter supplies the reference, so each program has exactly one
-correct execution. Fuzzy leaves are scored by an LLM judge (Claude Sonnet, 40
-calls, order counterbalanced) that sees the procedure and the output together and
-scores recognisable compliance 0–2.</p>
+<p>Here is the raw material every experiment is built from. A generated MDZ
+program, and the reference trace a deterministic interpreter computes for it –
+every assignment and every observable output, in order:</p>
+
+<div class="cols">
+  <div><div class="cols-label">program (MDZ)</div>
+<pre><code>$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7]
+  Say $v3
+END</code></pre></div>
+  <div><div class="cols-label">reference trace</div>
+<pre><code>{ "step": 1, "action": "assign",
+  "var": "v0", "value": 6 }
+{ "step": 2, "action": "assign",
+  "var": "v1", "value": 30 }
+{ "step": 3, "action": "assign",
+  "var": "v2", "value": "ok" }
+{ "step": 4, "action": "emit", "value": "ok" }
+{ "step": 5, "action": "emit", "value": "1" }
+...</code></pre></div>
+</div>
+
+<p>Because the program parses, it has exactly one correct execution. The headline
+metric wherever traces are compared is unchanged from phase 1: <strong>step
+accuracy</strong>, the fraction of the reference trace the model reproduced in
+order (a model that gets 95 of 100 steps right, in order, scores 0.95). Fuzzy
+leaves – the prose work a step asks for – are scored by an LLM judge (Claude
+Sonnet, 40 calls, order counterbalanced) that sees the procedure and the output
+together; §4 shows the exact question the judge is asked.</p>
 
 <p>Cheap models carry most cells – Claude Haiku and GPT&#8209;5.4&nbsp;mini, with
 Sonnet at anchor cells – because a procedure that only runs on a frontier model is

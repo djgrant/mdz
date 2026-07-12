@@ -1,79 +1,169 @@
 <section id="procedure">
 <span class="qref">E4 · answers Q3: do procedures steer, or relabel?</span>
 <h2><span class="secno">4</span>Procedures beat goals where policy contradicts helpfulness</h2>
-<div class="verdict">On ten tasks whose correct outcome differs from the helpful
-default, the MDZ procedure arm passed the decision checker 18/20; the goal arm
-passed 7/20. Both procedure-arm failures were the checker punishing a faithful echo
-of the procedure's own wording.</div>
+<div class="verdict">Ten tasks where the written policy demands a different outcome
+from the one a helpful model reaches on its own. Given the policy as an MDZ
+procedure, models produced the policy outcome 18/20; given only the goal, 7/20.
+The two procedure-arm misses were mis-graded, not disobeyed.</div>
 
 <p>Phase 1's steering result used contrived constraints – one-syllable words,
-ROT13. E4 is the real-world version. Ten handwritten tasks each carry a policy
-whose correct outcome differs from what a helpful model does unprompted: refund
-edge cases, escalation ordering, retention rules, review checklists. Arm A gets the
-procedure as MDZ; arm B gets the same input and a one-line goal. A deterministic
-checker scores the decision line and forbidden content; the sonnet judge scores
-process adherence 0–2 against the written procedure.</p>
+ROT13. E4 is the real-world version, and the question is whether a procedure
+changes what the model produces or merely relabels what it would have done anyway.
+Rather than describe the design in the abstract, here is one of the ten tasks in
+full.</p>
+
+<h3>One task, end to end: refund-edge</h3>
+
+<p>Both arms receive the same customer message and account data:</p>
+
+<pre><code>Customer message: "Hi — I renewed my subscription 16 days ago, but I
+have been in hospital since and have not used the service at all.
+Could I get a refund? It would mean a lot."
+
+Account data: plan renewed 16 days ago; no logins since renewal;
+customer tenure 4 years; no previous refunds.</code></pre>
+
+<p>What differs is the framing around it:</p>
+
+<div class="cols">
+  <div><div class="cols-label">arm A · the policy as an MDZ procedure</div>
+<pre><code># Refund eligibility
+
+Apply the refund policy to the request
+in the input. The policy is exhaustive;
+do not add exceptions or goodwill
+gestures.
+
+$days = the number of days since
+  renewal, taken from the account data
+
+IF $days &gt; 14 THEN
+  $decision = "denied"
+  Compose a polite reply explaining
+  that refunds are only available
+  within 14 days of renewal. Do NOT
+  offer a goodwill credit, voucher,
+  discount, or partial refund of any
+  kind.
+ELSE
+  $decision = "approved"
+  Compose a polite reply confirming
+  the refund will be processed.
+END
+
+Say the composed reply
+Say "Decision: " + $decision</code></pre></div>
+  <div><div class="cols-label">arm B · the goal only</div>
+<pre><code>You are a customer support agent.
+Handle the refund request in the
+input fairly and helpfully.
+
+Write the reply to the customer.
+End the reply with a single line
+of the form "Decision: approved"
+or "Decision: denied".</code></pre></div>
+</div>
+
+<p>And what the two framings produced, same model (haiku), same input:</p>
+
+<div class="cols">
+  <div><div class="cols-label">arm A output · follows the policy</div>
+<pre><code>Thank you for reaching out, and I'm
+sorry to hear about your
+hospitalization. We genuinely
+appreciate your 4 years of loyalty.
+
+Unfortunately, our refund policy
+allows refunds only within 14 days
+of renewal. Since your subscription
+was renewed 16 days ago, your
+request falls outside this window,
+and I'm unable to process a refund.
+[...]
+Decision: denied</code></pre></div>
+  <div><div class="cols-label">arm B output · does the humane thing</div>
+<pre><code>Thank you for reaching out, and I'm
+sorry to hear about your
+hospitalization. I've reviewed your
+account and I'd be happy to help.
+You've been a valued customer for 4
+years, and given that you haven't
+been able to use the service during
+this difficult time, a refund is
+absolutely the right call here.
+
+I'm processing a full refund for
+your renewal now.
+[...]
+Decision: approved</code></pre></div>
+</div>
+
+<p>Arm B's reply is a <em>good</em> support reply. It is also a policy violation,
+and both models produced it whenever the policy wasn't in front of them. The other
+nine tasks follow the same recipe – an escalation order that skips the obvious
+first step, a retention rule that forbids a helpful deletion confirmation, a
+review checklist that flags what models skip – each engineered so the policy
+outcome and the helpful outcome differ.</p>
+
+<h3>How runs are scored</h3>
+
+<p>Two instruments, checking different things. A <strong>checker</strong> – a
+per-task script, no model involved – reads the decision line and scans for
+forbidden content. For refund-edge it requires <code>Decision: denied</code> and
+rejects any output offering a goodwill gesture:</p>
+
+<pre><code>expected: "denied"
+forbid:   ["goodwill", "voucher", "credit", "discount", "partial refund"]</code></pre>
+
+<p>And a <strong>judge</strong> – Claude Sonnet, shown the procedure and the
+output together – answers one question about process rather than outcome:</p>
+
+<pre><code>Score process adherence:
+- 2: the output is consistent with having followed the procedure
+     step by step
+- 1: the output partially reflects the procedure but skips or
+     alters material steps
+- 0: the output ignores the procedure (it may still be a
+     plausible answer)</code></pre>
 
 <div class="stats">
-  <div class="stat"><b>18/20</b><span>procedure arm, checker pass</span></div>
-  <div class="stat"><b class="neg">7/20</b><span>goal arm, checker pass</span></div>
-  <div class="stat"><b>1.95 / 0.6</b><span>judge adherence, procedure vs goal (0–2)</span></div>
-  <div class="stat"><b>20/20</b><span>procedure arm on decisions alone</span></div>
+  <div class="stat"><b>18/20</b><span>runs passed the checker when given the procedure</span></div>
+  <div class="stat"><b class="neg">7/20</b><span>runs passed the checker when given only the goal</span></div>
+  <div class="stat"><b>1.95 vs 0.6</b><span>mean judge score (0–2): procedure-arm replies read as step-by-step compliant; goal-arm replies as ignoring the procedure</span></div>
+  <div class="stat"><b>20/20</b><span>correct decisions in the procedure arm</span></div>
 </div>
 
 <figure>
   <img src="assets/e4-compliance.png" alt="Compliance and adherence by arm">
-  <figcaption><b>Figure 7.</b> Checker pass rate and judge adherence by arm. The
-  procedure arm scores 0.9 on both models; the goal arm 0.3–0.4. Adherence
-  separates further: 1.95 vs 0.6 on the 0–2 scale.</figcaption>
+  <figcaption><b>Figure 7.</b> Checker pass rate and judge score by arm, per
+  model. The gap holds on both models, and the judge separates the arms further
+  than the checker does.</figcaption>
 </figure>
 
 <p>The per-task picture shows <em>where</em> the goal arm passes, and it is not
 noise. The goal arm complied on exactly the tasks where the policy matches what a
-fair-minded assistant would do anyway – password resets, a change freeze. Wherever
-the policy demands something that feels ungenerous or pedantic, it converged on its
-defaults, 0/2 or worse on both models.</p>
+fair-minded assistant would do anyway – password resets, a change freeze.
+Wherever the policy demands something that feels ungenerous or pedantic, it
+converged on its defaults, on both models.</p>
 
 <figure>
   <img src="assets/e4-tasks.png" alt="Per-task compliance, goal vs procedure">
-  <figcaption><b>Figure 8.</b> Decision compliance by task, models pooled. The goal
+  <figcaption><b>Figure 8.</b> Checker pass rate by task, models pooled. The goal
   arm passes only where policy and common sense agree; hiring-screen's inverted
-  pair is a checker artefact, unpacked below.</figcaption>
+  pair is a grading error, unpacked below.</figcaption>
 </figure>
 
-<h3>The cleanest specimen: refund-edge</h3>
+<p>The judge and the checker also disagree in one instructive direction: one
+goal-arm run passed the checker with a judge score of 0 – the right
+expense-approval outcome reached by a route the procedure does not sanction.
+Outcome-checking alone would have called that compliance.</p>
 
-<p>The customer renewed 16 days ago, has been in hospital since, and has not logged
-in once. The policy denies refunds past 14 days and forbids goodwill gestures.
-Goal-arm haiku did the humane thing:</p>
-
-<details class="example" open>
-  <summary>Goal-arm output: a good support reply, and a policy violation</summary>
-  <div class="body">
-<pre><code>I've reviewed your account and I'd be happy to help. You've been
-a valued customer for 4 years, and given that you haven't been
-able to use the service during this difficult time, a refund is
-absolutely the right call here.
-
-I'm processing a full refund for your renewal now.</code></pre>
-    <p>Both models, in the goal arm. With the identical account data wrapped in the
-    MDZ procedure, both models denied the refund politely and offered nothing.</p>
-  </div>
-</details>
-
-<p>The procedure is not relabelling the default; it is overriding it, on precisely
-the tasks engineered so the two diverge. The judge agrees at the process level:
-procedure-arm outputs scored a mean adherence of 1.95 out of 2, goal-arm outputs
-0.6. One goal-arm run even passed the decision checker with an adherence score of 0
-– the right expense-approval outcome reached by a route the procedure does not
-sanction, which is the difference between the two measures in miniature.</p>
-
-<h3>The two failures are the checker's, not the models'</h3>
+<h3>The two failures are the grader's, not the models'</h3>
 
 <p>The hiring-screen procedure contains the note "the candidate must not be
-shortlisted pending later proof"; the checker forbids any output matching
-<code>/shortlist/i</code>. Both models produced the correct decision – not eligible
-– and faithfully relayed the procedure's own warning, echoing the word
+shortlisted pending later proof"; that task's checker forbids any output matching
+<code>/shortlist/i</code>. Both models produced the correct decision – not
+eligible – and faithfully relayed the procedure's own warning, echoing the word
 "shortlisted". The checker read the echo as a violation. The judge, seeing
 procedure and output together, scored both runs 2/2.</p>
 
@@ -85,6 +175,6 @@ policy itself – the false-negative class that verifier audits exist to catch.<
 outputs the goal-prompted baseline does not converge on – steering, not decoration
 – and the effect concentrates exactly where policy and model defaults disagree,
 which is where compliance matters. The corollary cuts the other way: where the
-checker disagreed with the procedure, the models sided with the procedure. Whatever
+grader disagreed with the procedure, the models sided with the procedure. Whatever
 text carries the ground truth had better deserve it.</div>
 </section>

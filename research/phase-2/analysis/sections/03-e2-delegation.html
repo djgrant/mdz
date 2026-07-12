@@ -6,38 +6,79 @@ workers with verbatim payloads, and no run shortcutted. The two failure modes sa
 outside the notation: SPAWN routed to the wrong tool, and workers refusing a
 payload they read as an attack.</div>
 
-<p>E2 tests MDZ's higher-order case: a <code>map-reduce</code> skill that takes
-<code>$items</code>, <code>$map</code>, and <code>$reduce</code>, and fans out one
-<code>SPAWN</code> per item. Consumer programs call it agentically, with the skill
-present as a file and the <code>Task</code> tool allowed. Four consumer shapes:
-inline lists of three and five items, a skill binding <code>$items</code> to a
-heading anchor in the consuming document, and a lambda whose exact wording must
-reach each worker. Each item carries a canary token, so fan-out and aggregation are
-scored from the transcript.</p>
+<p>E2 tests MDZ's higher-order case: one document calling another with work to fan
+out. The skill under test, and a consumer program calling it, in full:</p>
 
-<table>
-  <tr><th>Metric</th><th>Definition</th></tr>
-  <tr><td>spawn fidelity</td><td>spawned workers / expected items, capped at 1</td></tr>
-  <tr><td>item coverage</td><td>items whose canary appears in exactly one worker prompt</td></tr>
-  <tr><td>payload coverage</td><td>canary present in any delegation attempt, spawned or not</td></tr>
-  <tr><td>lambda fidelity</td><td>workers whose prompt contains the <code>$map</code> instruction verbatim</td></tr>
-  <tr><td>aggregation</td><td>canaries surviving into the final output</td></tr>
-  <tr><td>shortcut rate</td><td>runs that answered without delegating at all</td></tr>
-</table>
+<div class="cols">
+  <div><div class="cols-label">skills/map-reduce.mdz</div>
+<pre><code># Map reduce
+
+A higher-order skill. Apply the $map
+instruction to every item in $items,
+delegating each item to its own worker,
+then combine the worker outputs with
+the $reduce instruction.
+
+FOR $item IN $items
+  SPAWN ~/agents/worker
+  WITH
+    instruction: $map
+    item: $item
+END
+
+$results = every worker output,
+  in the same order as $items
+$final = the result of applying
+  $reduce to $results
+
+Say $final</code></pre></div>
+  <div><div class="cols-label">a consumer program</div>
+<pre><code># Classify the items
+
+$items = ["The northern warehouse
+  reports a stock surplus of 400
+  units. CANARY-E2-...-1", ...]
+
+$map = item =&gt; "Classify the item
+  as URGENT or ROUTINE ... and
+  quote the item's CANARY token.
+  Item: #{item}"
+
+USE ~/skills/map-reduce WITH
+  items: $items
+  map: $map
+  reduce: Produce one line per item
+    in the form &lt;verdict&gt; --
+    &lt;CANARY token&gt;</code></pre></div>
+</div>
+
+<p>Runs are agentic: the model works in a directory containing the skill files,
+with a real subagent tool (<code>Task</code>) available, and the harness reads the
+session transcript afterwards. The <code>CANARY-…</code> tokens are the scoring
+device. Each item carries a unique one, so counting tokens in worker prompts and
+in the final answer settles, mechanically: did one worker get each item, did the
+instruction arrive intact, and did every item survive into the final answer? Four
+consumer shapes vary how <code>$items</code> is supplied: inline lists of three
+and five, a reference to a heading elsewhere in the document, and the lambda
+above, whose exact wording must reach each worker.</p>
 
 <div class="stats">
-  <div class="stat"><b>22/24</b><span>runs delegated via real spawns</span></div>
-  <div class="stat"><b>1.0</b><span>payload coverage, all 24 runs</span></div>
-  <div class="stat"><b>1.0</b><span>lambda fidelity, every worker</span></div>
-  <div class="stat"><b>0</b><span>shortcut runs</span></div>
+  <div class="stat"><b>22/24</b><span>runs delegated via real subagent spawns</span></div>
+  <div class="stat"><b>24/24</b><span>runs where every item reached a delegation attempt intact</span></div>
+  <div class="stat"><b>6/6</b><span>lambda runs delivered the instruction verbatim to every worker</span></div>
+  <div class="stat"><b>0</b><span>runs answered inline without delegating</span></div>
 </div>
 
 <figure>
   <img src="assets/e2-fidelity.png" alt="Delegation fidelity by consumer variant">
-  <figcaption><b>Figure 3.</b> Delegation metrics by consumer variant and model,
-  n=3 per cell. Sonnet is at or near ceiling everywhere; its one imperfect cell
-  spawned six workers for five items, duplicating one rather than losing it.
-  Haiku's two depressed cells have distinct causes, unpacked below.</figcaption>
+  <figcaption><b>Figure 3.</b> Delegation scores by consumer variant and model,
+  n=3 per cell. Reading the bars: <em>spawn fidelity</em> = workers spawned per
+  item; <em>item coverage</em> = items reaching exactly one worker; <em>payload
+  coverage</em> = items reaching any delegation attempt; <em>aggregation</em> =
+  items surviving into the final answer. Sonnet is at or near ceiling everywhere;
+  its one imperfect cell spawned six workers for five items, duplicating one
+  rather than losing it. Haiku's two depressed cells have distinct causes,
+  unpacked below.</figcaption>
 </figure>
 
 <figure>

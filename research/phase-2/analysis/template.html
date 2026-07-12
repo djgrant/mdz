@@ -60,10 +60,10 @@
            border-radius: 12px; padding: 1.05rem 1.15rem; color: var(--ink);
            box-shadow: var(--shadow); transition: border-color 0.15s; }
   .fcard:hover { border-color: var(--accent); text-decoration: none; }
-  .fcard .tag { font-size: 0.72rem; font-weight: 700; color: var(--muted);
+  .fcard .tag { display: block; font-size: 0.72rem; font-weight: 700; color: var(--muted);
                 text-transform: uppercase; letter-spacing: 0.08em; }
-  .fcard .num { font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em;
-                margin: 0.15rem 0; color: var(--accent); }
+  .fcard .num { display: block; font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em;
+                margin: 0.15rem 0 0.45rem; color: var(--accent); }
   .fcard .num.neg { color: var(--accent-2); }
   .fcard p { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
 
@@ -111,6 +111,12 @@
   .step { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
           padding: 0.9rem 1rem; font-size: 0.88rem; color: var(--muted); }
   .step b { display: block; margin-bottom: 0.3rem; color: var(--accent); }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+          gap: 0.8rem; margin: 1.3rem 0; }
+  .cols pre { margin: 0; height: 100%; }
+  .cols-label { font-size: 0.72rem; font-weight: 700; color: var(--muted);
+                text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.35rem; }
 
   figure { margin: 1.7rem 0; background: var(--card); border: 1px solid var(--border);
            border-radius: 12px; padding: 1rem; box-shadow: var(--shadow); }

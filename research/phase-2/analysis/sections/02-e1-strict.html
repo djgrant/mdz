@@ -6,29 +6,46 @@ clean halt, 10/10 on both models. It does nothing for syntax faults, which the m
 repairs before it can notice them.</div>
 
 <p>Phase 1 found that models never halt on malformed programs – they repair or
-improvise. E1 asks whether a directive can flip that behaviour. Programs at 40
-statements run in three integrity conditions and two modes; strict semantics take
-two lines in the executor preamble: validate before executing; on any syntax or
-type violation, emit a single halt step and stop.</p>
+improvise. E1 asks whether a directive can flip that behaviour. Each 40-statement
+program is either clean or carries exactly one planted fault, of one of two
+kinds:</p>
 
-<table>
-  <tr><th>Metric</th><th>Definition</th></tr>
-  <tr><td>halt rate</td><td>faulted runs whose trace is a single well-formed halt step</td></tr>
-  <tr><td>repair rate</td><td>faulted runs that execute through the fault, phase-1 style</td></tr>
-  <tr><td>false-halt rate</td><td>clean runs that halt</td></tr>
-  <tr><td>strictness tax</td><td>step-accuracy delta, strict vs default, on clean programs</td></tr>
-</table>
-
-<div class="stats">
-  <div class="stat"><b>0/21</b><span>default-mode halts on faulted programs</span></div>
-  <div class="stat"><b>10/10</b><span>strict halts on type faults</span></div>
-  <div class="stat"><b class="neg">1/10</b><span>strict halts on syntax faults</span></div>
-  <div class="stat"><b class="neg">1/10</b><span>false halts on clean programs</span></div>
+<div class="cols">
+  <div><div class="cols-label">syntax fault · a keyword removed</div>
+<pre><code>- FOR $v3 IN [1, 4, 0, 3, 7]
++ FOR $v3 [1, 4, 0, 3, 7]</code></pre></div>
+  <div><div class="cols-label">type fault · annotation contradicts value</div>
+<pre><code>- $v0 = 6
++ $v0: String = 6</code></pre></div>
 </div>
 
-<p>Default mode replicated phase 1 exactly: every faulted run executed through its
-fault. Strict mode's aggregate halt rate of 0.55 hides the real result, which
-splits cleanly by fault class.</p>
+<p>Half the runs execute as phase 1 did. The other half get <code>PRAGMA
+STRICT</code> as the program's first statement, and this definition of it in the
+executor preamble:</p>
+
+<pre><code>This program declares PRAGMA STRICT: before executing anything, validate
+the whole program — every statement must be syntactically well-formed and
+every type annotation must match its value. On any syntax or type violation,
+output a trace containing a single step
+{ "step": 1, "action": "halt", "reason": "&lt;what is wrong and where&gt;" }
+and stop; execute no steps.</code></pre>
+
+<p>Scoring is then a matter of counting. Did faulted runs halt (the instructed
+behaviour), or execute through the fault (the phase-1 behaviour, "repair")? Did
+any clean run halt when it should not have (a "false halt")? And on clean
+programs, does running in strict mode cost any step accuracy (a "strictness
+tax")?</p>
+
+<div class="stats">
+  <div class="stat"><b>0/21</b><span>faulted programs halted without the pragma</span></div>
+  <div class="stat"><b>10/10</b><span>wrong type annotations halted under strict</span></div>
+  <div class="stat"><b class="neg">1/10</b><span>broken-syntax programs halted under strict</span></div>
+  <div class="stat"><b class="neg">1/10</b><span>clean programs wrongly halted</span></div>
+</div>
+
+<p>Without the pragma, every faulted run executed through its fault – phase 1
+replicated exactly. With it, the aggregate halt rate of 0.55 hides the real
+result, which splits cleanly by fault class.</p>
 
 <figure>
   <img src="assets/e1-halt.png" alt="Halt rate on faulted programs by fault class">
