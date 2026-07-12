@@ -13,7 +13,7 @@
     "value": {
       "type": "tuple",
       "elements": [
-        { "type": "link", "kind": "path", "value": "~/skill/debugger" },
+        { "type": "link", "kind": "path", "value": "./skill/debugger" },
         { "type": "lambda", "params": ["$x"], "body": "do thing" },
         {
           "type": "template",
@@ -43,7 +43,7 @@
       "type": "tuple",
       "elements": [
         { "type": "link", "kind": "anchor", "value": "#code-snippet" },
-        { "type": "link", "kind": "path", "value": "~/skill/debugger" }
+        { "type": "link", "kind": "path", "value": "./skill/debugger" }
       ]
     }
   }

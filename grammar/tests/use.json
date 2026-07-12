@@ -2,12 +2,12 @@
   {
     "type": "stmt",
     "keyword": "USE",
-    "target": { "type": "link", "kind": "path", "value": "~/skill/alpha" }
+    "target": { "type": "link", "kind": "path", "value": "./skill/alpha" }
   },
   {
     "type": "stmt",
     "keyword": "USE",
-    "target": { "type": "link", "kind": "path", "value": "~/skill/alpha" },
+    "target": { "type": "link", "kind": "path", "value": "./skill/alpha" },
     "params": [
       {
         "name": "p1",
@@ -18,13 +18,13 @@
   {
     "type": "stmt",
     "keyword": "USE",
-    "target": { "type": "link", "kind": "path", "value": "~/skill/alpha" },
+    "target": { "type": "link", "kind": "path", "value": "./skill/alpha" },
     "text": "do thing"
   },
   {
     "type": "stmt",
     "keyword": "USE",
-    "target": { "type": "link", "kind": "path", "value": "~/skill/alpha" },
+    "target": { "type": "link", "kind": "path", "value": "./skill/alpha" },
     "text": "do thing",
     "params": [
       {
@@ -36,7 +36,7 @@
   {
     "type": "stmt",
     "keyword": "USE",
-    "target": { "type": "link", "kind": "path", "value": "~/skill/alpha" },
+    "target": { "type": "link", "kind": "path", "value": "./skill/alpha" },
     "text": "do thing",
     "params": [
       {

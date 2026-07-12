@@ -14,6 +14,6 @@ TYPE Pair = (String, Number)
 
 TYPE Magnitude = 123
 
-TYPE Agent = ~/agent/general
+TYPE Agent = ./agent/general
 
 TYPE Approx = a random number

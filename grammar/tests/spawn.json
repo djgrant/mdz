@@ -2,20 +2,20 @@
   {
     "type": "stmt",
     "keyword": "SPAWN",
-    "target": { "type": "link", "kind": "path", "value": "~/agent/general" },
+    "target": { "type": "link", "kind": "path", "value": "./agent/general" },
     "text": "task"
   },
   {
     "type": "stmt",
     "keyword": "SPAWN",
-    "target": { "type": "link", "kind": "path", "value": "~/agent/reporter" },
+    "target": { "type": "link", "kind": "path", "value": "./agent/reporter" },
     "text": "note that post is published"
   },
   {
     "type": "stmt",
     "keyword": "SPAWN",
     "modifier": "ASYNC",
-    "target": { "type": "link", "kind": "path", "value": "~/agent/explore" },
+    "target": { "type": "link", "kind": "path", "value": "./agent/explore" },
     "text": "explore codebase",
     "with": { "type": "link", "kind": "anchor", "value": "#explore-instructions" }
   },
@@ -23,7 +23,7 @@
     "type": "stmt",
     "keyword": "SPAWN",
     "modifier": "AWAIT",
-    "target": { "type": "link", "kind": "path", "value": "~/agent/analyst" },
+    "target": { "type": "link", "kind": "path", "value": "./agent/analyst" },
     "text": "analyze report",
     "with": [
       { "name": "depth", "value": "\"deep\"" },

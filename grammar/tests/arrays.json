@@ -20,7 +20,7 @@
       "elements": [
         "\"exact\"",
         "loose",
-        { "type": "link", "kind": "path", "value": "~/skill/browser" },
+        { "type": "link", "kind": "path", "value": "./skill/browser" },
         {
           "type": "template",
           "parts": [

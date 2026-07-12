@@ -24,7 +24,7 @@
           {
             "type": "stmt",
             "keyword": "SPAWN",
-            "target": { "type": "link", "kind": "path", "value": "~/agent/report" },
+            "target": { "type": "link", "kind": "path", "value": "./agent/report" },
             "text": "note that post is published"
           },
           {

@@ -38,7 +38,7 @@ MDZ can optionally be prefixed with list markers to prevent formatters (e.g. Pre
 
 ```md
 - FOR $instruction IN $instructions
-  - ASYNC SPAWN ~/agent/explore
+  - ASYNC SPAWN ./agent/explore
     - WITH $instruction
 - END
 ```
@@ -64,7 +64,7 @@ Block boundaries are determined by construct grammar. Once a statement begins, i
 $summary = the main argument in one sentence
 
 <!-- imperative for instructions -->
-USE ~/skill/debug TO find the root cause
+USE ./skill/debug TO find the root cause
 ```
 
 **Syntax:** Any unquoted text in expression position (e.g. assignment RHS or condition) is treated as a semantic expression.
@@ -104,10 +104,10 @@ $bytes = 1e3
 
 ```md
 $snippet = #code-snippet
-USE ~/skill/debugger
+USE ./skill/debugger
 ```
 
-**Syntax:** `#anchor` or `~/path`.
+**Syntax:** `#anchor` or a filesystem path (`./`, `../`, or `/`), resolved relative to the containing file.
 
 **Runtime behaviour:** Links are resolved by the executor (anchor to section content, path to a prompt file e.g. skill/agent/resource).
 
@@ -166,7 +166,7 @@ $status = "draft"
 
 ```md
 $log = "processing #{item}"
-SPAWN ~/agent/reporter WITH $log
+SPAWN ./agent/reporter WITH $log
 ```
 
 **Syntax:** Variables are referenced by `$name` in expressions, and any prose.
@@ -194,7 +194,7 @@ Expr
 a random number
 
 <!-- link literal -->
-~/agent/general
+./agent/general
 
 <!-- string literal -->
 "draft"
@@ -223,7 +223,7 @@ Array<MyType>
 ```md
 TYPE Status = "draft" | "pending" | "published"
 TYPE Pair = (String, Number)
-TYPE Agent = ~/agent/general
+TYPE Agent = ./agent/general
 ```
 
 **Syntax:** `TYPE Name = TypeExpr`.
@@ -249,7 +249,7 @@ Control flow is heavily inspired by Ruby for its readability and obvious runtime
 
 ```md
 FOR $item IN $items
-  SPAWN ~/agent/reporter WITH note that post is published
+  SPAWN ./agent/reporter WITH note that post is published
 END
 
 FOR $item
@@ -326,7 +326,7 @@ CASE $status
 WHEN "draft" OR "pending"
   RETURN "needs review"
 WHEN "published" THEN
-  SPAWN ~/agent/reporter WITH note that post is published
+  SPAWN ./agent/reporter WITH note that post is published
 ELSE
   RETURN "ignore"
 END
@@ -387,10 +387,10 @@ GOTO next section
 ### SPAWN
 
 ```md
-SPAWN ~/agent/reporter TO summarize the findings
+SPAWN ./agent/reporter TO summarize the findings
 
 FOR $instruction IN $instructions
-  ASYNC SPAWN ~/agent/explore
+  ASYNC SPAWN ./agent/explore
     WITH $instruction
 END
 ```
@@ -402,9 +402,9 @@ END
 ### USE
 
 ```md
-USE ~/skill/debug
+USE ./skill/debug
 
-USE ~/skill/debug TO do thing WITH
+USE ./skill/debug TO do thing WITH
   p1: val
 ```
 
@@ -415,9 +415,9 @@ USE ~/skill/debug TO do thing WITH
 ### WITH parameter blocks
 
 ```md
-SPAWN ~/agent/reporter WITH #publish-note
+SPAWN ./agent/reporter WITH #publish-note
 
-USE ~/skill/debug TO do thing WITH
+USE ./skill/debug TO do thing WITH
   p1: val
   p2: "literal text"
 ```

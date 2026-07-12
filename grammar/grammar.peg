@@ -589,8 +589,8 @@ AnchorName = $( [a-zA-Z_][a-zA-Z0-9_-]* )
 ParamName = $( (!(":" / Newline) .)+ )
 
 LinkValue
-  = "~/" path:$( [a-zA-Z0-9_./-]+ ) {
-      return { type: "link", kind: "path", value: `~/${path}` };
+  = path:$( ("../" / "./" / "/") [a-zA-Z0-9_./-]+ ) {
+      return { type: "link", kind: "path", value: path };
     }
 
 
@@ -780,7 +780,9 @@ ValueLiteralStart
   = "["
   / "("
   / "#"
-  / "~/"
+  / "../"
+  / "./"
+  / "/"
   / "\""
 
 AnchorValue

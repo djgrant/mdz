@@ -1,0 +1,64 @@
+[
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "target": {
+      "type": "link",
+      "kind": "path",
+      "value": "./skill/alpha"
+    }
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "target": {
+      "type": "link",
+      "kind": "path",
+      "value": "./skill/alpha"
+    },
+    "params": [
+      {
+        "name": "p1",
+        "value": "val"
+      }
+    ]
+  },
+  {
+    "type": "stmt",
+    "keyword": "USE",
+    "target": {
+      "type": "link",
+      "kind": "path",
+      "value": "../shared/skill/beta"
+    }
+  },
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
+    "target": {
+      "type": "link",
+      "kind": "path",
+      "value": "./agents/worker"
+    },
+    "text": ""
+  },
+  {
+    "type": "stmt",
+    "keyword": "SPAWN",
+    "target": {
+      "type": "link",
+      "kind": "path",
+      "value": "/opt/agents/worker"
+    },
+    "text": ""
+  },
+  {
+    "type": "assign",
+    "target": "$snippet",
+    "value": {
+      "type": "link",
+      "kind": "path",
+      "value": "./resources/notes"
+    }
+  }
+]

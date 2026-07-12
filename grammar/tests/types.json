@@ -78,7 +78,7 @@
     "name": "Agent",
     "value": {
       "type": "literal",
-      "value": { "type": "link", "kind": "path", "value": "~/agent/general" }
+      "value": { "type": "link", "kind": "path", "value": "./agent/general" }
     }
   },
   {

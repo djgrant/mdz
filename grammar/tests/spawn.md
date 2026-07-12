@@ -1,12 +1,12 @@
-SPAWN ~/agent/general TO task
+SPAWN ./agent/general TO task
 
-SPAWN ~/agent/reporter WITH note that post is published
+SPAWN ./agent/reporter WITH note that post is published
 
-ASYNC SPAWN ~/agent/explore
+ASYNC SPAWN ./agent/explore
 TO explore codebase
 WITH #explore-instructions
 
-AWAIT SPAWN ~/agent/analyst
+AWAIT SPAWN ./agent/analyst
 TO analyze report
 WITH
   depth: "deep"
