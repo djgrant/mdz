@@ -204,8 +204,8 @@ def chart_e1(df: pd.DataFrame):
         ax.set_title(label)
         ax.set_ylim(0, 1.05)
         ax.set_xlabel("")
-    axes[0].set_ylabel("halt rate — 1.0 is the goal")
-    fig.suptitle("Faulted programs: did the model stop instead of guessing?", y=1.02)
+    axes[0].set_ylabel("halt rate")
+    # TODO: suptitle
     fig.tight_layout()
     fig.savefig(ASSETS / "e1-halt.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
@@ -214,8 +214,8 @@ def chart_e1(df: pd.DataFrame):
     clean = df[df.condition == "clean"]
     piv = clean.groupby(["model", "mode"]).step_accuracy.mean().unstack()
     piv.plot.bar(ax=ax, color=[C_C, C_A], rot=0)
-    ax.set_title("Clean programs: does strict mode hurt normal execution?")
-    ax.set_ylabel("step accuracy — 1.0 is perfect")
+    # TODO: title
+    ax.set_ylabel("step accuracy")
     ax.set_ylim(0, 1.05)
     ax.set_xlabel("")
     fig.tight_layout()
@@ -297,8 +297,8 @@ def score_e2(records, manifest) -> pd.DataFrame:
 
 def chart_e2(df: pd.DataFrame):
     metrics = ["spawn_fidelity", "item_coverage", "payload_coverage", "aggregation"]
-    labels = ["spawned real agents", "each item reached its own agent",
-              "parameters arrived intact", "all results in final answer"]
+    # TODO: friendly labels
+    labels = ["spawn fidelity", "item coverage", "payload coverage", "aggregation"]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)
     for ax, model in zip(axes, sorted(df.model.unique())):
         sub = df[df.model == model].groupby("variant")[metrics].mean()
@@ -307,8 +307,8 @@ def chart_e2(df: pd.DataFrame):
         ax.set_title(model)
         ax.set_ylim(0, 1.05)
         ax.set_xlabel("")
-    axes[0].set_ylabel("score — 1.0 is perfect")
-    fig.suptitle("Fanning work out to subagents: what survived?", y=1.02)
+    axes[0].set_ylabel("score")
+    # TODO: suptitle
     fig.tight_layout()
     fig.savefig(ASSETS / "e2-fidelity.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
@@ -356,9 +356,8 @@ def chart_e3(df: pd.DataFrame):
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.8))
     for ax, metric, title in zip(
         axes, ["assign_acc", "emit_acc", "completion_tokens"],
-        ["state log completeness\n1.0 = every assignment logged",
-         "output correctness\n1.0 = perfect",
-         "completion tokens\nlower = cheaper"],
+        # TODO: panel titles
+        ["assign accuracy", "emit accuracy", "completion tokens"],
     ):
         piv = df[df.model == "haiku"].groupby(["size", "arm"])[metric].mean().unstack()
         piv.plot.bar(ax=ax, color=[C_C, C_A], rot=0, legend=(metric == "assign_acc"))
@@ -366,7 +365,7 @@ def chart_e3(df: pd.DataFrame):
         ax.set_xlabel("program size (statements)")
         if metric != "completion_tokens":
             ax.set_ylim(0, 1.05)
-    fig.suptitle("Tracking state in an external tool vs the model's own report (haiku)", y=1.04)
+    # TODO: suptitle
     fig.tight_layout()
     fig.savefig(ASSETS / "e3-store.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
@@ -396,18 +395,20 @@ def chart_e4(df: pd.DataFrame):
     piv = df.groupby(["model", "arm"]).compliant.mean().unstack()
     piv.columns = ["MDZ procedure", "goal prompt"]
     piv.plot.bar(ax=axes[0], color=[C_A, C_C], rot=0)
-    axes[0].set_title("passed the policy checker")
-    axes[0].set_ylabel("pass rate — higher is better")
+    # TODO: title
+    axes[0].set_title("checker pass rate")
+    axes[0].set_ylabel("pass rate")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_xlabel("")
     piv2 = df.groupby(["model", "arm"]).adherence.mean().unstack()
     piv2.columns = ["MDZ procedure", "goal prompt"]
     piv2.plot.bar(ax=axes[1], color=[C_A, C_C], rot=0)
-    axes[1].set_title("judge: did it follow the procedure?")
-    axes[1].set_ylabel("adherence 0–2 — higher is better")
+    # TODO: title
+    axes[1].set_title("judge adherence")
+    axes[1].set_ylabel("adherence 0–2")
     axes[1].set_ylim(0, 2.1)
     axes[1].set_xlabel("")
-    fig.suptitle("Same task, procedure vs goal prompt", y=1.04)
+    # TODO: suptitle
     fig.tight_layout()
     fig.savefig(ASSETS / "e4-compliance.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
