@@ -1,0 +1,422 @@
+[
+  {
+    "programPath": "programs/q1/stmt40-seed1-canonical.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-casing-lower.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "casing-lower",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-delimiter-indent.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "delimiter-indent",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-delimiter-none.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "delimiter-none",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-annotations-annotated.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "annotations-annotated",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-annotations-mismatch.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "annotations-mismatch",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed1-malformed.mdz",
+    "tracePath": "programs/q1/stmt40-seed1.trace.json",
+    "variant": {
+      "notation": "malformed",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": true
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-canonical.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-casing-lower.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "casing-lower",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-delimiter-indent.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "delimiter-indent",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-delimiter-none.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "delimiter-none",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-annotations-annotated.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "annotations-annotated",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-annotations-mismatch.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "annotations-mismatch",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed2-malformed.mdz",
+    "tracePath": "programs/q1/stmt40-seed2.trace.json",
+    "variant": {
+      "notation": "malformed",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": true
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-canonical.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-casing-lower.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "casing-lower",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-delimiter-indent.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "delimiter-indent",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-delimiter-none.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "delimiter-none",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-annotations-annotated.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "annotations-annotated",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-annotations-mismatch.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "annotations-mismatch",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed3-malformed.mdz",
+    "tracePath": "programs/q1/stmt40-seed3.trace.json",
+    "variant": {
+      "notation": "malformed",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": true
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-canonical.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-casing-lower.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "casing-lower",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-delimiter-indent.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "delimiter-indent",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-delimiter-none.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "delimiter-none",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-annotations-annotated.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "annotations-annotated",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-annotations-mismatch.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "annotations-mismatch",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed4-malformed.mdz",
+    "tracePath": "programs/q1/stmt40-seed4.trace.json",
+    "variant": {
+      "notation": "malformed",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": true
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-canonical.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-casing-lower.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "casing-lower",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-delimiter-indent.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "delimiter-indent",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-delimiter-none.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "delimiter-none",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-annotations-annotated.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "annotations-annotated",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-annotations-mismatch.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "annotations-mismatch",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": false
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q1/stmt40-seed5-malformed.mdz",
+    "tracePath": "programs/q1/stmt40-seed5.trace.json",
+    "variant": {
+      "notation": "malformed",
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "malformed": true
+    },
+    "seed": 5
+  }
+]

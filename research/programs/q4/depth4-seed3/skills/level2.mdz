@@ -1,0 +1,20 @@
+---
+name: level2
+input: p, q, r
+---
+
+# level2
+
+Say $p
+Say $q
+Say $r
+$d_p = $p + 3
+Say $d_p
+$d_q = $q * 1
+Say $d_q
+$d_r = $r - 2
+Say $d_r
+USE ~/skills/level3 WITH
+  p: $d_p
+  q: $d_q
+  r: $d_r

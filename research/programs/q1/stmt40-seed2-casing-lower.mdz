@@ -1,0 +1,74 @@
+---
+name: q1-seed2
+---
+
+# q1-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+if $v0 = 8 then
+  if $v0 > 7 then
+    Say $v1
+  end
+end
+$v3 = 3
+Say $v2
+if $v1 = 3 then
+  $v4 = $v3 - 4
+end
+if $v3 = 0 then
+  $v5 = $v3 * 1
+  Say $v2
+end
+Say "next"
+case $v2
+when "draft"
+  Say $v3
+  Say $v2
+when "next"
+  $v6 = 9
+  $v7 = $v0 * 2
+else
+  Say "hold"
+end
+case $v2
+when "blue"
+  Say "ok"
+  $v8 = $v1 + 2
+when "next"
+  Say $v1
+else
+  Say $v2
+end
+for $v9 in [0, 7, 0, 7, 7]
+  Say $v9
+end
+$v10 = $v1 + 1
+Say "blue"
+if $v0 < 8 then
+  Say $v3
+  Say $v2
+end
+case $v2
+when "blue"
+  Say $v1
+when "ok"
+  Say $v1
+  $v11 = $v10 + 5
+else
+  Say $v1
+end
+Say "done"
+case $v2
+when "hold"
+  $v12 = 9
+when "red"
+  $v13 = $v1 + 2
+  Say $v1
+else
+  $v14 = $v0 * 4
+  Say $v3
+end
+Say $v10
+$v15 = $v2 + "ok"

@@ -1,0 +1,202 @@
+[
+  {
+    "programPath": "programs/q4/depth1-seed1/root.mdz",
+    "tracePath": "programs/q4/depth1-seed1/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 1,
+      "paramsPerBoundary": 3
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q4/depth1-seed2/root.mdz",
+    "tracePath": "programs/q4/depth1-seed2/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 1,
+      "paramsPerBoundary": 3
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q4/depth1-seed3/root.mdz",
+    "tracePath": "programs/q4/depth1-seed3/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 1,
+      "paramsPerBoundary": 3
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q4/depth1-seed4/root.mdz",
+    "tracePath": "programs/q4/depth1-seed4/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 1,
+      "paramsPerBoundary": 3
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q4/depth1-seed5/root.mdz",
+    "tracePath": "programs/q4/depth1-seed5/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 1,
+      "paramsPerBoundary": 3
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q4/depth2-seed1/root.mdz",
+    "tracePath": "programs/q4/depth2-seed1/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 2,
+      "paramsPerBoundary": 3
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q4/depth2-seed2/root.mdz",
+    "tracePath": "programs/q4/depth2-seed2/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 2,
+      "paramsPerBoundary": 3
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q4/depth2-seed3/root.mdz",
+    "tracePath": "programs/q4/depth2-seed3/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 2,
+      "paramsPerBoundary": 3
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q4/depth2-seed4/root.mdz",
+    "tracePath": "programs/q4/depth2-seed4/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 2,
+      "paramsPerBoundary": 3
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q4/depth2-seed5/root.mdz",
+    "tracePath": "programs/q4/depth2-seed5/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 2,
+      "paramsPerBoundary": 3
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q4/depth3-seed1/root.mdz",
+    "tracePath": "programs/q4/depth3-seed1/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 3,
+      "paramsPerBoundary": 3
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q4/depth3-seed2/root.mdz",
+    "tracePath": "programs/q4/depth3-seed2/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 3,
+      "paramsPerBoundary": 3
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q4/depth3-seed3/root.mdz",
+    "tracePath": "programs/q4/depth3-seed3/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 3,
+      "paramsPerBoundary": 3
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q4/depth3-seed4/root.mdz",
+    "tracePath": "programs/q4/depth3-seed4/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 3,
+      "paramsPerBoundary": 3
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q4/depth3-seed5/root.mdz",
+    "tracePath": "programs/q4/depth3-seed5/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 3,
+      "paramsPerBoundary": 3
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q4/depth4-seed1/root.mdz",
+    "tracePath": "programs/q4/depth4-seed1/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 4,
+      "paramsPerBoundary": 3
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q4/depth4-seed2/root.mdz",
+    "tracePath": "programs/q4/depth4-seed2/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 4,
+      "paramsPerBoundary": 3
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q4/depth4-seed3/root.mdz",
+    "tracePath": "programs/q4/depth4-seed3/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 4,
+      "paramsPerBoundary": 3
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q4/depth4-seed4/root.mdz",
+    "tracePath": "programs/q4/depth4-seed4/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 4,
+      "paramsPerBoundary": 3
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q4/depth4-seed5/root.mdz",
+    "tracePath": "programs/q4/depth4-seed5/root.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "callDepth": 4,
+      "paramsPerBoundary": 3
+    },
+    "seed": 5
+  }
+]

@@ -1,0 +1,17 @@
+---
+name: reverse-word-order
+---
+
+# reverse-word-order
+
+DO
+- Split the input sentence into words.
+- Reverse the order of the words.
+- Join them back into one line, keeping original capitalisation on each word.
+END
+
+RETURN the reversed sentence
+
+<!-- input -->
+
+The quick brown fox jumps over the lazy dog.

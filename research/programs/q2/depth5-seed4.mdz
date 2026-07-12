@@ -1,0 +1,58 @@
+---
+name: q2-depth5-seed4
+---
+
+# q2-depth5-seed4
+
+$v0 = 9
+$v1 = $v0 + 2
+$v2 = "red"
+IF $v0 > 3 THEN
+  IF $v1 != 9 THEN
+    IF $v1 < 4 THEN
+      IF $v1 != 8 THEN
+        IF $v1 < 7 THEN
+          Say $v2
+        END
+      END
+    END
+  END
+END
+Say $v2
+$v3 = $v0 - 3
+Say $v2
+CASE $v2
+WHEN "red"
+  Say $v3
+WHEN "ok"
+  Say "done"
+  $v4 = 4
+ELSE
+  Say "draft"
+END
+$v5 = "red"
+Say $v2
+$v6 = 10
+WHILE $v6 != 0
+  Say $v6
+  $v6 = $v6 - 1
+END
+CASE $v5
+WHEN "draft"
+  Say $v5
+WHEN "draft"
+  Say "blue"
+ELSE
+  Say $v1
+END
+Say $v1
+Say $v5
+Say $v0
+IF $v3 > 3 THEN
+  $v7 = 1
+END
+$v8 = 10
+WHILE $v8 != 0
+  Say $v8
+  $v8 = $v8 - 1
+END

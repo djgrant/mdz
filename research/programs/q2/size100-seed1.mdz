@@ -1,0 +1,93 @@
+---
+name: q2-size100-seed1
+---
+
+# q2-size100-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]
+  Say $v3
+END
+Say $v0
+$v4 = 1
+Say $v2
+Say $v2
+IF $v4 = 7 THEN
+  $v5 = $v0 * 3
+ELSE
+  $v6 = 8
+END
+CASE $v2
+WHEN "blue"
+  Say $v2
+  Say "draft"
+WHEN "draft"
+  $v7 = 5
+  Say $v0
+ELSE
+  Say $v2
+  $v8 = $v0 - 2
+END
+$v9 = $v0 * 5
+FOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]
+  Say $v10
+END
+IF $v0 < 7 THEN
+  Say $v0
+END
+FOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]
+  Say $v11
+END
+IF $v9 != 8 THEN
+  Say $v9
+ELSE
+  $v12 = $v4 + 5
+END
+$v13 = $v2 + "done"
+FOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]
+  Say $v14
+END
+IF $v1 = 4 THEN
+  $v15 = 5
+  $v16 = 3
+ELSE
+  Say $v0
+  $v17 = 6
+END
+Say $v4
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+$v19 = 5
+$v20 = $v2 + "next"
+IF $v18 != 2 THEN
+  $v21 = 2
+  Say "draft"
+ELSE
+  Say $v18
+END
+IF $v1 = 9 THEN
+  Say $v13
+  $v22 = $v9 - 2
+END
+$v23 = $v0 - 2
+IF $v23 < 0 THEN
+  Say $v0
+  $v24 = $v18 - 4
+END
+Say "draft"
+Say $v19
+$v25 = 10
+WHILE $v25 != 0
+  Say $v25
+  $v25 = $v25 - 1
+END

@@ -1,0 +1,17 @@
+---
+name: acrostic-mdz
+---
+
+# acrostic-mdz
+
+DO
+- Write a four line poem about the topic.
+- The first letters of the four lines, read top to bottom, must spell "MDZ" then "!".
+- Line 1 starts with M, line 2 with D, line 3 with Z, line 4 with any word.
+END
+
+RETURN the acrostic poem
+
+<!-- input -->
+
+Topic: the sea.

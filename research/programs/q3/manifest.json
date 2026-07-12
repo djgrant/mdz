@@ -1,0 +1,202 @@
+[
+  {
+    "programPath": "programs/q3/one-syllable-summary.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "one-syllable-summary",
+      "scoring": "output-divergence"
+    },
+    "seed": 1,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/one-syllable-summary.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "one-syllable-summary",
+      "scoring": "output-divergence"
+    },
+    "seed": 1,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/lipogram-no-e.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "lipogram-no-e",
+      "scoring": "output-divergence"
+    },
+    "seed": 2,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/lipogram-no-e.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "lipogram-no-e",
+      "scoring": "output-divergence"
+    },
+    "seed": 2,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/reverse-word-order.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "reverse-word-order",
+      "scoring": "output-divergence"
+    },
+    "seed": 3,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/reverse-word-order.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "reverse-word-order",
+      "scoring": "output-divergence"
+    },
+    "seed": 3,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/acrostic-mdz.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "acrostic-mdz",
+      "scoring": "output-divergence"
+    },
+    "seed": 4,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/acrostic-mdz.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "acrostic-mdz",
+      "scoring": "output-divergence"
+    },
+    "seed": 4,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/exactly-five-words.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "exactly-five-words",
+      "scoring": "output-divergence"
+    },
+    "seed": 5,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/exactly-five-words.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "exactly-five-words",
+      "scoring": "output-divergence"
+    },
+    "seed": 5,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/sort-by-length.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "sort-by-length",
+      "scoring": "output-divergence"
+    },
+    "seed": 6,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/sort-by-length.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "sort-by-length",
+      "scoring": "output-divergence"
+    },
+    "seed": 6,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/pig-latin.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "pig-latin",
+      "scoring": "output-divergence"
+    },
+    "seed": 7,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/pig-latin.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "pig-latin",
+      "scoring": "output-divergence"
+    },
+    "seed": 7,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/spell-and-double.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "spell-and-double",
+      "scoring": "output-divergence"
+    },
+    "seed": 8,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/spell-and-double.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "spell-and-double",
+      "scoring": "output-divergence"
+    },
+    "seed": 8,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/rot13-phrase.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "rot13-phrase",
+      "scoring": "output-divergence"
+    },
+    "seed": 9,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/rot13-phrase.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "rot13-phrase",
+      "scoring": "output-divergence"
+    },
+    "seed": 9,
+    "arm": "B-goal"
+  },
+  {
+    "programPath": "programs/q3/questions-only.procedure.mdz",
+    "tracePath": null,
+    "variant": {
+      "task": "questions-only",
+      "scoring": "output-divergence"
+    },
+    "seed": 10,
+    "arm": "A-procedure"
+  },
+  {
+    "programPath": "programs/q3/questions-only.goal.md",
+    "tracePath": null,
+    "variant": {
+      "task": "questions-only",
+      "scoring": "output-divergence"
+    },
+    "seed": 10,
+    "arm": "B-goal"
+  }
+]

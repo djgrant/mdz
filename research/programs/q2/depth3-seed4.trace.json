@@ -1,0 +1,318 @@
+[
+  {
+    "step": 1,
+    "action": "assign",
+    "var": "v0",
+    "value": 9
+  },
+  {
+    "step": 2,
+    "action": "assign",
+    "var": "v1",
+    "value": 11
+  },
+  {
+    "step": 3,
+    "action": "assign",
+    "var": "v2",
+    "value": "red"
+  },
+  {
+    "step": 4,
+    "action": "assign",
+    "var": "v3",
+    "value": "hold"
+  },
+  {
+    "step": 5,
+    "action": "assign",
+    "var": "v4",
+    "value": 16
+  },
+  {
+    "step": 6,
+    "action": "assign",
+    "var": "v6",
+    "value": 8
+  },
+  {
+    "step": 7,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 8,
+    "action": "assign",
+    "var": "v7",
+    "value": 8
+  },
+  {
+    "step": 9,
+    "action": "assign",
+    "var": "v8",
+    "value": "red"
+  },
+  {
+    "step": 10,
+    "action": "emit",
+    "value": "hold"
+  },
+  {
+    "step": 11,
+    "action": "assign",
+    "var": "v9",
+    "value": 10
+  },
+  {
+    "step": 12,
+    "action": "emit",
+    "value": "10"
+  },
+  {
+    "step": 13,
+    "action": "assign",
+    "var": "v9",
+    "value": 9
+  },
+  {
+    "step": 14,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 15,
+    "action": "assign",
+    "var": "v9",
+    "value": 8
+  },
+  {
+    "step": 16,
+    "action": "emit",
+    "value": "8"
+  },
+  {
+    "step": 17,
+    "action": "assign",
+    "var": "v9",
+    "value": 7
+  },
+  {
+    "step": 18,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 19,
+    "action": "assign",
+    "var": "v9",
+    "value": 6
+  },
+  {
+    "step": 20,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 21,
+    "action": "assign",
+    "var": "v9",
+    "value": 5
+  },
+  {
+    "step": 22,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 23,
+    "action": "assign",
+    "var": "v9",
+    "value": 4
+  },
+  {
+    "step": 24,
+    "action": "emit",
+    "value": "4"
+  },
+  {
+    "step": 25,
+    "action": "assign",
+    "var": "v9",
+    "value": 3
+  },
+  {
+    "step": 26,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 27,
+    "action": "assign",
+    "var": "v9",
+    "value": 2
+  },
+  {
+    "step": 28,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 29,
+    "action": "assign",
+    "var": "v9",
+    "value": 1
+  },
+  {
+    "step": 30,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 31,
+    "action": "assign",
+    "var": "v9",
+    "value": 0
+  },
+  {
+    "step": 32,
+    "action": "emit",
+    "value": "8"
+  },
+  {
+    "step": 33,
+    "action": "emit",
+    "value": "11"
+  },
+  {
+    "step": 34,
+    "action": "emit",
+    "value": "red"
+  },
+  {
+    "step": 35,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 36,
+    "action": "assign",
+    "var": "v10",
+    "value": 1
+  },
+  {
+    "step": 37,
+    "action": "assign",
+    "var": "v11",
+    "value": 10
+  },
+  {
+    "step": 38,
+    "action": "emit",
+    "value": "10"
+  },
+  {
+    "step": 39,
+    "action": "assign",
+    "var": "v11",
+    "value": 9
+  },
+  {
+    "step": 40,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 41,
+    "action": "assign",
+    "var": "v11",
+    "value": 8
+  },
+  {
+    "step": 42,
+    "action": "emit",
+    "value": "8"
+  },
+  {
+    "step": 43,
+    "action": "assign",
+    "var": "v11",
+    "value": 7
+  },
+  {
+    "step": 44,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 45,
+    "action": "assign",
+    "var": "v11",
+    "value": 6
+  },
+  {
+    "step": 46,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 47,
+    "action": "assign",
+    "var": "v11",
+    "value": 5
+  },
+  {
+    "step": 48,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 49,
+    "action": "assign",
+    "var": "v11",
+    "value": 4
+  },
+  {
+    "step": 50,
+    "action": "emit",
+    "value": "4"
+  },
+  {
+    "step": 51,
+    "action": "assign",
+    "var": "v11",
+    "value": 3
+  },
+  {
+    "step": 52,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 53,
+    "action": "assign",
+    "var": "v11",
+    "value": 2
+  },
+  {
+    "step": 54,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 55,
+    "action": "assign",
+    "var": "v11",
+    "value": 1
+  },
+  {
+    "step": 56,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 57,
+    "action": "assign",
+    "var": "v11",
+    "value": 0
+  }
+]

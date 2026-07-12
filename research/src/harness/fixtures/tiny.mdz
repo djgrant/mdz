@@ -1,0 +1,6 @@
+$x = 3
+$y = $x + 4
+Say the value of $y
+IF $y > 5
+  Say "big"
+END

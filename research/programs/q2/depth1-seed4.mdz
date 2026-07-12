@@ -1,0 +1,38 @@
+---
+name: q2-depth1-seed4
+---
+
+# q2-depth1-seed4
+
+$v0 = 9
+$v1 = $v0 + 2
+$v2 = "red"
+IF $v1 < 7 THEN
+  Say $v2
+END
+$v3 = 10
+WHILE $v3 != 0
+  Say $v3
+  $v3 = $v3 - 1
+END
+Say "red"
+Say $v1
+Say "hold"
+CASE $v2
+WHEN "next"
+  Say $v1
+WHEN "red"
+  $v4 = $v3 + 5
+ELSE
+  $v5 = $v0 - 2
+END
+$v6 = 8
+Say $v0
+$v7 = $v6 * 1
+$v8 = "red"
+Say $v2
+$v9 = 10
+WHILE $v9 != 0
+  Say $v9
+  $v9 = $v9 - 1
+END

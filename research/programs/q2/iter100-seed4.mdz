@@ -1,0 +1,21 @@
+---
+name: q2-iter100-seed4
+---
+
+# q2-iter100-seed4
+
+$v0 = 9
+$v1 = $v0 + 2
+$v2 = "red"
+IF $v1 != 8 THEN
+  IF $v1 < 7 THEN
+    Say $v2
+  END
+END
+$v3 = $v2 + "next"
+Say "red"
+$v4 = 100
+WHILE $v4 != 0
+  Say $v4
+  $v4 = $v4 - 1
+END

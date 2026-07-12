@@ -1,0 +1,62 @@
+---
+name: q2-depth1-seed3
+---
+
+# q2-depth1-seed3
+
+$v0 = 7
+$v1 = $v0 + 4
+$v2 = "red"
+IF $v1 != 1 THEN
+  Say $v0
+END
+IF $v1 < 5 THEN
+  $v3 = 8
+  $v4 = 2
+END
+IF $v0 < 3 THEN
+  $v5 = 7
+  $v6 = 1
+ELSE
+  $v7 = $v0 * 4
+  Say $v7
+END
+$v8 = $v2 + "red"
+$v9 = "blue"
+$v10 = 10
+WHILE $v10 != 0
+  Say $v10
+  $v10 = $v10 - 1
+END
+$v11 = $v9 + "hold"
+$v12 = "next"
+IF $v1 != 5 THEN
+  Say "done"
+END
+$v13 = 1
+Say $v9
+Say $v13
+IF $v13 > 3 THEN
+  Say $v12
+  Say "blue"
+END
+$v14 = $v9 + "draft"
+$v15 = $v13 + 5
+IF $v0 = 6 THEN
+  Say $v9
+ELSE
+  Say $v1
+END
+$v16 = "next"
+IF $v1 < 9 THEN
+  $v17 = 6
+END
+IF $v1 > 4 THEN
+  $v18 = $v10 - 3
+  $v19 = 0
+END
+$v20 = 10
+WHILE $v20 != 0
+  Say $v20
+  $v20 = $v20 - 1
+END

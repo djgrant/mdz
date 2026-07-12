@@ -1,0 +1,22 @@
+---
+name: q2-size10-seed3
+---
+
+# q2-size10-seed3
+
+$v0 = 7
+$v1 = $v0 + 4
+$v2 = "red"
+IF $v1 = 4 THEN
+  IF $v1 != 1 THEN
+    Say $v0
+  END
+END
+Say "done"
+$v3 = 5
+Say $v0
+Say $v2
+Say $v3
+IF $v1 > 6 THEN
+  Say $v0
+END

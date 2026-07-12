@@ -1,0 +1,61 @@
+---
+name: q2-iter25-seed5
+---
+
+# q2-iter25-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+IF $v1 = 7 THEN
+  IF $v0 < 9 THEN
+    Say $v1
+  END
+END
+$v3 = $v0 * 2
+Say $v1
+IF $v1 != 2 THEN
+  $v4 = $v0 - 5
+  $v5 = $v4 + 3
+END
+Say $v2
+$v6 = "draft"
+$v7 = $v3 - 1
+Say $v3
+Say $v1
+Say $v6
+IF $v0 > 7 THEN
+  Say $v7
+ELSE
+  Say $v1
+END
+Say $v7
+Say $v7
+Say $v7
+IF $v0 = 3 THEN
+  Say $v1
+END
+Say $v3
+IF $v7 = 9 THEN
+  Say $v2
+END
+$v8 = $v1 + 3
+Say $v2
+IF $v0 < 6 THEN
+  $v9 = $v8 + 3
+  $v10 = $v7 + 4
+ELSE
+  Say $v7
+END
+$v11 = $v1 - 4
+Say $v2
+Say $v0
+IF $v8 != 2 THEN
+  $v12 = 4
+ELSE
+  Say $v6
+  Say "ok"
+END
+FOR $v13 IN [7, 0, 6, 5, 2, 2, 6, 8, 5, 6, 6, 4, 5, 1, 1, 3, 4, 0, 6, 4, 4, 3, 5, 3, 2]
+  Say $v13
+END

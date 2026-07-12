@@ -1,0 +1,71 @@
+---
+name: q5-size100-seed4
+---
+
+# q5-size100-seed4
+
+$v0 = 9
+$v1 = $v0 + 2
+$v2 = "red"
+IF $v1 != 8 THEN
+  IF $v1 < 7 THEN
+    Say $v2
+  END
+END
+$v3 = $v2 + "next"
+Say "red"
+$v4 = 10
+WHILE $v4 != 0
+  Say $v4
+  $v4 = $v4 - 1
+END
+Say $v2
+$v5 = $v0 - 3
+Say $v2
+CASE $v2
+WHEN "red"
+  Say $v5
+WHEN "ok"
+  Say "done"
+  $v6 = 4
+ELSE
+  Say "draft"
+END
+$v7 = "red"
+Say $v3
+$v8 = 10
+WHILE $v8 != 0
+  Say $v8
+  $v8 = $v8 - 1
+END
+CASE $v7
+WHEN "draft"
+  Say $v3
+WHEN "draft"
+  Say "blue"
+ELSE
+  Say $v4
+END
+Say $v1
+Say $v7
+Say $v0
+IF $v5 > 3 THEN
+  $v9 = 1
+END
+$v10 = 10
+WHILE $v10 != 0
+  Say $v10
+  $v10 = $v10 - 1
+END
+$v11 = $v3 + "next"
+$v12 = "blue"
+IF $v8 = 4 THEN
+  Say $v5
+  Say $v12
+END
+Say $v0
+$v13 = 6
+$v14 = 3
+FOR $v15 IN [9, 9, 3, 0, 7, 0, 8, 3, 4, 6]
+  Say $v15
+END

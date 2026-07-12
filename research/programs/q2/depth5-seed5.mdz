@@ -1,0 +1,80 @@
+---
+name: q2-depth5-seed5
+---
+
+# q2-depth5-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+IF $v1 > 2 THEN
+  IF $v1 != 2 THEN
+    IF $v0 < 4 THEN
+      IF $v1 = 7 THEN
+        IF $v0 < 9 THEN
+          Say $v1
+        END
+      END
+    END
+  END
+END
+IF $v0 != 2 THEN
+  $v3 = $v0 - 5
+  $v4 = $v3 + 3
+END
+Say $v2
+$v5 = "draft"
+$v6 = $v1 - 1
+Say $v1
+Say $v0
+Say $v5
+IF $v0 > 7 THEN
+  Say $v2
+ELSE
+  Say $v1
+END
+Say $v6
+Say $v6
+Say $v6
+IF $v0 = 3 THEN
+  Say $v1
+END
+Say $v6
+IF $v6 = 9 THEN
+  Say $v2
+END
+$v7 = $v1 + 3
+Say $v2
+IF $v0 < 6 THEN
+  $v8 = $v7 + 3
+  $v9 = $v7 + 4
+ELSE
+  Say $v6
+END
+$v10 = $v1 - 4
+Say $v5
+Say $v0
+IF $v10 != 2 THEN
+  $v11 = 4
+ELSE
+  Say $v5
+  Say "ok"
+END
+FOR $v12 IN [7, 0, 6, 5, 2, 2, 6, 8, 5, 6]
+  Say $v12
+END
+$v13 = $v0 + 2
+$v14 = 4
+CASE $v2
+WHEN "red"
+  $v15 = $v7 - 2
+WHEN "ok"
+  $v16 = $v10 + 1
+  Say $v13
+ELSE
+  $v17 = $v14 - 1
+END
+$v18 = "red"
+FOR $v19 IN [1, 8, 9, 5, 1, 6, 4, 3, 1, 4]
+  Say $v19
+END

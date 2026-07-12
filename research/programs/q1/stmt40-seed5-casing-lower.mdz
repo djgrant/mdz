@@ -1,0 +1,64 @@
+---
+name: q1-seed5
+---
+
+# q1-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+if $v1 = 7 then
+  if $v0 < 9 then
+    Say $v1
+  end
+end
+$v3 = $v0 * 2
+Say $v1
+if $v1 != 2 then
+  $v4 = $v0 - 5
+  $v5 = $v4 + 3
+end
+Say $v2
+$v6 = "draft"
+$v7 = $v3 - 1
+Say $v3
+Say $v1
+Say $v6
+if $v0 > 7 then
+  Say $v7
+else
+  Say $v1
+end
+Say $v7
+Say $v7
+Say $v7
+if $v0 = 3 then
+  Say $v1
+end
+Say $v3
+if $v7 = 9 then
+  Say $v2
+end
+$v8 = $v1 + 3
+Say $v2
+if $v0 < 6 then
+  $v9 = $v8 + 3
+  $v10 = $v7 + 4
+else
+  Say $v7
+end
+$v11 = $v1 - 4
+Say $v2
+Say $v0
+if $v8 != 2 then
+  $v12 = 4
+else
+  Say $v6
+  Say "ok"
+end
+for $v13 in [7, 0, 6, 5, 2]
+  Say $v13
+end
+for $v14 in [6, 8, 5, 6, 6]
+  Say $v14
+end

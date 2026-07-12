@@ -1,0 +1,48 @@
+---
+name: q2-depth3-seed5
+---
+
+# q2-depth3-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+IF $v0 < 4 THEN
+  IF $v1 = 7 THEN
+    IF $v0 < 9 THEN
+      Say $v1
+    END
+  END
+END
+$v3 = 10
+WHILE $v3 != 0
+  Say $v3
+  $v3 = $v3 - 1
+END
+Say $v2
+Say $v0
+Say $v1
+IF $v1 != 9 THEN
+  Say $v0
+END
+FOR $v4 IN [3, 2, 8, 7, 8, 5, 8, 6, 1, 6]
+  Say $v4
+END
+$v5 = 6
+IF $v0 = 7 THEN
+  $v6 = $v5 + 1
+  Say $v2
+ELSE
+  Say $v5
+END
+$v7 = 0
+Say "ok"
+$v8 = "blue"
+Say $v5
+IF $v0 = 3 THEN
+  Say $v1
+END
+Say $v3
+IF $v5 = 9 THEN
+  Say $v7
+END

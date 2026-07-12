@@ -1,0 +1,17 @@
+---
+name: questions-only
+---
+
+# questions-only
+
+DO
+- Rephrase the information in the input.
+- The rephrasing must consist ENTIRELY of questions.
+- Every sentence must end with a question mark; rewrite any that do not.
+END
+
+RETURN the questions-only rephrasing
+
+<!-- input -->
+
+The library closes at eight and reopens at nine.

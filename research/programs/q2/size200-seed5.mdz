@@ -1,0 +1,152 @@
+---
+name: q2-size200-seed5
+---
+
+# q2-size200-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+IF $v1 = 7 THEN
+  IF $v0 < 9 THEN
+    Say $v1
+  END
+END
+$v3 = $v0 * 2
+Say $v1
+IF $v1 != 2 THEN
+  $v4 = $v0 - 5
+  $v5 = $v4 + 3
+END
+Say $v2
+$v6 = "draft"
+$v7 = $v3 - 1
+Say $v3
+Say $v1
+Say $v6
+IF $v0 > 7 THEN
+  Say $v7
+ELSE
+  Say $v1
+END
+Say $v7
+Say $v7
+Say $v7
+IF $v0 = 3 THEN
+  Say $v1
+END
+Say $v3
+IF $v7 = 9 THEN
+  Say $v2
+END
+$v8 = $v1 + 3
+Say $v2
+IF $v0 < 6 THEN
+  $v9 = $v8 + 3
+  $v10 = $v7 + 4
+ELSE
+  Say $v7
+END
+$v11 = $v1 - 4
+Say $v2
+Say $v0
+IF $v8 != 2 THEN
+  $v12 = 4
+ELSE
+  Say $v6
+  Say "ok"
+END
+FOR $v13 IN [7, 0, 6, 5, 2, 2, 6, 8, 5, 6]
+  Say $v13
+END
+$v14 = $v1 + 2
+$v15 = 4
+CASE $v2
+WHEN "red"
+  $v16 = $v8 - 2
+WHEN "ok"
+  $v17 = $v11 + 1
+  Say $v11
+ELSE
+  $v18 = $v15 - 1
+END
+$v19 = "red"
+FOR $v20 IN [1, 8, 9, 5, 1, 6, 4, 3, 1, 4]
+  Say $v20
+END
+Say $v1
+FOR $v21 IN [9, 2, 7, 7, 5, 0, 4, 9, 0, 7]
+  Say $v21
+END
+$v22 = $v3 - 5
+FOR $v23 IN [3, 0, 2, 8, 4, 8, 9, 5, 6, 0]
+  Say $v23
+END
+IF $v0 != 7 THEN
+  Say $v15
+  $v24 = $v11 * 1
+ELSE
+  Say "hold"
+END
+$v25 = 10
+WHILE $v25 != 0
+  Say $v25
+  $v25 = $v25 - 1
+END
+Say $v0
+$v26 = "red"
+IF $v1 != 3 THEN
+  Say $v3
+  Say $v22
+END
+$v27 = 10
+WHILE $v27 != 0
+  Say $v27
+  $v27 = $v27 - 1
+END
+FOR $v28 IN [3, 3, 7, 4, 2, 2, 6, 2, 8, 4]
+  Say $v28
+END
+IF $v25 = 1 THEN
+  Say $v27
+  Say $v15
+ELSE
+  $v29 = $v1 + 2
+  Say $v27
+END
+$v30 = $v3 + 4
+$v31 = 10
+WHILE $v31 != 0
+  Say $v31
+  $v31 = $v31 - 1
+END
+$v32 = $v7 - 5
+Say $v30
+Say $v14
+$v33 = $v0 + 5
+Say $v25
+Say $v8
+$v34 = 3
+IF $v34 > 6 THEN
+  Say $v34
+  Say $v15
+ELSE
+  Say "ok"
+  Say $v3
+END
+$v35 = $v22 * 1
+IF $v15 > 2 THEN
+  Say $v33
+  Say $v35
+END
+IF $v11 > 3 THEN
+  $v36 = $v31 + 5
+ELSE
+  Say $v11
+  $v37 = $v32 * 1
+END
+$v38 = 10
+WHILE $v38 != 0
+  Say $v38
+  $v38 = $v38 - 1
+END

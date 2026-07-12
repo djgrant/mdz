@@ -1,6 +1,7 @@
 {
   "name": "mdz-monorepo",
   "scripts": {
+    "analysis": "(cd 'benchmark/analysis/phase 1' && jupyter notebook mdz-analysis-phase-1.ipynb)",
     "build": "pnpm -r build",
     "vscode": "pnpm -C extensions/vscode",
     "test": "vitest run"

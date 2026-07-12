@@ -1,0 +1,50 @@
+---
+name: q1-seed1
+---
+
+# q1-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7]
+  Say $v3
+END
+FOR $v4 IN [1, 0, 4, 5, 7]
+  Say $v4
+END
+FOR $v5 IN [2, 6, 5, 7, 1]
+  Say $v5
+END
+Say $v2
+Say $v2
+IF $v1 = 7 THEN
+  $v6 = $v0 * 3
+ELSE
+  $v7 = 8
+CASE $v2
+WHEN "blue"
+  Say $v2
+  Say "draft"
+WHEN "draft"
+  $v8 = 5
+  Say $v0
+ELSE
+  Say $v2
+  $v9 = $v0 - 2
+END
+$v10 = $v0 * 5
+FOR $v11 IN [1, 3, 8, 2, 1]
+  Say $v11
+END
+$v12 = $v0 + 1
+$v13 = 5
+WHILE $v13 != 0
+  Say $v13
+  $v13 = $v13 - 1
+END

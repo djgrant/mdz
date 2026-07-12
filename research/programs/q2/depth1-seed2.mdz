@@ -1,0 +1,50 @@
+---
+name: q2-depth1-seed2
+---
+
+# q2-depth1-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 > 7 THEN
+  Say $v1
+END
+FOR $v3 IN [4, 8, 5, 1, 6, 3, 9, 0, 9, 0]
+  Say $v3
+END
+IF $v0 > 4 THEN
+  $v4 = 4
+END
+$v5 = 10
+WHILE $v5 != 0
+  Say $v5
+  $v5 = $v5 - 1
+END
+IF $v5 = 0 THEN
+  $v6 = $v5 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v5
+  Say $v2
+WHEN "next"
+  $v7 = 9
+  $v8 = $v0 * 2
+ELSE
+  Say "hold"
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v9 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v10 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]
+  Say $v10
+END

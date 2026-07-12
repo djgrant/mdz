@@ -1,0 +1,17 @@
+---
+name: one-syllable-summary
+---
+
+# one-syllable-summary
+
+DO
+- Read the input text.
+- Write a one sentence summary using ONLY words of one syllable.
+- Reject any draft that contains a word of two or more syllables and rewrite it.
+END
+
+RETURN the one-syllable summary
+
+<!-- input -->
+
+The committee deliberated extensively before authorising the expenditure.

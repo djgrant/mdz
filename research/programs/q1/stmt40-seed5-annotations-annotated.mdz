@@ -1,0 +1,64 @@
+---
+name: q1-seed5
+---
+
+# q1-seed5
+
+$v0: Number = 6
+$v1: Number = 2
+$v2: String = "blue"
+IF $v1 = 7 THEN
+  IF $v0 < 9 THEN
+    Say $v1
+  END
+END
+$v3: Number = $v0 * 2
+Say $v1
+IF $v1 != 2 THEN
+  $v4: Number = $v0 - 5
+  $v5: Number = $v4 + 3
+END
+Say $v2
+$v6: String = "draft"
+$v7: Number = $v3 - 1
+Say $v3
+Say $v1
+Say $v6
+IF $v0 > 7 THEN
+  Say $v7
+ELSE
+  Say $v1
+END
+Say $v7
+Say $v7
+Say $v7
+IF $v0 = 3 THEN
+  Say $v1
+END
+Say $v3
+IF $v7 = 9 THEN
+  Say $v2
+END
+$v8: Number = $v1 + 3
+Say $v2
+IF $v0 < 6 THEN
+  $v9: Number = $v8 + 3
+  $v10: Number = $v7 + 4
+ELSE
+  Say $v7
+END
+$v11: Number = $v1 - 4
+Say $v2
+Say $v0
+IF $v8 != 2 THEN
+  $v12: Number = 4
+ELSE
+  Say $v6
+  Say "ok"
+END
+FOR $v13 IN [7, 0, 6, 5, 2]
+  Say $v13
+END
+FOR $v14 IN [6, 8, 5, 6, 6]
+  Say $v14
+END

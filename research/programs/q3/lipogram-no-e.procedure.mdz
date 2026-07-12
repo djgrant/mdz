@@ -1,0 +1,17 @@
+---
+name: lipogram-no-e
+---
+
+# lipogram-no-e
+
+DO
+- Answer the request in the input.
+- Constraint: the entire answer must not contain the letter e (a lipogram).
+- Scan the answer for any e and rewrite until none remain.
+END
+
+RETURN the lipogram answer
+
+<!-- input -->
+
+Please describe a typical morning routine.

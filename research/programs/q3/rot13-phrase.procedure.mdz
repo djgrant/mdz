@@ -1,0 +1,17 @@
+---
+name: rot13-phrase
+---
+
+# rot13-phrase
+
+DO
+- Apply the ROT13 cipher to the input: shift each letter 13 places.
+- Leave spaces unchanged.
+- Output only the ciphertext.
+END
+
+RETURN the ROT13 ciphertext
+
+<!-- input -->
+
+attack at dawn

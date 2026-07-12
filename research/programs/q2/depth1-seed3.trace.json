@@ -1,0 +1,348 @@
+[
+  {
+    "step": 1,
+    "action": "assign",
+    "var": "v0",
+    "value": 7
+  },
+  {
+    "step": 2,
+    "action": "assign",
+    "var": "v1",
+    "value": 11
+  },
+  {
+    "step": 3,
+    "action": "assign",
+    "var": "v2",
+    "value": "red"
+  },
+  {
+    "step": 4,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 5,
+    "action": "assign",
+    "var": "v7",
+    "value": 28
+  },
+  {
+    "step": 6,
+    "action": "emit",
+    "value": "28"
+  },
+  {
+    "step": 7,
+    "action": "assign",
+    "var": "v8",
+    "value": "redred"
+  },
+  {
+    "step": 8,
+    "action": "assign",
+    "var": "v9",
+    "value": "blue"
+  },
+  {
+    "step": 9,
+    "action": "assign",
+    "var": "v10",
+    "value": 10
+  },
+  {
+    "step": 10,
+    "action": "emit",
+    "value": "10"
+  },
+  {
+    "step": 11,
+    "action": "assign",
+    "var": "v10",
+    "value": 9
+  },
+  {
+    "step": 12,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 13,
+    "action": "assign",
+    "var": "v10",
+    "value": 8
+  },
+  {
+    "step": 14,
+    "action": "emit",
+    "value": "8"
+  },
+  {
+    "step": 15,
+    "action": "assign",
+    "var": "v10",
+    "value": 7
+  },
+  {
+    "step": 16,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 17,
+    "action": "assign",
+    "var": "v10",
+    "value": 6
+  },
+  {
+    "step": 18,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 19,
+    "action": "assign",
+    "var": "v10",
+    "value": 5
+  },
+  {
+    "step": 20,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 21,
+    "action": "assign",
+    "var": "v10",
+    "value": 4
+  },
+  {
+    "step": 22,
+    "action": "emit",
+    "value": "4"
+  },
+  {
+    "step": 23,
+    "action": "assign",
+    "var": "v10",
+    "value": 3
+  },
+  {
+    "step": 24,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 25,
+    "action": "assign",
+    "var": "v10",
+    "value": 2
+  },
+  {
+    "step": 26,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 27,
+    "action": "assign",
+    "var": "v10",
+    "value": 1
+  },
+  {
+    "step": 28,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 29,
+    "action": "assign",
+    "var": "v10",
+    "value": 0
+  },
+  {
+    "step": 30,
+    "action": "assign",
+    "var": "v11",
+    "value": "bluehold"
+  },
+  {
+    "step": 31,
+    "action": "assign",
+    "var": "v12",
+    "value": "next"
+  },
+  {
+    "step": 32,
+    "action": "emit",
+    "value": "done"
+  },
+  {
+    "step": 33,
+    "action": "assign",
+    "var": "v13",
+    "value": 1
+  },
+  {
+    "step": 34,
+    "action": "emit",
+    "value": "blue"
+  },
+  {
+    "step": 35,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 36,
+    "action": "assign",
+    "var": "v14",
+    "value": "bluedraft"
+  },
+  {
+    "step": 37,
+    "action": "assign",
+    "var": "v15",
+    "value": 6
+  },
+  {
+    "step": 38,
+    "action": "emit",
+    "value": "11"
+  },
+  {
+    "step": 39,
+    "action": "assign",
+    "var": "v16",
+    "value": "next"
+  },
+  {
+    "step": 40,
+    "action": "assign",
+    "var": "v18",
+    "value": -3
+  },
+  {
+    "step": 41,
+    "action": "assign",
+    "var": "v19",
+    "value": 0
+  },
+  {
+    "step": 42,
+    "action": "assign",
+    "var": "v20",
+    "value": 10
+  },
+  {
+    "step": 43,
+    "action": "emit",
+    "value": "10"
+  },
+  {
+    "step": 44,
+    "action": "assign",
+    "var": "v20",
+    "value": 9
+  },
+  {
+    "step": 45,
+    "action": "emit",
+    "value": "9"
+  },
+  {
+    "step": 46,
+    "action": "assign",
+    "var": "v20",
+    "value": 8
+  },
+  {
+    "step": 47,
+    "action": "emit",
+    "value": "8"
+  },
+  {
+    "step": 48,
+    "action": "assign",
+    "var": "v20",
+    "value": 7
+  },
+  {
+    "step": 49,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 50,
+    "action": "assign",
+    "var": "v20",
+    "value": 6
+  },
+  {
+    "step": 51,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 52,
+    "action": "assign",
+    "var": "v20",
+    "value": 5
+  },
+  {
+    "step": 53,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 54,
+    "action": "assign",
+    "var": "v20",
+    "value": 4
+  },
+  {
+    "step": 55,
+    "action": "emit",
+    "value": "4"
+  },
+  {
+    "step": 56,
+    "action": "assign",
+    "var": "v20",
+    "value": 3
+  },
+  {
+    "step": 57,
+    "action": "emit",
+    "value": "3"
+  },
+  {
+    "step": 58,
+    "action": "assign",
+    "var": "v20",
+    "value": 2
+  },
+  {
+    "step": 59,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 60,
+    "action": "assign",
+    "var": "v20",
+    "value": 1
+  },
+  {
+    "step": 61,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 62,
+    "action": "assign",
+    "var": "v20",
+    "value": 0
+  }
+]

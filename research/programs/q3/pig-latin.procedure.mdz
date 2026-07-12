@@ -1,0 +1,17 @@
+---
+name: pig-latin
+---
+
+# pig-latin
+
+DO
+- For each word, move the first consonant cluster to the end and add 'ay'.
+- If a word starts with a vowel, add 'way' to the end.
+- Output the transformed words in order on one line.
+END
+
+RETURN the pig latin text
+
+<!-- input -->
+
+hello world this is a test

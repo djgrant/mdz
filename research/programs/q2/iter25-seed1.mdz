@@ -1,0 +1,35 @@
+---
+name: q2-iter25-seed1
+---
+
+# q2-iter25-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5, 7, 2, 2, 6, 5, 7, 1, 7, 4, 7, 9, 2, 7, 1, 3]
+  Say $v3
+END
+CASE $v2
+WHEN "ok"
+  Say $v0
+  $v4 = 8
+WHEN "ok"
+  Say $v0
+  Say "hold"
+ELSE
+  Say $v2
+  $v5 = $v1 + 5
+END
+$v6 = "ok"
+$v7 = $v6 + "ok"
+$v8 = 25
+WHILE $v8 != 0
+  Say $v8
+  $v8 = $v8 - 1
+END

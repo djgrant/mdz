@@ -1,0 +1,16 @@
+---
+name: level1
+input: p, q, r
+---
+
+# level1
+
+Say $p
+Say $q
+Say $r
+$d_p = $p + 2
+Say $d_p
+$d_q = $q * 3
+Say $d_q
+$d_r = $r - 1
+Say $d_r

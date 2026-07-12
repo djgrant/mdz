@@ -1,0 +1,17 @@
+---
+name: q2-size10-seed1
+---
+
+# q2-size10-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]
+  Say $v3
+END

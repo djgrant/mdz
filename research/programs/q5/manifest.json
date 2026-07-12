@@ -1,0 +1,242 @@
+[
+  {
+    "programPath": "programs/q5/size100-seed1.mdz",
+    "tracePath": "programs/q5/size100-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 1,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size100-seed1.mdz",
+    "tracePath": "programs/q5/size100-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 1,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size100-seed2.mdz",
+    "tracePath": "programs/q5/size100-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 2,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size100-seed2.mdz",
+    "tracePath": "programs/q5/size100-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 2,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size100-seed3.mdz",
+    "tracePath": "programs/q5/size100-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 3,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size100-seed3.mdz",
+    "tracePath": "programs/q5/size100-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 3,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size100-seed4.mdz",
+    "tracePath": "programs/q5/size100-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 4,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size100-seed4.mdz",
+    "tracePath": "programs/q5/size100-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 4,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size100-seed5.mdz",
+    "tracePath": "programs/q5/size100-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 5,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size100-seed5.mdz",
+    "tracePath": "programs/q5/size100-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 5,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size200-seed1.mdz",
+    "tracePath": "programs/q5/size200-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 1,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size200-seed1.mdz",
+    "tracePath": "programs/q5/size200-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 1,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size200-seed2.mdz",
+    "tracePath": "programs/q5/size200-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 2,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size200-seed2.mdz",
+    "tracePath": "programs/q5/size200-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 2,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size200-seed3.mdz",
+    "tracePath": "programs/q5/size200-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 3,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size200-seed3.mdz",
+    "tracePath": "programs/q5/size200-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 3,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size200-seed4.mdz",
+    "tracePath": "programs/q5/size200-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 4,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size200-seed4.mdz",
+    "tracePath": "programs/q5/size200-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 4,
+    "arm": "B-state-ledger"
+  },
+  {
+    "programPath": "programs/q5/size200-seed5.mdz",
+    "tracePath": "programs/q5/size200-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 5,
+    "arm": "A-internal"
+  },
+  {
+    "programPath": "programs/q5/size200-seed5.mdz",
+    "tracePath": "programs/q5/size200-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10
+    },
+    "seed": 5,
+    "arm": "B-state-ledger"
+  }
+]

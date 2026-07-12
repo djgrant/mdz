@@ -1,0 +1,46 @@
+---
+name: q2-iter100-seed2
+---
+
+# q2-iter100-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3 = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4 = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5 = $v3 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v3
+  Say $v2
+WHEN "next"
+  $v6 = 9
+  $v7 = $v0 * 2
+ELSE
+  Say "hold"
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v8 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1, 1, 7, 9, 6, 1, 5, 9, 0, 5, 5, 7, 8, 4, 5, 0, 8, 4, 2, 5, 4, 5, 5, 3, 2, 9, 5, 5, 2, 1, 2, 8, 1, 9, 2, 8, 3, 3, 7, 9, 3, 4, 8, 8, 3, 4, 9, 9, 5, 8, 1, 3, 3, 1, 3, 9, 2, 2, 8, 1, 2, 0, 6, 6, 5, 7, 3, 8, 0, 6, 6, 8, 1, 5, 1, 3, 3, 8, 5, 7, 0, 6, 0, 8, 0, 2, 1, 9, 1, 6, 5]
+  Say $v9
+END

@@ -1,0 +1,51 @@
+---
+name: q2-depth5-seed2
+---
+
+# q2-depth5-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 > 1 THEN
+  IF $v1 != 0 THEN
+    IF $v0 < 6 THEN
+      IF $v0 = 8 THEN
+        IF $v0 > 7 THEN
+          Say $v1
+        END
+      END
+    END
+  END
+END
+FOR $v3 IN [0, 9, 4, 6, 9, 2, 4, 3, 0, 5]
+  Say $v3
+END
+IF $v1 = 5 THEN
+  Say $v0
+END
+FOR $v4 IN [6, 0, 7, 9, 8, 4, 9, 0, 7, 9]
+  Say $v4
+END
+Say $v1
+IF $v1 > 9 THEN
+  Say $v0
+  Say "red"
+ELSE
+  Say $v1
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v5 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v6 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]
+  Say $v6
+END
+FOR $v7 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]
+  Say $v7
+END

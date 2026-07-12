@@ -1,0 +1,47 @@
+---
+name: q2-depth3-seed1
+---
+
+# q2-depth3-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 = 4 THEN
+  IF $v0 != 4 THEN
+    IF $v1 != 4 THEN
+      Say $v2
+    END
+  END
+END
+IF $v1 = 5 THEN
+  Say $v0
+ELSE
+  Say $v0
+END
+Say $v2
+CASE $v2
+WHEN "hold"
+  Say $v0
+WHEN "done"
+  $v3 = 5
+ELSE
+  $v4 = $v1 * 2
+END
+Say $v1
+$v5 = 10
+WHILE $v5 != 0
+  Say $v5
+  $v5 = $v5 - 1
+END
+$v6 = "blue"
+Say $v6
+IF $v5 > 1 THEN
+  Say $v6
+END
+$v7 = $v6 + "ok"
+$v8 = 10
+WHILE $v8 != 0
+  Say $v8
+  $v8 = $v8 - 1
+END

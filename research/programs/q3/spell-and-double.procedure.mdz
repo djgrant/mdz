@@ -1,0 +1,17 @@
+---
+name: spell-and-double
+---
+
+# spell-and-double
+
+DO
+- Find every integer in the sentence.
+- Double each integer.
+- Replace it with the doubled value spelled out in words.
+END
+
+RETURN the rewritten sentence
+
+<!-- input -->
+
+I have 3 cats and 12 books.

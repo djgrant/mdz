@@ -1,0 +1,24 @@
+---
+name: q2-size10-seed2
+---
+
+# q2-size10-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3 = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4 = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5 = $v3 * 1
+  Say $v2
+END
+Say "next"

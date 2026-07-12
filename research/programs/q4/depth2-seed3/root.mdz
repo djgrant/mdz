@@ -1,0 +1,13 @@
+---
+name: q4-depth2-seed3
+---
+
+# q4-depth2-seed3
+
+$a0 = 4
+$a1 = 1
+$a2 = 3
+USE ~/skills/level1 WITH
+  p: $a0
+  q: $a1
+  r: $a2

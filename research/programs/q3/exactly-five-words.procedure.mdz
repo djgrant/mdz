@@ -1,0 +1,17 @@
+---
+name: exactly-five-words
+---
+
+# exactly-five-words
+
+DO
+- Explain the topic in exactly three sentences.
+- Every sentence must contain exactly five words.
+- Count the words in each sentence and rewrite any sentence that is not five words.
+END
+
+RETURN the three five-word sentences
+
+<!-- input -->
+
+Explain what a compiler does.

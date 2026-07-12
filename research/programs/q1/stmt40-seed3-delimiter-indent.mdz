@@ -1,0 +1,49 @@
+---
+name: q1-seed3
+---
+
+# q1-seed3
+
+$v0 = 7
+$v1 = $v0 + 4
+$v2 = "red"
+IF $v1 = 4 THEN
+  IF $v1 != 1 THEN
+    Say $v0
+Say "done"
+$v3 = 5
+Say $v0
+Say $v2
+Say $v3
+IF $v1 > 6 THEN
+  Say $v0
+Say $v3
+IF $v1 != 7 THEN
+  Say $v1
+Say $v1
+$v4 = $v2 + "hold"
+$v5 = "next"
+IF $v1 != 5 THEN
+  Say "done"
+$v6 = 1
+Say $v4
+Say $v3
+IF $v6 > 3 THEN
+  Say $v5
+  Say "blue"
+$v7 = $v4 + "draft"
+$v8 = $v6 + 5
+IF $v0 = 6 THEN
+  Say $v4
+ELSE
+  Say $v1
+$v9 = "next"
+IF $v1 < 9 THEN
+  $v10 = 6
+IF $v1 > 4 THEN
+  $v11 = $v3 - 3
+  $v12 = 0
+$v13 = 5
+WHILE $v13 != 0
+  Say $v13
+  $v13 = $v13 - 1

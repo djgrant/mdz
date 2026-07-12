@@ -1,0 +1,51 @@
+[
+  {
+    "step": 1,
+    "action": "assign",
+    "var": "v0",
+    "value": 7
+  },
+  {
+    "step": 2,
+    "action": "assign",
+    "var": "v1",
+    "value": 11
+  },
+  {
+    "step": 3,
+    "action": "assign",
+    "var": "v2",
+    "value": "red"
+  },
+  {
+    "step": 4,
+    "action": "emit",
+    "value": "done"
+  },
+  {
+    "step": 5,
+    "action": "assign",
+    "var": "v3",
+    "value": 5
+  },
+  {
+    "step": 6,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 7,
+    "action": "emit",
+    "value": "red"
+  },
+  {
+    "step": 8,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 9,
+    "action": "emit",
+    "value": "7"
+  }
+]

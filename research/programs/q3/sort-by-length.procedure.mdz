@@ -1,0 +1,17 @@
+---
+name: sort-by-length
+---
+
+# sort-by-length
+
+DO
+- Take the comma separated list in the input.
+- Sort the items by word length, shortest first.
+- Break ties by keeping the original left-to-right order.
+END
+
+RETURN the length-sorted list
+
+<!-- input -->
+
+banana, fig, watermelon, kiwi, apple

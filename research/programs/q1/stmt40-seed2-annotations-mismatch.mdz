@@ -1,0 +1,74 @@
+---
+name: q1-seed2
+---
+
+# q1-seed2
+
+$v0: String = 7
+$v1: String = $v0 - 5
+$v2: Number = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3: String = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4: String = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5: String = $v3 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v3
+  Say $v2
+WHEN "next"
+  $v6: String = 9
+  $v7: String = $v0 * 2
+ELSE
+  Say "hold"
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v8: String = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v9 IN [0, 7, 0, 7, 7]
+  Say $v9
+END
+$v10: String = $v1 + 1
+Say "blue"
+IF $v0 < 8 THEN
+  Say $v3
+  Say $v2
+END
+CASE $v2
+WHEN "blue"
+  Say $v1
+WHEN "ok"
+  Say $v1
+  $v11: String = $v10 + 5
+ELSE
+  Say $v1
+END
+Say "done"
+CASE $v2
+WHEN "hold"
+  $v12: String = 9
+WHEN "red"
+  $v13: String = $v1 + 2
+  Say $v1
+ELSE
+  $v14: String = $v0 * 4
+  Say $v3
+END
+Say $v10
+$v15: Number = $v2 + "ok"

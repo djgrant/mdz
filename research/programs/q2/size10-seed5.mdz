@@ -1,0 +1,22 @@
+---
+name: q2-size10-seed5
+---
+
+# q2-size10-seed5
+
+$v0 = 6
+$v1 = 2
+$v2 = "blue"
+IF $v1 = 7 THEN
+  IF $v0 < 9 THEN
+    Say $v1
+  END
+END
+$v3 = $v0 * 2
+Say $v1
+IF $v1 != 2 THEN
+  $v4 = $v0 - 5
+  $v5 = $v4 + 3
+END
+Say $v2
+$v6 = "draft"

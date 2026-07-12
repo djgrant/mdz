@@ -1,0 +1,662 @@
+[
+  {
+    "programPath": "programs/q2/size10-seed1.mdz",
+    "tracePath": "programs/q2/size10-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 10,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size10"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/size10-seed2.mdz",
+    "tracePath": "programs/q2/size10-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 10,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size10"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/size10-seed3.mdz",
+    "tracePath": "programs/q2/size10-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 10,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size10"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/size10-seed4.mdz",
+    "tracePath": "programs/q2/size10-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 10,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size10"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/size10-seed5.mdz",
+    "tracePath": "programs/q2/size10-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 10,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size10"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/size25-seed1.mdz",
+    "tracePath": "programs/q2/size25-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 25,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size25"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/size25-seed2.mdz",
+    "tracePath": "programs/q2/size25-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 25,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size25"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/size25-seed3.mdz",
+    "tracePath": "programs/q2/size25-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 25,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size25"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/size25-seed4.mdz",
+    "tracePath": "programs/q2/size25-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 25,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size25"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/size25-seed5.mdz",
+    "tracePath": "programs/q2/size25-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 25,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size25"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/size50-seed1.mdz",
+    "tracePath": "programs/q2/size50-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size50"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/size50-seed2.mdz",
+    "tracePath": "programs/q2/size50-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size50"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/size50-seed3.mdz",
+    "tracePath": "programs/q2/size50-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size50"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/size50-seed4.mdz",
+    "tracePath": "programs/q2/size50-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size50"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/size50-seed5.mdz",
+    "tracePath": "programs/q2/size50-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size50"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/size100-seed1.mdz",
+    "tracePath": "programs/q2/size100-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size100"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/size100-seed2.mdz",
+    "tracePath": "programs/q2/size100-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size100"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/size100-seed3.mdz",
+    "tracePath": "programs/q2/size100-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size100"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/size100-seed4.mdz",
+    "tracePath": "programs/q2/size100-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size100"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/size100-seed5.mdz",
+    "tracePath": "programs/q2/size100-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size100"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/size200-seed1.mdz",
+    "tracePath": "programs/q2/size200-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size200"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/size200-seed2.mdz",
+    "tracePath": "programs/q2/size200-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size200"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/size200-seed3.mdz",
+    "tracePath": "programs/q2/size200-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size200"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/size200-seed4.mdz",
+    "tracePath": "programs/q2/size200-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size200"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/size200-seed5.mdz",
+    "tracePath": "programs/q2/size200-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "cell": "size200"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/depth1-seed1.mdz",
+    "tracePath": "programs/q2/depth1-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 1,
+      "iterations": 10,
+      "cell": "depth1"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/depth1-seed2.mdz",
+    "tracePath": "programs/q2/depth1-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 1,
+      "iterations": 10,
+      "cell": "depth1"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/depth1-seed3.mdz",
+    "tracePath": "programs/q2/depth1-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 1,
+      "iterations": 10,
+      "cell": "depth1"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/depth1-seed4.mdz",
+    "tracePath": "programs/q2/depth1-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 1,
+      "iterations": 10,
+      "cell": "depth1"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/depth1-seed5.mdz",
+    "tracePath": "programs/q2/depth1-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 1,
+      "iterations": 10,
+      "cell": "depth1"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/depth3-seed1.mdz",
+    "tracePath": "programs/q2/depth3-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 3,
+      "iterations": 10,
+      "cell": "depth3"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/depth3-seed2.mdz",
+    "tracePath": "programs/q2/depth3-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 3,
+      "iterations": 10,
+      "cell": "depth3"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/depth3-seed3.mdz",
+    "tracePath": "programs/q2/depth3-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 3,
+      "iterations": 10,
+      "cell": "depth3"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/depth3-seed4.mdz",
+    "tracePath": "programs/q2/depth3-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 3,
+      "iterations": 10,
+      "cell": "depth3"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/depth3-seed5.mdz",
+    "tracePath": "programs/q2/depth3-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 3,
+      "iterations": 10,
+      "cell": "depth3"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/depth5-seed1.mdz",
+    "tracePath": "programs/q2/depth5-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 5,
+      "iterations": 10,
+      "cell": "depth5"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/depth5-seed2.mdz",
+    "tracePath": "programs/q2/depth5-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 5,
+      "iterations": 10,
+      "cell": "depth5"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/depth5-seed3.mdz",
+    "tracePath": "programs/q2/depth5-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 5,
+      "iterations": 10,
+      "cell": "depth5"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/depth5-seed4.mdz",
+    "tracePath": "programs/q2/depth5-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 5,
+      "iterations": 10,
+      "cell": "depth5"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/depth5-seed5.mdz",
+    "tracePath": "programs/q2/depth5-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 5,
+      "iterations": 10,
+      "cell": "depth5"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/iter5-seed1.mdz",
+    "tracePath": "programs/q2/iter5-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 5,
+      "cell": "iter5"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/iter5-seed2.mdz",
+    "tracePath": "programs/q2/iter5-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 5,
+      "cell": "iter5"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/iter5-seed3.mdz",
+    "tracePath": "programs/q2/iter5-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 5,
+      "cell": "iter5"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/iter5-seed4.mdz",
+    "tracePath": "programs/q2/iter5-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 5,
+      "cell": "iter5"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/iter5-seed5.mdz",
+    "tracePath": "programs/q2/iter5-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 5,
+      "cell": "iter5"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/iter25-seed1.mdz",
+    "tracePath": "programs/q2/iter25-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 25,
+      "cell": "iter25"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/iter25-seed2.mdz",
+    "tracePath": "programs/q2/iter25-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 25,
+      "cell": "iter25"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/iter25-seed3.mdz",
+    "tracePath": "programs/q2/iter25-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 25,
+      "cell": "iter25"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/iter25-seed4.mdz",
+    "tracePath": "programs/q2/iter25-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 25,
+      "cell": "iter25"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/iter25-seed5.mdz",
+    "tracePath": "programs/q2/iter25-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 25,
+      "cell": "iter25"
+    },
+    "seed": 5
+  },
+  {
+    "programPath": "programs/q2/iter100-seed1.mdz",
+    "tracePath": "programs/q2/iter100-seed1.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 100,
+      "cell": "iter100"
+    },
+    "seed": 1
+  },
+  {
+    "programPath": "programs/q2/iter100-seed2.mdz",
+    "tracePath": "programs/q2/iter100-seed2.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 100,
+      "cell": "iter100"
+    },
+    "seed": 2
+  },
+  {
+    "programPath": "programs/q2/iter100-seed3.mdz",
+    "tracePath": "programs/q2/iter100-seed3.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 100,
+      "cell": "iter100"
+    },
+    "seed": 3
+  },
+  {
+    "programPath": "programs/q2/iter100-seed4.mdz",
+    "tracePath": "programs/q2/iter100-seed4.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 100,
+      "cell": "iter100"
+    },
+    "seed": 4
+  },
+  {
+    "programPath": "programs/q2/iter100-seed5.mdz",
+    "tracePath": "programs/q2/iter100-seed5.trace.json",
+    "variant": {
+      "notation": "canonical",
+      "statements": 50,
+      "depth": 2,
+      "iterations": 100,
+      "cell": "iter100"
+    },
+    "seed": 5
+  }
+]

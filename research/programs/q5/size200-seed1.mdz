@@ -1,0 +1,155 @@
+---
+name: q5-size200-seed1
+---
+
+# q5-size200-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]
+  Say $v3
+END
+Say $v0
+$v4 = 1
+Say $v2
+Say $v2
+IF $v4 = 7 THEN
+  $v5 = $v0 * 3
+ELSE
+  $v6 = 8
+END
+CASE $v2
+WHEN "blue"
+  Say $v2
+  Say "draft"
+WHEN "draft"
+  $v7 = 5
+  Say $v0
+ELSE
+  Say $v2
+  $v8 = $v0 - 2
+END
+$v9 = $v0 * 5
+FOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]
+  Say $v10
+END
+IF $v0 < 7 THEN
+  Say $v0
+END
+FOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]
+  Say $v11
+END
+IF $v9 != 8 THEN
+  Say $v9
+ELSE
+  $v12 = $v4 + 5
+END
+$v13 = $v2 + "done"
+FOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]
+  Say $v14
+END
+IF $v1 = 4 THEN
+  $v15 = 5
+  $v16 = 3
+ELSE
+  Say $v0
+  $v17 = 6
+END
+Say $v4
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+$v19 = 5
+$v20 = $v2 + "next"
+IF $v18 != 2 THEN
+  $v21 = 2
+  Say "draft"
+ELSE
+  Say $v18
+END
+IF $v1 = 9 THEN
+  Say $v13
+  $v22 = $v9 - 2
+END
+$v23 = $v0 - 2
+IF $v23 < 0 THEN
+  Say $v0
+  $v24 = $v18 - 4
+END
+Say "draft"
+Say $v19
+$v25 = 10
+WHILE $v25 != 0
+  Say $v25
+  $v25 = $v25 - 1
+END
+IF $v19 < 8 THEN
+  Say $v0
+END
+$v26 = $v13 + "next"
+FOR $v27 IN [8, 7, 0, 1, 7, 0, 8, 9, 3, 9]
+  Say $v27
+END
+Say $v19
+$v28 = $v1 * 4
+IF $v28 != 6 THEN
+  Say $v1
+  Say $v0
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+WHEN "blue"
+  Say $v19
+  Say $v13
+ELSE
+  $v29 = 7
+  $v30 = $v28 - 5
+END
+$v31 = $v2 + "next"
+$v32 = $v2 + "next"
+Say $v18
+Say $v9
+IF $v19 = 7 THEN
+  Say $v23
+END
+$v33 = $v9 * 3
+Say "blue"
+FOR $v34 IN [6, 6, 5, 9, 3, 9, 0, 4, 2, 0]
+  Say $v34
+END
+$v35 = 3
+Say "done"
+FOR $v36 IN [5, 5, 3, 9, 6, 5, 4, 0, 4, 1]
+  Say $v36
+END
+$v37 = $v9 - 2
+IF $v0 != 1 THEN
+  $v38 = $v25 - 1
+ELSE
+  Say $v9
+END
+$v39 = 10
+WHILE $v39 != 0
+  Say $v39
+  $v39 = $v39 - 1
+END
+$v40 = $v26 + "red"
+CASE $v20
+WHEN "draft"
+  Say $v0
+  $v41 = $v28 * 5
+WHEN "red"
+  $v42 = $v9 * 1
+  $v43 = 8
+ELSE
+  Say $v39
+END

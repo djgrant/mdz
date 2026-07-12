@@ -1,0 +1,136 @@
+[
+  {
+    "step": 1,
+    "action": "assign",
+    "var": "a0",
+    "value": 5
+  },
+  {
+    "step": 2,
+    "action": "assign",
+    "var": "a1",
+    "value": 2
+  },
+  {
+    "step": 3,
+    "action": "assign",
+    "var": "a2",
+    "value": 2
+  },
+  {
+    "step": 4,
+    "action": "call",
+    "target": "~/skills/level1",
+    "args": {
+      "p": 5,
+      "q": 2,
+      "r": 2
+    }
+  },
+  {
+    "step": 5,
+    "action": "emit",
+    "value": "5"
+  },
+  {
+    "step": 6,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 7,
+    "action": "emit",
+    "value": "2"
+  },
+  {
+    "step": 8,
+    "action": "assign",
+    "var": "d_p",
+    "value": 7
+  },
+  {
+    "step": 9,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 10,
+    "action": "assign",
+    "var": "d_q",
+    "value": 6
+  },
+  {
+    "step": 11,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 12,
+    "action": "assign",
+    "var": "d_r",
+    "value": 1
+  },
+  {
+    "step": 13,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 14,
+    "action": "call",
+    "target": "~/skills/level2",
+    "args": {
+      "p": 7,
+      "q": 6,
+      "r": 1
+    }
+  },
+  {
+    "step": 15,
+    "action": "emit",
+    "value": "7"
+  },
+  {
+    "step": 16,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 17,
+    "action": "emit",
+    "value": "1"
+  },
+  {
+    "step": 18,
+    "action": "assign",
+    "var": "d_p",
+    "value": 10
+  },
+  {
+    "step": 19,
+    "action": "emit",
+    "value": "10"
+  },
+  {
+    "step": 20,
+    "action": "assign",
+    "var": "d_q",
+    "value": 6
+  },
+  {
+    "step": 21,
+    "action": "emit",
+    "value": "6"
+  },
+  {
+    "step": 22,
+    "action": "assign",
+    "var": "d_r",
+    "value": -1
+  },
+  {
+    "step": 23,
+    "action": "emit",
+    "value": "-1"
+  }
+]

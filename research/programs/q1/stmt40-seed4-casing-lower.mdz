@@ -1,0 +1,48 @@
+---
+name: q1-seed4
+---
+
+# q1-seed4
+
+$v0 = 9
+$v1 = $v0 + 2
+$v2 = "red"
+if $v1 != 8 then
+  if $v1 < 7 then
+    Say $v2
+  end
+end
+$v3 = $v2 + "next"
+Say "red"
+$v4 = 5
+while $v4 != 0
+  Say $v4
+  $v4 = $v4 - 1
+end
+Say $v2
+$v5 = $v0 - 3
+Say $v2
+case $v2
+when "red"
+  Say $v5
+when "ok"
+  Say "done"
+  $v6 = 4
+else
+  Say "draft"
+end
+$v7 = "red"
+Say $v3
+$v8 = 5
+while $v8 != 0
+  Say $v8
+  $v8 = $v8 - 1
+end
+case $v7
+when "draft"
+  Say $v3
+when "draft"
+  Say "blue"
+else
+  Say $v4
+end

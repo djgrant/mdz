@@ -1,0 +1,52 @@
+---
+name: q2-size50-seed1
+---
+
+# q2-size50-seed1
+
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]
+  Say $v3
+END
+Say $v0
+$v4 = 1
+Say $v2
+Say $v2
+IF $v4 = 7 THEN
+  $v5 = $v0 * 3
+ELSE
+  $v6 = 8
+END
+CASE $v2
+WHEN "blue"
+  Say $v2
+  Say "draft"
+WHEN "draft"
+  $v7 = 5
+  Say $v0
+ELSE
+  Say $v2
+  $v8 = $v0 - 2
+END
+$v9 = $v0 * 5
+FOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]
+  Say $v10
+END
+IF $v0 < 7 THEN
+  Say $v0
+END
+FOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]
+  Say $v11
+END
+IF $v9 != 8 THEN
+  Say $v9
+ELSE
+  $v12 = $v4 + 5
+END
