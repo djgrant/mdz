@@ -33,16 +33,7 @@ Real-world-shaped programs, executed agentically, with traces captured by the ha
 - **External state store.** A harness-side `state` tool (`get`/`set`) replacing the abandoned prose ledger. Two arms: internal execution vs tool-backed state, at sizes past the phase 1 ceiling. The `set` call log doubles as an assign trace, captured mechanically. Metrics: accuracy at size, and token cost of the round-trips.
 - **Real-world procedure vs goal (Q3 flagship).** Tasks where the model's default is plausible but non-compliant – a refund policy that differs from common-sense fairness, a review checklist that flags what models skip by default. Deterministic checkers on the decision; judge on process adherence.
 
-### Findings (July 2026 run – see phase-2/analysis/mdz-analysis-phase-2.html)
-
-- **Strict mode is real for types, not for grammar.** `PRAGMA STRICT` flipped type-fault halting from 0/10 to 10/10 on both models; syntax faults still halted almost never (1/10). Grammar enforcement must be a validator gate in the harness.
-- **Binding survives; mechanism selection fails.** Payload fidelity was 1.00 across all 24 agentic map-reduce runs, anchors included. Haiku misdelegated 2/12 runs into todo-list tools (payload intact, mechanism wrong); no run shortcut silently.
-- **Worker safety layers see verbatim instructions.** Haiku workers refused the passphrase-plus-canary lambda as suspected injection in 3/3 runs; sonnet workers executed it. Canaries must look boring.
-- **The tool-backed store is cheap but incomplete.** Emit accuracy 0.97–1.00 everywhere; assign-trace completeness ~0.25 (haiku) and 0.21–0.47 (sonnet). Instructed state logging sheds under load at both tiers; structural state (interpreter-as-tool) is the phase-3 candidate.
-- **Procedures beat goals on realistic tasks: 0.90 vs 0.35** compliance (judge adherence 1.95 vs 0.60). Goal prompts complied only where policy matched model defaults.
-
 ### Deferred
 
-- Local weights and KV-cache state injection – kept out of phase 2; the external store result says instructed logging is the bottleneck, so structural state comes first.
+- Local weights and KV-cache state injection – kept out of phase 2.
 - The prose ledger – ruled out by phase 1.
-- Interpreter-as-tool (harness owns the program counter, every step forced through a tool call) – the phase-3 candidate mechanism.
