@@ -1,29 +1,35 @@
 <section id="size">
 <span class="qref">Corpus-wide · answers Q2: where does size break execution?</span>
-<h2><span class="secno">5</span>The size ceiling, read off the corpus</h2>
+<h2><span class="secno">5</span>Length is not the binding constraint: the phase-1 slip did not recur</h2>
 <div class="verdict">The phase-1 slip at 200 statements did not recur: haiku's
 internal arm was perfect at both 100 and 200. Where phase-2 runs failed, the
-failure was mechanism-shaped, not size-shaped.</div>
+failure traced to a specific mechanism, not to program length.</div>
 
 <p>Phase 2 ran no dedicated size experiment. Every record instead carries size
-metadata, and the size question is read off the whole corpus. Two observations come
+metadata, and the size question was read off the whole corpus. Two observations came
 out of it.</p>
 
 <p>First, the phase-1 slip did not reproduce. Phase 1 measured step accuracy
 slipping from ~0.99 at 100 statements to 0.92 at 200. E3's internal arm re-ran that
-setup and haiku scored 1.0 on assigns and emits in all eight runs, at both sizes.
-The sample is small – two seeds, one model – so I read it as the phase-1 ceiling
-failing to reproduce rather than as a new, higher ceiling. Either the model family
+setup and haiku scored 1.0 on assigns and emits in all eight runs, at both sizes.</p>
+
+<p>The sample is small – two seeds, one model – so I read it as the phase-1 ceiling
+failing to reproduce rather than as a new, higher ceiling.</p>
+
+<p>Either the model family
 improved between the phases or the phase-1 slip was itself partly the self-report
 confound; the E3 sonnet anchor that condensed its reported assigns while emitting
 perfectly (§3) points at the second.</p>
 
 <p>Second, no phase-2 failure was a length failure. The runs that went wrong –
-misrouted spawns (§2), refused payloads (§2), unjournalled state (§3), the
-strict-mode false halt (§1) – all went wrong on programs well inside the executable
-range, for reasons that adding or removing statements would not touch. The brief's
-concern that tool-heavy statements would drag the ceiling down finds no support in
-this corpus: E2's agentic programs are statement-light and tool-heavy, and their
+SPAWN calls sent to the wrong tool (§2), payloads the workers refused as an attack
+(§2), assignments never written to the store (§3), and the one clean program
+wrongly halted under strict mode (§1) – all went wrong on programs well inside the executable
+range, for reasons that adding or removing statements would not touch.</p>
+
+<p>The brief's
+concern that tool-heavy statements would drag the ceiling down found no support in
+this corpus: E2's agentic programs were statement-light and tool-heavy, and their
 skeletons executed at ceiling.</p>
 
 <div class="note"><b>Implication.</b> The practical rule from phase 1 – procedures

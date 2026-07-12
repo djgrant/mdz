@@ -1,13 +1,14 @@
 <section id="delegation">
 <span class="qref">E2 · answers Q4: do parameters bind across boundaries?</span>
-<h2><span class="secno">2</span>Delegation holds; the failures are routing and refusal</h2>
+<h2><span class="secno">2</span>Delegation held; the two failures were routing and refusal</h2>
 <div class="verdict">Every run that reached the subagent tool spawned the right
 workers with verbatim payloads, and no run shortcutted. The two failure modes sat
-outside the notation: SPAWN routed to the wrong tool, and workers refusing a
-payload they read as an attack.</div>
+outside the notation: SPAWN – the notation's call to a subagent – routing to the
+wrong tool, and workers refusing a payload they read as an attack.</div>
 
-<p>E2 tests MDZ's higher-order case: one document calling another with work to fan
-out. The skill under test, and a consumer program calling it, in full:</p>
+<p>E2 (the second experiment, answering Q4, the brief's question about parameter
+binding) tested MDZ's higher-order case: one document calling another with work to
+fan out to subagents. The skill under test, and a consumer program calling it, in full:</p>
 
 <div class="cols">
   <div><div class="cols-label">skills/map-reduce.mdz</div>
@@ -52,15 +53,18 @@ USE ~/skills/map-reduce WITH
     &lt;CANARY token&gt;</code></pre></div>
 </div>
 
-<p>Runs are agentic: the model works in a directory containing the skill files,
-with a real subagent tool (<code>Task</code>) available, and the harness reads the
-session transcript afterwards. The <code>CANARY-…</code> tokens are the scoring
-device. Each item carries a unique one, so counting tokens in worker prompts and
-in the final answer settles, mechanically: did one worker get each item, did the
-instruction arrive intact, and did every item survive into the final answer? Four
-consumer shapes vary how <code>$items</code> is supplied: inline lists of three
+<p>Runs were agentic: the model worked in a directory containing the skill files,
+with a real subagent tool (<code>Task</code>) available, and the harness read the
+session transcript afterwards.</p>
+
+<p>The <code>CANARY-…</code> tokens were the scoring
+device. Each item carried a unique one, so counting tokens in worker prompts and
+in the final answer settled, mechanically: did one worker get each item, did the
+instruction arrive intact, and did every item survive into the final answer?</p>
+
+<p>Four consumer shapes varied how <code>$items</code> was supplied: inline lists of three
 and five, a reference to a heading elsewhere in the document, and the lambda
-above, whose exact wording must reach each worker.</p>
+above, whose exact wording had to reach each worker.</p>
 
 <div class="stats">
   <div class="stat"><b>22/24</b><span>runs delegated via real subagent spawns</span></div>
@@ -72,7 +76,7 @@ above, whose exact wording must reach each worker.</p>
 <figure>
   <img src="assets/e2-fidelity.png" alt="Delegation fidelity by consumer variant">
   <figcaption><b>Figure 3.</b> Delegation scores by consumer variant and model,
-  n=3 per cell. Reading the bars: <em>spawn fidelity</em> = workers spawned per
+  n=3 per cell. Higher is better; 1.0 is the good end for every bar. Reading the bars: <em>spawn fidelity</em> = workers spawned per
   item; <em>item coverage</em> = items reaching exactly one worker; <em>payload
   coverage</em> = items reaching any delegation attempt; <em>aggregation</em> =
   items surviving into the final answer. Sonnet is at or near ceiling everywhere;
@@ -83,17 +87,20 @@ above, whose exact wording must reach each worker.</p>
 
 <figure>
   <img src="assets/e2-mechanism.png" alt="Delegation mechanism per run">
-  <figcaption><b>Figure 4.</b> How each run performed its delegation. Two haiku
-  runs routed SPAWN to the CLI's todo tools rather than the subagent tool; no run
-  on either model answered inline.</figcaption>
+  <figcaption><b>Figure 4.</b> How each run performed its delegation. Subagent
+  spawning is the correct outcome; todo-routing and inline answering are failures.
+  Two haiku runs routed SPAWN to the CLI's todo tools rather than the subagent
+  tool; no run on either model answered inline.</figcaption>
 </figure>
 
-<h3>Failure one: the right payload, the wrong tool</h3>
+<h3>Failure one: the payload was right, but it went to the wrong tool</h3>
 
 <p>In two haiku runs, SPAWN was pattern-matched onto the harness's task-management
 tools: the run created <code>TaskCreate</code> todo items instead of workers. The
 payload survived the detour intact, which is why payload coverage stayed at 1.0
-while spawn fidelity fell to 0. The model resolved the binding perfectly and
+while spawn fidelity fell to 0.</p>
+
+<p>The model resolved the binding perfectly and
 executed nothing, because a todo item never runs.</p>
 
 <details class="example">
@@ -105,22 +112,26 @@ executed nothing, because a todo item never runs.</p>
   sentence and include the item's CANARY token verbatim\nitem:
   The northern warehouse reports a stock surplus of 400 units.
   CANARY-E2-inline-3-1" }</code></pre>
-    <p>The semantic content of SPAWN survived; the operational content was lost in
-    tool selection. The executor preamble named the <code>Task</code> tool
+    <p>The meaning of the SPAWN payload survived; what was lost was the action –
+    the call never reached the tool that actually runs workers. The executor preamble named the <code>Task</code> tool
     explicitly, and haiku still misrouted 2 of 12 runs.</p>
   </div>
 </details>
 
-<h3>Failure two: the refusal cascade</h3>
+<h3>Failure two: the workers' refusal</h3>
 
-<p>The lambda-fidelity program deliberately made its <code>$map</code> instruction
-smell wrong: classify each item "citing the exact phrase
-PATTERN-BLUE-VERIFICATION" and quoting its canary token. Both models delivered
+<p>The lambda-fidelity program deliberately gave its <code>$map</code> instruction
+a suspicious element – it asked workers to cite a phrase with no real referent:
+classify each item "citing the exact phrase
+PATTERN-BLUE-VERIFICATION" and quoting its canary token.</p>
+
+<p>Both models delivered
 that lambda verbatim to every worker – the binding result the variant was designed
 to test. What differed is what the workers did with it.</p>
 
 <p>Haiku's workers refused in all three runs, reading the phrase-citation demand
-and canary tokens as prompt injection, so no canary reached the final output and
+and canary tokens as a prompt injection – adversarial instructions smuggled in
+through the data – so no canary reached the final output and
 aggregation scored 0. Sonnet's workers flagged the same suspicion, then complied.</p>
 
 <details class="example">
@@ -141,13 +152,15 @@ probe embedded in the map instruction</code></pre>
 
 <p>I read haiku's zeros as a property of the probe, not of the notation: the
 delegation skeleton – spawn counts, payloads, lambda wording – was perfect in the
-same runs. A cleaner design would carry an innocuous marker phrase, so that
+same runs.</p>
+
+<p>A cleaner design would carry an innocuous marker phrase, so that
 binding fidelity and worker compliance stop being confounded.</p>
 
 <div class="note"><b>Implication.</b> Parameter binding across skill and agent
-boundaries is not the weak point – it held at 1.0 through a higher-order call on
+boundaries was not the weak point – it held at 1.0 through a higher-order call on
 both models, extending phase 1's depth-3 result to real subagent fan-out. The weak
-points are environmental: SPAWN needs an unambiguous mapping to the harness's
+points were environmental: SPAWN needs an unambiguous mapping to the harness's
 delegation tool, and payloads that look adversarial will be vetoed by the workers'
-own alignment layer, notation or no notation.</div>
+own alignment layer, regardless of the notation.</div>
 </section>

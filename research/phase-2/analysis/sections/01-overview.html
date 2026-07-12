@@ -2,30 +2,32 @@
 <h2>Overview &amp; method</h2>
 
 <p>MDZ is a superset of Markdown that adds control flow, variables, and calls to
-other documents to prose prompts, with an LLM as the interpreter. A procedure is a
-different contract from a goal: the deliverable is following the steps exactly.
-Phase 1 measured that contract on contrived programs and self-reported traces. Both
-caps are lifted here.</p>
+other documents to prose prompts, with an LLM as the interpreter. Phase 1 measured that contract on contrived programs and self-reported traces.</p>
 
-<p>Programs now take real procedure shapes – runbooks, checklists, policies – with
-deterministic invariants threaded through the control flow. Fuzzy work happens at
-the leaves; the skeleton stays exactly scorable. And the harness observes the trace
-through three channels, none self-reported:</p>
+<p>Phase-2 programs took real procedure shapes – runbooks, checklists, policies – with
+deterministic invariants threaded through the control flow. The open-ended prose
+work sat in the leaf steps, while the control-flow skeleton around it could still be
+scored exactly against a reference. And the harness – the test framework that ran
+the programs and recorded the traces – observed each trace through three channels,
+none self-reported:</p>
 
 <div class="steps">
   <div class="step"><b>Session transcripts</b> Agentic runs go through
   <code>claude&nbsp;-p</code>; the session transcript is read back from disk.
-  <code>Task</code> tool calls are SPAWN events, carrying the full WITH payload.</div>
+  <code>Task</code> tool calls are SPAWN events (SPAWN is the notation's call to a
+  subagent), carrying the full WITH payload (the named parameters passed to
+  it).</div>
   <div class="step"><b>MCP tool log</b> A mock <code>state</code> server
   (<code>get</code>/<code>set</code>) appends every call to a log file. The
   <code>set</code> log doubles as a mechanically captured assignment trace.</div>
   <div class="step"><b>Canary tokens</b> Each item in a program's data flow carries a
-  unique token. Token presence in worker prompts and final output makes fan-out and
-  aggregation deterministic to score, with no judge.</div>
+  unique token. Token presence in worker prompts and final output makes fan-out
+  (distributing items to workers) and aggregation (combining their outputs back)
+  deterministic to score, with no judge.</div>
 </div>
 
-<p>Here is the raw material every experiment is built from. A generated MDZ
-program, and the reference trace a deterministic interpreter computes for it –
+<p>Here is the raw material every experiment was built from. A generated MDZ
+program, and the reference trace a deterministic interpreter computed for it –
 every assignment and every observable output, in order:</p>
 
 <div class="cols">
@@ -56,21 +58,24 @@ END</code></pre></div>
 <p>Because the program parses, it has exactly one correct execution. The headline
 metric wherever traces are compared is unchanged from phase 1: <strong>step
 accuracy</strong>, the fraction of the reference trace the model reproduced in
-order (a model that gets 95 of 100 steps right, in order, scores 0.95). Fuzzy
-leaves – the prose work a step asks for – are scored by an LLM judge (Claude
-Sonnet, 40 calls, order counterbalanced) that sees the procedure and the output
-together; §4 shows the exact question the judge is asked.</p>
+order (a model that gets 95 of 100 steps right, in order, scores 0.95).</p>
 
-<p>Cheap models carry most cells – Claude Haiku and GPT&#8209;5.4&nbsp;mini, with
-Sonnet at anchor cells – because a procedure that only runs on a frontier model is
-doing little work.</p>
+<p>Fuzzy
+leaves – the prose work a step asks for – were scored by an LLM judge (Claude
+Sonnet, 40 calls, order counterbalanced) that saw the procedure and the output
+together; §4 shows the exact question the judge was asked.</p>
 
-<div class="note"><b>The throughline.</b> One mechanism runs through all four
-results. Notation binds where compliance is locally checkable at the moment of
-generation – a type annotation contradicting its value, a spawn payload, a decision
-line. It slips where compliance demands a running discipline the model must hold
-against its own competence: halting on syntax it has already silently fixed, or
-journalling state it can track perfectly well in context. That boundary, not
-program size, is where enforcement has to move from the notation into the
-harness.</div>
+<p>Cheap models carried most cells – Claude Haiku and GPT&#8209;5.4&nbsp;mini, with
+Sonnet running the anchor cells: reference runs on a stronger model, used to
+sanity-check the cheap-model results. The practical target is procedures that run
+on cheap models, so that is where the evidence should come from.</p>
+
+<div class="note"><p><b>The question the four experiments shared.</b> Each one probed
+a different point on the same axis: when did models follow the notation reliably,
+and when did they drop it? The working hypothesis going in: the notation should be
+followed where compliance can be checked locally at the moment of generation, and
+dropped where it demands a discipline maintained across the whole execution.</p>
+<p>The four sections that follow tested
+where that boundary actually fell, and whether it – rather than program size – was
+what forced enforcement out of the notation and into the harness.</p>
 </section>
