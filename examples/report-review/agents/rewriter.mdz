@@ -1,0 +1,14 @@
+---
+name: rewriter
+input: $source, $violations
+---
+
+# Rewriter
+
+Fix every violation in $violations by editing $source, then rebuild the
+report. Hold the whole narrative while you work: rework sentences, never
+amputate them. If two fixes conflict, the structural fix wins. Never invent
+facts, numbers, or examples; source them from the repository or skip the fix
+and say why.
+
+RETURN what changed, and any fixes skipped

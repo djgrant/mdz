@@ -1,0 +1,60 @@
+---
+name: report-review
+input: $report, $source
+---
+
+$sections = $report split at h2 boundaries
+$skeleton = only the headings, figure captions, and each paragraph's first sentence
+$pass = 1
+
+WHILE $pass != 4
+  USE ./skills/map-reduce WITH
+    items: $sections
+    map: #critique
+    reduce: one flat list of the violations, in section order
+
+  AWAIT SPAWN ./agents/critic
+    WITH
+      text: $skeleton
+      checklist: #skeleton-heuristics
+
+  $violations = both critiques combined
+
+  IF $violations = [] THEN
+    RETURN the clean report
+  END
+
+  SPAWN ./agents/rewriter
+    WITH
+      source: $source
+      violations: $violations
+
+  $report = the rebuilt report
+  $pass = $pass + 1
+END
+
+RETURN a list of the remdiations
+
+## Critique
+
+USE ./agents/critic WITH
+  text: $item
+  checklist: #section-heuristics
+
+RETURN the violations, or [] if clean
+
+## Section heuristics
+
+- lead with the takeaway: the first sentence is the one the reader keeps
+- try to keep paragraphs under 50 words – split rather than compact
+- no fact relied on before the reader has been told it
+- no filler: if deleting a sentence loses nothing, it goes
+- no jargon
+- lean on examples – code, tables, graphs
+- after every third sentence ask: has the reader lost interest yet?
+
+## Skeleton heuristics
+
+- the headings alone must tell the story
+- a reader scrolling through the page will grasp the findings from headings and figures alone
+- every caption says what is measured and which direction is good
