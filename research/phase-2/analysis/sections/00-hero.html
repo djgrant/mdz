@@ -1,0 +1,63 @@
+<div class="hero">
+  <span class="kicker">MDZ research · phase 2</span>
+  <h1>Accountable execution</h1>
+  <p class="sub">Phase 1 showed that models can execute MDZ programs. Phase 2 asks
+  whether that execution can be held to account: real-world-shaped procedures, run
+  agentically, with every trace captured by the harness rather than reported by the
+  model.</p>
+  <p class="meta">July 2026 · Daniel Grant ·
+    <a href="https://github.com/djgrant/mdz/tree/main/research">djgrant/mdz/research</a> ·
+    <a href="https://github.com/djgrant/mdz/blob/main/research/RESEARCH.md">research brief</a></p>
+
+  <div class="counters">
+    <div class="counter"><b>147</b><span>scored model runs</span></div>
+    <div class="counter"><b>4</b><span>experiments</span></div>
+    <div class="counter"><b>3</b><span>models, + 1 judge</span></div>
+    <div class="counter"><b>40</b><span>judge calls</span></div>
+    <div class="counter"><b>$6.71</b><span>recorded API spend</span></div>
+  </div>
+</div>
+
+<div class="cards">
+  <a class="fcard" href="#strict">
+    <span class="tag">E1 · strict mode</span>
+    <span class="num">10/10 <span style="font-size:0.9rem">type halts</span></span>
+    <p>A pragma flips type violations from silent coercion to a clean halt. Syntax
+    faults still execute 9/10 – the model repairs them in the act of reading.</p>
+  </a>
+  <a class="fcard" href="#delegation">
+    <span class="tag">E2 · map-reduce skill</span>
+    <span class="num">1.0 <span style="font-size:0.9rem">payload fidelity</span></span>
+    <p>Every delegation attempt carried its items and lambda verbatim. The failures
+    were tool routing and worker refusal, both outside the notation.</p>
+  </a>
+  <a class="fcard" href="#store">
+    <span class="tag">E3 · state store</span>
+    <span class="num neg">0.25 <span style="font-size:0.9rem">of assigns journalled</span></span>
+    <p>Models executed correctly and ignored the journalling discipline, treating
+    the store as documentation instead of memory. Negative result.</p>
+  </a>
+  <a class="fcard" href="#procedure">
+    <span class="tag">E4 · procedure vs goal</span>
+    <span class="num">18/20 <span style="font-size:0.9rem">vs 7/20 compliant</span></span>
+    <p>Where policy contradicts the helpful default, the MDZ procedure holds and the
+    goal prompt folds. Both procedure failures were a checker artefact.</p>
+  </a>
+</div>
+
+<div class="layout">
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#overview">Overview &amp; method</a></li>
+    <li><a href="#strict">1 · Strict mode</a></li>
+    <li><a href="#delegation">2 · Delegation</a></li>
+    <li><a href="#store">3 · State store</a></li>
+    <li><a href="#procedure">4 · Procedure vs goal</a></li>
+    <li><a href="#size">5 · The size ceiling</a></li>
+    <li><a href="#limitations">Limitations</a></li>
+    <li><a href="#verdicts">Verdicts</a></li>
+    <li><a href="#explore">Explore the runs</a></li>
+  </ol>
+</nav>
+<article>

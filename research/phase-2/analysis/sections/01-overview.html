@@ -1,0 +1,47 @@
+<section id="overview">
+<h2>Overview &amp; method</h2>
+
+<p>MDZ is a superset of Markdown that adds control flow, variables, and calls to
+other documents to prose prompts, with an LLM as the interpreter. A procedure is a
+different contract from a goal: the deliverable is following the steps exactly.
+Phase 1 measured that contract on contrived programs and self-reported traces. Both
+caps are lifted here.</p>
+
+<p>Programs now take real procedure shapes – runbooks, checklists, policies – with
+deterministic invariants threaded through the control flow. Fuzzy work happens at
+the leaves; the skeleton stays exactly scorable. And the harness observes the trace
+through three channels, none self-reported:</p>
+
+<div class="steps">
+  <div class="step"><b>Session transcripts</b> Agentic runs go through
+  <code>claude&nbsp;-p</code>; the session transcript is read back from disk.
+  <code>Task</code> tool calls are SPAWN events, carrying the full WITH payload.</div>
+  <div class="step"><b>MCP tool log</b> A mock <code>state</code> server
+  (<code>get</code>/<code>set</code>) appends every call to a log file. The
+  <code>set</code> log doubles as a mechanically captured assignment trace.</div>
+  <div class="step"><b>Canary tokens</b> Each item in a program's data flow carries a
+  unique token. Token presence in worker prompts and final output makes fan-out and
+  aggregation deterministic to score, with no judge.</div>
+</div>
+
+<p>The headline metric where traces are compared is unchanged from phase 1:
+<strong>step accuracy</strong>, the fraction of the reference trace the model
+reproduced in order, computed as the longest common subsequence of the two traces.
+A deterministic interpreter supplies the reference, so each program has exactly one
+correct execution. Fuzzy leaves are scored by an LLM judge (Claude Sonnet, 40
+calls, order counterbalanced) that sees the procedure and the output together and
+scores recognisable compliance 0–2.</p>
+
+<p>Cheap models carry most cells – Claude Haiku and GPT&#8209;5.4&nbsp;mini, with
+Sonnet at anchor cells – because a procedure that only runs on a frontier model is
+doing little work.</p>
+
+<div class="note"><b>The throughline.</b> One mechanism runs through all four
+results. Notation binds where compliance is locally checkable at the moment of
+generation – a type annotation contradicting its value, a spawn payload, a decision
+line. It slips where compliance demands a running discipline the model must hold
+against its own competence: halting on syntax it has already silently fixed, or
+journalling state it can track perfectly well in context. That boundary, not
+program size, is where enforcement has to move from the notation into the
+harness.</div>
+</section>

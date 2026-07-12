@@ -1,30 +1,90 @@
-<h2>4. Procedures beat goals where policy contradicts helpfulness</h2>
-<p class="verdict">On ten tasks whose correct outcome differs from the helpful default, the MDZ procedure arm passed the decision checker 18/20; the goal arm passed 7/20. Both procedure-arm failures were the checker punishing a faithful echo of the procedure's own wording.</p>
+<section id="procedure">
+<span class="qref">E4 · answers Q3: do procedures steer, or relabel?</span>
+<h2><span class="secno">4</span>Procedures beat goals where policy contradicts helpfulness</h2>
+<div class="verdict">On ten tasks whose correct outcome differs from the helpful
+default, the MDZ procedure arm passed the decision checker 18/20; the goal arm
+passed 7/20. Both procedure-arm failures were the checker punishing a faithful echo
+of the procedure's own wording.</div>
 
-<p>Phase 1's steering result used contrived constraints – one-syllable words, ROT13. E4 is the real-world version, and the flagship for the brief's third question: does a procedure change what the model produces, or relabel what it would have done anyway? Ten handwritten tasks each carry a policy whose correct outcome differs from what a helpful model does unprompted: refund edge cases, escalation ordering, retention rules, review checklists. Arm A gets the procedure as MDZ; arm B gets the same input and a one-line goal. A deterministic checker scores the decision line and forbidden content; the sonnet judge scores process adherence 0–2 against the written procedure.</p>
+<p>Phase 1's steering result used contrived constraints – one-syllable words,
+ROT13. E4 is the real-world version. Ten handwritten tasks each carry a policy
+whose correct outcome differs from what a helpful model does unprompted: refund
+edge cases, escalation ordering, retention rules, review checklists. Arm A gets the
+procedure as MDZ; arm B gets the same input and a one-line goal. A deterministic
+checker scores the decision line and forbidden content; the sonnet judge scores
+process adherence 0–2 against the written procedure.</p>
+
+<div class="stats">
+  <div class="stat"><b>18/20</b><span>procedure arm, checker pass</span></div>
+  <div class="stat"><b class="neg">7/20</b><span>goal arm, checker pass</span></div>
+  <div class="stat"><b>1.95 / 0.6</b><span>judge adherence, procedure vs goal (0–2)</span></div>
+  <div class="stat"><b>20/20</b><span>procedure arm on decisions alone</span></div>
+</div>
 
 <figure>
   <img src="assets/e4-compliance.png" alt="Compliance and adherence by arm">
-  <figcaption>Figure 7. Checker pass rate and judge adherence by arm. The procedure arm scores 0.9 on both models; the goal arm 0.3–0.4. Adherence separates further: 1.95 vs 0.6 on the 0–2 scale.</figcaption>
+  <figcaption><b>Figure 7.</b> Checker pass rate and judge adherence by arm. The
+  procedure arm scores 0.9 on both models; the goal arm 0.3–0.4. Adherence
+  separates further: 1.95 vs 0.6 on the 0–2 scale.</figcaption>
 </figure>
 
-<p>The per-task picture shows <em>where</em> the goal arm passes, and it is not noise.</p>
+<p>The per-task picture shows <em>where</em> the goal arm passes, and it is not
+noise. The goal arm complied on exactly the tasks where the policy matches what a
+fair-minded assistant would do anyway – password resets, a change freeze. Wherever
+the policy demands something that feels ungenerous or pedantic, it converged on its
+defaults, 0/2 or worse on both models.</p>
 
 <figure>
   <img src="assets/e4-tasks.png" alt="Per-task compliance, goal vs procedure">
-  <figcaption>Figure 8. Decision compliance by task, models pooled. The goal arm passes only where policy and common sense agree; hiring-screen's inverted pair is a checker artefact, unpacked below.</figcaption>
+  <figcaption><b>Figure 8.</b> Decision compliance by task, models pooled. The goal
+  arm passes only where policy and common sense agree; hiring-screen's inverted
+  pair is a checker artefact, unpacked below.</figcaption>
 </figure>
 
-<p>The goal arm complied on exactly the tasks where the policy matches what a fair-minded assistant would do anyway – password resets, a change freeze. Wherever the policy demands something that feels ungenerous or pedantic, it converged on its defaults, 0/2 or worse on both models. The refund task is the cleanest specimen. The customer renewed 16 days ago, has been in hospital since, and has not logged in once; the policy denies refunds past 14 days and forbids goodwill gestures. Goal-arm haiku did the humane thing:</p>
+<h3>The cleanest specimen: refund-edge</h3>
 
-<pre><code>I've reviewed your account and I'd be happy to help. You've been a valued
-customer for 4 years, and given that you haven't been able to use the service
-during this difficult time, a refund is absolutely the right call here.
+<p>The customer renewed 16 days ago, has been in hospital since, and has not logged
+in once. The policy denies refunds past 14 days and forbids goodwill gestures.
+Goal-arm haiku did the humane thing:</p>
+
+<details class="example" open>
+  <summary>Goal-arm output: a good support reply, and a policy violation</summary>
+  <div class="body">
+<pre><code>I've reviewed your account and I'd be happy to help. You've been
+a valued customer for 4 years, and given that you haven't been
+able to use the service during this difficult time, a refund is
+absolutely the right call here.
 
 I'm processing a full refund for your renewal now.</code></pre>
+    <p>Both models, in the goal arm. With the identical account data wrapped in the
+    MDZ procedure, both models denied the refund politely and offered nothing.</p>
+  </div>
+</details>
 
-<p>That is a good support reply and a policy violation. Both models, in the goal arm. With the identical account data wrapped in the MDZ procedure, both models denied the refund politely and offered nothing. The procedure is not relabelling the default; it is overriding it, on precisely the tasks engineered so the two diverge. The judge agrees at the process level: procedure-arm outputs scored a mean adherence of 1.95 out of 2, goal-arm outputs 0.6. One goal-arm run even passed the decision checker with an adherence score of 0 – the right expense-approval outcome reached by a route the procedure does not sanction, which is the difference between the two measures in miniature.</p>
+<p>The procedure is not relabelling the default; it is overriding it, on precisely
+the tasks engineered so the two diverge. The judge agrees at the process level:
+procedure-arm outputs scored a mean adherence of 1.95 out of 2, goal-arm outputs
+0.6. One goal-arm run even passed the decision checker with an adherence score of 0
+– the right expense-approval outcome reached by a route the procedure does not
+sanction, which is the difference between the two measures in miniature.</p>
 
-<p>The procedure arm's two failures deserve their own paragraph, because they are the report's best argument for auditing checkers alongside models. The hiring-screen procedure contains the note "the candidate must not be shortlisted pending later proof"; the checker forbids any output matching <code>/shortlist/i</code>. Both models produced the correct decision – not eligible – and faithfully relayed the procedure's own warning, echoing the word "shortlisted". The checker read the echo as a violation. The judge, seeing procedure and output together, scored both runs 2/2. On decisions alone the procedure arm went 20/20; the 18/20 headline is the checker punishing fidelity. The fix is a checker that exempts restatements of the policy itself – the false-negative class that verifier audits exist to catch.</p>
+<h3>The two failures are the checker's, not the models'</h3>
 
-<div class="note"><b>Implication.</b> Answering the brief's question 3: a faithfully executed procedure produces outputs the goal-prompted baseline does not converge on – steering, not decoration – and the effect concentrates exactly where policy and model defaults disagree, which is where compliance matters. The corollary cuts the other way: where the checker disagreed with the procedure, the models sided with the procedure. Whatever text carries the ground truth had better deserve it.</div>
+<p>The hiring-screen procedure contains the note "the candidate must not be
+shortlisted pending later proof"; the checker forbids any output matching
+<code>/shortlist/i</code>. Both models produced the correct decision – not eligible
+– and faithfully relayed the procedure's own warning, echoing the word
+"shortlisted". The checker read the echo as a violation. The judge, seeing
+procedure and output together, scored both runs 2/2.</p>
+
+<p>On decisions alone the procedure arm went 20/20; the 18/20 headline is the
+checker punishing fidelity. The fix is a checker that exempts restatements of the
+policy itself – the false-negative class that verifier audits exist to catch.</p>
+
+<div class="note"><b>Implication.</b> A faithfully executed procedure produces
+outputs the goal-prompted baseline does not converge on – steering, not decoration
+– and the effect concentrates exactly where policy and model defaults disagree,
+which is where compliance matters. The corollary cuts the other way: where the
+checker disagreed with the procedure, the models sided with the procedure. Whatever
+text carries the ground truth had better deserve it.</div>
+</section>

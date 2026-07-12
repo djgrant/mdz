@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Assemble mdz-analysis-phase-2.html from template.html + sections/*.html.
 
-Prose lives in sections/ as one fragment per h2 section, ordered by filename
-prefix. Figures reference assets/*.png and are inlined as base64 so the
-report is a single self-contained file. Edit a fragment, re-run this script.
+Prose lives in sections/ as one fragment per section, ordered by filename prefix.
+Figures reference assets/*.png and are inlined as base64, and the runs explorer's
+data is injected from the e*-scored.json files, so the report is a single
+self-contained file. Edit a fragment, re-run this script.
 """
 import base64
+import json
 import pathlib
 import re
 
@@ -22,6 +24,14 @@ def inline_asset(m: re.Match) -> str:
 
 
 body = re.sub(r'src="(assets/[^"]+\.png)"', inline_asset, body)
+
+runs = {
+    exp: json.loads((HERE / f"{exp}-scored.json").read_text())
+    for exp in ("e1", "e2", "e3", "e4")
+    if (HERE / f"{exp}-scored.json").exists()
+}
+body = body.replace("{{RUNS_JSON}}", json.dumps(runs))
+
 html = (HERE / "template.html").read_text().replace("{{BODY}}", body)
 
 out = HERE / "mdz-analysis-phase-2.html"

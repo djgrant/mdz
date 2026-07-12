@@ -17,6 +17,20 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+plt.rcParams.update({
+    "axes.spines.top": False, "axes.spines.right": False,
+    "axes.edgecolor": "#c9d2d9", "axes.linewidth": 0.8,
+    "axes.grid": True, "axes.axisbelow": True,
+    "grid.color": "#e7edf1", "grid.linewidth": 0.7,
+    "axes.grid.axis": "y",
+    "font.family": "Helvetica Neue", "font.size": 10,
+    "axes.titlesize": 11, "axes.titleweight": "semibold",
+    "figure.titlesize": 12, "figure.titleweight": "semibold",
+    "legend.frameon": False,
+    "xtick.color": "#5c6b78", "ytick.color": "#5c6b78",
+    "axes.labelcolor": "#41505c", "text.color": "#16212b",
+})
+
 HERE = pathlib.Path(__file__).parent
 PHASE = HERE.parent
 RESULTS = PHASE / "results"
@@ -321,10 +335,12 @@ def chart_e2_mechanism(df: pd.DataFrame):
                 .reindex(columns=order).fillna(0))
     fig, ax = plt.subplots(figsize=(6, 3.2))
     counts.plot.barh(ax=ax, stacked=True, color=[C_A, C_B, C_C])
+    ax.grid(axis="x")
+    ax.grid(False, axis="y")
     ax.set_title("Delegation mechanism per run (n=12 per model)")
     ax.set_xlabel("runs")
     ax.set_ylabel("")
-    ax.legend(title="", loc="lower right")
+    ax.legend(title="", loc="upper left", bbox_to_anchor=(1.02, 1.0))
     fig.tight_layout()
     fig.savefig(ASSETS / "e2-mechanism.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
@@ -402,6 +418,8 @@ def chart_e3_journal(df: pd.DataFrame):
     ax.barh(y - 0.2, sub.n_sets, height=0.38, color=C_B, label="set calls made")
     ax.set_yticks(y, labels, fontsize=8)
     ax.invert_yaxis()
+    ax.grid(axis="x")
+    ax.grid(False, axis="y")
     ax.set_xlabel("count")
     ax.set_title("Store arm: set calls made vs assignments required, per run")
     ax.legend(loc="lower right")

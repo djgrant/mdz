@@ -1,0 +1,25 @@
+<section id="explore">
+<h2>Explore the runs</h2>
+
+<p>Every number above resolves to one of the 147 scored runs below. Run ids map
+one-to-one to records in <code>results/*.jsonl</code>, and agentic runs to full
+session transcripts in <code>results/transcripts/</code>.</p>
+
+<div class="explorer">
+  <div class="controls">
+    <button data-exp="e1" class="on">E1 · strict mode</button>
+    <button data-exp="e2">E2 · map-reduce</button>
+    <button data-exp="e3">E3 · state store</button>
+    <button data-exp="e4">E4 · procedure vs goal</button>
+  </div>
+  <div class="twrap" id="runs-table"></div>
+  <p class="hint">Click a column header to sort. Accuracies are step accuracy
+  against the reference trace; a dot marks a metric that does not apply to the
+  run.</p>
+</div>
+
+<script type="application/json" id="runs-data">{{RUNS_JSON}}</script>
+</section>
+
+</article>
+</div>
