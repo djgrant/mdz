@@ -1,0 +1,24 @@
+<h2>3. The state store is treated as documentation, not memory</h2>
+<p class="verdict">Models executed the programs correctly and ignored the journalling discipline: the store arm recorded a quarter of the assignments it was instructed to record, while final outputs stayed near-perfect. A negative result, but a different negative than phase 1's ledger.</p>
+
+<p>Phase 1 ruled out a model-maintained prose ledger: it made accuracy worse at twice the cost. E3 replaces it with a harness-side <code>state</code> tool – <code>set</code> after every assignment, <code>get</code> before every read – on programs of 100 and 200 statements, against an internal arm re-running the phase-1 single-turn setup for comparability. The design goal was accountability as much as capacity: the <code>set</code> log is a mechanically captured assignment trace, immune to the self-report confound.</p>
+
+<p>Two accuracies matter. <strong>Assign accuracy</strong> scores the recorded assignments (the <code>set</code> log in the store arm, the self-reported trace in the internal arm) against the reference interpreter's assignment sequence. <strong>Emit accuracy</strong> scores the program's observable outputs from the final answer.</p>
+
+<figure>
+  <img src="assets/e3-store.png" alt="Internal vs store arm accuracy and tokens">
+  <figcaption>Figure 5. Haiku, internal vs store arm. Emit accuracy is near ceiling in both arms; assign accuracy collapses in the store arm because the assignments were never journalled, not because they were computed wrongly.</figcaption>
+</figure>
+
+<p>Haiku's internal arm was perfect: assign and emit accuracy 1.0 in all eight runs, at both sizes. The store arm's emit accuracy stayed at 0.97–1.0 – the model executes the program fine – while its assign accuracy averaged 0.25. The gap between those two numbers is the finding. The model is not failing to compute the state; it is declining to journal it.</p>
+
+<figure>
+  <img src="assets/e3-journal.png" alt="Set calls made vs assignments required per run">
+  <figcaption>Figure 6. Store arm, per run: <code>set</code> calls made against assignments the reference trace requires. Every run under-journals; one made no tool calls at all and still emitted a near-perfect output.</figcaption>
+</figure>
+
+<p>The per-run logs show how. A run needing 35 assignments made 15 <code>set</code> calls; one needing 57 made 27; one made 3; one made none at all and still produced a correct output stream. The pattern in the logs is one <code>set</code> per variable rather than one per assignment – loop-iteration updates, the bulk of the reference trace, are collapsed into a single write. <code>get</code> calls barely occur (0–4 per run against dozens of reads). The instruction "set after every assignment, get before every read" loses to the model's own working memory: at these sizes its context already tracks state reliably, so the tool round-trip buys it nothing, and the discipline decays into occasional note-taking. The store arm even spent <em>fewer</em> completion tokens at 200 statements (10,177 vs 19,395 for internal) – under-journalling is cheaper than the trace it was meant to replace.</p>
+
+<p>The sonnet anchors sharpen the diagnosis rather than softening it. Sonnet's store runs under-journalled the same way (0.47 and 0.21). And one sonnet <em>internal</em> run scored 0.47 on assigns while its emits were perfect – the phase-1 dropped-assign confound recurring on cue, a correct execution condensed in the self-report. That confound is exactly what the store was meant to eliminate; the store eliminates it only if the model actually journals.</p>
+
+<div class="note"><b>Implication.</b> Voluntary journalling fails for the same reason strict mode fails on syntax: it asks the model to maintain a discipline against its own competence, and competence wins. Two designs follow. Either the ceiling question stops needing the store – the internal arm was perfect at 200 statements (§5) – or state capture moves from instructed to structural: a harness that intercepts assignment-shaped steps, or an executor whose only way to produce a value is through the tool. Instructed compliance is the wrong foundation for accountability.</div>

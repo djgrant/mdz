@@ -1,0 +1,32 @@
+<h2>1. Strict mode is a type gate, not a parser</h2>
+<p class="verdict">PRAGMA STRICT flips type violations from silent coercion to a clean halt, 10/10 on both models. It does nothing for syntax faults, which the model repairs before it can notice them.</p>
+
+<p>Phase 1 found that models never halt on malformed programs – they repair or improvise. E1 asks whether a directive can flip that behaviour: 40-statement programs in three integrity conditions (clean, one mangled construct, one type annotation contradicted by its value), run in default mode and with <code>PRAGMA STRICT</code> as the first statement. Strict semantics take two lines in the executor preamble: validate before executing; on any syntax or type violation, emit a single halt step and stop.</p>
+
+<p>Four metrics, defined here. <strong>Halt rate</strong> is the share of faulted runs whose trace is a single well-formed halt step. <strong>Repair rate</strong> is the share of faulted runs that execute through the fault, phase-1 style. <strong>False-halt rate</strong> is the share of clean runs that halt. The <strong>strictness tax</strong> is the step-accuracy delta between strict and default on clean programs.</p>
+
+<p>Default mode replicated phase 1 exactly: 0/21 faulted runs halted, repair rate 1.0. Strict mode's aggregate halt rate of 0.55 hides the real result, which splits cleanly by fault class.</p>
+
+<figure>
+  <img src="assets/e1-halt.png" alt="Halt rate on faulted programs by fault class">
+  <figcaption>Figure 1. Halt rate on faulted programs under strict mode, by fault class. Default mode (grey) never halts on either class. Strict mode (green) halts on every type fault and almost no syntax faults.</figcaption>
+</figure>
+
+<p>Every type-faulted run halted under strict mode, on both models, and every halt named the offending annotation. Syntax faults halted once in ten runs – a single GPT&#8209;5.4&nbsp;mini run that correctly reported <code>FOR $v3 [3, 2, 5, 2, 9]</code> as missing its <code>IN</code>. Haiku halted on none. The other nine runs executed the whole program correctly, straight through the malformation they had been told to reject.</p>
+
+<p>The mechanism is visible in what the two fault classes demand. A type fault (<code>$x: String = 6</code>) is a local contradiction: two tokens on one line disagree, and checking them is a recognition task. A syntax fault demands that the model notice the <em>absence</em> of a keyword – but an LLM does not parse, it reads, and a FOR header missing its IN still reads fine. The repair happens inside comprehension, before any validation step the pragma prescribes can run. The model cannot halt on an error it never experienced as one.</p>
+
+<p>Strictness is not free. One GPT&#8209;5.4&nbsp;mini run in ten halted on a clean program, hallucinating a violation in a legal expression:</p>
+
+<pre><code>{ "action": "halt", "reason": "Type violation at line 76: `$v15 = $v2 + \"ok\"`
+  adds a string value to a string literal, which is not a valid typed
+  expression under PRAGMA STRICT." }</code></pre>
+
+<p>That is the strict prior doing what priors do – raising suspicion without supplying a checker. It also accounts for the entire measured tax: outside the false halt, clean-program step accuracy under strict mode was 1.0 for Haiku and 1.0 for GPT&#8209;5.4&nbsp;mini's four non-halting runs. Strict mode costs nothing per step; its cost is a false-positive risk, here 1/10 on one model, 0/10 on the other.</p>
+
+<figure>
+  <img src="assets/e1-tax.png" alt="Clean-program step accuracy, default vs strict">
+  <figcaption>Figure 2. Clean-program step accuracy by mode. GPT&#8209;5.4&nbsp;mini's strict-mode mean of 0.8 is one false-halt run scoring 0 among four perfect runs; there is no per-step degradation.</figcaption>
+</figure>
+
+<div class="note"><b>Implication.</b> Type contracts can live in the notation: a pragma is enough to make annotations enforced rather than decorative, at a small false-positive risk. Syntax enforcement cannot – the phase-1 conclusion stands, and the validator gate belongs in the harness, where MDZ's parseability makes it a few lines of code.</div>

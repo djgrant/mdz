@@ -1,0 +1,29 @@
+<h2>Verdicts against the research brief</h2>
+
+<table>
+  <tr><th>Question</th><th>Phase-2 answer</th></tr>
+  <tr>
+    <td>Q1 — can notation enforce integrity (halt, not repair)?</td>
+    <td>Split by fault class. Type contracts: yes, a pragma flips coercion to a 10/10 halt at a ~1-in-10 false-positive risk on one model. Syntax: no, repair happens inside reading; enforcement belongs in a harness validator (§1).</td>
+  </tr>
+  <tr>
+    <td>Q2 — where does size break execution?</td>
+    <td>Not in range. The phase-1 slip at 200 statements did not reproduce; every observed failure was mechanism-shaped rather than length-shaped (§5).</td>
+  </tr>
+  <tr>
+    <td>Q3 — do procedures steer, or relabel?</td>
+    <td>Steer. 18/20 (20/20 on decisions) against 7/20 for goal prompts, with the gap concentrated on tasks where policy contradicts the helpful default; judge adherence 1.95 vs 0.6 (§4).</td>
+  </tr>
+  <tr>
+    <td>Q4 — do parameters bind across skill/agent boundaries?</td>
+    <td>Yes, through a higher-order skill into real subagent fan-out: payload and lambda fidelity 1.0 on both models. Residual risk sits in tool routing and worker refusal, outside the notation (§2).</td>
+  </tr>
+  <tr>
+    <td>Q5 — does external state extend executable size?</td>
+    <td>Unanswerable as designed, and the design is the finding: models will not maintain instructed journalling against their own working memory, so a voluntary store can neither extend size nor provide the audit trail (§3).</td>
+  </tr>
+</table>
+
+<p>What phase 3 should take from this. The accountable-execution programme stands or falls on making capture structural instead of instructed: a validator gate for syntax, interception rather than instruction for state, an explicit SPAWN-to-tool mapping in the executor. The steering result is strong enough to carry the applied case on its own – the compliance framing in the brief is where MDZ has demonstrated value a goal prompt cannot reach – and the next size experiment should push past 200 statements with harness-captured traces, because the current instruments stop measuring exactly where the question gets interesting.</p>
+
+<p class="meta">Runs: 147 scored model calls plus 40 judge calls; recorded spend $6.71; models Claude Haiku, Claude Sonnet, GPT&#8209;5.4&nbsp;mini, judged by Claude Sonnet. Programs, results, transcripts, and this report's build script live in <a href="https://github.com/djgrant/mdz/tree/main/research/phase-2">research/phase-2</a>.</p>

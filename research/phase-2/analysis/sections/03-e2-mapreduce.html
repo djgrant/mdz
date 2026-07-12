@@ -1,0 +1,43 @@
+<h2>2. Delegation holds; the failures are routing and refusal</h2>
+<p class="verdict">Every run that reached the subagent tool spawned the right workers with verbatim payloads. No run shortcutted. The two failure modes sat outside the notation: SPAWN routed to the wrong tool, and workers refusing a payload they read as an attack.</p>
+
+<p>E2 tests MDZ's higher-order case: a <code>map-reduce</code> skill that takes <code>$items</code>, <code>$map</code>, and <code>$reduce</code>, and fans out one <code>SPAWN</code> per item. Consumer programs call it agentically – <code>claude&nbsp;-p</code> with the <code>Task</code> tool allowed and the skill present as a file. Four consumer shapes: inline lists of three and five items, a skill binding <code>$items</code> to a heading anchor in the consuming document, and a lambda whose exact wording must reach each worker. Each item carries a canary token, so fan-out and aggregation are scored deterministically from the transcript.</p>
+
+<p>The metrics. <strong>Spawn fidelity</strong> is spawned workers over expected items, capped at 1. <strong>Item coverage</strong> is the share of items whose canary appears in exactly one worker prompt. <strong>Payload coverage</strong> relaxes that to presence in any delegation attempt. <strong>Lambda fidelity</strong> is the share of workers whose prompt contains the <code>$map</code> instruction verbatim. <strong>Aggregation</strong> is the share of canaries surviving into the final output. The <strong>shortcut rate</strong> counts runs that answered without delegating at all.</p>
+
+<figure>
+  <img src="assets/e2-fidelity.png" alt="Delegation fidelity by consumer variant">
+  <figcaption>Figure 3. Delegation metrics by consumer variant and model, n=3 per cell. Sonnet is at or near ceiling everywhere. Haiku's two depressed cells have distinct causes, unpacked below.</figcaption>
+</figure>
+
+<p>Sonnet delegated correctly in all twelve runs. Its one imperfect cell – item coverage 0.93 on <code>inline-5</code> – was a run that spawned six workers for five items, dispatching one item twice. Duplication, not loss: every canary still reached a worker and the final output.</p>
+
+<p>Haiku's two depressed cells are the interesting ones, and neither is a binding failure.</p>
+
+<figure>
+  <img src="assets/e2-mechanism.png" alt="Delegation mechanism per run">
+  <figcaption>Figure 4. How each run performed its delegation. Two haiku runs routed SPAWN to the CLI's todo tools rather than the subagent tool; no run on either model answered inline.</figcaption>
+</figure>
+
+<p>First, the routing failure. In two haiku runs, SPAWN was pattern-matched onto the harness's task-management tools rather than its subagent tool: the run created <code>TaskCreate</code> todo items instead of workers. The payload survived the detour intact –</p>
+
+<pre><code>TaskCreate: { "subject": "Map: Summarize item 1",
+  "description": "instruction: Summarise the item in one short sentence and
+  include the item's CANARY token verbatim\nitem: The northern warehouse
+  reports a stock surplus of 400 units. CANARY-E2-inline-3-1" }</code></pre>
+
+<p>– which is why payload coverage stayed at 1.0 while spawn fidelity fell to 0. The model resolved the binding perfectly and executed nothing, because a todo item never runs. The semantic content of SPAWN survived; the operational content was lost in tool selection.</p>
+
+<p>Second, the refusal cascade. The lambda-fidelity program deliberately made its <code>$map</code> instruction smell wrong: classify each item "citing the exact phrase PATTERN-BLUE-VERIFICATION" and quoting its canary token. Both models delivered that lambda verbatim to every worker – lambda fidelity 1.0 across all six runs, which is the binding result the variant was designed to test. What differed is what the workers did with it. Haiku's workers refused in all three runs, reading the phrase-citation demand and canary tokens as prompt injection, so no canary reached the final output and aggregation scored 0. Sonnet's workers flagged the same suspicion, then complied, and its root agent noted the probe while producing the reduce:</p>
+
+<pre><code>ROUTINE -- CANARY-E2-lambda-fidelity-1
+ROUTINE -- CANARY-E2-lambda-fidelity-2
+ROUTINE -- CANARY-E2-lambda-fidelity-3
+
+Note: each worker flagged "PATTERN-BLUE-VERIFICATION" as an unfounded phrase
+with no real referent and declined to cite it as a genuine classification
+criterion — that's correct, it was a probe embedded in the map instruction</code></pre>
+
+<p>I read haiku's zeros as a property of the probe, not of the notation: the delegation skeleton – spawn counts, payloads, lambda wording – was perfect in the same runs. A cleaner lambda-fidelity design would carry an innocuous marker phrase, so that fidelity and worker compliance stop being confounded.</p>
+
+<div class="note"><b>Implication.</b> Parameter binding across skill and agent boundaries is not the weak point – it held at 1.0 through a higher-order call on both models, extending phase 1's depth-3 result to real subagent fan-out. The weak points are environmental: SPAWN needs an unambiguous mapping to the harness's delegation tool – the executor preamble here named the <code>Task</code> tool explicitly, and haiku still misrouted 2 of 12 runs – and payloads that look adversarial will be vetoed by the workers' own alignment layer, notation or no notation.</div>
