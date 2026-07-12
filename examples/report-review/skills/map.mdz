@@ -1,0 +1,13 @@
+---
+name: map-reduce
+input: $worker, $items, $map
+---
+
+FOR $item IN $items
+  SPAWN $worker
+  WITH
+    instruction: $map
+    item: $item
+END
+
+RETURN every sub-agent output, in the same order as $items

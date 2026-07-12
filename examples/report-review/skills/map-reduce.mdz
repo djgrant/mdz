@@ -1,21 +1,15 @@
 ---
 name: map-reduce
-input: $items, $map, $reduce
+input: $worker, $items, $map, $reduce
 ---
 
-# Map reduce
-
-A higher-order skill. Apply the $map instruction to every item in $items,
-delegating each item to its own worker, then combine the worker outputs with
-the $reduce instruction.
-
 FOR $item IN $items
-  SPAWN ./agents/worker
+  SPAWN $worker
   WITH
     instruction: $map
     item: $item
 END
 
-$results = every worker output, in the same order as $items
+$results = every sub-agent output, in the same order as $items
 
 RETURN the result of applying $reduce to $results
