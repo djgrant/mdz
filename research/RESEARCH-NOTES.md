@@ -33,6 +33,16 @@ Real-world-shaped programs, executed agentically, with traces captured by the ha
 - **External state store.** A harness-side `state` tool (`get`/`set`) replacing the abandoned prose ledger. Two arms: internal execution vs tool-backed state, at sizes past the phase 1 ceiling. The `set` call log doubles as an assign trace, captured mechanically. Metrics: accuracy at size, and token cost of the round-trips.
 - **Real-world procedure vs goal (Q3 flagship).** Tasks where the model's default is plausible but non-compliant – a refund policy that differs from common-sense fairness, a review checklist that flags what models skip by default. Deterministic checkers on the decision; judge on process adherence.
 
+### Failings
+
+Found after the phase-2 report was written; each weakens a headline claim.
+
+- **E1's syntax result is confounded.** The strict preamble demands every statement be "syntactically well-formed", but the model is never given the grammar – only "MDZ is a simple imperative notation" and one worked example. A model cannot halt on a missing `IN` when nothing told it `FOR` requires one. The type result survives (a type fault is self-contradictory without a spec); the syntax half needs re-running with the grammar in the preamble before "repair happens inside reading" can be claimed as the mechanism.
+- **E4 confounds form with content.** Arm B's prompt is "handle the refund request fairly and helpfully" – the policy content (the 14-day rule, the goodwill prohibition) appears nowhere in it. So 18/20 vs 7/20 shows models cannot comply with a policy they were never shown, which is trivially true. The Q3 verdict ("procedures steer, not relabel") is not supported by this design. The missing arm gives the same requirements declaratively – "refunds only within 14 days; no goodwill gestures; handle the request" – and tests whether the step-by-step form adds compliance beyond the content, i.e. whether the model shortcuts a stated constraint when not walked through it.
+- **E2's lambda probe tested the wrong thing.** `PATTERN-BLUE-VERIFICATION` – a codephrase with no referent – read as an injection marker, so haiku's workers refused and aggregation scored 0. Binding fidelity and worker compliance were confounded; an innocuous marker phrase separates them.
+- **One checker graded fidelity as violation.** The hiring-screen regex forbade `/shortlist/i`, and both models echoed the procedure's own "must not be shortlisted" warning. Decisions were 20/20; the 18/20 headline is a grader artefact, and other checkers may harbour subtler versions.
+- **E3 could not answer Q5.** Models journalled a quarter of assignments, so the design measured compliance with a recording instruction rather than whether external state extends size. Informative as a negative, but the size question stays open.
+
 ### Deferred
 
 - Local weights and KV-cache state injection – kept out of phase 2.

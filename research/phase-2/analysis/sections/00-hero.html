@@ -2,57 +2,12 @@
   <span class="kicker">MDZ research · phase 2</span>
   <h1>Accountable execution</h1>
   <p class="sub">Phase 1 showed that models can execute MDZ programs. Phase 2 tested
-  whether that execution can be verified from the outside: procedures shaped like
-  real tasks, run by the model acting on its own, with every trace captured by the
-  harness – the test framework that ran the programs and recorded the traces –
-  rather than reported by the model.</p>
+  whether that execution can be checked from traces the harness recorded rather than
+  the model reported. 147 scored runs across four experiments, on three models plus a
+  judge, for $6.71 of API spend.</p>
   <p class="meta">July 2026 · Daniel Grant ·
     <a href="https://github.com/djgrant/mdz/tree/main/research">djgrant/mdz/research</a> ·
     <a href="https://github.com/djgrant/mdz/blob/main/research/RESEARCH.md">research brief</a></p>
-
-  <div class="counters">
-    <div class="counter"><b>147</b><span>scored model runs</span></div>
-    <div class="counter"><b>4</b><span>experiments</span></div>
-    <div class="counter"><b>3</b><span>models, + 1 judge</span></div>
-    <div class="counter"><b>40</b><span>judge calls</span></div>
-    <div class="counter"><b>$6.71</b><span>recorded API spend</span></div>
-  </div>
-</div>
-
-<div class="cards">
-  <a class="fcard" href="#strict">
-    <span class="tag">E1 · strict mode</span>
-    <span class="num">10/10 <span style="font-size:0.9rem">wrong types caught</span></span>
-    <p>Programs carried one planted fault, and models were told to validate before
-    executing. They halted on every wrong type annotation. Broken syntax got
-    silently repaired in 9 runs of 10.</p>
-  </a>
-  <a class="fcard" href="#delegation">
-    <span class="tag">E2 · map-reduce skill</span>
-    <span class="num">24/24 <span style="font-size:0.9rem">payloads intact</span></span>
-    <p>Programs fanned a list of items out to subagents. Every item and its
-    instruction arrived unchanged. The only failures: two runs put the work on
-    a todo list instead of spawning agents, and one batch of workers declined to carry out an
-    instruction, treating it as a possible prompt injection – adversarial
-    instructions smuggled in through the data.</p>
-  </a>
-  <a class="fcard" href="#store">
-    <span class="tag">E3 · state store</span>
-    <span class="num neg">¼ <span style="font-size:0.9rem">of writes logged</span></span>
-    <p>Models were told to save every variable update to an external store as they
-    executed. They computed the values correctly but logged only a quarter of them,
-    while final outputs stayed near-perfect.</p>
-  </a>
-  <a class="fcard" href="#procedure">
-    <span class="tag">E4 · procedure vs goal</span>
-    <span class="num">18/20 <span style="font-size:0.9rem">vs 7/20 compliant</span></span>
-    <p>Ten tasks where written policy demands a harsher outcome than a helpful
-    assistant's instinct – for example, denying a refund requested on day 16 and
-    offering no goodwill credit.</p>
-    <p>Policy written as a step-by-step procedure: followed 18/20. The same policy
-    compressed to a one-line goal: 7/20, with models producing the helpful outcome
-    the policy forbids.</p>
-  </a>
 </div>
 
 <div class="layout">
@@ -66,7 +21,7 @@
     <li><a href="#procedure">4 · Procedure vs goal</a></li>
     <li><a href="#size">5 · The size ceiling</a></li>
     <li><a href="#limitations">Limitations</a></li>
-    <li><a href="#verdicts">Verdicts</a></li>
+    <li><a href="#verdicts">Results</a></li>
     <li><a href="#explore">Explore the runs</a></li>
   </ol>
 </nav>

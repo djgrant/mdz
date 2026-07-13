@@ -331,8 +331,10 @@ def chart_e2_mechanism(df: pd.DataFrame):
     """How each run performed its delegation: real spawns, the CLI's todo
     tools (wrong mechanism), or inline answering (shortcut)."""
     order = ["spawned", "wrong-mechanism", "inline"]
+    display = {"spawned": "spawned worker", "wrong-mechanism": "wrong tool",
+               "inline": "answered inline"}
     counts = (df.groupby(["model", "mechanism"]).size().unstack()
-                .reindex(columns=order).fillna(0))
+                .reindex(columns=order).fillna(0).rename(columns=display))
     fig, ax = plt.subplots(figsize=(6, 3.2))
     counts.plot.barh(ax=ax, stacked=True, color=[C_A, C_B, C_C])
     ax.grid(axis="x")

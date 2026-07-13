@@ -1,14 +1,9 @@
 <section id="strict">
-<span class="qref">E1 · answers Q1: can notation enforce integrity?</span>
-<h2><span class="secno">1</span>Strict mode enforced type annotations but not syntax</h2>
-<div class="verdict">PRAGMA STRICT – a directive placed at the top of a program to
-demand validation before execution – flipped type violations from silent coercion
-to a clean halt, 10/10 on both models. It did almost nothing for syntax faults –
-1/10 halted – which the model repaired before it could notice them.</div>
+<span class="qref">Research question 1: can notation enforce integrity?</span>
+<h2><span class="secno">Experiment 1:</span>Strict mode enforced type annotations but not syntax</h2>
 
 <p>Phase 1 found that models never halt on malformed programs – they repair or
-improvise. E1 (the first experiment, answering Q1, the brief's question about
-integrity enforcement) asked whether a directive could flip that behaviour. Each
+improvise. E1 asked whether a directive could flip that behaviour. Each
 40-statement program was either clean or carried exactly one planted fault, of one
 of two kinds:</p>
 
@@ -25,51 +20,27 @@ of two kinds:</p>
 STRICT</code> as the program's first statement, and this definition of it in the
 executor preamble:</p>
 
-<pre><code>This program declares PRAGMA STRICT: before executing anything, validate
+<pre><code class="nohighlight">This program declares PRAGMA STRICT: before executing anything, validate
 the whole program — every statement must be syntactically well-formed and
 every type annotation must match its value. On any syntax or type violation,
 output a trace containing a single step
 { "step": 1, "action": "halt", "reason": "&lt;what is wrong and where&gt;" }
 and stop; execute no steps.</code></pre>
 
-<p>Did faulted runs halt (the instructed
-behaviour), or execute through the fault (the phase-1 behaviour, repairing it
-silently)? Did any clean run halt when it should not have? And on clean
-programs, did running in strict mode cost any step accuracy?</p>
-
-<div class="stats">
-  <div class="stat"><b>0/21</b><span>faulted programs halted without the pragma</span></div>
-  <div class="stat"><b>10/10</b><span>wrong type annotations halted under strict</span></div>
-  <div class="stat"><b class="neg">1/10</b><span>broken-syntax programs halted under strict</span></div>
-  <div class="stat"><b class="neg">1/10</b><span>clean programs wrongly halted</span></div>
-</div>
-
-<p>Without the pragma, every faulted run executed through its fault – phase 1
-replicated exactly. With the pragma, the aggregate halt rate on faulted runs was
-0.55 – but that aggregate hides the real result, which splits cleanly by fault
-class.</p>
+<p>Without the pragma, phase 1 replicated exactly: all 21 faulted runs executed
+through their faults. With it, the result split by fault class. Every one of the
+10 wrong type annotations halted the program. Only 1 of 10 syntax faults did; the
+other nine runs read the broken FOR as if the keyword were still there and
+carried on.</p>
 
 <figure>
   <img src="assets/e1-halt.png" alt="Halt rate on faulted programs by fault class">
-  <figcaption><b>Figure 1.</b> Halt rate on faulted programs under strict mode, by
-  fault class. A higher halt rate is the desired outcome here – halting on a faulted
-  program is the correct behaviour, even though halting is undesirable elsewhere in
-  the report. Default mode (grey) never halts on either class. Strict mode (green)
-  halts on every type fault and almost no syntax faults.</figcaption>
+  <figcaption><b>Figure 1.</b> Halt rate on faulted programs by fault class;
+  halting is the correct behaviour here.</figcaption>
 </figure>
 
-<p>The mechanism is visible in what the two fault classes demand. A type fault
-(<code>$x: String = 6</code>) is a local contradiction: two tokens on one line
-disagree, and checking them is a recognition task.</p>
-
-<p>A syntax fault demands that the
-model notice the <em>absence</em> of a keyword – but an LLM does not parse, it
-reads, and a FOR header missing its IN still reads fine. The repair happens inside
-comprehension, before any validation step the pragma prescribes can run. The model
-cannot halt on an error it never experienced as one.</p>
-
-<p>Strict mode did carry a small cost. One GPT&#8209;5.4&nbsp;mini run in ten halted on a clean
-program – the strict prior raising suspicion without supplying a checker.</p>
+<p>Strict mode also produced one false halt: a single GPT&#8209;5.4&nbsp;mini run
+rejected a clean program that had no fault in it.</p>
 
 <details class="example">
   <summary>The wrongly halted clean run: a hallucinated type violation</summary>
@@ -79,22 +50,18 @@ program – the strict prior raising suspicion without supplying a checker.</p>
 <pre><code>{ "action": "halt", "reason": "Type violation at line 76:
   `$v15 = $v2 + \"ok\"` adds a string value to a string literal,
   which is not a valid typed expression under PRAGMA STRICT." }</code></pre>
-    <p>This one run was the entire measured cost of strict mode: outside it, clean-program
-    step accuracy under strict mode was 1.0 on both models.</p>
+    <p>Every other clean program under strict mode executed perfectly, on both
+    models.</p>
   </div>
 </details>
 
 <figure>
   <img src="assets/e1-tax.png" alt="Clean-program step accuracy, default vs strict">
-  <figcaption><b>Figure 2.</b> Clean-program step accuracy by mode; higher is
-  better.
-  GPT&#8209;5.4&nbsp;mini's strict-mode mean of 0.8 is one wrongly halted run scoring 0
-  among four perfect runs; there is no per-step degradation.</figcaption>
+  <figcaption><b>Figure 2.</b> Step accuracy on clean programs, default vs strict
+  mode, per model.</figcaption>
 </figure>
 
-<div class="note"><b>Implication.</b> Type contracts can live in the notation: a
-pragma is enough to make annotations enforced rather than decorative, at a small
-false-positive risk. Syntax enforcement cannot – the phase-1 conclusion stands, and
-the validator gate belongs in the harness, where MDZ's parseability makes it a few
-lines of code.</div>
+<p>GPT&#8209;5.4&nbsp;mini's strict-mode mean of 0.8 is that one false halt scoring
+0 alongside four perfect runs. The steps that did execute were unaffected.</p>
+
 </section>

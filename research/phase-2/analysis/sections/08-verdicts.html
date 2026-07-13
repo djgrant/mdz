@@ -1,59 +1,37 @@
 <section id="verdicts">
-<h2>Verdicts against the research brief</h2>
+<h2>Results against the research brief</h2>
 
 <table>
-  <tr><th style="width: 34%">Question</th><th>Phase-2 answer</th></tr>
+  <tr><th style="width: 34%">Question</th><th>Phase-2 result</th></tr>
   <tr>
     <td>Q1 — can notation enforce integrity (halt, not repair)?</td>
-    <td>The answer split by fault class. For type contracts, yes: a pragma – a
-    directive at the top of the program – flipped silent coercion (executing
-    through a wrong type annotation) into a 10/10 halt, at a ~1-in-10
-    false-positive risk on one model. For syntax, no: repair
-    happened inside reading; enforcement belongs in a harness validator, a small
-    mechanical check run before the model sees the program (§1).</td>
+    <td>Split by fault class. The pragma flipped wrong type annotations from
+    silent coercion to a 10/10 halt, with one clean run in ten wrongly halted on
+    one model. Syntax faults halted 1/10 (§1).</td>
   </tr>
   <tr>
     <td>Q2 — where does size break execution?</td>
     <td>No breaking point appeared within the tested range. The phase-1 slip at
-    200 statements did not reproduce; every
-    observed failure traced to a specific mechanism (tool routing, worker refusal,
-    unrecorded state, one wrongly halted clean run) rather than to program length (§5).</td>
+    200 statements did not reproduce, and every observed failure occurred on
+    programs well inside the executable range (§5).</td>
   </tr>
   <tr>
     <td>Q3 — do procedures steer, or relabel?</td>
-    <td>They steered: the procedure changed what the model produced. 18/20 (20/20
-    on decisions) against 7/20 for goal prompts, with the
-    gap concentrated on tasks where policy contradicts the helpful default; judge
-    adherence 1.95 vs 0.6 (§4).</td>
+    <td>The procedure arm passed the checker 18/20 (20/20 on decisions) against
+    7/20 for the goal arm, with the gap concentrated on tasks where policy
+    contradicts the helpful default; judge adherence 1.95 vs 0.6 (§4).</td>
   </tr>
   <tr>
     <td>Q4 — do parameters bind across skill/agent boundaries?</td>
-    <td>Yes, through a higher-order skill into real subagent fan-out (one worker
-    spawned per item): payload fidelity and lambda fidelity – whether the
-    parameters and the lambda's exact wording reached each worker – were 1.0 on
-    both models. Residual risk sat in tool routing and
-    worker refusal, outside the notation (§2).</td>
+    <td>Payload and lambda fidelity were 1.0 on both models, through a
+    higher-order skill into real subagent fan-out. The observed failures were
+    tool routing and worker refusal (§2).</td>
   </tr>
   <tr>
     <td>Q5 — does external state extend executable size?</td>
     <td>Not answerable with this design: models did not maintain instructed
     journalling, so a voluntary store neither extended size nor provided the
-    audit trail. That failure to comply was itself the experiment's finding (§3).</td>
+    audit trail (§3).</td>
   </tr>
 </table>
-
-<p>For phase 3, the accountable-execution programme depends entirely on making
-capture structural instead of instructed: a validator gate for syntax (the harness
-checks the program mechanically before execution), interception rather than
-instruction for state (the harness records assignments itself rather than asking
-the model to), and an explicit SPAWN-to-tool mapping in the executor (so the
-notation's subagent call always routes to the real delegation tool).</p>
-
-<p>The steering result is the clearest applied finding: on
-these tasks, the compliance framing in the brief was where MDZ produced outcomes a
-goal prompt did not.</p>
-
-<p>The next size experiment should push past 200 statements with
-harness-captured traces, since the present corpus measures nothing beyond that
-point.</p>
 </section>

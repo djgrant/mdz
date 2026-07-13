@@ -2,48 +2,42 @@
 <h2>Limitations</h2>
 
 <ul>
-  <li><strong>Cell sizes are small.</strong> Most cells are n=3–6; E4 ran each task
-  once per model per arm. The headline gaps (0/21 vs 10/10 halts; 18/20 vs 7/20
-  compliance) are large enough to survive the noise. The finer rates – haiku's
-  2-in-12 misrouting, GPT's 1-in-10 wrongly halted clean run – are order-of-magnitude estimates,
-  not measurements.</li>
+  <li><strong>Cell sizes are small.</strong> Most cells are n=3–6; E4 ran each
+  task once per model per arm. The headline gaps (0/21 vs 10/10 halts; 18/20 vs
+  7/20 compliance) survive the noise; the finer rates – haiku's 2-in-12
+  misrouting, GPT's 1-in-10 wrongly halted clean run – are order-of-magnitude
+  estimates.</li>
 
-  <li><strong>The internal arm still relied on self-reporting.</strong> E3's comparability
-  baseline inherited the phase-1 confound – a run that executes correctly while its
-  self-reported trace omits assignments, so the score understates the execution –
-  and one sonnet run exhibited it (perfect
-  emits, condensed assigns). Haiku's 1.0s are trustworthy only because they are
-  perfect – a lower self-reported score would be ambiguous.</li>
+  <li><strong>The internal arm still relied on self-reporting.</strong> E3's
+  comparability baseline inherited the phase-1 confound – a run that executes
+  correctly while its self-reported trace omits assignments – and one sonnet run
+  exhibited it. Haiku's 1.0s are trustworthy only because they are perfect; a
+  lower self-reported score would be ambiguous.</li>
 
   <li><strong>Store-arm scoring has a formatting component.</strong>
   <code>set</code> values arrived as strings; numeric strings were coerced before
-  comparison, but sonnet wrote quote-wrapped strings (<code>"\"blue\""</code>) that
-  scored as mismatches. This depressed store-arm assign accuracy by a few points;
-  the dominant failure remained the missing calls.</li>
+  comparison, but sonnet's quote-wrapped strings (<code>"\"blue\""</code>) scored
+  as mismatches. This depressed store-arm assign accuracy by a few points; the
+  dominant failure remained the missing calls.</li>
 
   <li><strong>One checker was wrong.</strong> The hiring-screen forbidden-content
   regex punished faithful echoes of the procedure (§4). I report the checker&#8217;s
   18/20 as the headline and the corrected 20/20 in prose; other checkers may
-  harbour subtler versions of the same artefact, and only a per-task audit would
-  find them.</li>
+  harbour subtler versions of the same artefact.</li>
 
-  <li><strong>The lambda-fidelity probe confounded two things.</strong> The probe –
-  the E2 variant checking whether a lambda's exact wording reached each worker –
-  made the payload resemble an injection attack, so it tested worker compliance as
-  much as binding
-  fidelity (§2). Binding was measured cleanly (the payloads are in the
-  transcripts); aggregation under that variant was not.</li>
+  <li><strong>The lambda-fidelity probe confounded two things.</strong> Making
+  the payload resemble an injection attack tested worker compliance as much as
+  binding fidelity (§2). Binding was measured cleanly – the payloads are in the
+  transcripts; aggregation under that variant was not.</li>
 
-  <li><strong>USE remains unobservable.</strong> USE – the notation's inline skill
-  call – produces no natural event for the harness to record; at best a file read.
-  E2 measured SPAWN; whether USE can be captured and audited is still an open
-  question.</li>
+  <li><strong>USE remains unobservable.</strong> USE – the notation's inline
+  skill call – produces no natural event for the harness to record; at best a
+  file read. E2 measured SPAWN; whether USE can be captured and audited is still
+  an open question.</li>
 
   <li><strong>Model coverage is narrow.</strong> Haiku carried most cells by
-  design; GPT&#8209;5.4&nbsp;mini appeared in E1 and E4, and sonnet ran a small number of
-  anchor cells in E2 and E3. The anchor cells are reference runs on a stronger
-  model used to sanity-check the cheap-model results.
-  Cross-family claims (e.g. that misrouting is a small-model behaviour)
-  rest on one model per family.</li>
+  design; GPT&#8209;5.4&nbsp;mini appeared in E1 and E4, and sonnet ran a small
+  number of anchor cells in E2 and E3. Cross-family claims (e.g. that misrouting
+  is a small-model behaviour) rest on one model per family.</li>
 </ul>
 </section>
