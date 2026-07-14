@@ -10,9 +10,8 @@
     "url": "https://github.com/djgrant/mdz"
   },
   "devDependencies": {
-    "@pokit/core": "latest",
-    "@pokit/prompter-clack": "latest",
-    "@pokit/reporter-clack": "latest",
+    "@pokit/core": "^0.6.0",
+    "@pokit/terminal": "^0.6.0",
     "glob": "^13.0.0",
     "peggy": "^5.0.6",
     "vite-tsconfig-paths": "^5.1.4",
