@@ -27,6 +27,10 @@
  *                 The session transcript is copied into results/transcripts/
  *                 and mined for spawns and tool calls; the mock server's call
  *                 log is captured on the record (stateLog / opsLog).
+ *                 Entries with `passes > 1` (ralph loops) run that many fresh
+ *                 sequential sessions with the same prompt in the same
+ *                 sandbox; tokens/cost aggregate, spawns/toolCalls carry a
+ *                 `pass` tag, and one record is emitted for the whole loop.
  */
 
 import { spawn } from "node:child_process";
@@ -305,61 +309,93 @@ async function runAgenticClaude(
 
     if (allowed.length) args.push("--allowedTools", ...allowed);
 
-    const out = await spawnProcess(
-      "claude",
-      args,
-      entry.prompt,
-      AGENTIC_TIMEOUT_MS,
-      sandbox,
-      env,
-    );
-    const durationMs = Date.now() - started;
+    // Ralph loops (entry.passes > 1): run the SAME prompt `passes` times, each
+    // in a FRESH `claude -p` session, sequentially, against the SAME sandbox —
+    // each pass sees the previous pass's mutations. No fan-out, no selection.
+    // Tokens/cost are summed, spawns/toolCalls concatenated (tagged with a
+    // 1-based `pass`), every pass's transcript is copied into
+    // results/transcripts (suffixed -pass<i> when passes > 1), and
+    // transcriptPath points at the LAST pass's transcript.
+    const passes = Math.max(1, entry.passes ?? 1);
 
-    if (out.spawnError)
-      return { ...empty, durationMs, error: `spawn error: ${out.spawnError}` };
-    if (out.timedOut)
-      return { ...empty, durationMs, error: `timeout after ${AGENTIC_TIMEOUT_MS}ms` };
-
-    const envelope = parseEnvelope(out.stdout);
-    if (!envelope) {
-      return {
-        ...empty,
-        durationMs,
-        rawOutput: out.stdout,
-        error:
-          out.code !== 0
-            ? `claude exit ${out.code}: ${truncate(out.stderr)}`
-            : `unparseable claude json envelope: ${truncate(out.stdout)}`,
-      };
-    }
-
-    // Locate + copy the session transcript, then mine it.
+    let promptTokens = 0;
+    let completionTokens = 0;
+    let costUsd: number | null = null;
+    let rawOutput = "";
+    let error: string | null = null;
     let transcriptPath: string | null = null;
-    let spawns: Spawn[] = [];
-    let toolCalls: ToolCall[] = [];
-    if (envelope.sessionId) {
-      const src = findTranscript(sandbox, envelope.sessionId);
-      if (src) {
-        const destDir = join(PHASE_ROOT, "results", "transcripts");
-        await mkdir(destDir, { recursive: true });
-        transcriptPath = join(destDir, `${recordId}.jsonl`);
-        await copyFile(src, transcriptPath);
-        const parsed = parseTranscript(readFileSync(transcriptPath, "utf8"));
-        spawns = parsed.spawns;
-        toolCalls = parsed.toolCalls;
+    const spawns: Spawn[] = [];
+    const toolCalls: ToolCall[] = [];
+
+    for (let pass = 1; pass <= passes; pass++) {
+      const out = await spawnProcess(
+        "claude",
+        args,
+        entry.prompt,
+        AGENTIC_TIMEOUT_MS,
+        sandbox,
+        env,
+      );
+
+      if (out.spawnError) {
+        error = `pass ${pass}/${passes}: spawn error: ${out.spawnError}`;
+        break;
+      }
+      if (out.timedOut) {
+        error = `pass ${pass}/${passes}: timeout after ${AGENTIC_TIMEOUT_MS}ms`;
+        break;
+      }
+
+      const envelope = parseEnvelope(out.stdout);
+      if (!envelope) {
+        rawOutput = out.stdout;
+        error =
+          out.code !== 0
+            ? `pass ${pass}/${passes}: claude exit ${out.code}: ${truncate(out.stderr)}`
+            : `pass ${pass}/${passes}: unparseable claude json envelope: ${truncate(out.stdout)}`;
+        break;
+      }
+
+      promptTokens += envelope.inputTokens;
+      completionTokens += envelope.outputTokens;
+      if (envelope.costUsd != null) costUsd = (costUsd ?? 0) + envelope.costUsd;
+      rawOutput = envelope.resultText;
+
+      // Locate + copy this pass's session transcript, then mine it.
+      if (envelope.sessionId) {
+        const src = findTranscript(sandbox, envelope.sessionId);
+        if (src) {
+          const destDir = join(PHASE_ROOT, "results", "transcripts");
+          await mkdir(destDir, { recursive: true });
+          const suffix = passes > 1 ? `-pass${pass}` : "";
+          transcriptPath = join(destDir, `${recordId}${suffix}.jsonl`);
+          await copyFile(src, transcriptPath);
+          const parsed = parseTranscript(readFileSync(transcriptPath, "utf8"));
+          // Tag with the pass index only on multi-pass runs, so single-pass
+          // records keep their existing shape.
+          spawns.push(...parsed.spawns.map((s) => (passes > 1 ? { ...s, pass } : s)));
+          toolCalls.push(...parsed.toolCalls.map((c) => (passes > 1 ? { ...c, pass } : c)));
+        }
+      }
+
+      if (envelope.isError) {
+        error = `pass ${pass}/${passes}: claude reported error (subtype=${envelope.subtype})`;
+        break;
       }
     }
 
+    const durationMs = Date.now() - started;
     const stateLog = await readCallLog(stateLogPath);
     const opsLog = await readCallLog(opsLogPath);
 
     return {
-      rawOutput: envelope.resultText,
-      promptTokens: envelope.inputTokens,
-      completionTokens: envelope.outputTokens,
-      costUsd: envelope.costUsd,
+      ...empty,
+      rawOutput,
+      promptTokens,
+      completionTokens,
+      costUsd,
       durationMs,
-      error: envelope.isError ? `claude reported error (subtype=${envelope.subtype})` : null,
+      error,
       transcriptPath: transcriptPath
         ? transcriptPath.replace(`${PHASE_ROOT}/`, "")
         : null,

@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { buildE2b, E2B_TARGETS, HEURISTICS, ITERATIONS } from "./e2b.ts";
+import { buildE2b, E2B_TARGETS, HEURISTICS, ITERATIONS, PASSES } from "./e2b.ts";
 import { PHASE_ROOT, PROGRAMS_DIR, type ManifestEntry } from "./shared.ts";
 import { validateMdz } from "../../../src/interpreter/validate.ts";
 import { extractMechanism, extractWinnerIndex, runTargetTests } from "../score/e2b-score.ts";
@@ -25,15 +25,29 @@ function entry(id: string): ManifestEntry {
 }
 
 describe("manifest", () => {
-  it("has 2 targets x 2 arms = 4 agentic entries with unique ids", () => {
-    expect(entries.length).toBe(4);
+  it("has 2 targets x 3 arms = 6 agentic entries with unique ids", () => {
+    expect(entries.length).toBe(6);
     const ids = entries.map((e) => e.id);
-    expect(new Set(ids).size).toBe(4);
+    expect(new Set(ids).size).toBe(6);
     for (const e of entries) {
       expect(e.experiment).toBe("e2b");
       expect(e.runMode).toBe("agentic");
       expect(e.allowedTools).toContain("Task");
-      expect((e.variant as { iterations: number }).iterations).toBe(ITERATIONS);
+      const arm = (e.variant as { arm: string }).arm;
+      if (arm === "ralph") {
+        expect((e.variant as { passes: number }).passes).toBe(PASSES);
+      } else {
+        expect((e.variant as { iterations: number }).iterations).toBe(ITERATIONS);
+      }
+    }
+  });
+
+  it("ralph entries run passes=3 fresh sessions; the others run one", () => {
+    for (const target of E2B_TARGETS) {
+      expect(entry(`e2b-${target.name}-ralph`).passes).toBe(PASSES);
+      expect(PASSES).toBe(3);
+      expect(entry(`e2b-${target.name}-skill`).passes).toBeUndefined();
+      expect(entry(`e2b-${target.name}-goal`).passes).toBeUndefined();
     }
   });
 
@@ -41,7 +55,7 @@ describe("manifest", () => {
     const manifestPath = join(PROGRAMS_DIR, "e2b", "manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const parsed = JSON.parse(readFileSync(manifestPath, "utf8"));
-    expect(parsed.length).toBe(4);
+    expect(parsed.length).toBe(6);
     for (const e of entries) {
       expect(existsSync(join(PHASE_ROOT, e.programPath)), e.programPath).toBe(true);
     }
@@ -51,15 +65,18 @@ describe("manifest", () => {
     for (const target of E2B_TARGETS) {
       const skill = entry(`e2b-${target.name}-skill`);
       const goal = entry(`e2b-${target.name}-goal`);
+      const ralph = entry(`e2b-${target.name}-ralph`);
       expect(skill.prompt).toBe(`/simplify ${target.moduleFile}`);
       expect(goal.prompt).toBe(`/simplify-goal ${target.moduleFile}`);
+      expect(ralph.prompt).toBe(`/simplify-ralph ${target.moduleFile}`);
       expect(goal.prompt.replace("/simplify-goal", "/simplify")).toBe(skill.prompt);
+      expect(ralph.prompt.replace("/simplify-ralph", "/simplify")).toBe(skill.prompt);
     }
   });
 });
 
 describe("content matching", () => {
-  it("all three heuristic strings appear verbatim in both arms' sandboxes", () => {
+  it("all three heuristic strings appear verbatim in every arm's sandbox", () => {
     expect(HEURISTICS).toEqual(["make it more direct", "make it more obvious", "make it smaller"]);
     for (const e of entries) {
       const sandboxText = Object.values(e.sandbox!).join("\n");
@@ -83,6 +100,20 @@ describe("content matching", () => {
       expect(goalCommand).toContain(`${ITERATIONS} iterations`);
       expect(goalCommand).toContain("fresh perspective");
       expect(goalCommand).toContain("The winner need not be the last");
+    }
+  });
+
+  it("the ralph arm is a single-pass instruction: no iterate/select plan, no MDZ", () => {
+    for (const target of E2B_TARGETS) {
+      const ralph = entry(`e2b-${target.name}-ralph`);
+      expect(Object.keys(ralph.sandbox!).some((k) => k.startsWith("skills/"))).toBe(false);
+      const command = ralph.sandbox![".claude/commands/simplify-ralph.md"];
+      expect(command).toBeDefined();
+      expect(command).not.toMatch(/^\s*(FOR|SPAWN|USE|RETURN|END)\b/m);
+      expect(command).not.toContain("iteration");
+      expect(command).not.toContain("candidate");
+      expect(command).not.toContain("fresh perspective");
+      for (const h of HEURISTICS) expect(command).toContain(h);
     }
   });
 });
@@ -125,12 +156,23 @@ describe("simplify.mdz structure", () => {
 describe("target fixtures", () => {
   it("each sandbox pairs the module with its test suite", () => {
     for (const target of E2B_TARGETS) {
-      for (const arm of ["skill", "goal"]) {
+      for (const arm of ["skill", "goal", "ralph"]) {
         const e = entry(`e2b-${target.name}-${arm}`);
         expect(e.sandbox![target.moduleFile]).toContain("export");
         expect(e.sandbox![target.testFile]).toContain('from "node:test"');
         expect((e.expected as { targetFile: string }).targetFile).toBe(target.moduleFile);
       }
+    }
+  });
+
+  it("each module carries ~300-400 lines of layered abstraction debt", () => {
+    for (const target of E2B_TARGETS) {
+      const modulePath = join(
+        PHASE_ROOT, "src", "generate", "fixtures", "e2b", target.name, `${target.name}.ts`,
+      );
+      const lines = readFileSync(modulePath, "utf8").split("\n").length;
+      expect(lines, `${target.name} has ${lines} lines`).toBeGreaterThanOrEqual(300);
+      expect(lines, `${target.name} has ${lines} lines`).toBeLessThanOrEqual(400);
     }
   });
 

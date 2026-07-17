@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { buildE2a, E2A_TARGETS, STRATEGIES } from "./e2a.ts";
+import { buildE2a, E2A_TARGETS, PASSES, STRATEGIES } from "./e2a.ts";
 import { PHASE_ROOT, type ManifestEntry } from "./shared.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -37,20 +37,35 @@ function entry(id: string): ManifestEntry {
 }
 
 describe("manifest shape", () => {
-  it("emits 2 targets x 2 variants = 4 agentic entries", () => {
-    expect(entries.length).toBe(4);
+  it("emits 2 targets x 3 variants = 6 agentic entries", () => {
+    expect(entries.length).toBe(6);
     expect(entries.map((e) => e.id).sort()).toEqual([
       "e2a-ledger-goal",
       "e2a-ledger-mdz",
+      "e2a-ledger-ralph",
       "e2a-logscan-goal",
       "e2a-logscan-mdz",
+      "e2a-logscan-ralph",
     ]);
     for (const e of entries) {
       expect(e.experiment).toBe("e2a");
       expect(e.runMode).toBe("agentic");
       expect(e.allowedTools).toContain("Task");
       expect(e.allowedTools).toContain("Bash");
-      expect((e.expected as { spawnCount: number }).spawnCount).toBe(5);
+      const form = (e.variant as { form: string }).form;
+      // Ralph iterates by re-running, not by fanning out.
+      expect((e.expected as { spawnCount: number }).spawnCount).toBe(
+        form === "ralph" ? 0 : 5,
+      );
+    }
+  });
+
+  it("ralph entries run passes=3 fresh sessions; the others run one", () => {
+    for (const target of ["ledger", "logscan"]) {
+      expect(entry(`e2a-${target}-ralph`).passes).toBe(PASSES);
+      expect(PASSES).toBe(3);
+      expect(entry(`e2a-${target}-mdz`).passes).toBeUndefined();
+      expect(entry(`e2a-${target}-goal`).passes).toBeUndefined();
     }
   });
 
@@ -66,18 +81,31 @@ describe("manifest shape", () => {
 });
 
 describe("content matching", () => {
-  it("both command variants contain all five strategy hints verbatim", () => {
+  it("all three command variants contain all five strategy hints verbatim", () => {
     expect(STRATEGIES.length).toBe(5);
     for (const target of ["ledger", "logscan"]) {
       const mdz = entry(`e2a-${target}-mdz`).sandbox!["commands/optimise.mdz"];
       const goal = entry(`e2a-${target}-goal`).sandbox!["commands/optimise-goal.md"];
+      const ralph = entry(`e2a-${target}-ralph`).sandbox!["commands/optimise-ralph.md"];
       for (const hint of STRATEGIES) {
         expect(mdz, `${target} mdz missing hint`).toContain(hint);
         expect(goal, `${target} goal missing hint`).toContain(hint);
+        expect(ralph, `${target} ralph missing hint`).toContain(hint);
       }
       // The prompt carries the command verbatim.
       expect(entry(`e2a-${target}-mdz`).prompt).toContain(mdz);
       expect(entry(`e2a-${target}-goal`).prompt).toContain(goal);
+      expect(entry(`e2a-${target}-ralph`).prompt).toContain(ralph);
+    }
+  });
+
+  it("the ralph command states a single-pass goal, no explore-then-select plan", () => {
+    for (const target of ["ledger", "logscan"]) {
+      const ralph = entry(`e2a-${target}-ralph`).sandbox!["commands/optimise-ralph.md"];
+      expect(ralph).toContain("Improve the program's benchmark time");
+      expect(ralph).not.toContain("candidate");
+      expect(ralph).not.toContain("Explore five optimisation strategies");
+      expect(ralph).not.toContain("winning strategy");
     }
   });
 
@@ -87,20 +115,21 @@ describe("content matching", () => {
       const mdz = entry(`e2a-${target}-mdz`);
       expect(mdz.sandbox!["skills/map-reduce.mdz"]).toBe(skill);
       expect(mdz.sandbox!["commands/optimise.mdz"]).toContain("USE ~/skills/map-reduce");
-      const goal = entry(`e2a-${target}-goal`);
-      expect(goal.sandbox!["skills/map-reduce.mdz"]).toBeUndefined();
-      expect(Object.values(goal.sandbox!).join("\n")).not.toContain("SPAWN");
+      for (const form of ["goal", "ralph"]) {
+        const prose = entry(`e2a-${target}-${form}`);
+        expect(prose.sandbox!["skills/map-reduce.mdz"]).toBeUndefined();
+        expect(Object.values(prose.sandbox!).join("\n")).not.toContain("SPAWN");
+      }
     }
   });
 
-  it("both variants ship the identical target files", () => {
+  it("all variants ship the identical target files", () => {
     for (const t of E2A_TARGETS) {
-      const mdz = entry(`e2a-${t.name}-mdz`);
-      const goal = entry(`e2a-${t.name}-goal`);
       for (const f of t.files) {
         const fixture = readFileSync(join(FIXTURES_DIR, t.name, f), "utf8");
-        expect(mdz.sandbox![f]).toBe(fixture);
-        expect(goal.sandbox![f]).toBe(fixture);
+        for (const form of ["mdz", "goal", "ralph"]) {
+          expect(entry(`e2a-${t.name}-${form}`).sandbox![f]).toBe(fixture);
+        }
       }
     }
   });

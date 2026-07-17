@@ -13,6 +13,10 @@
  *     last worker, asked to compare versions)
  *   - winner index, if recoverable from the run's final output text
  *
+ * Every row carries a `variant` field (skill | goal | ralph). Ralph runs have
+ * no iterate/select mechanism, so their spawnsPerIteration, judgeSpawn, and
+ * winnerIndex are null; worker spawns are still counted (expected 0).
+ *
  * Usage (from research/):
  *   npx tsx phase-3/src/score/e2b-score.ts [results-jsonl]
  * Default results file: phase-3/results/e2b.jsonl. Records need `id`, and to
@@ -150,9 +154,13 @@ function phasePath(p: string): string {
   return isAbsolute(p) ? p : join(PHASE, p);
 }
 
-function targetOf(id: string): string | null {
-  const m = /^e2b-([a-z0-9]+)-(?:skill|goal)/.exec(id);
-  return m ? m[1] : null;
+export type E2bVariant = "skill" | "goal" | "ralph";
+
+export function parseRunId(
+  id: string,
+): { target: string; variant: E2bVariant } | null {
+  const m = /^e2b-([a-z0-9]+)-(skill|goal|ralph)/.exec(id);
+  return m ? { target: m[1], variant: m[2] as E2bVariant } : null;
 }
 
 function main(): void {
@@ -166,8 +174,9 @@ function main(): void {
     if (!line.trim()) continue;
     const rec = JSON.parse(line) as RunRecord;
     if (rec.error) continue;
-    const target = targetOf(rec.id);
-    if (!target) continue;
+    const parsed = parseRunId(rec.id);
+    if (!parsed) continue;
+    const { target, variant } = parsed;
 
     // The harness archives each run's final working directory under
     // results/sandboxes/<id>; the shipped module lives at its sandbox path.
@@ -184,7 +193,26 @@ function main(): void {
         ? extractMechanism(readFileSync(phasePath(rec.transcriptPath), "utf8"), rec.rawOutput ?? "")
         : null;
 
-    const row = { id: rec.id, target, testsPass, ...mechanism };
+    // Ralph rows have no iterate/select mechanism: no per-iteration grouping,
+    // no judge spawn, no winner index. Worker spawns are still counted
+    // (expected 0 — a ralph pass that fans out anyway is itself a finding);
+    // everything else is null.
+    const mechanismFields =
+      variant === "ralph"
+        ? {
+            workerSpawns: mechanism ? mechanism.workerSpawns : null,
+            spawnsPerIteration: null,
+            judgeSpawn: null,
+            winnerIndex: null,
+          }
+        : {
+            workerSpawns: mechanism?.workerSpawns ?? null,
+            spawnsPerIteration: mechanism?.spawnsPerIteration ?? null,
+            judgeSpawn: mechanism?.judgeSpawn ?? null,
+            winnerIndex: mechanism?.winnerIndex ?? null,
+          };
+
+    const row = { id: rec.id, target, variant, testsPass, ...mechanismFields };
     rows.push(JSON.stringify(row));
     console.log(JSON.stringify(row));
   }

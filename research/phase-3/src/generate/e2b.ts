@@ -8,13 +8,16 @@
  *           judge picks the best iteration at the end
  *   goal  — /simplify-goal, the same heuristics and the same iterate-diverge-
  *           select plan as a prose slash command, no notation
+ *   ralph — /simplify-ralph, the same heuristics as a single-pass simplify
+ *           instruction with no iterate/select plan, run passes=3 times as
+ *           fresh sessions against the same sandbox (re-running IS the plan)
  *
- * Content-matched: the three heuristic strings appear verbatim in both arms.
+ * Content-matched: the three heuristic strings appear verbatim in every arm.
  * The prompt invokes the command on the target file; nothing else. Outcome
  * scoring (pairwise judge across arms) lives in ../score/e2b-judge.py and
  * ../score/e2b-score.ts, not in the run itself.
  *
- * 2 targets x 2 arms = 4 manifest entries.
+ * 2 targets x 3 arms = 6 manifest entries.
  */
 
 import { readFileSync } from "node:fs";
@@ -30,6 +33,9 @@ const FIXTURES = join(HERE, "fixtures", "e2b");
 const MAP_REDUCE_PATH = resolve(PHASE_ROOT, "..", "..", "examples", "skills", "map-reduce.mdz");
 
 export const ITERATIONS = 3;
+
+/** Ralph loop: fresh sessions per entry, same prompt, same sandbox. */
+export const PASSES = 3;
 
 export const HEURISTICS = [
   "make it more direct",
@@ -128,6 +134,18 @@ The winner need not be the last — simplification can overshoot.
 Write the winning version back to $ARGUMENTS and ${TEST_NOTE}.
 `;
 
+/** /simplify-ralph — same heuristics, single pass, no iterate/select plan. */
+const SIMPLIFY_RALPH_COMMAND = `---
+description: Simplify a module in a single pass
+---
+
+Simplify the module at $ARGUMENTS without changing its behaviour or its public
+interface. Push in three directions:
+"make it more direct", "make it more obvious", "make it smaller".
+
+Write the simplified version back to $ARGUMENTS and ${TEST_NOTE}.
+`;
+
 // ---------------------------------------------------------------------------
 // Build
 // ---------------------------------------------------------------------------
@@ -167,17 +185,24 @@ export function buildE2b(outDir: string): ManifestEntry[] {
       [target.testFile]: testSource,
     };
 
-    for (const arm of ["skill", "goal"] as const) {
+    for (const arm of ["skill", "goal", "ralph"] as const) {
       const folder = join(dir, `${target.name}-${arm}`);
-      const command = arm === "skill" ? "/simplify" : "/simplify-goal";
-      const commandFile =
+      const command =
         arm === "skill"
-          ? ".claude/commands/simplify.md"
-          : ".claude/commands/simplify-goal.md";
+          ? "/simplify"
+          : arm === "goal"
+            ? "/simplify-goal"
+            : "/simplify-ralph";
+      const commandFile = `.claude/commands/${command.slice(1)}.md`;
 
       const sandbox: Record<string, string> = {
         ...targetFiles,
-        [commandFile]: arm === "skill" ? SIMPLIFY_COMMAND : SIMPLIFY_GOAL_COMMAND,
+        [commandFile]:
+          arm === "skill"
+            ? SIMPLIFY_COMMAND
+            : arm === "goal"
+              ? SIMPLIFY_GOAL_COMMAND
+              : SIMPLIFY_RALPH_COMMAND,
         ...(arm === "skill"
           ? {
               "skills/simplify.mdz": SIMPLIFY_SKILL,
@@ -201,18 +226,25 @@ export function buildE2b(outDir: string): ManifestEntry[] {
         programPath: rel(programPath),
         tracePath: null,
         prompt: `${command} ${target.moduleFile}`,
-        variant: { target: target.name, arm, iterations: ITERATIONS },
+        variant: {
+          target: target.name,
+          arm,
+          ...(arm === "ralph" ? { passes: PASSES } : { iterations: ITERATIONS }),
+        },
         expected: {
           heuristics: [...HEURISTICS],
-          iterations: ITERATIONS,
           targetFile: target.moduleFile,
           testFile: target.testFile,
+          ...(arm === "ralph"
+            ? { passes: PASSES, spawnCount: 0 }
+            : { iterations: ITERATIONS }),
           ...(arm === "skill"
             ? { workerSpawnsPerIteration: HEURISTICS.length, judgeSpawn: true }
             : {}),
         },
         sandbox,
         allowedTools: ["Task", "Read", "Write", "Edit", "Bash"],
+        ...(arm === "ralph" ? { passes: PASSES } : {}),
       });
     }
   }

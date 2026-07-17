@@ -45,6 +45,12 @@ export interface ManifestEntry {
   /** relative to phase-3/; initial mock-server state loaded before the run */
   mcpSeed?: string;
   allowedTools?: string[];
+  /**
+   * Ralph loop: run the SAME prompt this many times, each in a fresh session,
+   * sequentially against the SAME sandbox (default 1). No fan-out, no
+   * selection; whatever the last pass leaves is what ships.
+   */
+  passes?: number;
 }
 
 // ---------------------------------------------------------------------------

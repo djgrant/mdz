@@ -10,10 +10,15 @@
  * re-runs tests and benchmark afterwards; model-reported numbers are never
  * trusted (see ../score/e2a-score.ts).
  *
+ * A third variant, /optimise-ralph, is a ralph loop: the SAME single-pass
+ * prompt (same five strategy hints, no explore-then-select plan) run
+ * passes=3 times, each a fresh session against the same sandbox — iteration
+ * without kept alternatives or selection.
+ *
  * Targets are committed fixtures under fixtures/e2a/<target>/ — the source
  * of truth — and are copied verbatim into programs/ and the sandbox map.
  *
- * 2 targets x 2 variants = 4 manifest entries.
+ * 2 targets x 3 variants = 6 manifest entries.
  */
 
 import { readFileSync } from "node:fs";
@@ -33,6 +38,9 @@ const MAP_REDUCE_PATH = join(REPO_ROOT, "examples", "skills", "map-reduce.mdz");
 // The five strategy hints — identical, verbatim, in both command variants.
 // Each corresponds to real, measured headroom in both targets.
 // ---------------------------------------------------------------------------
+
+/** Ralph loop: fresh sessions per entry, same prompt, same sandbox. */
+export const PASSES = 3;
 
 export const STRATEGIES = [
   "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
@@ -145,6 +153,24 @@ passes) and report the winning strategy and its BENCH_MS.
 `;
 }
 
+/** Single-pass command for the ralph loop: same hints, no plan — re-running IS the plan. */
+function ralphCommand(t: E2aTarget): string {
+  const bullets = STRATEGIES.map((s) => `- ${s}`).join("\n");
+  return `# Optimise the program
+
+${framing(t)}
+
+Improve the program's benchmark time; the tests must pass. Strategies worth
+applying:
+
+${bullets}
+
+Edit ${t.targetFile} in place, keeping every exported name and all observable
+behaviour identical. Run ${t.testCommand} to confirm the tests still pass,
+then run ${t.benchCommand} and report the final BENCH_MS.
+`;
+}
+
 // ---------------------------------------------------------------------------
 // Prompts
 // ---------------------------------------------------------------------------
@@ -189,6 +215,19 @@ ${command}
 --- END COMMAND ---`;
 }
 
+function ralphPrompt(command: string): string {
+  return `You are a software agent running agentically in a working directory
+that contains a target program, its tests, and its benchmark. Follow the
+command below exactly.
+
+When finished, print the final BENCH_MS as your answer.
+
+Command (also available as ./commands/optimise-ralph.md):
+--- BEGIN COMMAND ---
+${command}
+--- END COMMAND ---`;
+}
+
 // ---------------------------------------------------------------------------
 // Build
 // ---------------------------------------------------------------------------
@@ -207,11 +246,20 @@ export function buildE2a(outDir: string): ManifestEntry[] {
       targetFiles[f] = readFileSync(join(FIXTURES_DIR, target.name, f), "utf8");
     }
 
-    for (const form of ["mdz", "goal"] as const) {
+    for (const form of ["mdz", "goal", "ralph"] as const) {
       const folder = join(dir, `${target.name}-${form}`);
       const commandRel =
-        form === "mdz" ? "commands/optimise.mdz" : "commands/optimise-goal.md";
-      const command = form === "mdz" ? mdzCommand(target) : goalCommand(target);
+        form === "mdz"
+          ? "commands/optimise.mdz"
+          : form === "goal"
+            ? "commands/optimise-goal.md"
+            : "commands/optimise-ralph.md";
+      const command =
+        form === "mdz"
+          ? mdzCommand(target)
+          : form === "goal"
+            ? goalCommand(target)
+            : ralphCommand(target);
       if (form === "mdz") assertValid(command, `e2a ${target.name} optimise.mdz`);
 
       const sandbox: Record<string, string> = {
@@ -230,10 +278,21 @@ export function buildE2a(outDir: string): ManifestEntry[] {
         runMode: "agentic",
         programPath: rel(join(folder, commandRel)),
         tracePath: null,
-        prompt: form === "mdz" ? mdzPrompt(command) : goalPrompt(command),
-        variant: { target: target.name, form, strategies: STRATEGIES.length },
+        prompt:
+          form === "mdz"
+            ? mdzPrompt(command)
+            : form === "goal"
+              ? goalPrompt(command)
+              : ralphPrompt(command),
+        variant: {
+          target: target.name,
+          form,
+          strategies: STRATEGIES.length,
+          ...(form === "ralph" ? { passes: PASSES } : {}),
+        },
         expected: {
-          spawnCount: STRATEGIES.length,
+          // Ralph never fans out: no plan asks it to spawn workers.
+          spawnCount: form === "ralph" ? 0 : STRATEGIES.length,
           strategies: [...STRATEGIES],
           targetFile: target.targetFile,
           testCommand: target.testCommand,
@@ -241,6 +300,7 @@ export function buildE2a(outDir: string): ManifestEntry[] {
         },
         sandbox,
         allowedTools: ALLOWED_TOOLS,
+        ...(form === "ralph" ? { passes: PASSES } : {}),
       });
     }
   }

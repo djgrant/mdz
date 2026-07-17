@@ -41,6 +41,7 @@ function normaliseEntry(raw: unknown): ManifestEntry {
     mcp: e.mcp,
     mcpSeed: e.mcpSeed,
     allowedTools: e.allowedTools,
+    passes: e.passes,
   };
 }
 
@@ -106,11 +107,15 @@ export interface Spawn {
   subagentType: string | null;
   prompt: string | null;
   description?: string | null;
+  /** Multi-pass (ralph) runs: 1-based index of the pass that produced this. */
+  pass?: number;
 }
 
 export interface ToolCall {
   name: string; // e.g. "mcp__ops__refund_issue"
   input: Record<string, unknown>;
+  /** Multi-pass (ralph) runs: 1-based index of the pass that produced this. */
+  pass?: number;
 }
 
 export interface TranscriptExtract {

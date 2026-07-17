@@ -49,3 +49,48 @@ test("handles an empty task list", () => {
     ["Empty", "=====", "0/0 done, 0h total"].join("\n"),
   );
 });
+
+test("honours a custom bullet and separator", () => {
+  assert.equal(
+    formatReport(SAMPLE, { bullet: "*", separator: "-" }),
+    [
+      "Sprint 4",
+      "--------",
+      "* [x] Write the parser (6h)",
+      "* [ ] Fix the flaky test (2h)",
+      "* [x] Ship the release (3h)",
+      "2/3 done, 11h total",
+    ].join("\n"),
+  );
+});
+
+test("renders the summary section when requested", () => {
+  assert.equal(
+    formatReport(SAMPLE, { sections: ["header", "summary", "tasks", "footer"] }),
+    [
+      "Sprint 4",
+      "========",
+      "Done: 2",
+      "Open: 1",
+      "Hours: 11h",
+      "- [x] Write the parser (6h)",
+      "- [ ] Fix the flaky test (2h)",
+      "- [x] Ship the release (3h)",
+      "2/3 done, 11h total",
+    ].join("\n"),
+  );
+});
+
+test("renders sections in the requested order", () => {
+  assert.equal(
+    formatReport(SAMPLE, { sections: ["footer", "header"] }),
+    ["2/3 done, 11h total", "Sprint 4", "========"].join("\n"),
+  );
+});
+
+test("rejects an unknown section", () => {
+  assert.throws(
+    () => formatReport(SAMPLE, { sections: ["appendix"] }),
+    /no renderer for section: appendix/,
+  );
+});

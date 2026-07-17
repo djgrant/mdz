@@ -88,11 +88,22 @@ remaining-step set. Cells: 4 tasks x 2 variants x 2 evidence levels x 2 kill poi
 Phase 2 tested map-reduce with toy consumers; spawn fidelity was the whole result. E2 asks
 whether the skill's real shape – diverge across alternatives, then select – produces work
 a single context does not. Two selection regimes: a benchmark (objective) and a judge
-(subjective). Both compare an MDZ consumer skill against a content-matched prose slash
-command, invoked identically in the harness sandbox; the delta cannot then be attributed
-to invocation mechanics. Prose variants state the same strategies and the same
-explore-then-select plan, and are free to fan out with subagents – the question is whether
-they do.
+(subjective). Each sub-experiment runs three content-matched variants, invoked identically
+in the harness sandbox so the delta cannot be attributed to invocation mechanics:
+
+- `skill` – the MDZ consumer skill: fan out, keep alternatives, select
+- `goal` – the same strategies and the same explore-then-select plan as a prose slash
+  command, free to fan out with subagents – the question is whether it does
+- `ralph` – a ralph loop: the same strategies as a single-pass instruction with no
+  explore-then-select plan, run three times, each a fresh session against the same
+  working directory. Each pass sees the previous pass's mutations; whatever the last
+  pass leaves is what ships
+
+The strategy strings are verbatim-identical across all three. Each variant isolates a
+mechanism: the skill both iterates and selects; the goal command holds the plan but not
+the notation; ralph iterates but cannot recover from a bad pass – no kept alternatives,
+no selection, so a regression in pass two ships unless pass three happens to undo it.
+The skill can recover, because selection over kept alternatives is part of its shape.
 
 #### E2a – optimise (objective selection)
 
@@ -103,14 +114,18 @@ in several directions (algorithm, caching, data structure, I/O batching).
   hints, one worker per strategy, `$reduce` = run tests and benchmark on every candidate,
   ship the fastest that passes
 - `/optimise-goal` – the same five hints and the same plan, as prose instructions
+- `/optimise-ralph` – the same five hints and the goal alone – improve the program's
+  benchmark time, tests must pass – run as three fresh sequential sessions in the same
+  sandbox. No candidates, no selection; re-running is the plan
 
 Headline metric: speedup of the shipped solution, scored by the harness re-running the
 benchmark (the model's own numbers are not trusted). Mechanism metrics from the trace:
 spawn count, distinct strategies pursued, whether the prose variant fanned out or tinkered
 sequentially. A tie on outcome splits informatively: tied-by-fanning-out means form is
 irrelevant and content suffices; tied-by-iterating means single-context iteration matches
-best-of-N, the more uncomfortable finding. Cells: 2 targets x 2 variants x 2 models
-(haiku, sonnet) x n=3 = 24 agentic runs.
+best-of-N, the more uncomfortable finding – and ralph sharpens that reading, because it
+iterates without ever holding alternatives. Cells: 2 targets x 3 variants x 2 models
+(haiku, sonnet) x n=3 = 36 agentic runs.
 
 #### E2b – simplify (subjective selection)
 
@@ -147,14 +162,24 @@ The judge spawn is load-bearing twice over: the coordinator has watched every it
 and would anchor on the trajectory, and the spawn itself is a scored behaviour – did the
 coordinator delegate the verdict or shortcut it inline.
 
-Targets: over-abstracted modules with passing test suites. Comparison: `/simplify` (the
-skill, n=3 iterations) vs `/simplify-goal` (same heuristics and plan in prose). Outcome
-scored by pairwise LLM judge (sonnet), order counterbalanced, both outputs presented with
-the original – the setup phase 2 validated. Mechanism metrics: spawn fidelity per
-iteration, judge-spawn presence, winner-index distribution (winners consistently mid-
-sequence is a finding about iterative self-editing on its own). Tests must still pass;
-a failing candidate loses regardless of the judge. Cells: 2 targets x 2 variants x
-2 models x n=3 = 24 agentic runs + judge calls.
+Targets: over-abstracted modules (~300–400 lines each) with passing test suites. The
+abstraction debt is layered – indirection wrapping duplication wrapping speculative
+generality – so that three successive rounds of genuine simplification are each
+productive: stripping the pipeline and renderer machinery exposes duplicated logic, and
+collapsing the duplication exposes never-used extension points. A target that exhausts
+its headroom in one pass would make the third iteration pure overshoot risk and the
+comparison trivial. Comparison: `/simplify` (the skill, n=3 iterations) vs
+`/simplify-goal` (same heuristics and plan in prose) vs `/simplify-ralph` (same
+heuristics as a single-pass instruction, no iterate/select plan, run as three fresh
+sequential sessions in the same sandbox – each pass simplifies whatever the previous
+pass left, and the last pass ships unjudged). Outcome scored by pairwise LLM judge
+(sonnet), order counterbalanced, both outputs presented with the original – the setup
+phase 2 validated. Mechanism metrics: spawn fidelity per iteration, judge-spawn
+presence, winner-index distribution (winners consistently mid-sequence is a finding
+about iterative self-editing on its own); ralph rows carry none of these – no kept
+alternatives, no judge, no winner – which is exactly the mechanism it isolates. Tests
+must still pass; a failing candidate loses regardless of the judge. Cells: 2 targets x
+3 variants x 2 models x n=3 = 36 agentic runs + judge calls.
 
 ### E3 – external state at breakdown sizes
 
@@ -175,12 +200,18 @@ Deviation detection – can a checker diff a captured trace against the artefact
 injected fault – is the audit-substrate bet, and becomes the flagship only if E1 comes
 back null. Not built in this phase.
 
+The E2 targets are synthetic for now; a real-world codebase target is a candidate for a
+later phase.
+
 ## Result records
 
 Phase-2 schema unchanged: `transcriptPath`, `spawns`, `toolCalls`, `judge`, plus phase-3
 fields where an experiment needs them (`killPoint`, `evidence`, `benchmarkMs`,
-`winnerIndex`). Budget: ~280 agentic runs + judge calls, haiku-dominated; sonnet where the
-task needs real coding.
+`winnerIndex`). Ralph entries carry `passes` in the manifest; the harness runs that many
+fresh sequential sessions in one sandbox and emits a single record, spawns and tool calls
+tagged with their pass. Budget: ~300 agentic runs + judge calls (a ralph run is three
+sessions, so the call count runs higher than the record count), haiku-dominated; sonnet
+where the task needs real coding.
 
 ## The report
 
