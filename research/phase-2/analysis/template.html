@@ -227,12 +227,14 @@
   if (!dataEl) return;
   var DATA = JSON.parse(dataEl.textContent);
   var COLS = {
-    e1: ["id", "model", "mode", "condition", "halted", "executed_past", "step_accuracy"],
+    e1: ["id", "model", "mode", "grammar", "condition", "halted", "executed_past", "step_accuracy"],
     e2: ["id", "model", "variant", "mechanism", "n_spawns", "expected_spawns",
          "item_coverage", "lambda_fidelity", "aggregation"],
     e3: ["id", "model", "arm", "size", "n_sets", "ref_assigns", "assign_acc",
          "emit_acc", "completion_tokens"],
-    e4: ["id", "model", "arm", "compliant", "adherence", "note"]
+    e3b: ["id", "model", "arm", "size", "chunks", "n_spawns", "n_sets", "n_gets",
+          "ref_assigns", "assign_acc", "emit_acc", "completion_tokens"],
+    e4: ["id", "model", "arm", "depth", "compliant", "adherence", "note"]
   };
   var state = { exp: "e1", sort: null, dir: 1 };
   var wrap = document.getElementById("runs-table");

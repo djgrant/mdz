@@ -1,16 +1,16 @@
 <section id="procedure">
 <span class="qref">Research question 3: do procedures steer, or relabel?</span>
-<h2><span class="secno">Experiment 4:</span>The procedure arm passed 18/20; the goal arm 7/20</h2>
+<h2><span class="secno">Experiment 4:</span>Content steers, not form: declarative rules matched the procedure 66/66</h2>
 
 <p>Phase 1's steering result used contrived constraints – one-syllable words,
-ROT13. E4 was the real-world version: ten tasks where the written policy demanded
-a different outcome from the one a helpful model reaches on its own. The question
-was whether a procedure changed what the model produced or merely relabelled what
-it would have done anyway. Here is one of the ten tasks in full.</p>
+ROT13. E4 was the real-world version: eleven tasks where the written policy
+demanded a different outcome from the one a helpful model reaches on its own. The
+question was whether a procedure changed what the model produced or merely
+relabelled what it would have done anyway. Here is one of the tasks in full.</p>
 
 <h3>One task, end to end: refund-edge</h3>
 
-<p>Each task ran under two arms: arm A gave the policy as an MDZ procedure, arm B
+<p>The first draft ran two arms: arm A gave the policy as an MDZ procedure, arm B
 gave only the goal. Both received the same customer message and account data:</p>
 
 <pre><code class="nohighlight">Customer message: "Hi — I renewed my subscription 16 days ago, but I
@@ -93,11 +93,60 @@ your renewal now.
 Decision: approved</code></pre></div>
 </div>
 
-<p>Arm B's reply is a <em>good</em> support reply. It is also a policy violation,
-and both models produced it whenever the policy wasn't in front of them. The
-other nine tasks followed the same pattern – an escalation order that skips the
-obvious first step, a retention rule that forbids a helpful deletion confirmation –
-each engineered so the policy outcome and the helpful outcome differ.</p>
+<p>Arm B's reply is a <em>good</em> support reply. It is also a policy violation.
+The first draft's headline – 18/20 for the procedure arm against 7/20 for the
+goal arm – read this gap as "procedures steer". Both numbers were wrong, for
+different reasons.</p>
+
+<h3>Failing one: arm B was a strawman</h3>
+
+<p>Look again at arm B's prompt. The 14-day rule and the goodwill prohibition
+appear nowhere in it. The comparison therefore showed that models cannot comply
+with a policy they were never shown – trivially true, and no evidence about
+form. The variant the question needed gives the model the same requirements
+declaratively – every rule the procedure encodes, stated as policy bullets, with
+no step-by-step skeleton. That is arm C:</p>
+
+<div class="cols">
+  <div><div class="cols-label">arm C · the same policy as declarative rules</div>
+<pre><code class="nohighlight">You are a customer support agent.
+Handle the refund request in the
+input in compliance with the refund
+policy below. The policy is
+exhaustive; do not add exceptions.
+
+- Refunds are available only within
+  14 days of renewal; requests
+  outside that window are denied.
+- Do not offer a goodwill credit,
+  voucher, discount, or partial
+  refund of any kind, regardless of
+  the circumstances or the
+  customer's tenure.
+- Reply to the customer politely.</code></pre></div>
+  <div><div class="cols-label">what each arm now tests</div>
+<pre><code class="nohighlight">A · procedure   policy content
+                + procedural form
+C · rules       policy content only
+B · goal        neither – kept as
+                the no-content
+                lower bound
+
+The Q3 comparison is A vs C:
+does the step-by-step FORM add
+compliance beyond the content?</code></pre></div>
+</div>
+
+<p>If declarative rules break down anywhere, it should be where constraints
+interact – ordering, precedence, exceptions to exceptions – so each task carries
+a constraint-interaction <strong>depth</strong> tag: 1 for flat rules, 2 for one
+ordering or interaction constraint, 3 for ordered gates with precedence and an
+exception-to-an-exception. The re-run added a depth-3 task,
+<code>return-eligibility</code>: recall check overrides everything, missing proof
+of purchase blocks the defect claim from even being discussed, a first defect is
+replaced never refunded, a <em>second</em> defect is refunded never replaced.
+Prompt length cannot be matched across forms – skeleton tokens are not free –
+so content parity, not length, is the control.</p>
 
 <h3>How runs were scored</h3>
 
@@ -120,43 +169,66 @@ together – answered one question about process rather than outcome:</p>
 - 0: the output ignores the procedure (it may still be a
      plausible answer)</code></pre>
 
-<p>Given the procedure, models passed the checker 18/20 and got every decision
-right, 20/20. Given only the goal, they passed 7/20. The judge scored the
-procedure arm 1.95 out of 2 on process adherence against 0.6 for the goal arm. The
-gap held on both models. The two procedure-arm misses were grading errors, unpacked
-at the end of this section.</p>
+<h3>Failing two: the checker graded fidelity as violation</h3>
+
+<p>The first draft's 18/20 was a grader artefact. The hiring-screen procedure
+contains the note "the candidate must not be shortlisted pending later proof";
+that task's checker forbade any output matching <code>/shortlist/i</code>. Both
+models produced the correct decision and faithfully relayed the procedure's own
+warning – and the checker read the echo as a violation. Re-scoring found three
+artefact classes and fixed each: forbid patterns are now split into absolute
+(mere mention violates, e.g. disclosing a cap) and affirmative-only
+(negation-aware, so "I'm unable to offer a goodwill credit" is not an offer); the
+decision line matches inline as a fallback; and curly apostrophes normalise
+before matching. Echo-regression fixtures pin the behaviour in tests. Under the
+fixed checkers, the original procedure arm's decisions were 20/20 all along.</p>
+
+<h3>The corrected result: form adds nothing that content did not already add</h3>
+
+<p>The re-run: 11 tasks × 3 arms × 2 models (haiku, GPT&#8209;5.4&nbsp;mini) ×
+n=3 – 198 runs, each checked and judged. The procedure arm passed the checker
+66/66. So did the rules arm, 66/66. The goal arm passed 25/66. The judge agreed:
+process adherence 1.97 for the procedure, 2.00 for the rules, 0.71 for the
+goal.</p>
 
 <figure>
-  <img src="assets/e4-compliance.png" alt="Compliance and adherence by arm">
-  <figcaption><b>Figure 7.</b> Checker pass rate and judge score by arm, per
-  model.</figcaption>
+  <img src="assets/e4-compliance.png" alt="Checker pass rate and judge adherence by arm and model">
+  <figcaption><b>Figure 9.</b> Checker pass rate and judge adherence score by
+  arm, per model, n=33 per cell. The procedure and rules arms are
+  indistinguishable; the goal arm – the no-content lower bound – trails on
+  both instruments.</figcaption>
 </figure>
-
-<p>The goal arm passed exactly the tasks where the policy matched what a fair-minded
-assistant would do anyway – password resets, a change freeze. Wherever the policy
-demanded an outcome harsher
-or more restrictive than the helpful default, it converged on its defaults, on
-both models.</p>
 
 <figure>
-  <img src="assets/e4-tasks.png" alt="Per-task compliance, goal vs procedure">
-  <figcaption><b>Figure 8.</b> Checker pass rate by task, models pooled.</figcaption>
+  <img src="assets/e4-tasks.png" alt="Per-task compliance by arm">
+  <figcaption><b>Figure 10.</b> Checker pass rate by task, models pooled. The
+  procedure and rules dots sit at 1.0 on every task, overlapping; the goal arm
+  passes only where the policy matches what a fair-minded assistant does
+  anyway.</figcaption>
 </figure>
 
-<p>The judge and the checker also disagreed in one instructive direction: one
-goal-arm run passed the checker with a judge score of 0 – the right
-expense-approval outcome reached by a route the procedure did not sanction.
-Outcome-checking alone would have called that compliance.</p>
+<p>The depth curve is where the hypothesis went to die. If procedural form earns
+its keep on interacting constraints, the A–C gap should open as depth rises. It
+stays at zero: both arms are 1.0 at depths 1, 2, and 3, including on
+<code>return-eligibility</code>'s exception-to-an-exception, where the goal arm
+manages 3/6.</p>
 
-<h3>The two failures are the grader's, not the models'</h3>
+<figure>
+  <img src="assets/e4-depth.png" alt="Compliance by constraint-interaction depth">
+  <figcaption><b>Figure 11.</b> Checker pass rate by constraint-interaction
+  depth, models and tasks pooled. Flat at 1.0 for both content-bearing arms;
+  a null at depth 1 was expected, a null at depth 3 was not.</figcaption>
+</figure>
 
-<p>The hiring-screen procedure contains the note "the candidate must not be
-shortlisted pending later proof"; that task's checker forbids any output matching
-<code>/shortlist/i</code>. Both models produced the correct decision – not
-eligible – and faithfully relayed the procedure's own warning, echoing the word
-"shortlisted". The checker read the echo as a violation; the judge, seeing
-procedure and output together, scored both runs 2/2.</p>
+<p>The checker and the judge still disagreed in one instructive direction: three
+goal-arm runs passed the checker with a judge score of 0 – the right outcome
+reached by a route the procedure did not sanction. Outcome-checking alone would
+have called those compliance.</p>
 
-<p>On decisions alone the procedure arm went 20/20; the 18/20 headline is the
-checker punishing fidelity.</p>
+<div class="verdict">The first draft's verdict – "procedures steer, not relabel"
+– does not survive its controls. Steering was carried entirely by policy
+content; at every depth tested, models given the rules declaratively complied as
+completely as models walked through them step by step. The case for procedural
+form has to rest on what the rest of this report measures – enforcement (§1),
+delegation (§2), traceable state (§3b) – not on compliance.</div>
 </section>

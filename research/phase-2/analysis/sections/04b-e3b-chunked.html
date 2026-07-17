@@ -1,0 +1,47 @@
+<section id="store-loadbearing">
+<span class="qref">Research question 5, redesigned: make the store load-bearing</span>
+<h2><span class="secno">Experiment 3b:</span>The store carries signal across a context boundary; it does not extend the ceiling</h2>
+
+<p>E3b removes the option E3 left open. The same generated programs, at 100 and
+200 statements, are split into ~25-statement chunks (never inside a block), and an
+orchestrator spawns one worker per chunk, sequentially. A worker sees only its own
+chunk. A variable assigned in chunk 1 and read in chunk 3 is therefore
+recoverable only through <code>mcp__state__get</code>, and a skipped
+<code>mcp__state__set</code> breaks every later chunk that needs the value.
+Non-compliance now shows up as wrong answers on the primary metric, rather than
+as gaps in a log the model was asked to keep.</p>
+
+<p>Two arms per program: <code>chunked-store</code>, where workers get the state
+tools, and <code>chunked-nostore</code>, where the same chunked workers must
+guess cross-chunk values – the control that shows whether the store is doing the
+work. E3's internal arm, run on the same generator, sizes, and seeds, is the
+whole-context baseline. 24 agentic runs: 2 sizes × 2 seeds × 2 arms × n=3, all
+haiku.</p>
+
+<p>The store is used this time, because it has to be: store-arm runs averaged 29
+<code>set</code> calls at size 100 and 30.5 at 200, with 9 and 20.5
+<code>get</code> calls – against E3's handful of journalled writes and 0–4 reads.
+That log also finally delivers what E3 promised: a mechanically captured assign
+trace, scoring 0.68 at size 100 and 0.41 at 200.</p>
+
+<figure>
+  <img src="assets/e3b-chunked.png" alt="Chunked execution: store vs no-store emit accuracy, and assign accuracy from the set log">
+  <figcaption><b>Figure 8.</b> Chunked execution, haiku, n=6 per cell. Left: emit
+  accuracy, store arm vs no-store control, by program size. Right: assign
+  accuracy read mechanically from the <code>set</code> log (the no-store arm has
+  no log to score).</figcaption>
+</figure>
+
+<p>Two results, pulling in opposite directions. First, the store beats guessing:
+emit accuracy 1.0 vs 0.94 at size 100, and 0.82 vs 0.78 at 200. The gap is real
+signal crossing a context boundary that nothing else carries. Second, the store
+does not extend the ceiling: chunked+store at 200 statements scores 0.82 on
+emits, where E3's whole-context internal arm scores 1.0 on the same programs.
+Cutting execution into chunks costs more than the store recovers.</p>
+
+<p>One caveat bounds the claim. At these sizes the internal baseline's emits do
+not degrade at all, so there is nothing for the store to rescue – E3b measures
+the overhead of externalising state, not its rescue value. The follow-up is to
+run the same design at sizes where whole-context execution actually breaks
+(400+ statements); that is deferred to the next phase.</p>
+</section>

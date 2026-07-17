@@ -1,6 +1,6 @@
 <section id="delegation">
 <span class="qref">Research question 4: do parameters bind across boundaries?</span>
-<h2><span class="secno">Experiment 2:</span>Delegation held; the two failures were routing and refusal</h2>
+<h2><span class="secno">Experiment 2:</span>Binding held everywhere; the aggregation zero was a refusal the probe provoked</h2>
 
 <p>E2 tested delegation: one MDZ document calling another that fans work out to
 subagents.</p>
@@ -60,17 +60,19 @@ session transcript to see what each worker received.</p>
 <p>Each item carried a <em>canary token</em> – a unique string such as
 <code>CANARY-E2-inline-3-1</code>, planted in the item text. Counting these tokens
 in the worker prompts and in the final answer shows which items reached a worker
-and which survived into the output. Four consumer variants supplied the item list
-differently; the figures below label them.</p>
+and which survived into the output. Five consumer variants supplied the item list
+differently; the fifth, <code>lambda-fidelity-neutral</code>, was added after the
+first draft, for reasons unpacked below.</p>
 
-<p>The finding: parameter binding held in all 24 runs. Every item reached a worker
-with its payload intact, and all six lambda runs delivered the instruction
-verbatim. Two runs still failed to deliver a result – one from a routing error
-before delegation, one from a worker refusal after it – examined below.</p>
+<p>The finding: parameter binding held in all 30 runs. Every item reached a
+delegation attempt with its payload intact, and all twelve lambda runs delivered
+the instruction verbatim. The failures sit elsewhere – haiku routing SPAWN to the
+wrong tool in 4 of 15 runs, and one variant's workers refusing a payload the
+probe itself made suspicious.</p>
 
 <figure>
   <img src="assets/e2-fidelity.png" alt="Delegation fidelity by consumer variant">
-  <figcaption><b>Figure 3.</b> Delegation metrics by consumer variant and model,
+  <figcaption><b>Figure 4.</b> Delegation metrics by consumer variant and model,
   n=3 per cell. <em>Spawn fidelity</em> = workers spawned per item; <em>item
   coverage</em> = items reaching exactly one worker; <em>payload coverage</em> =
   items reaching any delegation attempt; <em>aggregation</em> = items surviving
@@ -78,21 +80,21 @@ before delegation, one from a worker refusal after it – examined below.</p>
 </figure>
 
 <p>Sonnet ran at or near ceiling everywhere; its one imperfect cell spawned six
-workers for five items, duplicating one rather than losing it. Haiku's two low
-cells have distinct causes, below.</p>
+workers for five items, duplicating one rather than losing it. Haiku's low cells
+have two distinct causes, below.</p>
 
 <figure>
   <img src="assets/e2-mechanism.png" alt="Delegation mechanism per run">
-  <figcaption><b>Figure 4.</b> Delegation mechanism per run. No run on either model
-  answered inline.</figcaption>
+  <figcaption><b>Figure 5.</b> Delegation mechanism per run, 15 runs per model.
+  No run on either model answered inline.</figcaption>
 </figure>
 
 <h3>Failure one: SPAWN routed to the wrong tool</h3>
 
-<p>In two haiku runs, SPAWN was pattern-matched onto the harness's todo tools: the
-model created <code>TaskCreate</code> items instead of spawning workers, so the
-binding resolved correctly (payload coverage 1.0) but nothing ran (spawn fidelity
-0).</p>
+<p>In four haiku runs – two inline, two in the neutral lambda variant – SPAWN was
+pattern-matched onto the harness's todo tools: the model created
+<code>TaskCreate</code> items instead of spawning workers, so the binding resolved
+correctly (payload coverage 1.0) but no worker ran (spawn fidelity 0).</p>
 
 <details class="example">
   <summary>A SPAWN payload landing in a todo item</summary>
@@ -104,17 +106,17 @@ binding resolved correctly (payload coverage 1.0) but nothing ran (spawn fidelit
   The northern warehouse reports a stock surplus of 400 units.
   CANARY-E2-inline-3-1" }</code></pre>
     <p>The executor preamble named the <code>Task</code> tool explicitly, and
-    haiku still misrouted 2 of 12 runs.</p>
+    haiku still misrouted 4 of 15 runs.</p>
   </div>
 </details>
 
-<h3>Failure two: workers refused the payload</h3>
+<h3>Failure two: workers refused the payload – because the probe read as an attack</h3>
 
-<p>The lambda-fidelity variant's <code>$map</code> instruction asked workers to cite
-a phrase with no real referent, <code>PATTERN-BLUE-VERIFICATION</code> – bait for a
-prompt-injection response. Both models delivered the lambda verbatim, but haiku's
-workers refused it as an injection in all three runs (aggregation 0), while
-sonnet's flagged the suspicion and complied.</p>
+<p>The lambda-fidelity variant's <code>$map</code> instruction asked workers to
+cite a phrase with no real referent, <code>PATTERN-BLUE-VERIFICATION</code>. Both
+models delivered the lambda verbatim, but haiku's workers refused it as a prompt
+injection in all three runs (aggregation 0), while sonnet's flagged the suspicion
+and complied.</p>
 
 <details class="example">
   <summary>Sonnet's reduce, with the probe called out</summary>
@@ -131,4 +133,19 @@ probe embedded in the map instruction</code></pre>
     returned no classifications at all.</p>
   </div>
 </details>
+
+<p>The first draft reported that zero as a delegation failure. It was a design
+failing: a codephrase with no referent is exactly what an injection marker looks
+like, so the probe confounded binding fidelity with worker compliance. The
+<code>lambda-fidelity-neutral</code> variant repeats the probe with an innocuous
+marker phrase (<code>reviewed-for-the-weekly-digest</code>); the original variant
+is kept as the contrast case.</p>
+
+<p>With the neutral marker: lambda fidelity 1.0, aggregation 1.0, zero refusals,
+on both models. The zero was worker refusal, not a binding failure, and the
+binding verdict reverses to a clean pass. What survives is the
+delegation-fidelity concern: haiku dispatched to real workers in only 1 of its 3
+neutral runs – the other two are among the misrouted four above – while sonnet
+spawned in 3 of 3. The payload always arrives intact; whether a worker exists to
+receive it is the small-model failure mode.</p>
 </section>

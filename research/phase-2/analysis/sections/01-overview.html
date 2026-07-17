@@ -45,11 +45,22 @@ unchanged from phase 1: <strong>step accuracy</strong>, the fraction of the
 reference trace the model reproduced in order.</p>
 
 <p>Fuzzy leaves – the prose work a step asks for – were scored by an LLM judge
-(Claude Sonnet, 40 calls, order counterbalanced) that saw the procedure and the
-output together; §4 shows the exact question it was asked.</p>
+(Claude Sonnet, one call per E4 run, 198 in all, order counterbalanced) that saw
+the procedure and the output together; §4 shows the exact question it was
+asked.</p>
 
 <p>Claude Haiku and GPT&#8209;5.4&nbsp;mini carried most cells, with Sonnet running
 anchor cells – reference runs on a stronger model, used to sanity-check the
 cheap-model results. The practical target is procedures that run on cheap models,
 so that is where the evidence should come from.</p>
+
+<p>One more method note: this report was written twice. Review of the first draft
+found five design failings – a strict mode judged without being given the grammar
+(§1), a lambda probe that read as a prompt injection (§2), a store the model was
+free to ignore (§3), a goal arm never shown the policy it was scored against (§4),
+and a checker that punished faithful echoes of a procedure (§4). Each affected
+experiment was re-run or re-scored, and three headline claims changed. The
+sections below present the original result, the failing, and the corrected number
+in sequence – in a report arguing that execution needs checking, the corrections
+are part of the evidence.</p>
 </section>

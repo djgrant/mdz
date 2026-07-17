@@ -2,17 +2,30 @@
 <h2>Limitations</h2>
 
 <ul>
-  <li><strong>Cell sizes are small.</strong> Most cells are n=3–6; E4 ran each
-  task once per model per arm. The headline gaps (0/21 vs 10/10 halts; 18/20 vs
-  7/20 compliance) survive the noise; the finer rates – haiku's 2-in-12
-  misrouting, GPT's 1-in-10 wrongly halted clean run – are order-of-magnitude
-  estimates.</li>
+  <li><strong>Cell sizes are small.</strong> Most cells are n=3–6. The headline
+  gaps (0/21 vs 10/10 halts; 66/66 vs 25/66 compliance) survive the noise; the
+  finer rates – haiku's 4-in-15 misrouting, GPT's 1-in-10 wrongly halted clean
+  run – are order-of-magnitude estimates.</li>
+
+  <li><strong>E4's null is bounded by its tasks.</strong> A vs C found no gap at
+  constraint-interaction depths 1–3, on single-turn tasks with the policy fully
+  stated. That rules out form effects at these depths; it says nothing about
+  longer policies, multi-turn execution, or depths past 3, where a declarative
+  form may yet degrade first. Arm B remains a strawman by design – it is the
+  no-content lower bound, not a fair comparison.</li>
 
   <li><strong>The internal arm still relied on self-reporting.</strong> E3's
   comparability baseline inherited the phase-1 confound – a run that executes
   correctly while its self-reported trace omits assignments – and one sonnet run
   exhibited it. Haiku's 1.0s are trustworthy only because they are perfect; a
-  lower self-reported score would be ambiguous.</li>
+  lower self-reported score would be ambiguous. E3b closes this for the chunked
+  arms: its assign trace is the harness's own <code>set</code> log.</li>
+
+  <li><strong>E3b bounds overhead, not rescue.</strong> At 100–200 statements the
+  whole-context baseline's emits do not degrade, so there is nothing for the
+  store to rescue and the comparison can only measure what chunking costs.
+  Whether external state extends execution at sizes where whole-context
+  execution actually breaks (400+) is untested.</li>
 
   <li><strong>Store-arm scoring has a formatting component.</strong>
   <code>set</code> values arrived as strings; numeric strings were coerced before
@@ -20,15 +33,19 @@
   as mismatches. This depressed store-arm assign accuracy by a few points; the
   dominant failure remained the missing calls.</li>
 
-  <li><strong>One checker was wrong.</strong> The hiring-screen forbidden-content
-  regex punished faithful echoes of the procedure (§4). I report the checker&#8217;s
-  18/20 as the headline and the corrected 20/20 in prose; other checkers may
-  harbour subtler versions of the same artefact.</li>
+  <li><strong>The checkers needed a correction pass, and may need another.</strong>
+  Re-scoring found three artefact classes – forbid patterns hitting negated
+  echoes, decision lines missed when inline, curly apostrophes defeating string
+  matches – all in the direction of punishing compliant output. Each is fixed and
+  pinned by echo-regression fixtures, but the pass that found them was manual;
+  subtler artefacts may remain.</li>
 
-  <li><strong>The lambda-fidelity probe confounded two things.</strong> Making
-  the payload resemble an injection attack tested worker compliance as much as
-  binding fidelity (§2). Binding was measured cleanly – the payloads are in the
-  transcripts; aggregation under that variant was not.</li>
+  <li><strong>The original lambda probe is kept, not counted.</strong>
+  <code>PATTERN-BLUE-VERIFICATION</code> confounded binding fidelity with worker
+  compliance (§2); the neutral re-run separates them. The original variant stays
+  in the corpus as a contrast case – an accidental measurement of how small
+  models treat injection-shaped payloads – and contributes nothing to the
+  binding verdict.</li>
 
   <li><strong>USE remains unobservable.</strong> USE – the notation's inline
   skill call – produces no natural event for the harness to record; at best a
@@ -36,8 +53,8 @@
   an open question.</li>
 
   <li><strong>Model coverage is narrow.</strong> Haiku carried most cells by
-  design; GPT&#8209;5.4&nbsp;mini appeared in E1 and E4, and sonnet ran a small
-  number of anchor cells in E2 and E3. Cross-family claims (e.g. that misrouting
+  design; GPT&#8209;5.4&nbsp;mini appeared in E1 and E4, sonnet ran anchor cells
+  in E2 and E3, and E3b is haiku-only. Cross-family claims (e.g. that misrouting
   is a small-model behaviour) rest on one model per family.</li>
 </ul>
 </section>

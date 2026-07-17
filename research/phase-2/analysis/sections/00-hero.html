@@ -3,8 +3,10 @@
   <h1>Accountable execution</h1>
   <p class="sub">Phase 1 showed that models can execute MDZ programs. Phase 2 tested
   whether that execution can be checked from traces the harness recorded rather than
-  the model reported. 147 scored runs across four experiments, on three models plus a
-  judge, for $6.71 of API spend.</p>
+  the model reported. 385 scored runs across five experiments, on three models plus a
+  judge, for $12.69 of metered API spend. Review of the first draft found five design
+  failings; the affected experiments were re-run or re-scored, and each section
+  narrates its correction in place.</p>
   <p class="meta">July 2026 · Daniel Grant ·
     <a href="https://github.com/djgrant/mdz/tree/main/research">djgrant/mdz/research</a> ·
     <a href="https://github.com/djgrant/mdz/blob/main/research/RESEARCH.md">research brief</a></p>
@@ -18,7 +20,8 @@
     <li><a href="#strict">1 · Strict mode</a></li>
     <li><a href="#delegation">2 · Delegation</a></li>
     <li><a href="#store">3 · State store</a></li>
-    <li><a href="#procedure">4 · Procedure vs goal</a></li>
+    <li><a href="#store-loadbearing">3b · Load-bearing store</a></li>
+    <li><a href="#procedure">4 · Procedure vs form</a></li>
     <li><a href="#size">5 · The size ceiling</a></li>
     <li><a href="#limitations">Limitations</a></li>
     <li><a href="#verdicts">Results</a></li>

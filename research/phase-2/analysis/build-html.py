@@ -27,7 +27,7 @@ body = re.sub(r'src="(assets/[^"]+\.png)"', inline_asset, body)
 
 runs = {
     exp: json.loads((HERE / f"{exp}-scored.json").read_text())
-    for exp in ("e1", "e2", "e3", "e4")
+    for exp in ("e1", "e2", "e3", "e3b", "e4")
     if (HERE / f"{exp}-scored.json").exists()
 }
 body = body.replace("{{RUNS_JSON}}", json.dumps(runs))

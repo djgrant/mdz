@@ -3,8 +3,8 @@
 <h2><span class="secno">Corpus-wide:</span>The phase-1 slip at 200 statements did not recur</h2>
 
 <p>Phase 2 ran no dedicated size experiment; every record carries size metadata,
-and the size question was read off the whole corpus. Two observations came out of
-it.</p>
+and the size question was read off the whole corpus. Three observations came out
+of it.</p>
 
 <p>First, the phase-1 slip did not reproduce. Phase 1 measured step accuracy
 slipping from ~0.99 at 100 statements to 0.92 at 200. E3's internal arm re-ran
@@ -12,9 +12,16 @@ that setup and haiku scored 1.0 on assigns and emits in all eight runs, at both
 sizes. The sample is small – two seeds, one model.</p>
 
 <p>Second, the runs that went wrong – SPAWN calls sent to the wrong tool (§2),
-payloads the workers refused as an attack (§2), assignments never written to the
-store (§3), the one clean program wrongly halted (§1) – all went wrong on
-programs well inside the executable range. The brief's concern that tool-heavy
-statements would drag the ceiling down found no support: E2's agentic programs
-were statement-light and tool-heavy, and their skeletons executed at ceiling.</p>
+payloads the workers refused (§2), assignments never written to the store (§3),
+the clean programs wrongly halted (§1) – all went wrong on programs well inside
+the executable range. The brief's concern that tool-heavy statements would drag
+the ceiling down found no support: E2's agentic programs were statement-light and
+tool-heavy, and their skeletons executed at ceiling.</p>
+
+<p>Third, the only size-linked degradation phase 2 observed required a context
+boundary to produce. E3b's chunked arms lose emit accuracy from 100 to 200
+statements (1.0 to 0.82 with the store, 0.94 to 0.78 without) while the
+whole-context baseline holds 1.0 on the same programs (§3b). Within one context,
+size did not break execution anywhere in the tested range; splitting the context
+is what cost.</p>
 </section>

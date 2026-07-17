@@ -66,13 +66,13 @@ simply never written to the store.</p>
 
 <figure>
   <img src="assets/e3-store.png" alt="Internal vs store arm accuracy and tokens">
-  <figcaption><b>Figure 5.</b> Haiku, internal vs store arm: assign accuracy, emit
+  <figcaption><b>Figure 6.</b> Haiku, internal vs store arm: assign accuracy, emit
   accuracy, and completion tokens.</figcaption>
 </figure>
 
 <figure>
   <img src="assets/e3-journal.png" alt="Set calls made vs assignments required per run">
-  <figcaption><b>Figure 6.</b> Store arm, per run: <code>set</code> calls made
+  <figcaption><b>Figure 7.</b> Store arm, per run: <code>set</code> calls made
   against the assignments the reference trace requires.</figcaption>
 </figure>
 
@@ -87,4 +87,10 @@ completion tokens at 200 statements (10,177 vs 19,395 for internal).</p>
 its emits were perfect – the phase-1 confound again: a run that executed correctly
 but whose self-reported trace omitted assignments, so the score understated the
 execution.</p>
+
+<p>The first draft closed research question 5 here, as "not answerable with this
+design". The negative is real, but it is a finding about compliance, not about
+state: a store the model is free to ignore measures adherence to a recording
+instruction, and the models could ignore it because their own context still held
+every value. The redesign below takes the context away.</p>
 </section>

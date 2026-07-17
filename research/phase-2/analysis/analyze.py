@@ -365,7 +365,7 @@ def chart_e2_mechanism(df: pd.DataFrame):
     counts.plot.barh(ax=ax, stacked=True, color=[C_A, C_B, C_C])
     ax.grid(axis="x")
     ax.grid(False, axis="y")
-    ax.set_title("Delegation mechanism per run (n=12 per model)")
+    ax.set_title(f"Delegation mechanism per run (n={len(df[df.model == df.model.iloc[0]])} per model)")
     ax.set_xlabel("runs")
     ax.set_ylabel("")
     ax.legend(title="", loc="upper left", bbox_to_anchor=(1.02, 1.0))

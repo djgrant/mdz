@@ -1,37 +1,49 @@
 <section id="verdicts">
 <h2>Results against the research brief</h2>
 
+<p>Three of the five verdicts changed between drafts; the table gives the
+corrected result, with the superseded reading in brackets where one existed.</p>
+
 <table>
   <tr><th style="width: 34%">Question</th><th>Phase-2 result</th></tr>
   <tr>
     <td>Q1 — can notation enforce integrity (halt, not repair)?</td>
-    <td>Split by fault class. The pragma flipped wrong type annotations from
-    silent coercion to a 10/10 halt, with one clean run in ten wrongly halted on
-    one model. Syntax faults halted 1/10 (§1).</td>
+    <td>Yes, when the grammar is in context. Strict+grammar halted 10/10 on
+    syntax faults and 10/10 on type faults, with no false halts and no accuracy
+    tax (0.994 vs 0.989); default+grammar still repaired, so the directive does
+    the flipping, not grammar knowledge (§1). (Superseded: "types halt, syntax
+    does not" – the model had never been given the grammar.)</td>
   </tr>
   <tr>
     <td>Q2 — where does size break execution?</td>
-    <td>No breaking point appeared within the tested range. The phase-1 slip at
-    200 statements did not reproduce, and every observed failure occurred on
-    programs well inside the executable range (§5).</td>
+    <td>No breaking point appeared within one context in the tested range; the
+    phase-1 slip at 200 did not reproduce. The only size-linked degradation
+    required a context boundary: E3b's chunked arms lose accuracy from 100 to
+    200 while the whole-context baseline holds 1.0 (§5).</td>
   </tr>
   <tr>
     <td>Q3 — do procedures steer, or relabel?</td>
-    <td>The procedure arm passed the checker 18/20 (20/20 on decisions) against
-    7/20 for the goal arm, with the gap concentrated on tasks where policy
-    contradicts the helpful default; judge adherence 1.95 vs 0.6 (§4).</td>
+    <td>Content steers, not form. The content-matched declarative arm equalled
+    the procedure – 66/66 vs 66/66 on decisions, judge adherence 2.00 vs 1.97 –
+    at every constraint-interaction depth up to 3; the goal arm (25/66) had
+    never been shown the policy (§4). (Superseded: "procedures steer, 18/20 vs
+    7/20" – a strawman comparison scored by a faulty checker.)</td>
   </tr>
   <tr>
     <td>Q4 — do parameters bind across skill/agent boundaries?</td>
-    <td>Payload and lambda fidelity were 1.0 on both models, through a
+    <td>Yes: payload and lambda fidelity were 1.0 on both models, through a
     higher-order skill into real subagent fan-out. The observed failures were
-    tool routing and worker refusal (§2).</td>
+    haiku's tool misrouting and a worker refusal the probe itself provoked (§2).
+    (Superseded: an aggregation zero read as a delegation failure.)</td>
   </tr>
   <tr>
     <td>Q5 — does external state extend executable size?</td>
-    <td>Not answerable with this design: models did not maintain instructed
-    journalling, so a voluntary store neither extended size nor provided the
-    audit trail (§3).</td>
+    <td>Not at the sizes tested. A voluntary store went unused (§3); a
+    load-bearing store carried real signal across context boundaries – beating
+    the no-store control and yielding a mechanical assign trace – but
+    chunked+store at 200 (0.82 emits) stayed below whole-context execution
+    (1.0), so it bounds overhead rather than extending the ceiling. Rescue at
+    400+ statements is the open follow-up (§3b).</td>
   </tr>
 </table>
 </section>

@@ -1,6 +1,6 @@
 <section id="strict">
 <span class="qref">Research question 1: can notation enforce integrity?</span>
-<h2><span class="secno">Experiment 1:</span>Strict mode enforced type annotations but not syntax</h2>
+<h2><span class="secno">Experiment 1:</span>Strict mode halts on both fault classes – once the grammar is stated</h2>
 
 <p>Phase 1 found that models never halt on malformed programs – they repair or
 improvise. E1 asked whether a directive could flip that behaviour. Each
@@ -27,6 +27,8 @@ output a trace containing a single step
 { "step": 1, "action": "halt", "reason": "&lt;what is wrong and where&gt;" }
 and stop; execute no steps.</code></pre>
 
+<h3>The first result: types halted, syntax did not</h3>
+
 <p>Without the pragma, phase 1 replicated exactly: all 21 faulted runs executed
 through their faults. With it, the result split by fault class. Every one of the
 10 wrong type annotations halted the program. Only 1 of 10 syntax faults did; the
@@ -35,8 +37,8 @@ carried on.</p>
 
 <figure>
   <img src="assets/e1-halt.png" alt="Halt rate on faulted programs by fault class">
-  <figcaption><b>Figure 1.</b> Halt rate on faulted programs by fault class;
-  halting is the correct behaviour here.</figcaption>
+  <figcaption><b>Figure 1.</b> Halt rate on faulted programs by fault class,
+  before the grammar amendment; halting is the correct behaviour here.</figcaption>
 </figure>
 
 <p>Strict mode also produced one false halt: a single GPT&#8209;5.4&nbsp;mini run
@@ -58,10 +60,48 @@ rejected a clean program that had no fault in it.</p>
 <figure>
   <img src="assets/e1-tax.png" alt="Clean-program step accuracy, default vs strict">
   <figcaption><b>Figure 2.</b> Step accuracy on clean programs, default vs strict
-  mode, per model.</figcaption>
+  mode, per model, before the grammar amendment. GPT&#8209;5.4&nbsp;mini's strict
+  mean of 0.8 is the one false halt scoring 0 alongside four perfect runs.</figcaption>
 </figure>
 
-<p>GPT&#8209;5.4&nbsp;mini's strict-mode mean of 0.8 is that one false halt scoring
-0 alongside four perfect runs. The steps that did execute were unaffected.</p>
+<h3>The failing: the model was never given the grammar</h3>
+
+<p>The first draft of this report read the split as "strict mode enforced type
+annotations but not syntax". That reading was confounded. The strict preamble
+demands every statement be syntactically well-formed, but the preamble never
+states the grammar – the model gets "MDZ is a simple imperative notation" and one
+worked example. A model cannot halt on a missing <code>IN</code> when nothing
+told it <code>FOR</code> requires one. The type half of the result survives on
+its own terms, because a type fault is self-contradictory without any spec:
+<code>$v0: String = 6</code> is wrong by inspection. The syntax half needed
+re-running with the grammar in the preamble.</p>
+
+<h3>The re-run: with the grammar stated, strict mode halts 10/10</h3>
+
+<p>Five further cells – {default, strict} × {clean, syntax} plus strict × type,
+5 seeds × 2 models – repeated the experiment with the full grammar for this
+program class spelled out in the preamble. Strict mode with the grammar halted
+10/10 on syntax faults and 10/10 on type faults, with 0/10 false halts on clean
+programs and no accuracy tax: clean step accuracy 0.994, against 0.989 for
+default mode without the pragma.</p>
+
+<figure>
+  <img src="assets/e1-grammar.png" alt="Halt rate on syntax faults across the four cells">
+  <figcaption><b>Figure 3.</b> Halt rate on syntax faults, per model, across the
+  four cells. Only strict+grammar halts; default+grammar repairs exactly as
+  default does.</figcaption>
+</figure>
+
+<p>The default+grammar cell is the control that assigns the mechanism. Given the
+grammar but no pragma, the models halted on none of their 10 syntax faults and
+repaired all nine runs that completed (the tenth timed out). Knowing the grammar
+does not change behaviour; the strict directive does. Enforcement can live in
+notation – but only when the spec it enforces is in context.</p>
+
+<div class="note"><b>A methodological aside.</b> The first version of the grammar
+block omitted the rule that frontmatter is host text, and GPT&#8209;5.4&nbsp;mini
+falsely halted on the <code>---</code> delimiter in 5 of 10 clean runs –
+declaring a violation of the grammar exactly as stated. The grammar you state is
+the grammar they enforce, omissions included.</div>
 
 </section>
