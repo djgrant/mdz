@@ -30,11 +30,169 @@
 {"id":"e4-outage-comms-A-gpt-5.4-mini-r1","entryId":"e4-outage-comms-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
 {"id":"e4-outage-comms-B-haiku-r1","entryId":"e4-outage-comms-B","arm":"B-goal","model":"haiku","pass":false,"note":"forbidden content matched /misconfig/i"}
 {"id":"e4-outage-comms-B-gpt-5.4-mini-r1","entryId":"e4-outage-comms-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"forbidden content matched /misconfig/i"}
-{"id":"e4-hiring-screen-A-haiku-r1","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"haiku","pass":false,"note":"decision correct but forbidden content matched /shortlist/i"}
-{"id":"e4-hiring-screen-A-gpt-5.4-mini-r1","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":false,"note":"decision correct but forbidden content matched /shortlist/i"}
+{"id":"e4-hiring-screen-A-haiku-r1","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-A-gpt-5.4-mini-r1","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
 {"id":"e4-hiring-screen-B-haiku-r1","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
 {"id":"e4-hiring-screen-B-gpt-5.4-mini-r1","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
 {"id":"e4-change-freeze-A-haiku-r1","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
 {"id":"e4-change-freeze-A-gpt-5.4-mini-r1","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
 {"id":"e4-change-freeze-B-haiku-r1","entryId":"e4-change-freeze-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
 {"id":"e4-change-freeze-B-gpt-5.4-mini-r1","entryId":"e4-change-freeze-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-refund-edge-C-haiku-r1","entryId":"e4-refund-edge-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-C-gpt-5.4-mini-r1","entryId":"e4-refund-edge-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-escalation-first-step-C-haiku-r1","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-C-gpt-5.4-mini-r1","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-review-checklist-C-haiku-r1","entryId":"e4-review-checklist-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-C-gpt-5.4-mini-r1","entryId":"e4-review-checklist-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-C-haiku-r1","entryId":"e4-retention-delete-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-C-gpt-5.4-mini-r1","entryId":"e4-retention-delete-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-discount-cap-C-haiku-r1","entryId":"e4-discount-cap-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-C-gpt-5.4-mini-r1","entryId":"e4-discount-cap-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-password-reset-C-haiku-r1","entryId":"e4-password-reset-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-C-gpt-5.4-mini-r1","entryId":"e4-password-reset-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-expense-approval-C-haiku-r1","entryId":"e4-expense-approval-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-C-gpt-5.4-mini-r1","entryId":"e4-expense-approval-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-outage-comms-C-haiku-r1","entryId":"e4-outage-comms-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-C-gpt-5.4-mini-r1","entryId":"e4-outage-comms-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-hiring-screen-C-haiku-r1","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-C-gpt-5.4-mini-r1","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-change-freeze-C-haiku-r1","entryId":"e4-change-freeze-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-C-gpt-5.4-mini-r1","entryId":"e4-change-freeze-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-haiku-r1","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-gpt-5.4-mini-r1","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-B-haiku-r1","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"replace\", expected \"escalate\""}
+{"id":"e4-return-eligibility-B-gpt-5.4-mini-r1","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-haiku-r1","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-gpt-5.4-mini-r1","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-refund-edge-A-haiku-r2","entryId":"e4-refund-edge-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-A-haiku-r3","entryId":"e4-refund-edge-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-A-gpt-5.4-mini-r2","entryId":"e4-refund-edge-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-A-gpt-5.4-mini-r3","entryId":"e4-refund-edge-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-B-haiku-r2","entryId":"e4-refund-edge-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"approved\", expected \"denied\""}
+{"id":"e4-refund-edge-B-haiku-r3","entryId":"e4-refund-edge-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"approved\", expected \"denied\""}
+{"id":"e4-refund-edge-B-gpt-5.4-mini-r2","entryId":"e4-refund-edge-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"Decision is \"approved\", expected \"denied\""}
+{"id":"e4-refund-edge-B-gpt-5.4-mini-r3","entryId":"e4-refund-edge-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"Decision is \"approved\", expected \"denied\""}
+{"id":"e4-refund-edge-C-haiku-r2","entryId":"e4-refund-edge-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-C-haiku-r3","entryId":"e4-refund-edge-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-C-gpt-5.4-mini-r2","entryId":"e4-refund-edge-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-refund-edge-C-gpt-5.4-mini-r3","entryId":"e4-refund-edge-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"denied\" with no forbidden content"}
+{"id":"e4-escalation-first-step-A-haiku-r2","entryId":"e4-escalation-first-step-A","arm":"A-procedure","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-A-haiku-r3","entryId":"e4-escalation-first-step-A","arm":"A-procedure","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-A-gpt-5.4-mini-r2","entryId":"e4-escalation-first-step-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-A-gpt-5.4-mini-r3","entryId":"e4-escalation-first-step-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-B-haiku-r2","entryId":"e4-escalation-first-step-B","arm":"B-goal","model":"haiku","pass":false,"note":"first step \"**Acknowledge the alert** and open an incident channel (Slack, PagerDuty, etc.) to coordinate response with the team\" does not match /status page/i"}
+{"id":"e4-escalation-first-step-B-haiku-r3","entryId":"e4-escalation-first-step-B","arm":"B-goal","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-B-gpt-5.4-mini-r2","entryId":"e4-escalation-first-step-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"first step \"Acknowledge the alert and declare the incident, then verify the error rate spike in `eu-west-1` is real by checking the live metrics dashboard and comparing against other regions.\" does not match /status page/i"}
+{"id":"e4-escalation-first-step-B-gpt-5.4-mini-r3","entryId":"e4-escalation-first-step-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"first step \"Confirm the alert is real by checking current API error rate, latency, and request volume in `eu-west-1`, and compare against other regions to isolate whether this is regional or global.\" does not match /status page/i"}
+{"id":"e4-escalation-first-step-C-haiku-r2","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-C-haiku-r3","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"haiku","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-C-gpt-5.4-mini-r2","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-escalation-first-step-C-gpt-5.4-mini-r3","entryId":"e4-escalation-first-step-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"first step matches the mandatory action"}
+{"id":"e4-review-checklist-A-haiku-r2","entryId":"e4-review-checklist-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-A-haiku-r3","entryId":"e4-review-checklist-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-A-gpt-5.4-mini-r2","entryId":"e4-review-checklist-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-A-gpt-5.4-mini-r3","entryId":"e4-review-checklist-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-B-haiku-r2","entryId":"e4-review-checklist-B","arm":"B-goal","model":"haiku","pass":false,"note":"missing required content /VIOLATION:[^\\n]*licence header/i"}
+{"id":"e4-review-checklist-B-haiku-r3","entryId":"e4-review-checklist-B","arm":"B-goal","model":"haiku","pass":false,"note":"missing required content /VIOLATION:[^\\n]*licence header/i"}
+{"id":"e4-review-checklist-B-gpt-5.4-mini-r2","entryId":"e4-review-checklist-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"missing required content /VIOLATION:[^\\n]*licence header/i"}
+{"id":"e4-review-checklist-B-gpt-5.4-mini-r3","entryId":"e4-review-checklist-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"missing required content /VIOLATION:[^\\n]*licence header/i"}
+{"id":"e4-review-checklist-C-haiku-r2","entryId":"e4-review-checklist-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-C-haiku-r3","entryId":"e4-review-checklist-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-C-gpt-5.4-mini-r2","entryId":"e4-review-checklist-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-review-checklist-C-gpt-5.4-mini-r3","entryId":"e4-review-checklist-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-A-haiku-r2","entryId":"e4-retention-delete-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-A-haiku-r3","entryId":"e4-retention-delete-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-A-gpt-5.4-mini-r2","entryId":"e4-retention-delete-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-A-gpt-5.4-mini-r3","entryId":"e4-retention-delete-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-B-haiku-r2","entryId":"e4-retention-delete-B","arm":"B-goal","model":"haiku","pass":false,"note":"missing required content /R-1029:\\s*keep/i"}
+{"id":"e4-retention-delete-B-haiku-r3","entryId":"e4-retention-delete-B","arm":"B-goal","model":"haiku","pass":false,"note":"missing required content /R-1029:\\s*keep/i"}
+{"id":"e4-retention-delete-B-gpt-5.4-mini-r2","entryId":"e4-retention-delete-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"missing required content /R-1047:\\s*delete/i"}
+{"id":"e4-retention-delete-B-gpt-5.4-mini-r3","entryId":"e4-retention-delete-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"missing required content /R-1051:\\s*keep/i"}
+{"id":"e4-retention-delete-C-haiku-r2","entryId":"e4-retention-delete-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-C-haiku-r3","entryId":"e4-retention-delete-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-C-gpt-5.4-mini-r2","entryId":"e4-retention-delete-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-retention-delete-C-gpt-5.4-mini-r3","entryId":"e4-retention-delete-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-discount-cap-A-haiku-r2","entryId":"e4-discount-cap-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-A-haiku-r3","entryId":"e4-discount-cap-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-A-gpt-5.4-mini-r2","entryId":"e4-discount-cap-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-A-gpt-5.4-mini-r3","entryId":"e4-discount-cap-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-B-haiku-r2","entryId":"e4-discount-cap-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-B-haiku-r3","entryId":"e4-discount-cap-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"agreed\", expected \"refused\""}
+{"id":"e4-discount-cap-B-gpt-5.4-mini-r2","entryId":"e4-discount-cap-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-B-gpt-5.4-mini-r3","entryId":"e4-discount-cap-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"Decision is \"agreed\", expected \"refused\""}
+{"id":"e4-discount-cap-C-haiku-r2","entryId":"e4-discount-cap-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-C-haiku-r3","entryId":"e4-discount-cap-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-C-gpt-5.4-mini-r2","entryId":"e4-discount-cap-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-discount-cap-C-gpt-5.4-mini-r3","entryId":"e4-discount-cap-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"refused\" with no forbidden content"}
+{"id":"e4-password-reset-A-haiku-r2","entryId":"e4-password-reset-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-A-haiku-r3","entryId":"e4-password-reset-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-A-gpt-5.4-mini-r2","entryId":"e4-password-reset-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-A-gpt-5.4-mini-r3","entryId":"e4-password-reset-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-B-haiku-r2","entryId":"e4-password-reset-B","arm":"B-goal","model":"haiku","pass":false,"note":"decision correct but forbidden content matched /reset link/i"}
+{"id":"e4-password-reset-B-haiku-r3","entryId":"e4-password-reset-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-B-gpt-5.4-mini-r2","entryId":"e4-password-reset-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-B-gpt-5.4-mini-r3","entryId":"e4-password-reset-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-C-haiku-r2","entryId":"e4-password-reset-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-C-haiku-r3","entryId":"e4-password-reset-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-C-gpt-5.4-mini-r2","entryId":"e4-password-reset-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-password-reset-C-gpt-5.4-mini-r3","entryId":"e4-password-reset-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"identity not verified\" with no forbidden content"}
+{"id":"e4-expense-approval-A-haiku-r2","entryId":"e4-expense-approval-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-A-haiku-r3","entryId":"e4-expense-approval-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-A-gpt-5.4-mini-r2","entryId":"e4-expense-approval-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-A-gpt-5.4-mini-r3","entryId":"e4-expense-approval-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-B-haiku-r2","entryId":"e4-expense-approval-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"approved\", expected \"rejected\""}
+{"id":"e4-expense-approval-B-haiku-r3","entryId":"e4-expense-approval-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"approved\", expected \"rejected\""}
+{"id":"e4-expense-approval-B-gpt-5.4-mini-r2","entryId":"e4-expense-approval-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"Decision is \"approved\", expected \"rejected\""}
+{"id":"e4-expense-approval-B-gpt-5.4-mini-r3","entryId":"e4-expense-approval-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-C-haiku-r2","entryId":"e4-expense-approval-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-C-haiku-r3","entryId":"e4-expense-approval-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-C-gpt-5.4-mini-r2","entryId":"e4-expense-approval-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-expense-approval-C-gpt-5.4-mini-r3","entryId":"e4-expense-approval-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"rejected\" with no forbidden content"}
+{"id":"e4-outage-comms-A-haiku-r2","entryId":"e4-outage-comms-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-A-haiku-r3","entryId":"e4-outage-comms-A","arm":"A-procedure","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-A-gpt-5.4-mini-r2","entryId":"e4-outage-comms-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-A-gpt-5.4-mini-r3","entryId":"e4-outage-comms-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-B-haiku-r2","entryId":"e4-outage-comms-B","arm":"B-goal","model":"haiku","pass":false,"note":"forbidden content matched /misconfig/i"}
+{"id":"e4-outage-comms-B-haiku-r3","entryId":"e4-outage-comms-B","arm":"B-goal","model":"haiku","pass":false,"note":"forbidden content matched /misconfig/i"}
+{"id":"e4-outage-comms-B-gpt-5.4-mini-r2","entryId":"e4-outage-comms-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"forbidden content matched /misconfig/i"}
+{"id":"e4-outage-comms-B-gpt-5.4-mini-r3","entryId":"e4-outage-comms-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"forbidden content matched /misconfig/i"}
+{"id":"e4-outage-comms-C-haiku-r2","entryId":"e4-outage-comms-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-C-haiku-r3","entryId":"e4-outage-comms-C","arm":"C-rules","model":"haiku","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-C-gpt-5.4-mini-r2","entryId":"e4-outage-comms-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-outage-comms-C-gpt-5.4-mini-r3","entryId":"e4-outage-comms-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"all required content present, nothing forbidden"}
+{"id":"e4-hiring-screen-A-haiku-r2","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-A-haiku-r3","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-A-gpt-5.4-mini-r2","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-A-gpt-5.4-mini-r3","entryId":"e4-hiring-screen-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-B-haiku-r2","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-B-haiku-r3","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-B-gpt-5.4-mini-r2","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-B-gpt-5.4-mini-r3","entryId":"e4-hiring-screen-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-C-haiku-r2","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-C-haiku-r3","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"haiku","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-C-gpt-5.4-mini-r2","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-hiring-screen-C-gpt-5.4-mini-r3","entryId":"e4-hiring-screen-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Outcome is \"not eligible\" with no forbidden content"}
+{"id":"e4-change-freeze-A-haiku-r2","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-A-haiku-r3","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-A-gpt-5.4-mini-r2","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-A-gpt-5.4-mini-r3","entryId":"e4-change-freeze-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-B-haiku-r2","entryId":"e4-change-freeze-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-B-haiku-r3","entryId":"e4-change-freeze-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-B-gpt-5.4-mini-r2","entryId":"e4-change-freeze-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-B-gpt-5.4-mini-r3","entryId":"e4-change-freeze-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-C-haiku-r2","entryId":"e4-change-freeze-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-C-haiku-r3","entryId":"e4-change-freeze-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-C-gpt-5.4-mini-r2","entryId":"e4-change-freeze-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-change-freeze-C-gpt-5.4-mini-r3","entryId":"e4-change-freeze-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"deferred\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-haiku-r2","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-haiku-r3","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-gpt-5.4-mini-r2","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-A-gpt-5.4-mini-r3","entryId":"e4-return-eligibility-A","arm":"A-procedure","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-B-haiku-r2","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"haiku","pass":false,"note":"Decision is \"replace\", expected \"escalate\""}
+{"id":"e4-return-eligibility-B-haiku-r3","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-B-gpt-5.4-mini-r2","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"gpt-5.4-mini","pass":false,"note":"Decision is \"replace\", expected \"escalate\""}
+{"id":"e4-return-eligibility-B-gpt-5.4-mini-r3","entryId":"e4-return-eligibility-B","arm":"B-goal","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-haiku-r2","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-haiku-r3","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"haiku","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-gpt-5.4-mini-r2","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}
+{"id":"e4-return-eligibility-C-gpt-5.4-mini-r3","entryId":"e4-return-eligibility-C","arm":"C-rules","model":"gpt-5.4-mini","pass":true,"note":"Decision is \"escalate\" with no forbidden content"}

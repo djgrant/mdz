@@ -1,0 +1,44 @@
+---
+name: return-eligibility
+---
+
+# Product return decision
+
+Work through the request in the input. Gates are checked in order; a failed gate decides the case — later rules must not be weighed against it.
+
+$recalled = whether the product appears on the active recall list
+$proof = whether valid proof of purchase is included
+$defect = whether the request is a defect claim (rather than change of mind)
+$replaced = whether this order has already had one replacement
+$days = days since delivery
+
+IF $recalled THEN
+  $decision = "escalate"
+  Compose a reply directing the customer to the recall programme. Do NOT offer a refund or replacement, even if they would otherwise qualify.
+ELSE
+  IF NOT $proof THEN
+    $decision = "rejected"
+    Compose a reply rejecting solely for missing proof of purchase. Do NOT assess or discuss the defect claim.
+  ELSE
+    IF $defect THEN
+      IF $replaced THEN
+        $decision = "refund"
+        Compose a reply refunding: a second defect on the same order is refunded, never replaced again.
+      ELSE
+        $decision = "replace"
+        Compose a reply offering a replacement only. Do NOT offer a refund for a first defect, even if the customer asks for one.
+      END
+    ELSE
+      IF $days > 14 THEN
+        $decision = "rejected"
+        Compose a reply rejecting. Do NOT offer goodwill gestures, regardless of loyalty or amount.
+      ELSE
+        $decision = "refund"
+        Compose a reply approving the refund.
+      END
+    END
+  END
+END
+
+Say the composed reply
+Say "Decision: " + $decision

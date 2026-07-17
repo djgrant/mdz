@@ -1,0 +1,11 @@
+$v40 = $v26 + "red"
+CASE $v20
+WHEN "draft"
+  Say $v0
+  $v41 = $v28 * 5
+WHEN "red"
+  $v42 = $v9 * 1
+  $v43 = 8
+ELSE
+  Say $v39
+END

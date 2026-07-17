@@ -8,6 +8,13 @@
  * PRAGMA STRICT; the preamble gains two lines defining halt semantics).
  *
  * 2 modes x 3 conditions x 5 seeds = 30 manifest entries.
+ *
+ * Grammar cells: the original strict preamble demanded well-formed syntax
+ * without ever stating the grammar, so a model could not recognise a missing
+ * IN as malformed — the phase-2 syntax result was confounded. A second set of
+ * entries repeats the informative cells with the grammar spelled out in the
+ * preamble: {default, strict} x {clean, syntax} plus strict x type.
+ * 5 cells x 5 seeds = 25 further entries.
  */
 
 import { join } from "node:path";
@@ -89,15 +96,43 @@ export function addPragmaStrict(source: string): string {
 const STRICT_LINES = `This program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.
 On any syntax or type violation, output a trace containing a single step { "step": 1, "action": "halt", "reason": "<what is wrong and where>" } and stop; execute no steps.`;
 
+const GRAMMAR_LINES = `The complete MDZ grammar for this program class:
+- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.
+- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)
+- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = "a"); an annotation must match the type of the assigned value.
+- Output:       Say <expr>
+- Conditional:  IF <condition> [THEN] ... [ELSE ...] END
+- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.
+- While loop:   WHILE <condition> ... END
+- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END
+- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.
+- Expressions use $variables, number and "string" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).
+A statement that does not match one of these forms is a syntax error.`;
+
 const SPLICE_MARKER = "Output ONLY the final trace";
+
+function spliceBeforeMarker(base: string, lines: string[]): string {
+  if (!base.includes(SPLICE_MARKER)) {
+    throw new Error("phase-1 prompt changed shape; cannot splice preamble lines");
+  }
+  return base.replace(SPLICE_MARKER, `${lines.join("\n\n")}\n\n${SPLICE_MARKER}`);
+}
+
+/** Phase-1 standard prompt, optionally with grammar and/or strict lines added. */
+export function e1Prompt(
+  program: string,
+  opts: { strict?: boolean; grammar?: boolean } = {},
+): string {
+  const base = buildPrompt({ program, variant: "standard" });
+  const lines: string[] = [];
+  if (opts.grammar) lines.push(GRAMMAR_LINES);
+  if (opts.strict) lines.push(STRICT_LINES);
+  return lines.length ? spliceBeforeMarker(base, lines) : base;
+}
 
 /** Phase-1 standard prompt with the two strict lines added to the preamble. */
 export function strictPrompt(program: string): string {
-  const base = buildPrompt({ program, variant: "standard" });
-  if (!base.includes(SPLICE_MARKER)) {
-    throw new Error("phase-1 prompt changed shape; cannot splice strict lines");
-  }
-  return base.replace(SPLICE_MARKER, `${STRICT_LINES}\n\n${SPLICE_MARKER}`);
+  return e1Prompt(program, { strict: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -159,62 +194,74 @@ export function buildE1(outDir: string): ManifestEntry[] {
       type: sp.typeFaulted,
     };
 
+    const pushEntry = (mode: Mode, condition: Condition, grammar: boolean) => {
+      const source =
+        mode === "strict" ? addPragmaStrict(sources[condition]) : sources[condition];
+      const name = `${mode}-${condition}-seed${seed}`;
+      const programPath = join(dir, `${name}.mdz`);
+      writeText(programPath, source);
+
+      let tracePath: string | null;
+      let expected: Record<string, unknown>;
+      if (mode === "strict" && condition !== "clean") {
+        // Reference: a single halt step.
+        const reason =
+          condition === "syntax"
+            ? "syntax error: FOR header missing IN"
+            : "type violation: annotation contradicts the assigned literal";
+        const haltTracePath = join(dir, `${name}.trace.json`);
+        writeJson(haltTracePath, [{ step: 1, action: "halt", reason }]);
+        tracePath = rel(haltTracePath);
+        expected = { behaviour: "halt", haltReason: condition };
+      } else if (mode === "default" && condition === "syntax") {
+        // No reference: we observe whether the model halts, repairs or improvises.
+        tracePath = null;
+        expected = { behaviour: "observe" };
+      } else {
+        // clean (both modes) and default type-fault: the shared interpreter
+        // ignores annotations, so the coerced execution equals the clean trace.
+        tracePath = rel(cleanTracePath);
+        expected =
+          condition === "type"
+            ? { behaviour: "execute", note: "annotation ignored; trace equals clean" }
+            : { behaviour: "execute" };
+      }
+
+      entries.push({
+        id: `e1-${mode}${grammar ? "-grammar" : ""}-${condition}-seed${seed}`,
+        experiment: "e1",
+        runMode: "single-turn",
+        programPath: rel(programPath),
+        tracePath,
+        prompt: e1Prompt(source, { strict: mode === "strict", grammar }),
+        variant: {
+          mode,
+          condition,
+          grammar,
+          statements: STATEMENTS,
+          depth: DEPTH,
+          iterations: ITERATIONS,
+          seed,
+        },
+        expected,
+      });
+    };
+
     for (const mode of ["default", "strict"] as const) {
       for (const condition of ["clean", "syntax", "type"] as const) {
-        const source =
-          mode === "strict" ? addPragmaStrict(sources[condition]) : sources[condition];
-        const name = `${mode}-${condition}-seed${seed}`;
-        const programPath = join(dir, `${name}.mdz`);
-        writeText(programPath, source);
-
-        let tracePath: string | null;
-        let expected: Record<string, unknown>;
-        if (mode === "strict" && condition !== "clean") {
-          // Reference: a single halt step.
-          const reason =
-            condition === "syntax"
-              ? "syntax error: FOR header missing IN"
-              : "type violation: annotation contradicts the assigned literal";
-          const haltTracePath = join(dir, `${name}.trace.json`);
-          writeJson(haltTracePath, [{ step: 1, action: "halt", reason }]);
-          tracePath = rel(haltTracePath);
-          expected = { behaviour: "halt", haltReason: condition };
-        } else if (mode === "default" && condition === "syntax") {
-          // No reference: we observe whether the model halts, repairs or improvises.
-          tracePath = null;
-          expected = { behaviour: "observe" };
-        } else {
-          // clean (both modes) and default type-fault: the shared interpreter
-          // ignores annotations, so the coerced execution equals the clean trace.
-          tracePath = rel(cleanTracePath);
-          expected =
-            condition === "type"
-              ? { behaviour: "execute", note: "annotation ignored; trace equals clean" }
-              : { behaviour: "execute" };
-        }
-
-        entries.push({
-          id: `e1-${mode}-${condition}-seed${seed}`,
-          experiment: "e1",
-          runMode: "single-turn",
-          programPath: rel(programPath),
-          tracePath,
-          prompt:
-            mode === "strict"
-              ? strictPrompt(source)
-              : buildPrompt({ program: source, variant: "standard" }),
-          variant: {
-            mode,
-            condition,
-            statements: STATEMENTS,
-            depth: DEPTH,
-            iterations: ITERATIONS,
-            seed,
-          },
-          expected,
-        });
+        pushEntry(mode, condition, false);
       }
     }
+
+    // Grammar-in-preamble cells (deconfounds the syntax half of the strict result).
+    const GRAMMAR_CELLS: Array<[Mode, Condition]> = [
+      ["default", "clean"],
+      ["default", "syntax"],
+      ["strict", "clean"],
+      ["strict", "syntax"],
+      ["strict", "type"],
+    ];
+    for (const [mode, condition] of GRAMMAR_CELLS) pushEntry(mode, condition, true);
   }
 
   writeJson(join(dir, "manifest.json"), entries);

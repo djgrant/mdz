@@ -1,12 +1,15 @@
 /**
- * E4 — real-world procedure vs goal.
+ * E4 — real-world procedure vs goal vs declarative rules.
  *
- * Ten handwritten tasks (see e4-tasks.ts). Arm A gets the procedure as MDZ
- * plus the input; arm B gets the goal only plus the same input. Both arms are
- * scored by the deterministic checker named in `expected.checkerId`
- * (phase-2/src/score/checkers.ts), plus an LLM judge downstream.
+ * Handwritten tasks (see e4-tasks.ts). Variant A gets the procedure as MDZ
+ * plus the input; variant B gets the goal only plus the same input; variant C
+ * gets the same requirements as declarative rules — content-matched to the
+ * procedure but without the step-by-step skeleton. A-vs-C isolates what the
+ * procedural FORM adds; B stays as the no-content lower bound. All variants
+ * are scored by the deterministic checker named in `expected.checkerId`
+ * (phase-2/src/score/checkers.ts); A and B also get an LLM judge downstream.
  *
- * 10 tasks x 2 arms = 20 manifest entries.
+ * 11 tasks x 3 variants = 33 manifest entries.
  */
 
 import { join } from "node:path";
@@ -48,6 +51,24 @@ ${input}
 Produce the best result you can. Respond with your answer directly.`;
 }
 
+function rulesPrompt(rules: string, input: string): string {
+  return `Complete the following task in compliance with the stated policy.
+The policy is binding: apply it exactly as written, even where your own
+judgement would differ.
+
+Policy:
+--- BEGIN POLICY ---
+${rules}
+--- END POLICY ---
+
+Input:
+--- BEGIN INPUT ---
+${input}
+--- END INPUT ---
+
+Produce the best result you can. Respond with your answer directly.`;
+}
+
 export function buildE4(outDir: string): ManifestEntry[] {
   const dir = join(outDir, "e4");
   const entries: ManifestEntry[] = [];
@@ -60,12 +81,15 @@ export function buildE4(outDir: string): ManifestEntry[] {
     const goalPath = join(dir, `${task.id}.goal.md`);
     writeText(goalPath, `# Goal\n\n${task.goal}\n\n## Input\n\n${task.input}\n`);
 
+    const rulesPath = join(dir, `${task.id}.rules.md`);
+    writeText(rulesPath, `# Policy\n\n${task.rules}\n\n## Input\n\n${task.input}\n`);
+
     const expected = {
       checkerId: task.checkerId,
       checkerArgs: task.checkerArgs,
       procedureText: task.procedure,
     };
-    const variant = { task: task.id, statements: 1, scoring: "checker+judge" };
+    const variant = { task: task.id, depth: task.depth, statements: 1, scoring: "checker+judge" };
 
     entries.push({
       id: `e4-${task.id}-A`,
@@ -88,6 +112,18 @@ export function buildE4(outDir: string): ManifestEntry[] {
       prompt: goalPrompt(task.goal, task.input),
       variant,
       arm: "B-goal",
+      expected,
+    });
+
+    entries.push({
+      id: `e4-${task.id}-C`,
+      experiment: "e4",
+      runMode: "single-turn",
+      programPath: rel(rulesPath),
+      tracePath: null,
+      prompt: rulesPrompt(task.rules, task.input),
+      variant,
+      arm: "C-rules",
       expected,
     });
   }

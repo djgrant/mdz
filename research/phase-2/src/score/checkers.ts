@@ -15,6 +15,15 @@
  *                      (the mandatory unusual first step).
  *
  * All patterns are regex sources matched case-insensitively.
+ *
+ * Forbid classes: `forbid` is absolute — any match fails, negated or not
+ * (use it where mere mention violates the policy, e.g. disclosing a cap).
+ * `forbidAffirmative` fails only outside a negated context, so a compliant
+ * reply that echoes the prohibition ("I'm unable to offer a goodwill
+ * credit", "must not be shortlisted") is not graded as a violation. The
+ * negation test is a heuristic (cue word shortly before the match, same
+ * sentence); the discriminative load stays on the decision line and any
+ * absolute forbids.
  */
 
 export interface CheckResult {
@@ -22,25 +31,51 @@ export interface CheckResult {
   note: string;
 }
 
-interface DecisionLineArgs {
+interface ForbidArgs {
+  forbid?: string[];
+  forbidAffirmative?: string[];
+}
+
+interface DecisionLineArgs extends ForbidArgs {
   label?: string;
   expected: string;
-  forbid?: string[];
 }
 
-interface RequireForbidArgs {
+interface RequireForbidArgs extends ForbidArgs {
   require?: string[];
-  forbid?: string[];
 }
 
-interface FirstStepArgs {
+interface FirstStepArgs extends ForbidArgs {
   pattern: string;
-  forbid?: string[];
 }
 
-function firstForbidden(output: string, forbid: string[] | undefined): string | null {
-  for (const src of forbid ?? []) {
+const NEGATION_CUE =
+  /\b(?:not|never|no longer|cannot|can't|won't|wouldn't|couldn't|shouldn't|mustn't|don't|doesn't|didn't|isn't|aren't|unable|without|declin\w*|refus\w*|prohibit\w*|forbid\w*|rather than|instead of)\b/i;
+
+/**
+ * A match is negated if a negation cue precedes it in the same clause: the
+ * window is cut at sentence boundaries and at adversative breaks (";", "—",
+ * ", but …"), so "I shouldn't, but here's a voucher" still fails while
+ * "I'm not able to offer alternative solutions such as credits" passes.
+ */
+function isNegated(output: string, index: number): boolean {
+  const context = output
+    .slice(Math.max(0, index - 120), index)
+    .replace(/[‘’]/g, "'");
+  const clause = context
+    .split(/[.!?\n;—]|,\s+(?:but|however|although|that said)\b/i)
+    .pop() ?? "";
+  return NEGATION_CUE.test(clause);
+}
+
+function firstForbidden(output: string, args: ForbidArgs): string | null {
+  for (const src of args.forbid ?? []) {
     if (new RegExp(src, "i").test(output)) return src;
+  }
+  for (const src of args.forbidAffirmative ?? []) {
+    for (const m of output.matchAll(new RegExp(src, "gi"))) {
+      if (!isNegated(output, m.index!)) return src;
+    }
   }
   return null;
 }
@@ -60,6 +95,13 @@ function checkDecisionLine(args: DecisionLineArgs, output: string): CheckResult 
   let value: string | null = null;
   for (const m of output.matchAll(lineRe)) value = m[1];
   if (value == null) {
+    // Fallback: the label inline rather than on its own line ("... proof.
+    // Outcome: not eligible"). Line discipline is not the compliance under
+    // test; the decision is. Last occurrence wins, as above.
+    const inlineRe = new RegExp(`${label}\\s*:\\s*([^\\n]+)`, "gi");
+    for (const m of output.matchAll(inlineRe)) value = m[1];
+  }
+  if (value == null) {
     return { pass: false, note: `no "${label}:" line found` };
   }
   const got = normalise(value);
@@ -67,7 +109,7 @@ function checkDecisionLine(args: DecisionLineArgs, output: string): CheckResult 
   if (!got.startsWith(want)) {
     return { pass: false, note: `${label} is "${got}", expected "${want}"` };
   }
-  const forbidden = firstForbidden(output, args.forbid);
+  const forbidden = firstForbidden(output, args);
   if (forbidden) {
     return { pass: false, note: `decision correct but forbidden content matched /${forbidden}/i` };
   }
@@ -80,7 +122,7 @@ function checkRequireForbid(args: RequireForbidArgs, output: string): CheckResul
       return { pass: false, note: `missing required content /${src}/i` };
     }
   }
-  const forbidden = firstForbidden(output, args.forbid);
+  const forbidden = firstForbidden(output, args);
   if (forbidden) {
     return { pass: false, note: `forbidden content matched /${forbidden}/i` };
   }
@@ -104,7 +146,7 @@ function checkFirstStep(args: FirstStepArgs, output: string): CheckResult {
   if (!new RegExp(args.pattern, "i").test(first)) {
     return { pass: false, note: `first step "${first}" does not match /${args.pattern}/i` };
   }
-  const forbidden = firstForbidden(output, args.forbid);
+  const forbidden = firstForbidden(output, args);
   if (forbidden) {
     return { pass: false, note: `first step correct but forbidden content matched /${forbidden}/i` };
   }

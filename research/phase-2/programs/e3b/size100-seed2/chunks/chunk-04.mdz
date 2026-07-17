@@ -1,0 +1,8 @@
+IF $v1 > 1 THEN
+  $v23 = 0
+END
+$v24 = 10
+WHILE $v24 != 0
+  Say $v24
+  $v24 = $v24 - 1
+END

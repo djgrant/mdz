@@ -21,7 +21,7 @@ export const PROGRAMS_DIR = join(PHASE_ROOT, "programs");
 // Manifest contract (see the phase-2 generator brief)
 // ---------------------------------------------------------------------------
 
-export type Experiment = "e1" | "e2" | "e3" | "e4";
+export type Experiment = "e1" | "e2" | "e3" | "e3b" | "e4";
 export type RunMode = "single-turn" | "agentic";
 
 export interface ManifestEntry {

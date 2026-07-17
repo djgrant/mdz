@@ -1,0 +1,31 @@
+Say $v0
+Say $v16
+Say $v16
+Say $v18
+FOR $v32 IN [5, 6, 3, 2, 1, 4, 3, 6, 0, 0]
+  Say $v32
+END
+FOR $v33 IN [8, 8, 9, 1, 0, 1, 8, 2, 3, 6]
+  Say $v33
+END
+IF $v26 = 0 THEN
+  $v34 = $v17 - 2
+  Say $v24
+ELSE
+  Say $v18
+END
+Say $v16
+$v35 = 10
+WHILE $v35 != 0
+  Say $v35
+  $v35 = $v35 - 1
+END
+Say $v3
+CASE $v21
+WHEN "done"
+  Say $v27
+WHEN "blue"
+  Say "draft"
+ELSE
+  Say "blue"
+END

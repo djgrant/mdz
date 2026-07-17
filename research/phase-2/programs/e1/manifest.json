@@ -9,6 +9,7 @@
     "variant": {
       "mode": "default",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -28,6 +29,7 @@
     "variant": {
       "mode": "default",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -47,6 +49,7 @@
     "variant": {
       "mode": "default",
       "condition": "type",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -67,6 +70,7 @@
     "variant": {
       "mode": "strict",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -86,6 +90,7 @@
     "variant": {
       "mode": "strict",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -106,6 +111,109 @@
     "variant": {
       "mode": "strict",
       "condition": "type",
+      "grammar": false,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 1
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "type"
+    }
+  },
+  {
+    "id": "e1-default-grammar-clean-seed1",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-clean-seed1.mdz",
+    "tracePath": "programs/e1/clean-seed1.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed1\n---\n\n# e1-seed1\n\n$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7]\n  Say $v3\nEND\nFOR $v4 IN [1, 0, 4, 5, 7]\n  Say $v4\nEND\nFOR $v5 IN [2, 6, 5, 7, 1]\n  Say $v5\nEND\nSay $v2\nSay $v2\nIF $v1 = 7 THEN\n  $v6 = $v0 * 3\nELSE\n  $v7 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v8 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v9 = $v0 - 2\nEND\n$v10 = $v0 * 5\nFOR $v11 IN [1, 3, 8, 2, 1]\n  Say $v11\nEND\n$v12 = $v0 + 1\n$v13 = 5\nWHILE $v13 != 0\n  Say $v13\n  $v13 = $v13 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 1
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-default-grammar-syntax-seed1",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-syntax-seed1.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed1\n---\n\n# e1-seed1\n\n$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 [1, 4, 0, 3, 7]\n  Say $v3\nEND\nFOR $v4 IN [1, 0, 4, 5, 7]\n  Say $v4\nEND\nFOR $v5 IN [2, 6, 5, 7, 1]\n  Say $v5\nEND\nSay $v2\nSay $v2\nIF $v1 = 7 THEN\n  $v6 = $v0 * 3\nELSE\n  $v7 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v8 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v9 = $v0 - 2\nEND\n$v10 = $v0 * 5\nFOR $v11 IN [1, 3, 8, 2, 1]\n  Say $v11\nEND\n$v12 = $v0 + 1\n$v13 = 5\nWHILE $v13 != 0\n  Say $v13\n  $v13 = $v13 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 1
+    },
+    "expected": {
+      "behaviour": "observe"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-clean-seed1",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-clean-seed1.mdz",
+    "tracePath": "programs/e1/clean-seed1.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed1\n---\n\n# e1-seed1\n\nPRAGMA STRICT\n\n$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7]\n  Say $v3\nEND\nFOR $v4 IN [1, 0, 4, 5, 7]\n  Say $v4\nEND\nFOR $v5 IN [2, 6, 5, 7, 1]\n  Say $v5\nEND\nSay $v2\nSay $v2\nIF $v1 = 7 THEN\n  $v6 = $v0 * 3\nELSE\n  $v7 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v8 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v9 = $v0 - 2\nEND\n$v10 = $v0 * 5\nFOR $v11 IN [1, 3, 8, 2, 1]\n  Say $v11\nEND\n$v12 = $v0 + 1\n$v13 = 5\nWHILE $v13 != 0\n  Say $v13\n  $v13 = $v13 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 1
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-syntax-seed1",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-syntax-seed1.mdz",
+    "tracePath": "programs/e1/strict-syntax-seed1.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed1\n---\n\n# e1-seed1\n\nPRAGMA STRICT\n\n$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 [1, 4, 0, 3, 7]\n  Say $v3\nEND\nFOR $v4 IN [1, 0, 4, 5, 7]\n  Say $v4\nEND\nFOR $v5 IN [2, 6, 5, 7, 1]\n  Say $v5\nEND\nSay $v2\nSay $v2\nIF $v1 = 7 THEN\n  $v6 = $v0 * 3\nELSE\n  $v7 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v8 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v9 = $v0 - 2\nEND\n$v10 = $v0 * 5\nFOR $v11 IN [1, 3, 8, 2, 1]\n  Say $v11\nEND\n$v12 = $v0 + 1\n$v13 = 5\nWHILE $v13 != 0\n  Say $v13\n  $v13 = $v13 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 1
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "syntax"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-type-seed1",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-type-seed1.mdz",
+    "tracePath": "programs/e1/strict-type-seed1.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed1\n---\n\n# e1-seed1\n\nPRAGMA STRICT\n\n$v0: String = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7]\n  Say $v3\nEND\nFOR $v4 IN [1, 0, 4, 5, 7]\n  Say $v4\nEND\nFOR $v5 IN [2, 6, 5, 7, 1]\n  Say $v5\nEND\nSay $v2\nSay $v2\nIF $v1 = 7 THEN\n  $v6 = $v0 * 3\nELSE\n  $v7 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v8 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v9 = $v0 - 2\nEND\n$v10 = $v0 * 5\nFOR $v11 IN [1, 3, 8, 2, 1]\n  Say $v11\nEND\n$v12 = $v0 + 1\n$v13 = 5\nWHILE $v13 != 0\n  Say $v13\n  $v13 = $v13 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "type",
+      "grammar": true,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -126,6 +234,7 @@
     "variant": {
       "mode": "default",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -145,6 +254,7 @@
     "variant": {
       "mode": "default",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -164,6 +274,7 @@
     "variant": {
       "mode": "default",
       "condition": "type",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -184,6 +295,7 @@
     "variant": {
       "mode": "strict",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -203,6 +315,7 @@
     "variant": {
       "mode": "strict",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -223,6 +336,109 @@
     "variant": {
       "mode": "strict",
       "condition": "type",
+      "grammar": false,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 2
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "type"
+    }
+  },
+  {
+    "id": "e1-default-grammar-clean-seed2",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-clean-seed2.mdz",
+    "tracePath": "programs/e1/clean-seed2.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed2\n---\n\n# e1-seed2\n\n$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7]\n  Say $v9\nEND\n$v10 = $v1 + 1\nSay \"blue\"\nIF $v0 < 8 THEN\n  Say $v3\n  Say $v2\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v1\nWHEN \"ok\"\n  Say $v1\n  $v11 = $v10 + 5\nELSE\n  Say $v1\nEND\nSay \"done\"\nCASE $v2\nWHEN \"hold\"\n  $v12 = 9\nWHEN \"red\"\n  $v13 = $v1 + 2\n  Say $v1\nELSE\n  $v14 = $v0 * 4\n  Say $v3\nEND\nSay $v10\n$v15 = $v2 + \"ok\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 2
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-default-grammar-syntax-seed2",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-syntax-seed2.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed2\n---\n\n# e1-seed2\n\n$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 [0, 7, 0, 7, 7]\n  Say $v9\nEND\n$v10 = $v1 + 1\nSay \"blue\"\nIF $v0 < 8 THEN\n  Say $v3\n  Say $v2\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v1\nWHEN \"ok\"\n  Say $v1\n  $v11 = $v10 + 5\nELSE\n  Say $v1\nEND\nSay \"done\"\nCASE $v2\nWHEN \"hold\"\n  $v12 = 9\nWHEN \"red\"\n  $v13 = $v1 + 2\n  Say $v1\nELSE\n  $v14 = $v0 * 4\n  Say $v3\nEND\nSay $v10\n$v15 = $v2 + \"ok\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 2
+    },
+    "expected": {
+      "behaviour": "observe"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-clean-seed2",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-clean-seed2.mdz",
+    "tracePath": "programs/e1/clean-seed2.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed2\n---\n\n# e1-seed2\n\nPRAGMA STRICT\n\n$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7]\n  Say $v9\nEND\n$v10 = $v1 + 1\nSay \"blue\"\nIF $v0 < 8 THEN\n  Say $v3\n  Say $v2\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v1\nWHEN \"ok\"\n  Say $v1\n  $v11 = $v10 + 5\nELSE\n  Say $v1\nEND\nSay \"done\"\nCASE $v2\nWHEN \"hold\"\n  $v12 = 9\nWHEN \"red\"\n  $v13 = $v1 + 2\n  Say $v1\nELSE\n  $v14 = $v0 * 4\n  Say $v3\nEND\nSay $v10\n$v15 = $v2 + \"ok\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 2
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-syntax-seed2",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-syntax-seed2.mdz",
+    "tracePath": "programs/e1/strict-syntax-seed2.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed2\n---\n\n# e1-seed2\n\nPRAGMA STRICT\n\n$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 [0, 7, 0, 7, 7]\n  Say $v9\nEND\n$v10 = $v1 + 1\nSay \"blue\"\nIF $v0 < 8 THEN\n  Say $v3\n  Say $v2\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v1\nWHEN \"ok\"\n  Say $v1\n  $v11 = $v10 + 5\nELSE\n  Say $v1\nEND\nSay \"done\"\nCASE $v2\nWHEN \"hold\"\n  $v12 = 9\nWHEN \"red\"\n  $v13 = $v1 + 2\n  Say $v1\nELSE\n  $v14 = $v0 * 4\n  Say $v3\nEND\nSay $v10\n$v15 = $v2 + \"ok\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 2
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "syntax"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-type-seed2",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-type-seed2.mdz",
+    "tracePath": "programs/e1/strict-type-seed2.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed2\n---\n\n# e1-seed2\n\nPRAGMA STRICT\n\n$v0: String = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7]\n  Say $v9\nEND\n$v10 = $v1 + 1\nSay \"blue\"\nIF $v0 < 8 THEN\n  Say $v3\n  Say $v2\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v1\nWHEN \"ok\"\n  Say $v1\n  $v11 = $v10 + 5\nELSE\n  Say $v1\nEND\nSay \"done\"\nCASE $v2\nWHEN \"hold\"\n  $v12 = 9\nWHEN \"red\"\n  $v13 = $v1 + 2\n  Say $v1\nELSE\n  $v14 = $v0 * 4\n  Say $v3\nEND\nSay $v10\n$v15 = $v2 + \"ok\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "type",
+      "grammar": true,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -243,6 +459,7 @@
     "variant": {
       "mode": "default",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -262,6 +479,7 @@
     "variant": {
       "mode": "default",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -281,6 +499,7 @@
     "variant": {
       "mode": "default",
       "condition": "type",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -301,6 +520,7 @@
     "variant": {
       "mode": "strict",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -320,6 +540,7 @@
     "variant": {
       "mode": "strict",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -340,6 +561,109 @@
     "variant": {
       "mode": "strict",
       "condition": "type",
+      "grammar": false,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 5
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "type"
+    }
+  },
+  {
+    "id": "e1-default-grammar-clean-seed5",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-clean-seed5.mdz",
+    "tracePath": "programs/e1/clean-seed5.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed5\n---\n\n# e1-seed5\n\n$v0 = 6\n$v1 = 2\n$v2 = \"blue\"\nIF $v1 = 7 THEN\n  IF $v0 < 9 THEN\n    Say $v1\n  END\nEND\n$v3 = $v0 * 2\nSay $v1\nIF $v1 != 2 THEN\n  $v4 = $v0 - 5\n  $v5 = $v4 + 3\nEND\nSay $v2\n$v6 = \"draft\"\n$v7 = $v3 - 1\nSay $v3\nSay $v1\nSay $v6\nIF $v0 > 7 THEN\n  Say $v7\nELSE\n  Say $v1\nEND\nSay $v7\nSay $v7\nSay $v7\nIF $v0 = 3 THEN\n  Say $v1\nEND\nSay $v3\nIF $v7 = 9 THEN\n  Say $v2\nEND\n$v8 = $v1 + 3\nSay $v2\nIF $v0 < 6 THEN\n  $v9 = $v8 + 3\n  $v10 = $v7 + 4\nELSE\n  Say $v7\nEND\n$v11 = $v1 - 4\nSay $v2\nSay $v0\nIF $v8 != 2 THEN\n  $v12 = 4\nELSE\n  Say $v6\n  Say \"ok\"\nEND\nFOR $v13 IN [7, 0, 6, 5, 2]\n  Say $v13\nEND\nFOR $v14 IN [6, 8, 5, 6, 6]\n  Say $v14\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 5
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-default-grammar-syntax-seed5",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-syntax-seed5.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed5\n---\n\n# e1-seed5\n\n$v0 = 6\n$v1 = 2\n$v2 = \"blue\"\nIF $v1 = 7 THEN\n  IF $v0 < 9 THEN\n    Say $v1\n  END\nEND\n$v3 = $v0 * 2\nSay $v1\nIF $v1 != 2 THEN\n  $v4 = $v0 - 5\n  $v5 = $v4 + 3\nEND\nSay $v2\n$v6 = \"draft\"\n$v7 = $v3 - 1\nSay $v3\nSay $v1\nSay $v6\nIF $v0 > 7 THEN\n  Say $v7\nELSE\n  Say $v1\nEND\nSay $v7\nSay $v7\nSay $v7\nIF $v0 = 3 THEN\n  Say $v1\nEND\nSay $v3\nIF $v7 = 9 THEN\n  Say $v2\nEND\n$v8 = $v1 + 3\nSay $v2\nIF $v0 < 6 THEN\n  $v9 = $v8 + 3\n  $v10 = $v7 + 4\nELSE\n  Say $v7\nEND\n$v11 = $v1 - 4\nSay $v2\nSay $v0\nIF $v8 != 2 THEN\n  $v12 = 4\nELSE\n  Say $v6\n  Say \"ok\"\nEND\nFOR $v13 [7, 0, 6, 5, 2]\n  Say $v13\nEND\nFOR $v14 IN [6, 8, 5, 6, 6]\n  Say $v14\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 5
+    },
+    "expected": {
+      "behaviour": "observe"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-clean-seed5",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-clean-seed5.mdz",
+    "tracePath": "programs/e1/clean-seed5.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed5\n---\n\n# e1-seed5\n\nPRAGMA STRICT\n\n$v0 = 6\n$v1 = 2\n$v2 = \"blue\"\nIF $v1 = 7 THEN\n  IF $v0 < 9 THEN\n    Say $v1\n  END\nEND\n$v3 = $v0 * 2\nSay $v1\nIF $v1 != 2 THEN\n  $v4 = $v0 - 5\n  $v5 = $v4 + 3\nEND\nSay $v2\n$v6 = \"draft\"\n$v7 = $v3 - 1\nSay $v3\nSay $v1\nSay $v6\nIF $v0 > 7 THEN\n  Say $v7\nELSE\n  Say $v1\nEND\nSay $v7\nSay $v7\nSay $v7\nIF $v0 = 3 THEN\n  Say $v1\nEND\nSay $v3\nIF $v7 = 9 THEN\n  Say $v2\nEND\n$v8 = $v1 + 3\nSay $v2\nIF $v0 < 6 THEN\n  $v9 = $v8 + 3\n  $v10 = $v7 + 4\nELSE\n  Say $v7\nEND\n$v11 = $v1 - 4\nSay $v2\nSay $v0\nIF $v8 != 2 THEN\n  $v12 = 4\nELSE\n  Say $v6\n  Say \"ok\"\nEND\nFOR $v13 IN [7, 0, 6, 5, 2]\n  Say $v13\nEND\nFOR $v14 IN [6, 8, 5, 6, 6]\n  Say $v14\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 5
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-syntax-seed5",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-syntax-seed5.mdz",
+    "tracePath": "programs/e1/strict-syntax-seed5.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed5\n---\n\n# e1-seed5\n\nPRAGMA STRICT\n\n$v0 = 6\n$v1 = 2\n$v2 = \"blue\"\nIF $v1 = 7 THEN\n  IF $v0 < 9 THEN\n    Say $v1\n  END\nEND\n$v3 = $v0 * 2\nSay $v1\nIF $v1 != 2 THEN\n  $v4 = $v0 - 5\n  $v5 = $v4 + 3\nEND\nSay $v2\n$v6 = \"draft\"\n$v7 = $v3 - 1\nSay $v3\nSay $v1\nSay $v6\nIF $v0 > 7 THEN\n  Say $v7\nELSE\n  Say $v1\nEND\nSay $v7\nSay $v7\nSay $v7\nIF $v0 = 3 THEN\n  Say $v1\nEND\nSay $v3\nIF $v7 = 9 THEN\n  Say $v2\nEND\n$v8 = $v1 + 3\nSay $v2\nIF $v0 < 6 THEN\n  $v9 = $v8 + 3\n  $v10 = $v7 + 4\nELSE\n  Say $v7\nEND\n$v11 = $v1 - 4\nSay $v2\nSay $v0\nIF $v8 != 2 THEN\n  $v12 = 4\nELSE\n  Say $v6\n  Say \"ok\"\nEND\nFOR $v13 [7, 0, 6, 5, 2]\n  Say $v13\nEND\nFOR $v14 IN [6, 8, 5, 6, 6]\n  Say $v14\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 5
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "syntax"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-type-seed5",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-type-seed5.mdz",
+    "tracePath": "programs/e1/strict-type-seed5.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed5\n---\n\n# e1-seed5\n\nPRAGMA STRICT\n\n$v0: String = 6\n$v1 = 2\n$v2 = \"blue\"\nIF $v1 = 7 THEN\n  IF $v0 < 9 THEN\n    Say $v1\n  END\nEND\n$v3 = $v0 * 2\nSay $v1\nIF $v1 != 2 THEN\n  $v4 = $v0 - 5\n  $v5 = $v4 + 3\nEND\nSay $v2\n$v6 = \"draft\"\n$v7 = $v3 - 1\nSay $v3\nSay $v1\nSay $v6\nIF $v0 > 7 THEN\n  Say $v7\nELSE\n  Say $v1\nEND\nSay $v7\nSay $v7\nSay $v7\nIF $v0 = 3 THEN\n  Say $v1\nEND\nSay $v3\nIF $v7 = 9 THEN\n  Say $v2\nEND\n$v8 = $v1 + 3\nSay $v2\nIF $v0 < 6 THEN\n  $v9 = $v8 + 3\n  $v10 = $v7 + 4\nELSE\n  Say $v7\nEND\n$v11 = $v1 - 4\nSay $v2\nSay $v0\nIF $v8 != 2 THEN\n  $v12 = 4\nELSE\n  Say $v6\n  Say \"ok\"\nEND\nFOR $v13 IN [7, 0, 6, 5, 2]\n  Say $v13\nEND\nFOR $v14 IN [6, 8, 5, 6, 6]\n  Say $v14\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "type",
+      "grammar": true,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -360,6 +684,7 @@
     "variant": {
       "mode": "default",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -379,6 +704,7 @@
     "variant": {
       "mode": "default",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -398,6 +724,7 @@
     "variant": {
       "mode": "default",
       "condition": "type",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -418,6 +745,7 @@
     "variant": {
       "mode": "strict",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -437,6 +765,7 @@
     "variant": {
       "mode": "strict",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -457,6 +786,109 @@
     "variant": {
       "mode": "strict",
       "condition": "type",
+      "grammar": false,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 6
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "type"
+    }
+  },
+  {
+    "id": "e1-default-grammar-clean-seed6",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-clean-seed6.mdz",
+    "tracePath": "programs/e1/clean-seed6.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed6\n---\n\n# e1-seed6\n\n$v0 = 5\n$v1 = $v0 + 3\n$v2 = \"draft\"\nIF $v0 != 0 THEN\n  IF $v0 > 9 THEN\n    Say $v2\n  END\nEND\nCASE $v2\nWHEN \"blue\"\n  $v3 = $v1 * 2\nWHEN \"hold\"\n  Say $v2\n  Say \"ok\"\nELSE\n  $v4 = $v0 * 3\n  Say $v2\nEND\n$v5 = \"blue\"\nFOR $v6 IN [8, 8, 2, 4, 3]\n  Say $v6\nEND\n$v7 = $v0 + 2\nFOR $v8 IN [3, 0, 3, 0, 9]\n  Say $v8\nEND\n$v9 = $v1 + 3\n$v10 = $v9 + 1\n$v11 = \"hold\"\nIF $v7 != 3 THEN\n  $v12 = 1\n  $v13 = 0\nELSE\n  $v14 = 5\n  Say $v1\nEND\n$v15 = $v0 - 1\nSay $v0\n$v16 = 4\nSay $v11\n$v17 = 5\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 6
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-default-grammar-syntax-seed6",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-syntax-seed6.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed6\n---\n\n# e1-seed6\n\n$v0 = 5\n$v1 = $v0 + 3\n$v2 = \"draft\"\nIF $v0 != 0 THEN\n  IF $v0 > 9 THEN\n    Say $v2\n  END\nEND\nCASE $v2\nWHEN \"blue\"\n  $v3 = $v1 * 2\nWHEN \"hold\"\n  Say $v2\n  Say \"ok\"\nELSE\n  $v4 = $v0 * 3\n  Say $v2\nEND\n$v5 = \"blue\"\nFOR $v6 [8, 8, 2, 4, 3]\n  Say $v6\nEND\n$v7 = $v0 + 2\nFOR $v8 IN [3, 0, 3, 0, 9]\n  Say $v8\nEND\n$v9 = $v1 + 3\n$v10 = $v9 + 1\n$v11 = \"hold\"\nIF $v7 != 3 THEN\n  $v12 = 1\n  $v13 = 0\nELSE\n  $v14 = 5\n  Say $v1\nEND\n$v15 = $v0 - 1\nSay $v0\n$v16 = 4\nSay $v11\n$v17 = 5\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 6
+    },
+    "expected": {
+      "behaviour": "observe"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-clean-seed6",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-clean-seed6.mdz",
+    "tracePath": "programs/e1/clean-seed6.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed6\n---\n\n# e1-seed6\n\nPRAGMA STRICT\n\n$v0 = 5\n$v1 = $v0 + 3\n$v2 = \"draft\"\nIF $v0 != 0 THEN\n  IF $v0 > 9 THEN\n    Say $v2\n  END\nEND\nCASE $v2\nWHEN \"blue\"\n  $v3 = $v1 * 2\nWHEN \"hold\"\n  Say $v2\n  Say \"ok\"\nELSE\n  $v4 = $v0 * 3\n  Say $v2\nEND\n$v5 = \"blue\"\nFOR $v6 IN [8, 8, 2, 4, 3]\n  Say $v6\nEND\n$v7 = $v0 + 2\nFOR $v8 IN [3, 0, 3, 0, 9]\n  Say $v8\nEND\n$v9 = $v1 + 3\n$v10 = $v9 + 1\n$v11 = \"hold\"\nIF $v7 != 3 THEN\n  $v12 = 1\n  $v13 = 0\nELSE\n  $v14 = 5\n  Say $v1\nEND\n$v15 = $v0 - 1\nSay $v0\n$v16 = 4\nSay $v11\n$v17 = 5\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 6
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-syntax-seed6",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-syntax-seed6.mdz",
+    "tracePath": "programs/e1/strict-syntax-seed6.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed6\n---\n\n# e1-seed6\n\nPRAGMA STRICT\n\n$v0 = 5\n$v1 = $v0 + 3\n$v2 = \"draft\"\nIF $v0 != 0 THEN\n  IF $v0 > 9 THEN\n    Say $v2\n  END\nEND\nCASE $v2\nWHEN \"blue\"\n  $v3 = $v1 * 2\nWHEN \"hold\"\n  Say $v2\n  Say \"ok\"\nELSE\n  $v4 = $v0 * 3\n  Say $v2\nEND\n$v5 = \"blue\"\nFOR $v6 [8, 8, 2, 4, 3]\n  Say $v6\nEND\n$v7 = $v0 + 2\nFOR $v8 IN [3, 0, 3, 0, 9]\n  Say $v8\nEND\n$v9 = $v1 + 3\n$v10 = $v9 + 1\n$v11 = \"hold\"\nIF $v7 != 3 THEN\n  $v12 = 1\n  $v13 = 0\nELSE\n  $v14 = 5\n  Say $v1\nEND\n$v15 = $v0 - 1\nSay $v0\n$v16 = 4\nSay $v11\n$v17 = 5\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 6
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "syntax"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-type-seed6",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-type-seed6.mdz",
+    "tracePath": "programs/e1/strict-type-seed6.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed6\n---\n\n# e1-seed6\n\nPRAGMA STRICT\n\n$v0: String = 5\n$v1 = $v0 + 3\n$v2 = \"draft\"\nIF $v0 != 0 THEN\n  IF $v0 > 9 THEN\n    Say $v2\n  END\nEND\nCASE $v2\nWHEN \"blue\"\n  $v3 = $v1 * 2\nWHEN \"hold\"\n  Say $v2\n  Say \"ok\"\nELSE\n  $v4 = $v0 * 3\n  Say $v2\nEND\n$v5 = \"blue\"\nFOR $v6 IN [8, 8, 2, 4, 3]\n  Say $v6\nEND\n$v7 = $v0 + 2\nFOR $v8 IN [3, 0, 3, 0, 9]\n  Say $v8\nEND\n$v9 = $v1 + 3\n$v10 = $v9 + 1\n$v11 = \"hold\"\nIF $v7 != 3 THEN\n  $v12 = 1\n  $v13 = 0\nELSE\n  $v14 = 5\n  Say $v1\nEND\n$v15 = $v0 - 1\nSay $v0\n$v16 = 4\nSay $v11\n$v17 = 5\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "type",
+      "grammar": true,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -477,6 +909,7 @@
     "variant": {
       "mode": "default",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -496,6 +929,7 @@
     "variant": {
       "mode": "default",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -515,6 +949,7 @@
     "variant": {
       "mode": "default",
       "condition": "type",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -535,6 +970,7 @@
     "variant": {
       "mode": "strict",
       "condition": "clean",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -554,6 +990,7 @@
     "variant": {
       "mode": "strict",
       "condition": "syntax",
+      "grammar": false,
       "statements": 40,
       "depth": 2,
       "iterations": 5,
@@ -574,6 +1011,109 @@
     "variant": {
       "mode": "strict",
       "condition": "type",
+      "grammar": false,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 7
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "type"
+    }
+  },
+  {
+    "id": "e1-default-grammar-clean-seed7",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-clean-seed7.mdz",
+    "tracePath": "programs/e1/clean-seed7.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed7\n---\n\n# e1-seed7\n\n$v0 = 0\n$v1 = $v0 * 3\n$v2 = \"done\"\nIF $v1 = 5 THEN\n  IF $v1 < 2 THEN\n    Say $v0\n  END\nEND\nFOR $v3 IN [3, 2, 5, 2, 9]\n  Say $v3\nEND\nFOR $v4 IN [8, 1, 1, 1, 2]\n  Say $v4\nEND\n$v5 = $v2 + \"red\"\n$v6 = \"blue\"\nSay $v0\nIF $v1 != 7 THEN\n  $v7 = $v0 * 2\nEND\n$v8 = $v0 + 5\n$v9 = 5\nWHILE $v9 != 0\n  Say $v9\n  $v9 = $v9 - 1\nEND\nFOR $v10 IN [6, 3, 0, 6, 9]\n  Say $v10\nEND\n$v11 = \"hold\"\nIF $v9 < 0 THEN\n  Say \"hold\"\n  Say $v11\nEND\n$v12 = 5\nSay \"red\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 7
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-default-grammar-syntax-seed7",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/default-syntax-seed7.mdz",
+    "tracePath": null,
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed7\n---\n\n# e1-seed7\n\n$v0 = 0\n$v1 = $v0 * 3\n$v2 = \"done\"\nIF $v1 = 5 THEN\n  IF $v1 < 2 THEN\n    Say $v0\n  END\nEND\nFOR $v3 [3, 2, 5, 2, 9]\n  Say $v3\nEND\nFOR $v4 IN [8, 1, 1, 1, 2]\n  Say $v4\nEND\n$v5 = $v2 + \"red\"\n$v6 = \"blue\"\nSay $v0\nIF $v1 != 7 THEN\n  $v7 = $v0 * 2\nEND\n$v8 = $v0 + 5\n$v9 = 5\nWHILE $v9 != 0\n  Say $v9\n  $v9 = $v9 - 1\nEND\nFOR $v10 IN [6, 3, 0, 6, 9]\n  Say $v10\nEND\n$v11 = \"hold\"\nIF $v9 < 0 THEN\n  Say \"hold\"\n  Say $v11\nEND\n$v12 = 5\nSay \"red\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "default",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 7
+    },
+    "expected": {
+      "behaviour": "observe"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-clean-seed7",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-clean-seed7.mdz",
+    "tracePath": "programs/e1/clean-seed7.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed7\n---\n\n# e1-seed7\n\nPRAGMA STRICT\n\n$v0 = 0\n$v1 = $v0 * 3\n$v2 = \"done\"\nIF $v1 = 5 THEN\n  IF $v1 < 2 THEN\n    Say $v0\n  END\nEND\nFOR $v3 IN [3, 2, 5, 2, 9]\n  Say $v3\nEND\nFOR $v4 IN [8, 1, 1, 1, 2]\n  Say $v4\nEND\n$v5 = $v2 + \"red\"\n$v6 = \"blue\"\nSay $v0\nIF $v1 != 7 THEN\n  $v7 = $v0 * 2\nEND\n$v8 = $v0 + 5\n$v9 = 5\nWHILE $v9 != 0\n  Say $v9\n  $v9 = $v9 - 1\nEND\nFOR $v10 IN [6, 3, 0, 6, 9]\n  Say $v10\nEND\n$v11 = \"hold\"\nIF $v9 < 0 THEN\n  Say \"hold\"\n  Say $v11\nEND\n$v12 = 5\nSay \"red\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "clean",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 7
+    },
+    "expected": {
+      "behaviour": "execute"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-syntax-seed7",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-syntax-seed7.mdz",
+    "tracePath": "programs/e1/strict-syntax-seed7.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed7\n---\n\n# e1-seed7\n\nPRAGMA STRICT\n\n$v0 = 0\n$v1 = $v0 * 3\n$v2 = \"done\"\nIF $v1 = 5 THEN\n  IF $v1 < 2 THEN\n    Say $v0\n  END\nEND\nFOR $v3 [3, 2, 5, 2, 9]\n  Say $v3\nEND\nFOR $v4 IN [8, 1, 1, 1, 2]\n  Say $v4\nEND\n$v5 = $v2 + \"red\"\n$v6 = \"blue\"\nSay $v0\nIF $v1 != 7 THEN\n  $v7 = $v0 * 2\nEND\n$v8 = $v0 + 5\n$v9 = 5\nWHILE $v9 != 0\n  Say $v9\n  $v9 = $v9 - 1\nEND\nFOR $v10 IN [6, 3, 0, 6, 9]\n  Say $v10\nEND\n$v11 = \"hold\"\nIF $v9 < 0 THEN\n  Say \"hold\"\n  Say $v11\nEND\n$v12 = 5\nSay \"red\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "syntax",
+      "grammar": true,
+      "statements": 40,
+      "depth": 2,
+      "iterations": 5,
+      "seed": 7
+    },
+    "expected": {
+      "behaviour": "halt",
+      "haltReason": "syntax"
+    }
+  },
+  {
+    "id": "e1-strict-grammar-type-seed7",
+    "experiment": "e1",
+    "runMode": "single-turn",
+    "programPath": "programs/e1/strict-type-seed7.mdz",
+    "tracePath": "programs/e1/strict-type-seed7.trace.json",
+    "prompt": "You are an MDZ interpreter. MDZ is a simple imperative notation for\nprocedures. Your job is to execute the given MDZ program EXACTLY as written,\nstep by step, and report the resulting trace. Do not optimise, summarise,\nskip, or \"improve\" the program — follow it literally.\n\nYou must not use any tools, code execution, web access, or external\nresources. Execute the program purely by reasoning, in your head.\n\nThe trace is a JSON array of step objects. Only three actions are recorded:\n- emit:   { \"step\": <n>, \"action\": \"emit\", \"value\": <scalar> }   for every observable output line\n- assign: { \"step\": <n>, \"action\": \"assign\", \"var\": \"<name>\", \"value\": <scalar> }\n- call:   { \"step\": <n>, \"action\": \"call\", \"target\": \"<path>\", \"args\": { ... } }\nControl flow (IF/ELSE, FOR, WHILE, CASE) is NOT recorded directly; it only\ndetermines which observable steps occur and in what order. \"step\" numbers the\nobservable steps sequentially starting at 1. Values are JSON scalars: strings\nfor text, numbers for integers. Compare strings trimmed of surrounding\nwhitespace.\n\nWorked example.\n\nProgram:\n  $x = 3\n  $y = $x + 4\n  Say the value of $y\n  IF $y > 5\n    Say \"big\"\n  END\n\nTrace:\n```json\n[\n  { \"step\": 1, \"action\": \"assign\", \"var\": \"x\", \"value\": 3 },\n  { \"step\": 2, \"action\": \"assign\", \"var\": \"y\", \"value\": 7 },\n  { \"step\": 3, \"action\": \"emit\", \"value\": \"7\" },\n  { \"step\": 4, \"action\": \"emit\", \"value\": \"big\" }\n]\n```\n\nThe complete MDZ grammar for this program class:\n- MDZ is embedded in a Markdown host document: YAML frontmatter (--- ... ---), headings (# ...), and blank lines are host text, NOT MDZ statements — they are never validated as syntax.\n- Directive:    PRAGMA <name> (e.g. PRAGMA STRICT)\n- Assignment:   $name = <expr>   with an optional type annotation ($name: Number = 5, $name: String = \"a\"); an annotation must match the type of the assigned value.\n- Output:       Say <expr>\n- Conditional:  IF <condition> [THEN] ... [ELSE ...] END\n- List loop:    FOR $name IN [v1, v2, ...] ... END — the IN keyword is required between the loop variable and the list.\n- While loop:   WHILE <condition> ... END\n- Case:         CASE <expr> WHEN <value> ... [WHEN <value> ...] [ELSE ...] END\n- Every block opened by IF, FOR, WHILE, or CASE is closed by a matching END.\n- Expressions use $variables, number and \"string\" literals, arithmetic (+, -, *) and comparisons (=, !=, <, >).\nA statement that does not match one of these forms is a syntax error.\n\nThis program declares PRAGMA STRICT: before executing anything, validate the whole program — every statement must be syntactically well-formed and every type annotation must match its value.\nOn any syntax or type violation, output a trace containing a single step { \"step\": 1, \"action\": \"halt\", \"reason\": \"<what is wrong and where>\" } and stop; execute no steps.\n\nOutput ONLY the final trace as a single fenced ```json code block containing\nthe array of step objects. Do not output any other prose.\n\nProgram to execute:\n--- BEGIN PROGRAM ---\n---\nname: e1-seed7\n---\n\n# e1-seed7\n\nPRAGMA STRICT\n\n$v0: String = 0\n$v1 = $v0 * 3\n$v2 = \"done\"\nIF $v1 = 5 THEN\n  IF $v1 < 2 THEN\n    Say $v0\n  END\nEND\nFOR $v3 IN [3, 2, 5, 2, 9]\n  Say $v3\nEND\nFOR $v4 IN [8, 1, 1, 1, 2]\n  Say $v4\nEND\n$v5 = $v2 + \"red\"\n$v6 = \"blue\"\nSay $v0\nIF $v1 != 7 THEN\n  $v7 = $v0 * 2\nEND\n$v8 = $v0 + 5\n$v9 = 5\nWHILE $v9 != 0\n  Say $v9\n  $v9 = $v9 - 1\nEND\nFOR $v10 IN [6, 3, 0, 6, 9]\n  Say $v10\nEND\n$v11 = \"hold\"\nIF $v9 < 0 THEN\n  Say \"hold\"\n  Say $v11\nEND\n$v12 = 5\nSay \"red\"\n\n--- END PROGRAM ---",
+    "variant": {
+      "mode": "strict",
+      "condition": "type",
+      "grammar": true,
       "statements": 40,
       "depth": 2,
       "iterations": 5,

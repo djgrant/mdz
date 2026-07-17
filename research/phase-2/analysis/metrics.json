@@ -8,6 +8,14 @@
       "n_faulted": 21,
       "n_clean": 12
     },
+    "default-grammar": {
+      "halt_rate": 0.0,
+      "repair_rate": 0.9,
+      "false_halt_rate": 0.0,
+      "clean_step_accuracy": 1.0,
+      "n_faulted": 10,
+      "n_clean": 10
+    },
     "strict": {
       "halt_rate": 0.55,
       "repair_rate": 0.45,
@@ -16,9 +24,18 @@
       "n_faulted": 20,
       "n_clean": 10
     },
+    "strict-grammar": {
+      "halt_rate": 1.0,
+      "repair_rate": 0.0,
+      "false_halt_rate": 0.0,
+      "clean_step_accuracy": 0.9942669942669943,
+      "n_faulted": 20,
+      "n_clean": 10
+    },
     "by_cell": [
       {
         "mode": "default",
+        "grammar": false,
         "condition": "clean",
         "model": "gpt-5.4-mini",
         "halt": 0.0,
@@ -28,6 +45,7 @@
       },
       {
         "mode": "default",
+        "grammar": false,
         "condition": "clean",
         "model": "haiku",
         "halt": 0.0,
@@ -37,6 +55,7 @@
       },
       {
         "mode": "default",
+        "grammar": false,
         "condition": "syntax",
         "model": "gpt-5.4-mini",
         "halt": 0.0,
@@ -46,6 +65,7 @@
       },
       {
         "mode": "default",
+        "grammar": false,
         "condition": "syntax",
         "model": "haiku",
         "halt": 0.0,
@@ -55,6 +75,7 @@
       },
       {
         "mode": "default",
+        "grammar": false,
         "condition": "type",
         "model": "gpt-5.4-mini",
         "halt": 0.0,
@@ -64,6 +85,7 @@
       },
       {
         "mode": "default",
+        "grammar": false,
         "condition": "type",
         "model": "haiku",
         "halt": 0.0,
@@ -72,7 +94,48 @@
         "n": 5
       },
       {
+        "mode": "default",
+        "grammar": true,
+        "condition": "clean",
+        "model": "gpt-5.4-mini",
+        "halt": 0.0,
+        "exec_past": 1.0,
+        "acc": 1.0,
+        "n": 5
+      },
+      {
+        "mode": "default",
+        "grammar": true,
+        "condition": "clean",
+        "model": "haiku",
+        "halt": 0.0,
+        "exec_past": 1.0,
+        "acc": 1.0,
+        "n": 5
+      },
+      {
+        "mode": "default",
+        "grammar": true,
+        "condition": "syntax",
+        "model": "gpt-5.4-mini",
+        "halt": 0.0,
+        "exec_past": 0.8,
+        "acc": NaN,
+        "n": 5
+      },
+      {
+        "mode": "default",
+        "grammar": true,
+        "condition": "syntax",
+        "model": "haiku",
+        "halt": 0.0,
+        "exec_past": 1.0,
+        "acc": NaN,
+        "n": 5
+      },
+      {
         "mode": "strict",
+        "grammar": false,
         "condition": "clean",
         "model": "gpt-5.4-mini",
         "halt": 0.2,
@@ -82,6 +145,7 @@
       },
       {
         "mode": "strict",
+        "grammar": false,
         "condition": "clean",
         "model": "haiku",
         "halt": 0.0,
@@ -91,6 +155,7 @@
       },
       {
         "mode": "strict",
+        "grammar": false,
         "condition": "syntax",
         "model": "gpt-5.4-mini",
         "halt": 0.2,
@@ -100,6 +165,7 @@
       },
       {
         "mode": "strict",
+        "grammar": false,
         "condition": "syntax",
         "model": "haiku",
         "halt": 0.0,
@@ -109,6 +175,7 @@
       },
       {
         "mode": "strict",
+        "grammar": false,
         "condition": "type",
         "model": "gpt-5.4-mini",
         "halt": 1.0,
@@ -118,6 +185,67 @@
       },
       {
         "mode": "strict",
+        "grammar": false,
+        "condition": "type",
+        "model": "haiku",
+        "halt": 1.0,
+        "exec_past": 0.0,
+        "acc": 1.0,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
+        "condition": "clean",
+        "model": "gpt-5.4-mini",
+        "halt": 0.0,
+        "exec_past": 1.0,
+        "acc": 1.0,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
+        "condition": "clean",
+        "model": "haiku",
+        "halt": 0.0,
+        "exec_past": 1.0,
+        "acc": 0.9885339885339886,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
+        "condition": "syntax",
+        "model": "gpt-5.4-mini",
+        "halt": 1.0,
+        "exec_past": 0.0,
+        "acc": NaN,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
+        "condition": "syntax",
+        "model": "haiku",
+        "halt": 1.0,
+        "exec_past": 0.0,
+        "acc": NaN,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
+        "condition": "type",
+        "model": "gpt-5.4-mini",
+        "halt": 1.0,
+        "exec_past": 0.0,
+        "acc": 1.0,
+        "n": 5
+      },
+      {
+        "mode": "strict",
+        "grammar": true,
         "condition": "type",
         "model": "haiku",
         "halt": 1.0,
@@ -200,27 +328,45 @@
         "payload_coverage": 1.0,
         "lambda_fidelity": 1.0,
         "aggregation": 1.0
+      },
+      {
+        "variant": "e2-lambda-fidelity-neutral",
+        "model": "haiku",
+        "spawn_fidelity": 0.3333333333333333,
+        "item_coverage": 0.3333333333333333,
+        "payload_coverage": 1.0,
+        "lambda_fidelity": 1.0,
+        "aggregation": 1.0
+      },
+      {
+        "variant": "e2-lambda-fidelity-neutral",
+        "model": "sonnet",
+        "spawn_fidelity": 1.0,
+        "item_coverage": 1.0,
+        "payload_coverage": 1.0,
+        "lambda_fidelity": 1.0,
+        "aggregation": 1.0
       }
     ],
     "mechanism": [
       {
         "model": "haiku",
         "mechanism": "spawned",
-        "n": 10
+        "n": 11
       },
       {
         "model": "haiku",
         "mechanism": "wrong-mechanism",
-        "n": 2
+        "n": 4
       },
       {
         "model": "sonnet",
         "mechanism": "spawned",
-        "n": 12
+        "n": 15
       }
     ],
     "shortcut_rate": 0.0,
-    "n": 24
+    "n": 30
   },
   "e3": [
     {
@@ -260,33 +406,141 @@
       "n": 6
     }
   ],
+  "e3b": [
+    {
+      "size": 100,
+      "arm": "chunked-nostore",
+      "emit_acc": 0.9348659003831418,
+      "assign_acc": NaN,
+      "spawns": 4.0,
+      "sets": 0.0,
+      "gets": 0.0,
+      "tokens": 3187.1666666666665,
+      "wall_s": 137.67833333333334,
+      "n": 6
+    },
+    {
+      "size": 100,
+      "arm": "chunked-store",
+      "emit_acc": 1.0,
+      "assign_acc": 0.6839424141749723,
+      "spawns": 4.0,
+      "sets": 29.0,
+      "gets": 9.0,
+      "tokens": 3439.1666666666665,
+      "wall_s": 162.29999999999998,
+      "n": 6
+    },
+    {
+      "size": 200,
+      "arm": "chunked-nostore",
+      "emit_acc": 0.776278211641014,
+      "assign_acc": NaN,
+      "spawns": 4.5,
+      "sets": 0.0,
+      "gets": 0.0,
+      "tokens": 2863.6666666666665,
+      "wall_s": 218.24733333333333,
+      "n": 6
+    },
+    {
+      "size": 200,
+      "arm": "chunked-store",
+      "emit_acc": 0.8227816109384083,
+      "assign_acc": 0.4133556931544548,
+      "spawns": 4.666666666666667,
+      "sets": 30.5,
+      "gets": 20.5,
+      "tokens": 3606.1666666666665,
+      "wall_s": 220.58616666666668,
+      "n": 6
+    }
+  ],
   "e4": {
     "compliance": [
       {
         "arm": "A-procedure",
         "model": "gpt-5.4-mini",
-        "compliant": 0.9
+        "compliant": 1.0
       },
       {
         "arm": "A-procedure",
         "model": "haiku",
-        "compliant": 0.9
+        "compliant": 1.0
       },
       {
         "arm": "B-goal",
         "model": "gpt-5.4-mini",
-        "compliant": 0.4
+        "compliant": 0.42424242424242425
       },
       {
         "arm": "B-goal",
         "model": "haiku",
-        "compliant": 0.3
+        "compliant": 0.3333333333333333
+      },
+      {
+        "arm": "C-rules",
+        "model": "gpt-5.4-mini",
+        "compliant": 1.0
+      },
+      {
+        "arm": "C-rules",
+        "model": "haiku",
+        "compliant": 1.0
       }
     ],
     "adherence": {
-      "A-procedure": 1.95,
-      "B-goal": 0.6
+      "A-procedure": 1.9696969696969697,
+      "B-goal": 0.7121212121212122,
+      "C-rules": 2.0
     },
-    "n": 40
+    "n": 198,
+    "compliance_by_depth": [
+      {
+        "depth": 1,
+        "arm": "A-procedure",
+        "compliant": 1.0
+      },
+      {
+        "depth": 1,
+        "arm": "B-goal",
+        "compliant": 0.2
+      },
+      {
+        "depth": 1,
+        "arm": "C-rules",
+        "compliant": 1.0
+      },
+      {
+        "depth": 2,
+        "arm": "A-procedure",
+        "compliant": 1.0
+      },
+      {
+        "depth": 2,
+        "arm": "B-goal",
+        "compliant": 0.5333333333333333
+      },
+      {
+        "depth": 2,
+        "arm": "C-rules",
+        "compliant": 1.0
+      },
+      {
+        "depth": 3,
+        "arm": "A-procedure",
+        "compliant": 1.0
+      },
+      {
+        "depth": 3,
+        "arm": "B-goal",
+        "compliant": 0.5
+      },
+      {
+        "depth": 3,
+        "arm": "C-rules",
+        "compliant": 1.0
+      }
+    ]
   }
 }

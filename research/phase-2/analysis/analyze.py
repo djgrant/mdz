@@ -176,6 +176,7 @@ def score_e1(records, manifest) -> pd.DataFrame:
         ref = ref_trace(entry)
         rows.append(dict(
             id=r["id"], model=r["model"], mode=v["mode"], condition=v["condition"],
+            grammar=bool(v.get("grammar")),
             seed=v.get("seed"), parsed=trace is not None, halted=halted,
             any_halt=bool(halt_steps), executed_past=executed_past,
             step_accuracy=step_accuracy(trace or [], ref) if ref and not v["condition"].startswith("syntax") else np.nan,
@@ -189,17 +190,20 @@ def summarise_e1(df: pd.DataFrame) -> dict:
     faulted = df[df.condition != "clean"]
     clean = df[df.condition == "clean"]
     for mode in ("default", "strict"):
-        f = faulted[faulted["mode"] == mode]
-        c = clean[clean["mode"] == mode]
-        out[mode] = dict(
-            halt_rate=float(f.halted.mean()) if len(f) else None,
-            repair_rate=float(f.executed_past.mean()) if len(f) else None,
-            false_halt_rate=float(c.any_halt.mean()) if len(c) else None,
-            clean_step_accuracy=float(c.step_accuracy.mean()) if len(c) else None,
-            n_faulted=int(len(f)), n_clean=int(len(c)),
-        )
+        for grammar in (False, True):
+            f = faulted[(faulted["mode"] == mode) & (faulted.grammar == grammar)]
+            c = clean[(clean["mode"] == mode) & (clean.grammar == grammar)]
+            if not len(f) and not len(c):
+                continue
+            out[f"{mode}-grammar" if grammar else mode] = dict(
+                halt_rate=float(f.halted.mean()) if len(f) else None,
+                repair_rate=float(f.executed_past.mean()) if len(f) else None,
+                false_halt_rate=float(c.any_halt.mean()) if len(c) else None,
+                clean_step_accuracy=float(c.step_accuracy.mean()) if len(c) else None,
+                n_faulted=int(len(f)), n_clean=int(len(c)),
+            )
     out["by_cell"] = (
-        df.groupby(["mode", "condition", "model"])
+        df.groupby(["mode", "grammar", "condition", "model"])
         .agg(halt=("halted", "mean"), exec_past=("executed_past", "mean"),
              acc=("step_accuracy", "mean"), n=("id", "count"))
         .reset_index().to_dict("records")
@@ -207,7 +211,29 @@ def summarise_e1(df: pd.DataFrame) -> dict:
     return out
 
 
+def chart_e1_grammar(df: pd.DataFrame):
+    """Halt rate on syntax faults across the grammar deconfound cells."""
+    sub = df[df.condition == "syntax"].copy()
+    if not sub.grammar.any():
+        return
+    sub["cell"] = sub["mode"] + np.where(sub.grammar, "+grammar", "")
+    order = [c for c in ["default", "default+grammar", "strict", "strict+grammar"]
+             if c in set(sub.cell)]
+    fig, ax = plt.subplots(figsize=(7, 3.8))
+    piv = sub.groupby(["model", "cell"]).halted.mean().unstack()[order]
+    piv.plot.bar(ax=ax, color=[C_C, "#8fa3b3", C_A, "#0f9c85"], rot=0)
+    ax.set_title("Halt rate on syntax faults: does stating the grammar flip repair to halt?")
+    ax.set_ylabel("halt rate")
+    ax.set_ylim(0, 1.05)
+    ax.set_xlabel("")
+    fig.tight_layout()
+    fig.savefig(ASSETS / "e1-grammar.png", dpi=160, bbox_inches="tight")
+    plt.close(fig)
+
+
 def chart_e1(df: pd.DataFrame):
+    # The original cells (no grammar in the preamble); grammar cells get their own chart.
+    df = df[~df.grammar]
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), sharey=True)
     faulted = df[df.condition != "clean"]
     for ax, cond, label in zip(axes, ("syntax", "type"),
@@ -390,6 +416,58 @@ def score_e3(records, manifest) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def score_e3b(records, manifest) -> pd.DataFrame:
+    """Chunked execution: emits from the orchestrator's final output, assigns
+    from the mechanically captured set log (store arm only)."""
+    rows = []
+    for r in records:
+        entry = entry_for(r["id"], manifest)
+        if entry is None:
+            continue
+        ref = ref_trace(entry) or []
+        ref_assigns = [s for s in ref if s.get("action") == "assign"]
+        ref_emits = [coerce(s.get("value")) for s in ref if s.get("action") == "emit"]
+        raw = r.get("rawOutput") or ""
+        emits = [coerce(l) for l in (parse_fenced_lines(raw) or [])]
+        emit_acc = lcs_len(emits, ref_emits) / len(ref_emits) if ref_emits else np.nan
+        state_log = r.get("stateLog") or []
+        sets = [dict(action="assign", var=c.get("name"), value=c.get("value"))
+                for c in state_log if c.get("tool") == "set"]
+        assign_acc = (
+            step_accuracy(sets, ref_assigns) if entry.get("mcp") == "state" else np.nan
+        )
+        rows.append(dict(
+            id=r["id"], model=r["model"], arm=entry.get("arm"),
+            size=entry["variant"].get("statements"), seed=entry["variant"].get("seed"),
+            chunks=entry["variant"].get("chunks"),
+            n_spawns=len(r.get("spawns") or []),
+            n_sets=sum(1 for c in state_log if c.get("tool") == "set"),
+            n_gets=sum(1 for c in state_log if c.get("tool") == "get"),
+            ref_assigns=len(ref_assigns),
+            assign_acc=assign_acc, emit_acc=emit_acc,
+            completion_tokens=r.get("completionTokens"), duration_s=(r.get("durationMs") or 0) / 1000,
+            cost=r.get("costUsd"), error=r.get("error"),
+        ))
+    return pd.DataFrame(rows)
+
+
+def chart_e3b(df: pd.DataFrame):
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, metric, title in zip(
+        axes, ["emit_acc", "assign_acc"],
+        ["emit accuracy (store vs no-store control)", "assign accuracy (set log, store arm)"],
+    ):
+        piv = df.groupby(["size", "arm"])[metric].mean().unstack()
+        piv.plot.bar(ax=ax, color=[C_B, C_A], rot=0, legend=(metric == "emit_acc"))
+        ax.set_title(title)
+        ax.set_ylim(0, 1.05)
+        ax.set_xlabel("program size (statements)")
+    fig.suptitle("E3b: load-bearing external state via chunked execution", y=1.05)
+    fig.tight_layout()
+    fig.savefig(ASSETS / "e3b-chunked.png", dpi=160, bbox_inches="tight")
+    plt.close(fig)
+
+
 def chart_e3(df: pd.DataFrame):
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.8))
     for ax, metric, title in zip(
@@ -437,60 +515,89 @@ def chart_e3_journal(df: pd.DataFrame):
 def score_e4() -> pd.DataFrame:
     checks = {c["id"]: c for c in load_jsonl(RESULTS / "e4-checks.jsonl")}
     judges = {j["id"]: j for j in load_jsonl(RESULTS / "e4-judge.jsonl")}
+    manifest = load_manifest("e4")
     rows = []
     for rid, c in checks.items():
         j = judges.get(rid, {})
         verdict = (j.get("verdict") or {})
+        entry = manifest.get(c["entryId"]) or {}
         rows.append(dict(
             id=rid, entryId=c["entryId"], arm=c["arm"], model=c.get("model"),
+            depth=(entry.get("variant") or {}).get("depth"),
             compliant=bool(c["pass"]), note=c.get("note"),
             adherence=verdict.get("score"),
         ))
     return pd.DataFrame(rows)
 
 
+E4_ARM_LABELS = {"A-procedure": "MDZ procedure", "B-goal": "goal prompt", "C-rules": "declarative rules"}
+E4_ARM_COLORS = {"A-procedure": C_A, "B-goal": C_C, "C-rules": C_B}
+
+
 def chart_e4(df: pd.DataFrame):
+    arms = [a for a in E4_ARM_LABELS if a in set(df.arm)]
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
-    piv = df.groupby(["model", "arm"]).compliant.mean().unstack()
-    piv.columns = ["MDZ procedure", "goal prompt"]
-    piv.plot.bar(ax=axes[0], color=[C_A, C_C], rot=0)
+    piv = df.groupby(["model", "arm"]).compliant.mean().unstack()[arms]
+    piv.columns = [E4_ARM_LABELS[a] for a in arms]
+    piv.plot.bar(ax=axes[0], color=[E4_ARM_COLORS[a] for a in arms], rot=0)
     axes[0].set_title("checker pass rate")
     axes[0].set_ylabel("pass rate")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_xlabel("")
-    piv2 = df.groupby(["model", "arm"]).adherence.mean().unstack()
-    piv2.columns = ["MDZ procedure", "goal prompt"]
-    piv2.plot.bar(ax=axes[1], color=[C_A, C_C], rot=0)
+    piv2 = df.groupby(["model", "arm"]).adherence.mean().unstack()[arms]
+    piv2.columns = [E4_ARM_LABELS[a] for a in arms]
+    piv2.plot.bar(ax=axes[1], color=[E4_ARM_COLORS[a] for a in arms], rot=0)
     axes[1].set_title("judge score: did the reply follow the procedure?")
     axes[1].set_ylabel("mean judge score (0–2)")
     axes[1].set_ylim(0, 2.1)
     axes[1].set_xlabel("")
-    fig.suptitle("Decision compliance and process adherence, procedure vs goal", y=1.02)
+    fig.suptitle("Decision compliance and process adherence, by prompt form", y=1.02)
     fig.tight_layout()
     fig.savefig(ASSETS / "e4-compliance.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
 
 
 def chart_e4_tasks(df: pd.DataFrame):
-    """Per-task dumbbell: goal-arm vs procedure-arm pass rate, models pooled."""
+    """Per-task dumbbell: pass rate per arm, models pooled."""
     d = df.copy()
-    d["task"] = d.entryId.str.replace("^e4-", "", regex=True).str.replace("-[AB]$", "", regex=True)
-    piv = (d.groupby(["task", "arm"]).compliant.mean().unstack()
-             .sort_values("B-goal"))
+    d["task"] = d.entryId.str.replace("^e4-", "", regex=True).str.replace("-[ABC]$", "", regex=True)
+    arms = [a for a in E4_ARM_LABELS if a in set(d.arm)]
+    piv = (d.groupby(["task", "arm"]).compliant.mean().unstack()[arms]
+             .sort_values(arms[-1]))
     y = np.arange(len(piv))
     fig, ax = plt.subplots(figsize=(8, 0.42 * len(piv) + 1.2))
-    for yi, (goal, proc) in zip(y, piv[["B-goal", "A-procedure"]].values):
-        ax.plot([goal, proc], [yi, yi], color="#c9d2d9", lw=2, zorder=1)
-    ax.scatter(piv["B-goal"], y, color=C_C, s=55, zorder=2, label="goal prompt")
-    ax.scatter(piv["A-procedure"], y, color=C_A, s=55, zorder=2, label="MDZ procedure")
+    for yi, vals in zip(y, piv.values):
+        ax.plot([np.nanmin(vals), np.nanmax(vals)], [yi, yi], color="#c9d2d9", lw=2, zorder=1)
+    for a in arms:
+        ax.scatter(piv[a], y, color=E4_ARM_COLORS[a], s=55, zorder=2, label=E4_ARM_LABELS[a])
     ax.set_yticks(y, piv.index, fontsize=9)
     ax.set_xlim(-0.05, 1.05)
     ax.set_xlabel("checker pass rate (both models pooled)")
-    ax.set_title("Decision compliance by task, goal vs procedure")
+    ax.set_title("Decision compliance by task and prompt form")
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), frameon=False)
     ax.grid(axis="x", color="#eef2f4")
     fig.tight_layout()
     fig.savefig(ASSETS / "e4-tasks.png", dpi=160, bbox_inches="tight")
+    plt.close(fig)
+
+
+def chart_e4_depth(df: pd.DataFrame):
+    """Compliance vs constraint-interaction depth: does the declarative form
+    degrade with depth while the procedure holds?"""
+    d = df.dropna(subset=["depth"])
+    if not len(d) or "C-rules" not in set(d.arm):
+        return
+    arms = [a for a in E4_ARM_LABELS if a in set(d.arm)]
+    fig, ax = plt.subplots(figsize=(6.5, 3.8))
+    piv = d.groupby(["depth", "arm"]).compliant.mean().unstack()[arms]
+    piv.columns = [E4_ARM_LABELS[a] for a in arms]
+    piv.plot.bar(ax=ax, color=[E4_ARM_COLORS[a] for a in arms], rot=0)
+    ax.set_title("Compliance by constraint-interaction depth")
+    ax.set_ylabel("checker pass rate")
+    ax.set_ylim(0, 1.05)
+    ax.set_xlabel("interaction depth (1 = flat rules, 3 = ordered gates + precedence)")
+    fig.tight_layout()
+    fig.savefig(ASSETS / "e4-depth.png", dpi=160, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -504,6 +611,7 @@ def main():
     if len(e1):
         metrics["e1"] = summarise_e1(e1)
         chart_e1(e1)
+        chart_e1_grammar(e1)
         e1.to_json(HERE / "e1-scored.json", orient="records")
 
     e2 = score_e2(load_records("e2"), load_manifest("e2"))
@@ -531,6 +639,17 @@ def main():
         chart_e3_journal(e3)
         e3.to_json(HERE / "e3-scored.json", orient="records")
 
+    e3b = score_e3b(load_records("e3b"), load_manifest("e3b"))
+    if len(e3b):
+        metrics["e3b"] = e3b.groupby(["size", "arm"]).agg(
+            emit_acc=("emit_acc", "mean"), assign_acc=("assign_acc", "mean"),
+            spawns=("n_spawns", "mean"), sets=("n_sets", "mean"), gets=("n_gets", "mean"),
+            tokens=("completion_tokens", "mean"), wall_s=("duration_s", "mean"),
+            n=("id", "count"),
+        ).reset_index().to_dict("records")
+        chart_e3b(e3b)
+        e3b.to_json(HERE / "e3b-scored.json", orient="records")
+
     e4 = score_e4()
     if len(e4):
         metrics["e4"] = dict(
@@ -538,8 +657,13 @@ def main():
             adherence=e4.groupby(["arm"]).adherence.mean().to_dict(),
             n=int(len(e4)),
         )
+        metrics["e4"]["compliance_by_depth"] = (
+            e4.dropna(subset=["depth"]).groupby(["depth", "arm"]).compliant.mean()
+            .reset_index().to_dict("records")
+        )
         chart_e4(e4)
         chart_e4_tasks(e4)
+        chart_e4_depth(e4)
         e4.to_json(HERE / "e4-scored.json", orient="records")
 
     (HERE / "metrics.json").write_text(json.dumps(metrics, indent=2, default=float))

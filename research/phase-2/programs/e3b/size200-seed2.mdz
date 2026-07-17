@@ -1,0 +1,145 @@
+---
+name: e3b-size200-seed2
+---
+
+# e3b-size200-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3 = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4 = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5 = $v3 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v3
+  Say $v2
+WHEN "next"
+  $v6 = 9
+  $v7 = $v0 * 2
+ELSE
+  Say "hold"
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v8 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]
+  Say $v9
+END
+FOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]
+  Say $v10
+END
+Say $v3
+IF $v1 < 2 THEN
+  $v11 = $v1 - 3
+  Say $v1
+END
+IF $v1 != 9 THEN
+  Say $v2
+ELSE
+  $v12 = $v3 * 2
+  $v13 = 8
+END
+Say $v2
+IF $v0 > 6 THEN
+  $v14 = $v0 * 2
+ELSE
+  $v15 = $v0 * 4
+  Say $v1
+END
+$v16 = $v2 + "ok"
+$v17 = 10
+WHILE $v17 != 0
+  Say $v17
+  $v17 = $v17 - 1
+END
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+Say $v2
+IF $v0 < 3 THEN
+  $v19 = 0
+  $v20 = $v19 + 4
+END
+$v21 = $v16 + "blue"
+IF $v3 < 6 THEN
+  $v22 = 5
+END
+IF $v1 > 1 THEN
+  $v23 = 0
+END
+$v24 = 10
+WHILE $v24 != 0
+  Say $v24
+  $v24 = $v24 - 1
+END
+Say $v17
+$v25 = $v2 + "red"
+$v26 = $v17 * 1
+Say "ok"
+$v27 = 10
+WHILE $v27 != 0
+  Say $v27
+  $v27 = $v27 - 1
+END
+CASE $v2
+WHEN "red"
+  $v28 = $v0 + 3
+  $v29 = $v26 + 3
+WHEN "next"
+  $v30 = 6
+  $v31 = $v3 * 2
+ELSE
+  Say $v24
+END
+Say $v0
+Say $v16
+Say $v16
+Say $v18
+FOR $v32 IN [5, 6, 3, 2, 1, 4, 3, 6, 0, 0]
+  Say $v32
+END
+FOR $v33 IN [8, 8, 9, 1, 0, 1, 8, 2, 3, 6]
+  Say $v33
+END
+IF $v26 = 0 THEN
+  $v34 = $v17 - 2
+  Say $v24
+ELSE
+  Say $v18
+END
+Say $v16
+$v35 = 10
+WHILE $v35 != 0
+  Say $v35
+  $v35 = $v35 - 1
+END
+Say $v3
+CASE $v21
+WHEN "done"
+  Say $v27
+WHEN "blue"
+  Say "draft"
+ELSE
+  Say "blue"
+END

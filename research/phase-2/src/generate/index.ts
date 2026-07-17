@@ -15,6 +15,7 @@ import { PROGRAMS_DIR, type ManifestEntry } from "./shared.ts";
 import { buildE1 } from "./e1.ts";
 import { buildE2 } from "./e2.ts";
 import { buildE3 } from "./e3.ts";
+import { buildE3b } from "./e3b.ts";
 import { buildE4 } from "./e4.ts";
 
 export function buildAll(): Record<string, ManifestEntry[]> {
@@ -24,6 +25,7 @@ export function buildAll(): Record<string, ManifestEntry[]> {
     e1: buildE1(PROGRAMS_DIR),
     e2: buildE2(PROGRAMS_DIR),
     e3: buildE3(PROGRAMS_DIR),
+    e3b: buildE3b(PROGRAMS_DIR),
     e4: buildE4(PROGRAMS_DIR),
   };
 }

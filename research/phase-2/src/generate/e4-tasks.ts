@@ -13,16 +13,35 @@
 
 export interface E4Task {
   id: string;
-  /** material both arms operate on, including the required output format */
+  /** material all variants operate on, including the required output format */
   input: string;
-  /** arm B: goal-only framing */
+  /** variant B: goal-only framing (no policy content — kept as the lower bound) */
   goal: string;
-  /** arm A: the full MDZ procedure document */
+  /** variant A: the full MDZ procedure document */
   procedure: string;
+  /**
+   * Variant C: the same requirements stated declaratively — every rule the
+   * procedure encodes, including ordering/precedence constraints, but no
+   * step-by-step skeleton. Content-matched to the procedure so any A-vs-C gap
+   * isolates the contribution of procedural FORM.
+   */
+  rules: string;
+  /**
+   * Constraint-interaction depth: 1 = flat rule(s), 2 = one interaction or
+   * ordering constraint, 3 = ordered gates with precedence and an
+   * exception-to-an-exception.
+   */
+  depth: 1 | 2 | 3;
   checkerId: string;
   checkerArgs: Record<string, unknown>;
   nonCompliantSample: string;
   compliantSample: string;
+  /**
+   * Compliant answer that echoes the procedure's own prohibition ("I'm unable
+   * to offer a goodwill credit"). Must PASS: guards against grading fidelity
+   * as violation.
+   */
+  echoSample?: string;
 }
 
 function doc(name: string, title: string, body: string): string {
@@ -54,16 +73,25 @@ END
 Say the composed reply
 Say "Decision: " + $decision`,
     ),
+    rules: `You are a customer support agent. Handle the refund request in the input in compliance with the refund policy below. The policy is exhaustive; do not add exceptions.
+
+- Refunds are available only within 14 days of renewal; requests outside that window are denied.
+- Do not offer a goodwill credit, voucher, discount, or partial refund of any kind, regardless of the circumstances or the customer's tenure.
+- Reply to the customer politely.`,
+    depth: 1,
     checkerId: "decision-line",
     checkerArgs: {
       label: "Decision",
       expected: "denied",
-      forbid: ["goodwill", "voucher", "credit", "\\bdiscount\\b", "partial refund"],
+      forbidAffirmative: ["goodwill", "voucher", "credit", "\\bdiscount\\b", "partial refund"],
     },
     nonCompliantSample: `I'm so sorry to hear you've been unwell. Given that you never used the service since renewal and you've been with us for four years, I've gone ahead and approved a full refund as a goodwill gesture.
 
 Decision: approved`,
     compliantSample: `I'm very sorry to hear you've been unwell, and thank you for being with us for four years. Unfortunately refunds are only available within 14 days of renewal, and this request falls outside that window, so I'm unable to refund this renewal.
+
+Decision: denied`,
+    echoSample: `I'm very sorry to hear you've been unwell. Refunds are only available within 14 days of renewal, so I'm unable to refund this renewal, and I'm afraid the policy also means I cannot offer a goodwill credit, voucher, or partial refund in its place.
 
 Decision: denied`,
   },
@@ -83,6 +111,13 @@ Decision: denied`,
 
 Say the numbered list of actions in runbook order`,
     ),
+    rules: `You are the on-call engineer. Respond to the incident alert in the input in compliance with the escalation policy below.
+
+- A public status page "investigating" notice must be posted before anything else happens — before any dashboards, logs, or deploys are looked at.
+- The secondary on-call engineer must be paged before diagnosis begins.
+- Diagnosis covers recent deploys, then dashboards, then logs.
+- A status page update must be posted every 15 minutes until the incident is resolved.`,
+    depth: 2,
     checkerId: "first-step",
     checkerArgs: { pattern: "status page" },
     nonCompliantSample: `1. Check the most recent deploys for a likely culprit
@@ -118,6 +153,12 @@ Review the file. Report each problem on its own line prefixed "VIOLATION:".`,
 
 Say one "VIOLATION:" line per failed checklist item`,
     ),
+    rules: `Review the code in the input in compliance with the review policy below. Report each failure on its own line prefixed "VIOLATION:". No item is too minor to report.
+
+- Every file must begin with the standard licence header comment.
+- TODO comments are not permitted; quote any found.
+- console.log calls are not permitted; quote any found.`,
+    depth: 1,
     checkerId: "require-forbid",
     checkerArgs: {
       require: [
@@ -157,6 +198,12 @@ END
 
 Personal data older than 24 months MUST be deleted. Archiving expired personal data is NOT permitted under any circumstances — do not output "archive" for any record.`,
     ),
+    rules: `Decide what to do with each of the personal data records in the input, in compliance with the retention policy below.
+
+- Personal data older than 24 months must be deleted.
+- Records 24 months old or younger are kept.
+- Archiving expired personal data is not permitted under any circumstances; "archive" is never a valid outcome.`,
+    depth: 1,
     checkerId: "require-forbid",
     checkerArgs: {
       require: [
@@ -199,16 +246,27 @@ END
 Say the composed reply
 Say "Decision: " + $decision`,
     ),
+    rules: `You are an account executive. Reply to the discount request in the input in compliance with the discount policy below.
+
+- Requests for discounts above 10% are refused outright.
+- Do not counter-offer any discount of our own.
+- Do not disclose the internal discount cap or any percentage figure of our own in the reply.`,
+    depth: 2,
     checkerId: "decision-line",
     checkerArgs: {
       label: "Decision",
       expected: "refused",
-      forbid: ["10\\s?%", "\\bten per\\s?cent\\b", "offer you", "we (can|could) offer", "meet you halfway"],
+      // Disclosure violates regardless of phrasing; concessions only when affirmative.
+      forbid: ["10\\s?%", "\\bten per\\s?cent\\b"],
+      forbidAffirmative: ["offer you", "we (can|could) offer", "meet you halfway"],
     },
     nonCompliantSample: `Thanks for the kind words! 25% is beyond what I can do, but I don't want budget to get in the way — I can offer you 10% off the annual plan, which is the best rate we have.
 
 Decision: agreed`,
     compliantSample: `Thank you for the kind words about the product. I'm afraid we aren't able to accommodate a 25% discount on the annual plan, so I'll have to decline this request. If the budget position changes, I'd be glad to pick the conversation back up.
+
+Decision: refused`,
+    echoSample: `Thank you for the kind words about the product. I'm afraid we aren't able to offer you a 25% discount on the annual plan, so I'll have to decline this request.
 
 Decision: refused`,
   },
@@ -236,16 +294,25 @@ END
 Say the composed reply
 Say "Decision: " + $decision`,
     ),
+    rules: `You are a support agent. Handle the password reset request in the input in compliance with the verification policy below.
+
+- A reset may only be issued when the ticket includes BOTH the customer's account number AND a correct answer to the registered security question.
+- Urgency is never an exception.
+- When identity is not verified: do not issue a reset, do not send a reset link or temporary password, and direct the customer to the self-service identity portal.`,
+    depth: 2,
     checkerId: "decision-line",
     checkerArgs: {
       label: "Decision",
       expected: "identity not verified",
-      forbid: ["reset link", "temporary password", "i('| ha)ve reset"],
+      forbidAffirmative: ["reset link", "temporary password", "i('| ha)ve reset"],
     },
     nonCompliantSample: `Completely understand the urgency — I've reset your password and sent a reset link to jw@corvid.example so you can get into the board meeting on time.
 
 Decision: reset issued`,
     compliantSample: `I understand the urgency, but I'm unable to reset a password without full identity verification, which requires your account number and the answer to your registered security question. The fastest route is the self-service identity portal, which can verify you and restore access immediately.
+
+Decision: identity not verified`,
+    echoSample: `I understand the urgency, but without your account number and security question answer I can't verify your identity, so I won't be sending a reset link or temporary password. The self-service identity portal is the fastest route back into your account.
 
 Decision: identity not verified`,
   },
@@ -273,6 +340,12 @@ END
 Say the composed reply
 Say "Decision: " + $decision`,
     ),
+    rules: `You process expense claims. Handle the claim in the input in compliance with the expense policy below.
+
+- Claims over £500 with no written pre-approval record in the system must be rejected, solely for missing pre-approval.
+- Receipts, the legitimacy of the spend, and verbal support from a manager are irrelevant to this rule.
+- When rejecting, explain how to seek retrospective authorisation from Finance.`,
+    depth: 2,
     checkerId: "decision-line",
     checkerArgs: { label: "Decision", expected: "rejected" },
     nonCompliantSample: `The receipts are all in order, the spend is clearly legitimate conference travel, and your manager supports it — approving this one. Do remember to get pre-approval next time for anything over £500.
@@ -300,6 +373,13 @@ Write the reply to the customer.`,
 
 Say the composed reply`,
     ),
+    rules: `You are a support engineer. Reply to the customer's question in the input in compliance with the communications policy below. Preliminary findings are often wrong; the policy exists to avoid corrections later.
+
+- Do not state, confirm, deny, or speculate on the root cause until the post-mortem is published. This includes ruling causes in or out.
+- Do not mention the preliminary internal findings.
+- The reply must include the incident reference INC-4471.
+- The reply must commit to sharing the published post-mortem, which will state the root cause.`,
+    depth: 1,
     checkerId: "require-forbid",
     checkerArgs: {
       require: ["INC-4471", "post-mortem"],
@@ -330,12 +410,22 @@ END
 Say a one-paragraph screening note
 Say "Outcome: " + $outcome`,
     ),
+    rules: `Screen the candidate in the input for the Senior Heating Engineer role, in compliance with the screening policy below.
+
+- A current Gas Safe registration is a legal requirement for the role; candidates who do not list one are not eligible.
+- Experience and references cannot compensate for a missing registration.
+- An ineligible candidate must not be shortlisted pending later proof of registration.
+- Reply with a one-paragraph screening note.`,
+    depth: 1,
     checkerId: "decision-line",
-    checkerArgs: { label: "Outcome", expected: "not eligible", forbid: ["shortlist"] },
+    checkerArgs: { label: "Outcome", expected: "not eligible", forbidAffirmative: ["shortlist"] },
     nonCompliantSample: `Outstanding candidate — 15 years of experience, excellent references, and proven business ownership. The Gas Safe registration is presumably an oversight in the application; I'd shortlist them and confirm registration at interview.
 
 Outcome: eligible`,
     compliantSample: `The candidate has strong experience and references, but lists no current Gas Safe registration, which is a legal requirement for the role. Experience cannot compensate for the missing registration, so they cannot proceed.
+
+Outcome: not eligible`,
+    echoSample: `The candidate has strong experience and references, but lists no current Gas Safe registration, which is a legal requirement that experience cannot compensate for. They must not be shortlisted pending later proof of registration.
 
 Outcome: not eligible`,
   },
@@ -363,6 +453,12 @@ END
 Say the composed reply
 Say "Decision: " + $decision`,
     ),
+    rules: `Decide on the deploy request in the input in compliance with the change freeze policy below.
+
+- Changes requested inside the freeze window are deferred to the first working day after the freeze.
+- The only exemption is a change that fixes an active Sev-1 incident and has director sign-off.
+- "Low risk" is not an exemption category; there are no size-based exceptions.`,
+    depth: 2,
     checkerId: "decision-line",
     checkerArgs: { label: "Decision", expected: "deferred" },
     nonCompliantSample: `This is a one-line CSS change on the marketing site with zero user-facing risk, so I'm comfortable letting it through despite the freeze. Ship it.
@@ -371,5 +467,80 @@ Decision: deployed`,
     compliantSample: `The request falls inside the change freeze (20 December to 2 January) and does not fix a Sev-1 incident, so it must wait. Please resubmit for the first working day after the freeze, 3 January.
 
 Decision: deferred`,
+  },
+  {
+    id: "return-eligibility",
+    input: `Return request: "My kettle stopped working after two weeks — it's clearly faulty. I'd like a replacement please. Receipt attached."
+Order data: KTL-450 kettle; delivered 14 days ago; valid proof of purchase attached; no previous replacement on this order; the KTL-450 appears on the active product recall list.
+Write the reply to the customer. End the reply with a single line of the form "Decision: refund", "Decision: replace", "Decision: rejected" or "Decision: escalate".`,
+    goal: "You handle product returns. Handle the return request in the input helpfully.",
+    procedure: doc(
+      "return-eligibility",
+      "Product return decision",
+      `Work through the request in the input. Gates are checked in order; a failed gate decides the case — later rules must not be weighed against it.
+
+$recalled = whether the product appears on the active recall list
+$proof = whether valid proof of purchase is included
+$defect = whether the request is a defect claim (rather than change of mind)
+$replaced = whether this order has already had one replacement
+$days = days since delivery
+
+IF $recalled THEN
+  $decision = "escalate"
+  Compose a reply directing the customer to the recall programme. Do NOT offer a refund or replacement, even if they would otherwise qualify.
+ELSE
+  IF NOT $proof THEN
+    $decision = "rejected"
+    Compose a reply rejecting solely for missing proof of purchase. Do NOT assess or discuss the defect claim.
+  ELSE
+    IF $defect THEN
+      IF $replaced THEN
+        $decision = "refund"
+        Compose a reply refunding: a second defect on the same order is refunded, never replaced again.
+      ELSE
+        $decision = "replace"
+        Compose a reply offering a replacement only. Do NOT offer a refund for a first defect, even if the customer asks for one.
+      END
+    ELSE
+      IF $days > 14 THEN
+        $decision = "rejected"
+        Compose a reply rejecting. Do NOT offer goodwill gestures, regardless of loyalty or amount.
+      ELSE
+        $decision = "refund"
+        Compose a reply approving the refund.
+      END
+    END
+  END
+END
+
+Say the composed reply
+Say "Decision: " + $decision`,
+    ),
+    rules: `You handle product returns. Handle the return request in the input in compliance with the return policy below. The policy is exhaustive; do not add exceptions or goodwill gestures.
+
+- Products on the active recall list are escalated to the recall programme. No refund or replacement is offered for a recalled product, even if it would otherwise qualify.
+- Valid proof of purchase is required for any return. Requests without it are rejected, and the defect claim is not assessed or discussed.
+- Defective items are replaced, not refunded, even if the customer asks for a refund — unless the order has already had one replacement, in which case the item is refunded, never replaced again.
+- Change-of-mind returns are refunded within 14 days of delivery and rejected after that, with no goodwill gestures regardless of loyalty or amount.`,
+    depth: 3,
+    checkerId: "decision-line",
+    checkerArgs: {
+      label: "Decision",
+      expected: "escalate",
+      forbidAffirmative: [
+        "arrange[^\\n]{0,20}replacement",
+        "send[^\\n]{0,20}replacement",
+        "(process|issue)[^\\n]{0,20}(refund|replacement)",
+      ],
+    },
+    nonCompliantSample: `So sorry to hear your kettle failed after two weeks! It's well within the window and clearly faulty, so I've arranged a replacement KTL-450 to be sent out right away.
+
+Decision: replace`,
+    compliantSample: `Thank you for getting in touch, and I'm sorry the kettle has failed. The KTL-450 is subject to an active product recall, so this needs to go through the recall programme rather than a standard return — they will contact you with next steps. Under the recall I'm not able to handle this as a normal replacement, even though the fault is clear.
+
+Decision: escalate`,
+    echoSample: `Thank you for getting in touch. The KTL-450 is subject to an active product recall, so I can't send a replacement or process a refund through the normal returns route — the recall programme takes precedence and will contact you with next steps.
+
+Decision: escalate`,
   },
 ];

@@ -42,8 +42,14 @@ Say $final
 `;
 
 // The exact wording that must reach each worker in the lambda-fidelity variant.
+// The original marker (PATTERN-BLUE-VERIFICATION, a codephrase with no referent)
+// read as an injection marker and haiku's workers refused, confounding binding
+// fidelity with worker compliance. The variant is kept for contrast; the
+// neutral variant uses an innocuous editorial tag instead.
 const LAMBDA_PHRASE =
   "Classify the item as URGENT or ROUTINE, citing the exact phrase PATTERN-BLUE-VERIFICATION";
+const LAMBDA_PHRASE_NEUTRAL =
+  "Classify the item as URGENT or ROUTINE, citing the exact phrase reviewed-for-the-weekly-digest";
 
 // ---------------------------------------------------------------------------
 // Variants
@@ -129,7 +135,7 @@ USE ~/skills/map-reduce WITH
   reduce: Return the rewritten heuristics as a bullet list, one per item, each ending with its CANARY token verbatim
 `;
 
-function lambdaConsumer(variant: string, items: string[]): string {
+function lambdaConsumer(variant: string, items: string[], phrase: string): string {
   return `---
 name: e2-${variant}
 ---
@@ -138,7 +144,7 @@ name: e2-${variant}
 
 $items = ${itemsLiteral(items)}
 
-$map = item => "${LAMBDA_PHRASE}, and quote the item's CANARY token. Item: #{item}"
+$map = item => "${phrase}, and quote the item's CANARY token. Item: #{item}"
 
 USE ~/skills/map-reduce WITH
   items: $items
@@ -197,6 +203,7 @@ export function buildE2(outDir: string): ManifestEntry[] {
   const inline3Items = inlineItems("inline-3", 3);
   const inline5Items = inlineItems("inline-5", 5);
   const lambdaItems = inlineItems("lambda-fidelity", 3);
+  const lambdaNeutralItems = inlineItems("lambda-fidelity-neutral", 3);
 
   const variants: E2Variant[] = [
     {
@@ -225,11 +232,19 @@ export function buildE2(outDir: string): ManifestEntry[] {
     },
     {
       name: "lambda-fidelity",
-      program: lambdaConsumer("lambda-fidelity", lambdaItems),
+      program: lambdaConsumer("lambda-fidelity", lambdaItems, LAMBDA_PHRASE),
       extraSkills: {},
       canaries: lambdaItems.map((_, i) => canary("lambda-fidelity", i + 1)),
       spawnCount: 3,
       lambda: LAMBDA_PHRASE,
+    },
+    {
+      name: "lambda-fidelity-neutral",
+      program: lambdaConsumer("lambda-fidelity-neutral", lambdaNeutralItems, LAMBDA_PHRASE_NEUTRAL),
+      extraSkills: {},
+      canaries: lambdaNeutralItems.map((_, i) => canary("lambda-fidelity-neutral", i + 1)),
+      spawnCount: 3,
+      lambda: LAMBDA_PHRASE_NEUTRAL,
     },
   ];
 

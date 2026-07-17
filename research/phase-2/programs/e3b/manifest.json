@@ -1,0 +1,260 @@
+[
+  {
+    "id": "e3b-size100-seed1-chunked-store",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size100-seed1.mdz",
+    "tracePath": "programs/e3b/size100-seed1.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 4 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nState rules — the external state store is the ONLY memory shared with other chunks:\n- If the chunk reads a $variable it has not itself assigned, call mcp__state__get with that variable's name and use the returned value. NEVER guess or assume a default.\n- After EVERY assignment to a $variable, immediately call mcp__state__set with the variable's name and its new value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 1,
+      "chunks": 4
+    },
+    "arm": "chunked-store",
+    "expected": {
+      "chunkCount": 4
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]\n  Say $v3\nEND\nSay $v0\n$v4 = 1\nSay $v2\nSay $v2\nIF $v4 = 7 THEN\n  $v5 = $v0 * 3\nELSE\n  $v6 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v7 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v8 = $v0 - 2\nEND\n",
+      "chunks/chunk-02.mdz": "$v9 = $v0 * 5\nFOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]\n  Say $v10\nEND\nIF $v0 < 7 THEN\n  Say $v0\nEND\nFOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]\n  Say $v11\nEND\nIF $v9 != 8 THEN\n  Say $v9\nELSE\n  $v12 = $v4 + 5\nEND\n$v13 = $v2 + \"done\"\nFOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]\n  Say $v14\nEND\nIF $v1 = 4 THEN\n  $v15 = 5\n  $v16 = 3\nELSE\n  Say $v0\n  $v17 = 6\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v4\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\n$v19 = 5\n$v20 = $v2 + \"next\"\nIF $v18 != 2 THEN\n  $v21 = 2\n  Say \"draft\"\nELSE\n  Say $v18\nEND\nIF $v1 = 9 THEN\n  Say $v13\n  $v22 = $v9 - 2\nEND\n$v23 = $v0 - 2\nIF $v23 < 0 THEN\n  Say $v0\n  $v24 = $v18 - 4\nEND\nSay \"draft\"\nSay $v19\n",
+      "chunks/chunk-04.mdz": "$v25 = 10\nWHILE $v25 != 0\n  Say $v25\n  $v25 = $v25 - 1\nEND\n"
+    },
+    "mcp": "state",
+    "allowedTools": [
+      "Task",
+      "Read",
+      "mcp__state__get",
+      "mcp__state__set"
+    ]
+  },
+  {
+    "id": "e3b-size100-seed1-chunked-nostore",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size100-seed1.mdz",
+    "tracePath": "programs/e3b/size100-seed1.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 4 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nIf the chunk reads a $variable it has not itself assigned, use your best guess for its value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 1,
+      "chunks": 4
+    },
+    "arm": "chunked-nostore",
+    "expected": {
+      "chunkCount": 4
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]\n  Say $v3\nEND\nSay $v0\n$v4 = 1\nSay $v2\nSay $v2\nIF $v4 = 7 THEN\n  $v5 = $v0 * 3\nELSE\n  $v6 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v7 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v8 = $v0 - 2\nEND\n",
+      "chunks/chunk-02.mdz": "$v9 = $v0 * 5\nFOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]\n  Say $v10\nEND\nIF $v0 < 7 THEN\n  Say $v0\nEND\nFOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]\n  Say $v11\nEND\nIF $v9 != 8 THEN\n  Say $v9\nELSE\n  $v12 = $v4 + 5\nEND\n$v13 = $v2 + \"done\"\nFOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]\n  Say $v14\nEND\nIF $v1 = 4 THEN\n  $v15 = 5\n  $v16 = 3\nELSE\n  Say $v0\n  $v17 = 6\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v4\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\n$v19 = 5\n$v20 = $v2 + \"next\"\nIF $v18 != 2 THEN\n  $v21 = 2\n  Say \"draft\"\nELSE\n  Say $v18\nEND\nIF $v1 = 9 THEN\n  Say $v13\n  $v22 = $v9 - 2\nEND\n$v23 = $v0 - 2\nIF $v23 < 0 THEN\n  Say $v0\n  $v24 = $v18 - 4\nEND\nSay \"draft\"\nSay $v19\n",
+      "chunks/chunk-04.mdz": "$v25 = 10\nWHILE $v25 != 0\n  Say $v25\n  $v25 = $v25 - 1\nEND\n"
+    },
+    "allowedTools": [
+      "Task",
+      "Read"
+    ]
+  },
+  {
+    "id": "e3b-size100-seed2-chunked-store",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size100-seed2.mdz",
+    "tracePath": "programs/e3b/size100-seed2.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 4 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nState rules — the external state store is the ONLY memory shared with other chunks:\n- If the chunk reads a $variable it has not itself assigned, call mcp__state__get with that variable's name and use the returned value. NEVER guess or assume a default.\n- After EVERY assignment to a $variable, immediately call mcp__state__set with the variable's name and its new value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 2,
+      "chunks": 4
+    },
+    "arm": "chunked-store",
+    "expected": {
+      "chunkCount": 4
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\n",
+      "chunks/chunk-02.mdz": "CASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]\n  Say $v9\nEND\nFOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]\n  Say $v10\nEND\nSay $v3\nIF $v1 < 2 THEN\n  $v11 = $v1 - 3\n  Say $v1\nEND\nIF $v1 != 9 THEN\n  Say $v2\nELSE\n  $v12 = $v3 * 2\n  $v13 = 8\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v2\nIF $v0 > 6 THEN\n  $v14 = $v0 * 2\nELSE\n  $v15 = $v0 * 4\n  Say $v1\nEND\n$v16 = $v2 + \"ok\"\n$v17 = 10\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\nSay $v2\nIF $v0 < 3 THEN\n  $v19 = 0\n  $v20 = $v19 + 4\nEND\n$v21 = $v16 + \"blue\"\nIF $v3 < 6 THEN\n  $v22 = 5\nEND\n",
+      "chunks/chunk-04.mdz": "IF $v1 > 1 THEN\n  $v23 = 0\nEND\n$v24 = 10\nWHILE $v24 != 0\n  Say $v24\n  $v24 = $v24 - 1\nEND\n"
+    },
+    "mcp": "state",
+    "allowedTools": [
+      "Task",
+      "Read",
+      "mcp__state__get",
+      "mcp__state__set"
+    ]
+  },
+  {
+    "id": "e3b-size100-seed2-chunked-nostore",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size100-seed2.mdz",
+    "tracePath": "programs/e3b/size100-seed2.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 4 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nIf the chunk reads a $variable it has not itself assigned, use your best guess for its value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 100,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 2,
+      "chunks": 4
+    },
+    "arm": "chunked-nostore",
+    "expected": {
+      "chunkCount": 4
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\n",
+      "chunks/chunk-02.mdz": "CASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]\n  Say $v9\nEND\nFOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]\n  Say $v10\nEND\nSay $v3\nIF $v1 < 2 THEN\n  $v11 = $v1 - 3\n  Say $v1\nEND\nIF $v1 != 9 THEN\n  Say $v2\nELSE\n  $v12 = $v3 * 2\n  $v13 = 8\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v2\nIF $v0 > 6 THEN\n  $v14 = $v0 * 2\nELSE\n  $v15 = $v0 * 4\n  Say $v1\nEND\n$v16 = $v2 + \"ok\"\n$v17 = 10\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\nSay $v2\nIF $v0 < 3 THEN\n  $v19 = 0\n  $v20 = $v19 + 4\nEND\n$v21 = $v16 + \"blue\"\nIF $v3 < 6 THEN\n  $v22 = 5\nEND\n",
+      "chunks/chunk-04.mdz": "IF $v1 > 1 THEN\n  $v23 = 0\nEND\n$v24 = 10\nWHILE $v24 != 0\n  Say $v24\n  $v24 = $v24 - 1\nEND\n"
+    },
+    "allowedTools": [
+      "Task",
+      "Read"
+    ]
+  },
+  {
+    "id": "e3b-size200-seed1-chunked-store",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size200-seed1.mdz",
+    "tracePath": "programs/e3b/size200-seed1.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 6 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n./chunks/chunk-05.mdz\n./chunks/chunk-06.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nState rules — the external state store is the ONLY memory shared with other chunks:\n- If the chunk reads a $variable it has not itself assigned, call mcp__state__get with that variable's name and use the returned value. NEVER guess or assume a default.\n- After EVERY assignment to a $variable, immediately call mcp__state__set with the variable's name and its new value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 1,
+      "chunks": 6
+    },
+    "arm": "chunked-store",
+    "expected": {
+      "chunkCount": 6
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]\n  Say $v3\nEND\nSay $v0\n$v4 = 1\nSay $v2\nSay $v2\nIF $v4 = 7 THEN\n  $v5 = $v0 * 3\nELSE\n  $v6 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v7 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v8 = $v0 - 2\nEND\n",
+      "chunks/chunk-02.mdz": "$v9 = $v0 * 5\nFOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]\n  Say $v10\nEND\nIF $v0 < 7 THEN\n  Say $v0\nEND\nFOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]\n  Say $v11\nEND\nIF $v9 != 8 THEN\n  Say $v9\nELSE\n  $v12 = $v4 + 5\nEND\n$v13 = $v2 + \"done\"\nFOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]\n  Say $v14\nEND\nIF $v1 = 4 THEN\n  $v15 = 5\n  $v16 = 3\nELSE\n  Say $v0\n  $v17 = 6\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v4\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\n$v19 = 5\n$v20 = $v2 + \"next\"\nIF $v18 != 2 THEN\n  $v21 = 2\n  Say \"draft\"\nELSE\n  Say $v18\nEND\nIF $v1 = 9 THEN\n  Say $v13\n  $v22 = $v9 - 2\nEND\n$v23 = $v0 - 2\nIF $v23 < 0 THEN\n  Say $v0\n  $v24 = $v18 - 4\nEND\nSay \"draft\"\nSay $v19\n",
+      "chunks/chunk-04.mdz": "$v25 = 10\nWHILE $v25 != 0\n  Say $v25\n  $v25 = $v25 - 1\nEND\nIF $v19 < 8 THEN\n  Say $v0\nEND\n$v26 = $v13 + \"next\"\nFOR $v27 IN [8, 7, 0, 1, 7, 0, 8, 9, 3, 9]\n  Say $v27\nEND\nSay $v19\n$v28 = $v1 * 4\nIF $v28 != 6 THEN\n  Say $v1\n  Say $v0\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\nWHEN \"blue\"\n  Say $v19\n  Say $v13\nELSE\n  $v29 = 7\n  $v30 = $v28 - 5\nEND\n",
+      "chunks/chunk-05.mdz": "$v31 = $v2 + \"next\"\n$v32 = $v2 + \"next\"\nSay $v18\nSay $v9\nIF $v19 = 7 THEN\n  Say $v23\nEND\n$v33 = $v9 * 3\nSay \"blue\"\nFOR $v34 IN [6, 6, 5, 9, 3, 9, 0, 4, 2, 0]\n  Say $v34\nEND\n$v35 = 3\nSay \"done\"\nFOR $v36 IN [5, 5, 3, 9, 6, 5, 4, 0, 4, 1]\n  Say $v36\nEND\n$v37 = $v9 - 2\nIF $v0 != 1 THEN\n  $v38 = $v25 - 1\nELSE\n  Say $v9\nEND\n$v39 = 10\nWHILE $v39 != 0\n  Say $v39\n  $v39 = $v39 - 1\nEND\n",
+      "chunks/chunk-06.mdz": "$v40 = $v26 + \"red\"\nCASE $v20\nWHEN \"draft\"\n  Say $v0\n  $v41 = $v28 * 5\nWHEN \"red\"\n  $v42 = $v9 * 1\n  $v43 = 8\nELSE\n  Say $v39\nEND\n"
+    },
+    "mcp": "state",
+    "allowedTools": [
+      "Task",
+      "Read",
+      "mcp__state__get",
+      "mcp__state__set"
+    ]
+  },
+  {
+    "id": "e3b-size200-seed1-chunked-nostore",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size200-seed1.mdz",
+    "tracePath": "programs/e3b/size200-seed1.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 6 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n./chunks/chunk-05.mdz\n./chunks/chunk-06.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nIf the chunk reads a $variable it has not itself assigned, use your best guess for its value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 1,
+      "chunks": 6
+    },
+    "arm": "chunked-nostore",
+    "expected": {
+      "chunkCount": 6
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 6\n$v1 = $v0 * 5\n$v2 = \"ok\"\nIF $v0 != 4 THEN\n  IF $v1 != 4 THEN\n    Say $v2\n  END\nEND\nFOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]\n  Say $v3\nEND\nSay $v0\n$v4 = 1\nSay $v2\nSay $v2\nIF $v4 = 7 THEN\n  $v5 = $v0 * 3\nELSE\n  $v6 = 8\nEND\nCASE $v2\nWHEN \"blue\"\n  Say $v2\n  Say \"draft\"\nWHEN \"draft\"\n  $v7 = 5\n  Say $v0\nELSE\n  Say $v2\n  $v8 = $v0 - 2\nEND\n",
+      "chunks/chunk-02.mdz": "$v9 = $v0 * 5\nFOR $v10 IN [1, 3, 8, 2, 1, 6, 5, 3, 1, 1]\n  Say $v10\nEND\nIF $v0 < 7 THEN\n  Say $v0\nEND\nFOR $v11 IN [9, 9, 8, 0, 1, 0, 9, 3, 7, 8]\n  Say $v11\nEND\nIF $v9 != 8 THEN\n  Say $v9\nELSE\n  $v12 = $v4 + 5\nEND\n$v13 = $v2 + \"done\"\nFOR $v14 IN [2, 9, 9, 1, 3, 0, 0, 7, 3, 2]\n  Say $v14\nEND\nIF $v1 = 4 THEN\n  $v15 = 5\n  $v16 = 3\nELSE\n  Say $v0\n  $v17 = 6\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v4\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\n$v19 = 5\n$v20 = $v2 + \"next\"\nIF $v18 != 2 THEN\n  $v21 = 2\n  Say \"draft\"\nELSE\n  Say $v18\nEND\nIF $v1 = 9 THEN\n  Say $v13\n  $v22 = $v9 - 2\nEND\n$v23 = $v0 - 2\nIF $v23 < 0 THEN\n  Say $v0\n  $v24 = $v18 - 4\nEND\nSay \"draft\"\nSay $v19\n",
+      "chunks/chunk-04.mdz": "$v25 = 10\nWHILE $v25 != 0\n  Say $v25\n  $v25 = $v25 - 1\nEND\nIF $v19 < 8 THEN\n  Say $v0\nEND\n$v26 = $v13 + \"next\"\nFOR $v27 IN [8, 7, 0, 1, 7, 0, 8, 9, 3, 9]\n  Say $v27\nEND\nSay $v19\n$v28 = $v1 * 4\nIF $v28 != 6 THEN\n  Say $v1\n  Say $v0\nEND\nCASE $v2\nWHEN \"blue\"\n  Say \"ok\"\nWHEN \"blue\"\n  Say $v19\n  Say $v13\nELSE\n  $v29 = 7\n  $v30 = $v28 - 5\nEND\n",
+      "chunks/chunk-05.mdz": "$v31 = $v2 + \"next\"\n$v32 = $v2 + \"next\"\nSay $v18\nSay $v9\nIF $v19 = 7 THEN\n  Say $v23\nEND\n$v33 = $v9 * 3\nSay \"blue\"\nFOR $v34 IN [6, 6, 5, 9, 3, 9, 0, 4, 2, 0]\n  Say $v34\nEND\n$v35 = 3\nSay \"done\"\nFOR $v36 IN [5, 5, 3, 9, 6, 5, 4, 0, 4, 1]\n  Say $v36\nEND\n$v37 = $v9 - 2\nIF $v0 != 1 THEN\n  $v38 = $v25 - 1\nELSE\n  Say $v9\nEND\n$v39 = 10\nWHILE $v39 != 0\n  Say $v39\n  $v39 = $v39 - 1\nEND\n",
+      "chunks/chunk-06.mdz": "$v40 = $v26 + \"red\"\nCASE $v20\nWHEN \"draft\"\n  Say $v0\n  $v41 = $v28 * 5\nWHEN \"red\"\n  $v42 = $v9 * 1\n  $v43 = 8\nELSE\n  Say $v39\nEND\n"
+    },
+    "allowedTools": [
+      "Task",
+      "Read"
+    ]
+  },
+  {
+    "id": "e3b-size200-seed2-chunked-store",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size200-seed2.mdz",
+    "tracePath": "programs/e3b/size200-seed2.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 5 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n./chunks/chunk-05.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nState rules — the external state store is the ONLY memory shared with other chunks:\n- If the chunk reads a $variable it has not itself assigned, call mcp__state__get with that variable's name and use the returned value. NEVER guess or assume a default.\n- After EVERY assignment to a $variable, immediately call mcp__state__set with the variable's name and its new value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 2,
+      "chunks": 5
+    },
+    "arm": "chunked-store",
+    "expected": {
+      "chunkCount": 5
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\n",
+      "chunks/chunk-02.mdz": "CASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]\n  Say $v9\nEND\nFOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]\n  Say $v10\nEND\nSay $v3\nIF $v1 < 2 THEN\n  $v11 = $v1 - 3\n  Say $v1\nEND\nIF $v1 != 9 THEN\n  Say $v2\nELSE\n  $v12 = $v3 * 2\n  $v13 = 8\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v2\nIF $v0 > 6 THEN\n  $v14 = $v0 * 2\nELSE\n  $v15 = $v0 * 4\n  Say $v1\nEND\n$v16 = $v2 + \"ok\"\n$v17 = 10\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\nSay $v2\nIF $v0 < 3 THEN\n  $v19 = 0\n  $v20 = $v19 + 4\nEND\n$v21 = $v16 + \"blue\"\nIF $v3 < 6 THEN\n  $v22 = 5\nEND\n",
+      "chunks/chunk-04.mdz": "IF $v1 > 1 THEN\n  $v23 = 0\nEND\n$v24 = 10\nWHILE $v24 != 0\n  Say $v24\n  $v24 = $v24 - 1\nEND\nSay $v17\n$v25 = $v2 + \"red\"\n$v26 = $v17 * 1\nSay \"ok\"\n$v27 = 10\nWHILE $v27 != 0\n  Say $v27\n  $v27 = $v27 - 1\nEND\nCASE $v2\nWHEN \"red\"\n  $v28 = $v0 + 3\n  $v29 = $v26 + 3\nWHEN \"next\"\n  $v30 = 6\n  $v31 = $v3 * 2\nELSE\n  Say $v24\nEND\n",
+      "chunks/chunk-05.mdz": "Say $v0\nSay $v16\nSay $v16\nSay $v18\nFOR $v32 IN [5, 6, 3, 2, 1, 4, 3, 6, 0, 0]\n  Say $v32\nEND\nFOR $v33 IN [8, 8, 9, 1, 0, 1, 8, 2, 3, 6]\n  Say $v33\nEND\nIF $v26 = 0 THEN\n  $v34 = $v17 - 2\n  Say $v24\nELSE\n  Say $v18\nEND\nSay $v16\n$v35 = 10\nWHILE $v35 != 0\n  Say $v35\n  $v35 = $v35 - 1\nEND\nSay $v3\nCASE $v21\nWHEN \"done\"\n  Say $v27\nWHEN \"blue\"\n  Say \"draft\"\nELSE\n  Say \"blue\"\nEND\n"
+    },
+    "mcp": "state",
+    "allowedTools": [
+      "Task",
+      "Read",
+      "mcp__state__get",
+      "mcp__state__set"
+    ]
+  },
+  {
+    "id": "e3b-size200-seed2-chunked-nostore",
+    "experiment": "e3b",
+    "runMode": "agentic",
+    "programPath": "programs/e3b/size200-seed2.mdz",
+    "tracePath": "programs/e3b/size200-seed2.trace.json",
+    "prompt": "You are coordinating the execution of an MDZ program that has been split into 5 sequential chunks:\n\n./chunks/chunk-01.mdz\n./chunks/chunk-02.mdz\n./chunks/chunk-03.mdz\n./chunks/chunk-04.mdz\n./chunks/chunk-05.mdz\n\nRules:\n- Do NOT read or execute any chunk yourself. Your only job is coordination.\n- For each chunk IN ORDER, spawn exactly one worker with the Task tool and wait for it to finish before spawning the next. Never spawn workers in parallel.\n- Each worker's Task prompt must be EXACTLY the following template with {file} replaced by that chunk's path:\n--- BEGIN WORKER TEMPLATE ---\nYou are an MDZ interpreter executing ONE CHUNK of a larger program. MDZ is a simple imperative notation: keywords in capitals, $variables hold values, Say emits an output line. Read the file {file} and execute it EXACTLY as written, step by step.\nIf the chunk reads a $variable it has not itself assigned, use your best guess for its value.\nReply with ONLY the chunk's emitted output lines (from Say statements), in order, one per line, inside a single fenced code block. If the chunk emits nothing, reply with an empty fenced code block.\n--- END WORKER TEMPLATE ---\n- After the final worker returns, output ONLY the workers' emitted lines concatenated in chunk order, one per line, inside a single fenced code block. Do not add, drop, or reorder lines.",
+    "variant": {
+      "notation": "canonical",
+      "statements": 200,
+      "depth": 2,
+      "iterations": 10,
+      "seed": 2,
+      "chunks": 5
+    },
+    "arm": "chunked-nostore",
+    "expected": {
+      "chunkCount": 5
+    },
+    "sandbox": {
+      "chunks/chunk-01.mdz": "$v0 = 7\n$v1 = $v0 - 5\n$v2 = \"blue\"\nIF $v0 = 8 THEN\n  IF $v0 > 7 THEN\n    Say $v1\n  END\nEND\n$v3 = 3\nSay $v2\nIF $v1 = 3 THEN\n  $v4 = $v3 - 4\nEND\nIF $v3 = 0 THEN\n  $v5 = $v3 * 1\n  Say $v2\nEND\nSay \"next\"\nCASE $v2\nWHEN \"draft\"\n  Say $v3\n  Say $v2\nWHEN \"next\"\n  $v6 = 9\n  $v7 = $v0 * 2\nELSE\n  Say \"hold\"\nEND\n",
+      "chunks/chunk-02.mdz": "CASE $v2\nWHEN \"blue\"\n  Say \"ok\"\n  $v8 = $v1 + 2\nWHEN \"next\"\n  Say $v1\nELSE\n  Say $v2\nEND\nFOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]\n  Say $v9\nEND\nFOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]\n  Say $v10\nEND\nSay $v3\nIF $v1 < 2 THEN\n  $v11 = $v1 - 3\n  Say $v1\nEND\nIF $v1 != 9 THEN\n  Say $v2\nELSE\n  $v12 = $v3 * 2\n  $v13 = 8\nEND\n",
+      "chunks/chunk-03.mdz": "Say $v2\nIF $v0 > 6 THEN\n  $v14 = $v0 * 2\nELSE\n  $v15 = $v0 * 4\n  Say $v1\nEND\n$v16 = $v2 + \"ok\"\n$v17 = 10\nWHILE $v17 != 0\n  Say $v17\n  $v17 = $v17 - 1\nEND\n$v18 = 10\nWHILE $v18 != 0\n  Say $v18\n  $v18 = $v18 - 1\nEND\nSay $v2\nIF $v0 < 3 THEN\n  $v19 = 0\n  $v20 = $v19 + 4\nEND\n$v21 = $v16 + \"blue\"\nIF $v3 < 6 THEN\n  $v22 = 5\nEND\n",
+      "chunks/chunk-04.mdz": "IF $v1 > 1 THEN\n  $v23 = 0\nEND\n$v24 = 10\nWHILE $v24 != 0\n  Say $v24\n  $v24 = $v24 - 1\nEND\nSay $v17\n$v25 = $v2 + \"red\"\n$v26 = $v17 * 1\nSay \"ok\"\n$v27 = 10\nWHILE $v27 != 0\n  Say $v27\n  $v27 = $v27 - 1\nEND\nCASE $v2\nWHEN \"red\"\n  $v28 = $v0 + 3\n  $v29 = $v26 + 3\nWHEN \"next\"\n  $v30 = 6\n  $v31 = $v3 * 2\nELSE\n  Say $v24\nEND\n",
+      "chunks/chunk-05.mdz": "Say $v0\nSay $v16\nSay $v16\nSay $v18\nFOR $v32 IN [5, 6, 3, 2, 1, 4, 3, 6, 0, 0]\n  Say $v32\nEND\nFOR $v33 IN [8, 8, 9, 1, 0, 1, 8, 2, 3, 6]\n  Say $v33\nEND\nIF $v26 = 0 THEN\n  $v34 = $v17 - 2\n  Say $v24\nELSE\n  Say $v18\nEND\nSay $v16\n$v35 = 10\nWHILE $v35 != 0\n  Say $v35\n  $v35 = $v35 - 1\nEND\nSay $v3\nCASE $v21\nWHEN \"done\"\n  Say $v27\nWHEN \"blue\"\n  Say \"draft\"\nELSE\n  Say \"blue\"\nEND\n"
+    },
+    "allowedTools": [
+      "Task",
+      "Read"
+    ]
+  }
+]
