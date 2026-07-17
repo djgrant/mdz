@@ -327,12 +327,13 @@ async function runAgenticClaude(
     const spawns: Spawn[] = [];
     const toolCalls: ToolCall[] = [];
 
+    const timeoutMs = entry.timeoutMs ?? AGENTIC_TIMEOUT_MS;
     for (let pass = 1; pass <= passes; pass++) {
       const out = await spawnProcess(
         "claude",
         args,
         entry.prompt,
-        AGENTIC_TIMEOUT_MS,
+        timeoutMs,
         sandbox,
         env,
       );
@@ -342,7 +343,7 @@ async function runAgenticClaude(
         break;
       }
       if (out.timedOut) {
-        error = `pass ${pass}/${passes}: timeout after ${AGENTIC_TIMEOUT_MS}ms`;
+        error = `pass ${pass}/${passes}: timeout after ${timeoutMs}ms`;
         break;
       }
 

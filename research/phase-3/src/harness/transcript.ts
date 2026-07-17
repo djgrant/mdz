@@ -42,6 +42,7 @@ function normaliseEntry(raw: unknown): ManifestEntry {
     mcpSeed: e.mcpSeed,
     allowedTools: e.allowedTools,
     passes: e.passes,
+    timeoutMs: e.timeoutMs,
   };
 }
 

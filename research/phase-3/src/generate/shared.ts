@@ -51,6 +51,11 @@ export interface ManifestEntry {
    * selection; whatever the last pass leaves is what ships.
    */
   passes?: number;
+  /**
+   * Per-entry agentic timeout override in ms (per pass for multi-pass
+   * entries). Defaults to the harness's AGENTIC_TIMEOUT_MS.
+   */
+  timeoutMs?: number;
 }
 
 // ---------------------------------------------------------------------------

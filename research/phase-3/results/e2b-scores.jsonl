@@ -1,0 +1,2 @@
+{"id":"e2b-pricing-ralph-haiku-r1","target":"pricing","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-pricing-skill-haiku-r1","target":"pricing","variant":"skill","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
