@@ -29,6 +29,15 @@ export interface ValidationResult {
   error?: string;
 }
 
+/**
+ * Parses canonical MDZ and returns the block AST (throws on parse failure).
+ * Useful for asserting that notation constructs (FOR/IF/...) are recognised
+ * as real statements rather than swallowed as host text.
+ */
+export function parseMdz(source: string): unknown[] {
+  return loadParser().parse(source) as unknown[];
+}
+
 /** Returns { ok: true } if the source parses, else the parser error message. */
 export function validateMdz(source: string): ValidationResult {
   try {

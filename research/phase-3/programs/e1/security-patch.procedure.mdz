@@ -1,0 +1,48 @@
+---
+name: cve-remediation
+---
+
+# CVE-2026-30117 remediation
+
+A session-fixation vulnerability (CVE-2026-30117) affects Arclight's auth-api and session-store services. Both must be patched, the patching verified and announced, credentials rotated, and ticket TCK-9902 taken through to resolution.
+
+Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+
+First, review the security advisory in advisory.md.
+
+Use ticket_update to set ticket TCK-9902 to status "in-progress".
+
+Use record_note to record a note under id NOTE-SP-1 confirming the severity assessment.
+
+Next, identify the affected services and target versions from services.csv.
+
+Next, write patch-plan.md naming each affected service and its patched version.
+
+Use email_send to email security@arclight.example with the subject "CVE-2026-30117: patch window confirmed".
+
+$patches = [(auth-api, v5.8.4), (session-store, v2.2.9)]
+
+FOR $patch IN $patches
+  Use deploy_service to deploy $patch.service at version $patch.version.
+  Next, confirm with ops_lookup that $patch.service is running $patch.version.
+END
+
+Use record_note to record a note under id NOTE-SP-2 confirming both services are patched.
+
+Next, write patch-verification.md recording the verified versions.
+
+Use email_send to email security@arclight.example with the subject "CVE-2026-30117: patching complete".
+
+Use ticket_update to set ticket TCK-9902 to status "patched".
+
+Next, work through the credential rotation checklist in rotation-checklist.md.
+
+Use record_note to record a note under id NOTE-SP-3 confirming credentials were rotated.
+
+Use email_send to email it-all@arclight.example with the subject "Please sign in again after tonight's security maintenance".
+
+Next, append a CVE-2026-30117 row to security-register.csv.
+
+Use ticket_update to set ticket TCK-9902 to status "resolved".
+
+Finally, write closure-summary.md summarising the remediation.

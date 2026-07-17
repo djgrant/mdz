@@ -1,0 +1,34 @@
+---
+name: checkout-staged-rollout
+---
+
+# Checkout v9.2.0 staged rollout
+
+Meridian is rolling checkout v9.2.0 out across three environments in strict sequence — staging first, then eu, then us — with a verification gate after each deploy. Rollout ticket: TCK-7710.
+
+Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+
+First, review the release notes in release-notes.md.
+
+Use ticket_update to set ticket TCK-7710 to status "in-progress".
+
+Next, write rollout-order.md recording the environment sequence staging, then eu, then us.
+
+$environments = [(checkout-staging, staging-verification.md, NOTE-RR-1), (checkout-eu, eu-verification.md, NOTE-RR-2), (checkout-us, us-verification.md, NOTE-RR-3)]
+
+FOR $env IN $environments
+  Use deploy_service to deploy $env.service at version v9.2.0.
+  Next, run the smoke checklist in smoke-checklist.md against $env.service.
+  Next, write $env.file recording the checks for $env.service.
+  Use record_note to record a note under id $env.note confirming $env.service is verified.
+END
+
+Next, confirm that every environment listed in rollout-order.md has been deployed and verified.
+
+Use email_send to email release@meridian.example with the subject "Checkout v9.2.0: rollout complete".
+
+Use ticket_update to set ticket TCK-7710 to status "rollout-complete".
+
+Next, append a v9.2.0 entry to changelog.md.
+
+Finally, use ticket_update to set ticket TCK-7710 to status "resolved".

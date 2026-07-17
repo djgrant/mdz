@@ -1,0 +1,27 @@
+Say $v76
+Say $v0
+IF $v102 != 7 THEN
+  Say $v76
+END
+$v128 = "blue"
+$v129 = $v86 + "draft"
+Say $v72
+$v130 = $v16 + "draft"
+$v131 = 10
+WHILE $v131 != 0
+  Say $v131
+  $v131 = $v131 - 1
+END
+Say $v131
+Say $v45
+IF $v0 != 5 THEN
+  $v132 = 4
+END
+$v133 = $v2 + "next"
+Say $v122
+Say $v92
+IF $v1 = 6 THEN
+  Say $v74
+ELSE
+  Say $v2
+END

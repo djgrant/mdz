@@ -1,0 +1,26 @@
+IF $v49 < 4 THEN
+  Say $v90
+END
+Say $v99
+CASE $v26
+WHEN "blue"
+  Say $v26
+  Say $v19
+WHEN "hold"
+  Say $v13
+ELSE
+  $v120 = $v60 + 4
+END
+$v121 = $v52 - 2
+$v122 = $v79 - 1
+FOR $v123 IN [1, 7, 7, 4, 1, 9, 3, 6, 7, 0]
+  Say $v123
+END
+FOR $v124 IN [1, 3, 4, 1, 4, 3, 2, 1, 9, 9]
+  Say $v124
+END
+$v125 = 10
+WHILE $v125 != 0
+  Say $v125
+  $v125 = $v125 - 1
+END

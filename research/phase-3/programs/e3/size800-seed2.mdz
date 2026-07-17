@@ -1,0 +1,568 @@
+---
+name: e3-size800-seed2
+---
+
+# e3-size800-seed2
+
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3 = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4 = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5 = $v3 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v3
+  Say $v2
+WHEN "next"
+  $v6 = 9
+  $v7 = $v0 * 2
+ELSE
+  Say "hold"
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v8 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]
+  Say $v9
+END
+FOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]
+  Say $v10
+END
+Say $v3
+IF $v1 < 2 THEN
+  $v11 = $v1 - 3
+  Say $v1
+END
+IF $v1 != 9 THEN
+  Say $v2
+ELSE
+  $v12 = $v3 * 2
+  $v13 = 8
+END
+Say $v2
+IF $v0 > 6 THEN
+  $v14 = $v0 * 2
+ELSE
+  $v15 = $v0 * 4
+  Say $v1
+END
+$v16 = $v2 + "ok"
+$v17 = 10
+WHILE $v17 != 0
+  Say $v17
+  $v17 = $v17 - 1
+END
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+Say $v2
+IF $v0 < 3 THEN
+  $v19 = 0
+  $v20 = $v19 + 4
+END
+$v21 = $v16 + "blue"
+IF $v3 < 6 THEN
+  $v22 = 5
+END
+IF $v1 > 1 THEN
+  $v23 = 0
+END
+$v24 = 10
+WHILE $v24 != 0
+  Say $v24
+  $v24 = $v24 - 1
+END
+Say $v17
+$v25 = $v2 + "red"
+$v26 = $v17 * 1
+Say "ok"
+$v27 = 10
+WHILE $v27 != 0
+  Say $v27
+  $v27 = $v27 - 1
+END
+CASE $v2
+WHEN "red"
+  $v28 = $v0 + 3
+  $v29 = $v26 + 3
+WHEN "next"
+  $v30 = 6
+  $v31 = $v3 * 2
+ELSE
+  Say $v24
+END
+Say $v0
+Say $v16
+Say $v16
+Say $v18
+FOR $v32 IN [5, 6, 3, 2, 1, 4, 3, 6, 0, 0]
+  Say $v32
+END
+FOR $v33 IN [8, 8, 9, 1, 0, 1, 8, 2, 3, 6]
+  Say $v33
+END
+IF $v26 = 0 THEN
+  $v34 = $v17 - 2
+  Say $v24
+ELSE
+  Say $v18
+END
+Say $v16
+$v35 = 10
+WHILE $v35 != 0
+  Say $v35
+  $v35 = $v35 - 1
+END
+Say $v3
+CASE $v21
+WHEN "done"
+  Say $v27
+  Say $v25
+WHEN "draft"
+  Say $v24
+  Say "done"
+ELSE
+  $v36 = $v0 * 5
+  $v37 = $v3 * 3
+END
+$v38 = $v17 + 3
+$v39 = 6
+Say $v2
+$v40 = 10
+WHILE $v40 != 0
+  Say $v40
+  $v40 = $v40 - 1
+END
+FOR $v41 IN [1, 1, 7, 4, 7, 9, 8, 6, 5, 9]
+  Say $v41
+END
+$v42 = 10
+WHILE $v42 != 0
+  Say $v42
+  $v42 = $v42 - 1
+END
+FOR $v43 IN [5, 3, 9, 0, 7, 8, 0, 4, 4, 0]
+  Say $v43
+END
+Say $v42
+$v44 = $v16 + "done"
+$v45 = $v42 + 5
+FOR $v46 IN [4, 0, 3, 0, 6, 1, 7, 6, 5, 6]
+  Say $v46
+END
+FOR $v47 IN [0, 2, 3, 1, 5, 9, 2, 6, 5, 0]
+  Say $v47
+END
+$v48 = 8
+$v49 = $v1 * 5
+Say $v17
+Say $v25
+Say $v39
+Say $v44
+Say $v3
+IF $v1 != 3 THEN
+  Say $v35
+END
+$v50 = $v44 + "blue"
+IF $v40 < 4 THEN
+  Say $v49
+  $v51 = $v0 - 3
+ELSE
+  Say $v1
+  Say $v25
+END
+Say $v45
+Say $v45
+$v52 = 10
+WHILE $v52 != 0
+  Say $v52
+  $v52 = $v52 - 1
+END
+$v53 = 3
+IF $v17 < 4 THEN
+  Say $v21
+  $v54 = 9
+ELSE
+  $v55 = $v27 * 1
+END
+Say $v17
+$v56 = $v45 + 4
+$v57 = "ok"
+Say $v16
+Say "done"
+IF $v38 < 1 THEN
+  $v58 = 8
+  Say $v21
+ELSE
+  Say $v2
+END
+CASE $v57
+WHEN "next"
+  $v59 = $v48 + 4
+  $v60 = $v18 - 4
+WHEN "next"
+  $v61 = 6
+ELSE
+  Say $v18
+END
+Say $v24
+$v62 = 10
+WHILE $v62 != 0
+  Say $v62
+  $v62 = $v62 - 1
+END
+Say $v26
+IF $v18 = 7 THEN
+  $v63 = 9
+  $v64 = $v56 + 4
+END
+IF $v3 != 4 THEN
+  Say $v38
+END
+$v65 = "draft"
+FOR $v66 IN [7, 4, 1, 9, 9, 1, 8, 0, 9, 5]
+  Say $v66
+END
+FOR $v67 IN [5, 8, 1, 1, 9, 4, 1, 2, 5, 8]
+  Say $v67
+END
+$v68 = $v50 + "blue"
+CASE $v50
+WHEN "draft"
+  Say $v21
+  $v69 = 0
+WHEN "blue"
+  $v70 = $v3 * 1
+ELSE
+  Say $v17
+  Say $v65
+END
+Say $v39
+Say "done"
+IF $v24 < 5 THEN
+  $v71 = 5
+END
+Say $v0
+$v72 = 10
+WHILE $v72 != 0
+  Say $v72
+  $v72 = $v72 - 1
+END
+IF $v49 = 1 THEN
+  Say "hold"
+  Say $v56
+ELSE
+  Say $v52
+  $v73 = $v72 - 4
+END
+$v74 = "next"
+Say $v2
+IF $v56 != 2 THEN
+  Say $v52
+  Say $v65
+ELSE
+  $v75 = $v62 * 2
+  Say "next"
+END
+Say $v0
+$v76 = 10
+WHILE $v76 != 0
+  Say $v76
+  $v76 = $v76 - 1
+END
+$v77 = $v21 + "hold"
+IF $v76 > 4 THEN
+  $v78 = $v38 - 2
+ELSE
+  Say $v53
+  Say $v74
+END
+Say $v53
+$v79 = 8
+$v80 = "hold"
+Say $v21
+IF $v3 > 0 THEN
+  $v81 = $v42 + 3
+  Say $v17
+ELSE
+  Say "hold"
+  Say $v77
+END
+FOR $v82 IN [3, 8, 8, 3, 4, 6, 8, 3, 2, 1]
+  Say $v82
+END
+IF $v48 > 3 THEN
+  Say "hold"
+  Say $v44
+END
+CASE $v65
+WHEN "hold"
+  $v83 = $v56 * 4
+WHEN "next"
+  Say $v16
+  Say $v24
+ELSE
+  $v84 = 7
+END
+Say $v17
+Say $v1
+IF $v24 != 4 THEN
+  $v85 = $v27 - 4
+END
+Say $v17
+$v86 = $v77 + "ok"
+IF $v49 != 0 THEN
+  $v87 = $v18 - 4
+ELSE
+  $v88 = $v26 + 1
+  Say $v2
+END
+Say $v52
+Say $v38
+IF $v3 > 0 THEN
+  Say "hold"
+  Say $v1
+END
+Say $v68
+IF $v42 = 0 THEN
+  Say $v3
+  $v89 = 7
+END
+IF $v72 < 4 THEN
+  $v90 = 6
+  Say $v90
+END
+$v91 = $v40 - 5
+$v92 = 10
+WHILE $v92 != 0
+  Say $v92
+  $v92 = $v92 - 1
+END
+IF $v17 != 4 THEN
+  Say $v86
+  $v93 = 7
+ELSE
+  $v94 = 5
+END
+FOR $v95 IN [9, 2, 5, 0, 9, 9, 1, 6, 4, 7]
+  Say $v95
+END
+$v96 = 10
+WHILE $v96 != 0
+  Say $v96
+  $v96 = $v96 - 1
+END
+CASE $v74
+WHEN "draft"
+  $v97 = 0
+WHEN "red"
+  $v98 = $v3 - 3
+ELSE
+  Say $v27
+  $v99 = 1
+END
+FOR $v100 IN [4, 8, 3, 1, 0, 4, 5, 7, 8, 5]
+  Say $v100
+END
+$v101 = "hold"
+$v102 = 10
+WHILE $v102 != 0
+  Say $v102
+  $v102 = $v102 - 1
+END
+IF $v49 != 9 THEN
+  $v103 = $v24 * 3
+END
+IF $v26 = 9 THEN
+  Say $v52
+END
+Say $v27
+Say $v16
+FOR $v104 IN [2, 6, 5, 5, 8, 9, 2, 6, 4, 7]
+  Say $v104
+END
+Say $v27
+FOR $v105 IN [8, 6, 9, 3, 8, 6, 6, 9, 0, 5]
+  Say $v105
+END
+$v106 = 10
+WHILE $v106 != 0
+  Say $v106
+  $v106 = $v106 - 1
+END
+CASE $v16
+WHEN "blue"
+  Say $v2
+WHEN "done"
+  $v107 = $v102 + 2
+  $v108 = 7
+ELSE
+  $v109 = $v17 - 5
+END
+IF $v76 < 9 THEN
+  $v110 = 8
+END
+IF $v62 > 7 THEN
+  $v111 = $v96 - 2
+ELSE
+  $v112 = $v96 * 1
+END
+Say $v44
+IF $v62 > 2 THEN
+  $v113 = 4
+  Say "hold"
+END
+Say $v91
+IF $v3 = 7 THEN
+  Say $v72
+  Say "red"
+ELSE
+  $v114 = 3
+END
+$v115 = $v86 + "red"
+$v116 = $v50 + "ok"
+IF $v27 != 2 THEN
+  $v117 = $v26 * 4
+  $v118 = $v76 * 3
+ELSE
+  $v119 = $v24 + 5
+END
+FOR $v120 IN [6, 7, 4, 4, 1, 7, 2, 1, 9, 1]
+  Say $v120
+END
+Say $v96
+$v121 = 7
+Say $v49
+Say $v68
+$v122 = $v39 - 3
+$v123 = 3
+IF $v39 < 7 THEN
+  Say $v17
+ELSE
+  Say $v1
+  Say $v35
+END
+FOR $v124 IN [0, 8, 7, 7, 3, 0, 7, 7, 5, 9]
+  Say $v124
+END
+FOR $v125 IN [9, 7, 8, 6, 4, 3, 8, 9, 0, 7]
+  Say $v125
+END
+Say $v96
+Say $v39
+$v126 = $v24 + 1
+$v127 = $v72 + 1
+Say $v76
+Say $v0
+IF $v102 != 7 THEN
+  Say $v76
+END
+$v128 = "blue"
+$v129 = $v86 + "draft"
+Say $v72
+$v130 = $v16 + "draft"
+$v131 = 10
+WHILE $v131 != 0
+  Say $v131
+  $v131 = $v131 - 1
+END
+Say $v131
+Say $v45
+IF $v0 != 5 THEN
+  $v132 = 4
+END
+$v133 = $v2 + "next"
+Say $v122
+Say $v92
+IF $v1 = 6 THEN
+  Say $v74
+ELSE
+  Say $v2
+END
+Say $v42
+$v134 = "blue"
+$v135 = $v77 + "blue"
+Say $v116
+$v136 = "red"
+IF $v48 > 3 THEN
+  $v137 = 4
+END
+$v138 = 10
+WHILE $v138 != 0
+  Say $v138
+  $v138 = $v138 - 1
+END
+Say $v42
+Say $v24
+Say $v26
+Say $v1
+$v139 = 7
+$v140 = $v45 * 2
+$v141 = $v24 * 1
+$v142 = $v140 - 5
+Say $v76
+$v143 = $v126 + 2
+$v144 = $v40 + 2
+IF $v102 > 7 THEN
+  $v145 = 3
+  Say $v68
+ELSE
+  Say "next"
+END
+$v146 = $v1 * 1
+Say $v49
+$v147 = 5
+$v148 = "red"
+IF $v49 = 1 THEN
+  Say $v45
+  $v149 = $v24 + 3
+END
+CASE $v133
+WHEN "red"
+  Say "blue"
+  Say $v56
+WHEN "next"
+  $v150 = $v49 - 2
+ELSE
+  Say $v76
+END
+IF $v76 < 7 THEN
+  $v151 = $v106 + 2
+  $v152 = 9
+END
+Say "ok"
+CASE $v50
+WHEN "red"
+  $v153 = $v146 - 3
+WHEN "next"
+  $v154 = 9
+  $v155 = 3
+ELSE
+  $v156 = 0
+END
+$v157 = 10
+WHILE $v157 != 0
+  Say $v157
+  $v157 = $v157 - 1
+END

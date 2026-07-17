@@ -1,0 +1,46 @@
+---
+name: billing-incident-remediation
+---
+
+# Billing incident remediation
+
+A duplicate-charge fault in Brightloom's billing batch run has overcharged three customers. The faulty configuration must be corrected and redeployed, the affected orders refunded, the customers told, and ticket TCK-2201 taken through to resolution.
+
+Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+
+First, review the incident briefing in briefing.md.
+
+Use ticket_update to set ticket TCK-2201 to status "in-progress".
+
+Use record_note to record a note under id NOTE-BI-1 confirming ownership of the incident.
+
+Next, inspect billing-config.json and confirm the state of double_charge_guard.
+
+IF double_charge_guard is not already true in billing-config.json THEN
+  You must set double_charge_guard to true in billing-config.json.
+END
+
+Use deploy_service to deploy billing-api at version "v3.4.1".
+
+Next, confirm with ops_lookup that billing-api is running v3.4.1.
+
+Use record_note to record a note under id NOTE-BI-2 confirming the guard fix is live.
+
+Next, confirm the three affected orders and amounts against orders.csv.
+
+$orders = [(ORD-5501, 19.99, amara.osei@fernpost.example), (ORD-5502, 19.99, jonas.beck@quillmail.example), (ORD-5503, 39.98, priya.nair@lumenpost.example)]
+
+FOR $order IN $orders
+  Use refund_issue to issue a refund of $order.amount to order $order.id.
+  Use email_send to email $order.email with the subject "Your Brightloom refund has been issued".
+END
+
+Next, write refunds-summary.md listing every refund issued for this incident.
+
+Use ticket_update to set ticket TCK-2201 to status "refunds-complete".
+
+Use email_send to email finance@brightloom.example with the subject "Billing incident TCK-2201: refunds summary".
+
+Use ticket_update to set ticket TCK-2201 to status "resolved".
+
+Finally, write incident-closure.md summarising the remediation.

@@ -1,0 +1,29 @@
+{
+  "tickets": {
+    "TCK-9902": {
+      "status": "in-progress",
+      "comments": [
+        "On it; reading the affected-service list."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [
+    {
+      "to": "security@arclight.example",
+      "subject": "CVE-2026-30117: patch window confirmed"
+    },
+    {
+      "to": "security@arclight.example",
+      "subject": "CVE-2026-30117: patching complete"
+    }
+  ],
+  "deploys": {
+    "auth-api": "v5.8.4",
+    "session-store": "v2.2.9"
+  },
+  "notes": {
+    "NOTE-SP-1": "Treating as high; two services in scope.",
+    "NOTE-SP-2": "Both builds live and answering on the fixed versions."
+  }
+}

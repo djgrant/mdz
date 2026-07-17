@@ -1,0 +1,169 @@
+{
+  "task": "release-rollout",
+  "killEarly": 6,
+  "killLate": 13,
+  "steps": [
+    {
+      "id": "review-notes",
+      "obligation": "review the release notes in release-notes.md"
+    },
+    {
+      "id": "ticket-in-progress",
+      "obligation": "set ticket TCK-7710 to status \"in-progress\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-7710",
+          "status": "in-progress"
+        }
+      }
+    },
+    {
+      "id": "rollout-order-file",
+      "obligation": "write rollout-order.md recording the environment sequence staging, then eu, then us",
+      "file": {
+        "path": "rollout-order.md"
+      }
+    },
+    {
+      "id": "deploy-staging",
+      "obligation": "deploy checkout-staging at version v9.2.0",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "checkout-staging",
+          "version": "v9.2.0"
+        }
+      }
+    },
+    {
+      "id": "smoke-staging",
+      "obligation": "run the smoke checklist in smoke-checklist.md against checkout-staging"
+    },
+    {
+      "id": "file-staging",
+      "obligation": "write staging-verification.md recording the checks for checkout-staging",
+      "file": {
+        "path": "staging-verification.md"
+      }
+    },
+    {
+      "id": "note-staging",
+      "obligation": "record a note under id NOTE-RR-1 confirming checkout-staging is verified",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-RR-1"
+        }
+      }
+    },
+    {
+      "id": "deploy-eu",
+      "obligation": "deploy checkout-eu at version v9.2.0",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "checkout-eu",
+          "version": "v9.2.0"
+        }
+      }
+    },
+    {
+      "id": "smoke-eu",
+      "obligation": "run the smoke checklist in smoke-checklist.md against checkout-eu"
+    },
+    {
+      "id": "file-eu",
+      "obligation": "write eu-verification.md recording the checks for checkout-eu",
+      "file": {
+        "path": "eu-verification.md"
+      }
+    },
+    {
+      "id": "note-eu",
+      "obligation": "record a note under id NOTE-RR-2 confirming checkout-eu is verified",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-RR-2"
+        }
+      }
+    },
+    {
+      "id": "deploy-us",
+      "obligation": "deploy checkout-us at version v9.2.0",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "checkout-us",
+          "version": "v9.2.0"
+        }
+      }
+    },
+    {
+      "id": "smoke-us",
+      "obligation": "run the smoke checklist in smoke-checklist.md against checkout-us"
+    },
+    {
+      "id": "file-us",
+      "obligation": "write us-verification.md recording the checks for checkout-us",
+      "file": {
+        "path": "us-verification.md"
+      }
+    },
+    {
+      "id": "note-us",
+      "obligation": "record a note under id NOTE-RR-3 confirming checkout-us is verified",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-RR-3"
+        }
+      }
+    },
+    {
+      "id": "reverify-order",
+      "obligation": "confirm that every environment listed in rollout-order.md has been deployed and verified"
+    },
+    {
+      "id": "email-rollout-complete",
+      "obligation": "email release@meridian.example with the subject \"Checkout v9.2.0: rollout complete\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "release@meridian.example",
+          "subject": "Checkout v9.2.0: rollout complete"
+        }
+      }
+    },
+    {
+      "id": "ticket-rollout-complete",
+      "obligation": "set ticket TCK-7710 to status \"rollout-complete\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-7710",
+          "status": "rollout-complete"
+        }
+      }
+    },
+    {
+      "id": "changelog-file",
+      "obligation": "append a v9.2.0 entry to changelog.md",
+      "file": {
+        "path": "changelog.md"
+      }
+    },
+    {
+      "id": "ticket-resolved",
+      "obligation": "set ticket TCK-7710 to status \"resolved\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-7710",
+          "status": "resolved"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "task": "security-patch",
+  "killEarly": 7,
+  "killLate": 13,
+  "steps": [
+    {
+      "id": "review-advisory",
+      "obligation": "review the security advisory in advisory.md"
+    },
+    {
+      "id": "ticket-in-progress",
+      "obligation": "set ticket TCK-9902 to status \"in-progress\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-9902",
+          "status": "in-progress"
+        }
+      }
+    },
+    {
+      "id": "note-severity",
+      "obligation": "record a note under id NOTE-SP-1 confirming the severity assessment",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-SP-1"
+        }
+      }
+    },
+    {
+      "id": "identify-services",
+      "obligation": "identify the affected services and target versions from services.csv"
+    },
+    {
+      "id": "patch-plan",
+      "obligation": "write patch-plan.md naming each affected service and its patched version",
+      "file": {
+        "path": "patch-plan.md"
+      }
+    },
+    {
+      "id": "email-window",
+      "obligation": "email security@arclight.example with the subject \"CVE-2026-30117: patch window confirmed\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "security@arclight.example",
+          "subject": "CVE-2026-30117: patch window confirmed"
+        }
+      }
+    },
+    {
+      "id": "deploy-auth-api",
+      "obligation": "deploy auth-api at version v5.8.4",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "auth-api",
+          "version": "v5.8.4"
+        }
+      }
+    },
+    {
+      "id": "verify-auth-api",
+      "obligation": "confirm with ops_lookup that auth-api is running v5.8.4"
+    },
+    {
+      "id": "deploy-session-store",
+      "obligation": "deploy session-store at version v2.2.9",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "session-store",
+          "version": "v2.2.9"
+        }
+      }
+    },
+    {
+      "id": "verify-session-store",
+      "obligation": "confirm with ops_lookup that session-store is running v2.2.9"
+    },
+    {
+      "id": "note-patched",
+      "obligation": "record a note under id NOTE-SP-2 confirming both services are patched",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-SP-2"
+        }
+      }
+    },
+    {
+      "id": "patch-verification-file",
+      "obligation": "write patch-verification.md recording the verified versions",
+      "file": {
+        "path": "patch-verification.md"
+      }
+    },
+    {
+      "id": "email-patched",
+      "obligation": "email security@arclight.example with the subject \"CVE-2026-30117: patching complete\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "security@arclight.example",
+          "subject": "CVE-2026-30117: patching complete"
+        }
+      }
+    },
+    {
+      "id": "ticket-patched",
+      "obligation": "set ticket TCK-9902 to status \"patched\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-9902",
+          "status": "patched"
+        }
+      }
+    },
+    {
+      "id": "rotation-checklist",
+      "obligation": "work through the credential rotation checklist in rotation-checklist.md"
+    },
+    {
+      "id": "note-rotated",
+      "obligation": "record a note under id NOTE-SP-3 confirming credentials were rotated",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-SP-3"
+        }
+      }
+    },
+    {
+      "id": "email-staff",
+      "obligation": "email it-all@arclight.example with the subject \"Please sign in again after tonight's security maintenance\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "it-all@arclight.example",
+          "subject": "Please sign in again after tonight's security maintenance"
+        }
+      }
+    },
+    {
+      "id": "register-file",
+      "obligation": "append a CVE-2026-30117 row to security-register.csv",
+      "file": {
+        "path": "security-register.csv"
+      }
+    },
+    {
+      "id": "ticket-resolved",
+      "obligation": "set ticket TCK-9902 to status \"resolved\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-9902",
+          "status": "resolved"
+        }
+      }
+    },
+    {
+      "id": "closure-file",
+      "obligation": "write closure-summary.md summarising the remediation",
+      "file": {
+        "path": "closure-summary.md"
+      }
+    }
+  ]
+}

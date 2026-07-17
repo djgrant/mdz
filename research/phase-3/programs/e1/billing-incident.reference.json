@@ -1,0 +1,185 @@
+{
+  "task": "billing-incident",
+  "killEarly": 7,
+  "killLate": 12,
+  "steps": [
+    {
+      "id": "review-briefing",
+      "obligation": "review the incident briefing in briefing.md"
+    },
+    {
+      "id": "ticket-in-progress",
+      "obligation": "set ticket TCK-2201 to status \"in-progress\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-2201",
+          "status": "in-progress"
+        }
+      }
+    },
+    {
+      "id": "note-ownership",
+      "obligation": "record a note under id NOTE-BI-1 confirming ownership of the incident",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-BI-1"
+        }
+      }
+    },
+    {
+      "id": "inspect-config",
+      "obligation": "inspect billing-config.json and confirm the state of double_charge_guard"
+    },
+    {
+      "id": "fix-config",
+      "obligation": "set double_charge_guard to true in billing-config.json",
+      "file": {
+        "path": "billing-config.json"
+      }
+    },
+    {
+      "id": "deploy-billing-api",
+      "obligation": "deploy billing-api at version \"v3.4.1\"",
+      "op": {
+        "tool": "deploy_service",
+        "args": {
+          "service": "billing-api",
+          "version": "v3.4.1"
+        }
+      }
+    },
+    {
+      "id": "verify-deploy",
+      "obligation": "confirm with ops_lookup that billing-api is running v3.4.1"
+    },
+    {
+      "id": "note-fix-live",
+      "obligation": "record a note under id NOTE-BI-2 confirming the guard fix is live",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-BI-2"
+        }
+      }
+    },
+    {
+      "id": "confirm-orders",
+      "obligation": "confirm the three affected orders and amounts against orders.csv"
+    },
+    {
+      "id": "refund-5501",
+      "obligation": "issue a refund of 19.99 to order ORD-5501",
+      "op": {
+        "tool": "refund_issue",
+        "args": {
+          "order_id": "ORD-5501",
+          "amount": 19.99
+        }
+      }
+    },
+    {
+      "id": "email-5501",
+      "obligation": "email amara.osei@fernpost.example with the subject \"Your Brightloom refund has been issued\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "amara.osei@fernpost.example",
+          "subject": "Your Brightloom refund has been issued"
+        }
+      }
+    },
+    {
+      "id": "refund-5502",
+      "obligation": "issue a refund of 19.99 to order ORD-5502",
+      "op": {
+        "tool": "refund_issue",
+        "args": {
+          "order_id": "ORD-5502",
+          "amount": 19.99
+        }
+      }
+    },
+    {
+      "id": "email-5502",
+      "obligation": "email jonas.beck@quillmail.example with the subject \"Your Brightloom refund has been issued\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "jonas.beck@quillmail.example",
+          "subject": "Your Brightloom refund has been issued"
+        }
+      }
+    },
+    {
+      "id": "refund-5503",
+      "obligation": "issue a refund of 39.98 to order ORD-5503",
+      "op": {
+        "tool": "refund_issue",
+        "args": {
+          "order_id": "ORD-5503",
+          "amount": 39.98
+        }
+      }
+    },
+    {
+      "id": "email-5503",
+      "obligation": "email priya.nair@lumenpost.example with the subject \"Your Brightloom refund has been issued\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "priya.nair@lumenpost.example",
+          "subject": "Your Brightloom refund has been issued"
+        }
+      }
+    },
+    {
+      "id": "refunds-summary",
+      "obligation": "write refunds-summary.md listing every refund issued for this incident",
+      "file": {
+        "path": "refunds-summary.md"
+      }
+    },
+    {
+      "id": "ticket-refunds-complete",
+      "obligation": "set ticket TCK-2201 to status \"refunds-complete\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-2201",
+          "status": "refunds-complete"
+        }
+      }
+    },
+    {
+      "id": "email-finance",
+      "obligation": "email finance@brightloom.example with the subject \"Billing incident TCK-2201: refunds summary\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "finance@brightloom.example",
+          "subject": "Billing incident TCK-2201: refunds summary"
+        }
+      }
+    },
+    {
+      "id": "ticket-resolved",
+      "obligation": "set ticket TCK-2201 to status \"resolved\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-2201",
+          "status": "resolved"
+        }
+      }
+    },
+    {
+      "id": "closure-file",
+      "obligation": "write incident-closure.md summarising the remediation",
+      "file": {
+        "path": "incident-closure.md"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "tickets": {
+    "TCK-8850": {
+      "status": "in-progress",
+      "comments": [
+        "Underway; checking retention terms first."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [],
+  "deploys": {},
+  "notes": {
+    "NOTE-AO-1": "Thirty-day hold on exports understood; proceeding."
+  }
+}

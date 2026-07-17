@@ -1,0 +1,194 @@
+{
+  "task": "account-offboard",
+  "killEarly": 7,
+  "killLate": 13,
+  "steps": [
+    {
+      "id": "review-request",
+      "obligation": "review the offboarding request in offboard-request.md"
+    },
+    {
+      "id": "ticket-in-progress",
+      "obligation": "set ticket TCK-8850 to status \"in-progress\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-8850",
+          "status": "in-progress"
+        }
+      }
+    },
+    {
+      "id": "note-retention",
+      "obligation": "record a note under id NOTE-AO-1 confirming the retention rules were checked",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-AO-1"
+        }
+      }
+    },
+    {
+      "id": "check-legal-holds",
+      "obligation": "confirm in legal-holds.csv that Fernwood Ltd has no active legal hold"
+    },
+    {
+      "id": "manifest-crm_contacts",
+      "obligation": "add crm_contacts (primary-db) to export-manifest.md, first confirming it appears in data-inventory.csv",
+      "file": {
+        "path": "export-manifest.md"
+      }
+    },
+    {
+      "id": "manifest-invoices",
+      "obligation": "add invoices (primary-db) to export-manifest.md, first confirming it appears in data-inventory.csv",
+      "file": {
+        "path": "export-manifest.md"
+      }
+    },
+    {
+      "id": "manifest-usage_events",
+      "obligation": "add usage_events (event-lake) to export-manifest.md, first confirming it appears in data-inventory.csv",
+      "file": {
+        "path": "export-manifest.md"
+      }
+    },
+    {
+      "id": "manifest-support_threads",
+      "obligation": "add support_threads (helpdesk) to export-manifest.md, first confirming it appears in data-inventory.csv",
+      "file": {
+        "path": "export-manifest.md"
+      }
+    },
+    {
+      "id": "email-dpo-manifest",
+      "obligation": "email dpo@halcyon.example with the subject \"Fernwood Ltd: data export manifest prepared\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "dpo@halcyon.example",
+          "subject": "Fernwood Ltd: data export manifest prepared"
+        }
+      }
+    },
+    {
+      "id": "ticket-access-revoked",
+      "obligation": "set ticket TCK-8851 to status \"access-revoked\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-8851",
+          "status": "access-revoked"
+        }
+      }
+    },
+    {
+      "id": "email-customer-access",
+      "obligation": "email it@fernwood.example with the subject \"Your Halcyon access has now ended\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "it@fernwood.example",
+          "subject": "Your Halcyon access has now ended"
+        }
+      }
+    },
+    {
+      "id": "revocation-record",
+      "obligation": "write revocation-record.md recording when and how access was revoked",
+      "file": {
+        "path": "revocation-record.md"
+      }
+    },
+    {
+      "id": "refund-prorata",
+      "obligation": "issue a refund of 240.00 to order ORD-3320",
+      "op": {
+        "tool": "refund_issue",
+        "args": {
+          "order_id": "ORD-3320",
+          "amount": 240
+        }
+      }
+    },
+    {
+      "id": "email-customer-refund",
+      "obligation": "email accounts@fernwood.example with the subject \"Your pro-rata Halcyon refund\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "accounts@fernwood.example",
+          "subject": "Your pro-rata Halcyon refund"
+        }
+      }
+    },
+    {
+      "id": "note-refund",
+      "obligation": "record a note under id NOTE-AO-2 confirming the refund was issued and notified",
+      "op": {
+        "tool": "record_note",
+        "args": {
+          "note_id": "NOTE-AO-2"
+        }
+      }
+    },
+    {
+      "id": "deletion-schedule",
+      "obligation": "write deletion-schedule.md with deletion dates per the retention rules",
+      "file": {
+        "path": "deletion-schedule.md"
+      }
+    },
+    {
+      "id": "email-dpo-schedule",
+      "obligation": "email dpo@halcyon.example with the subject \"Fernwood Ltd: deletion schedule confirmed\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "dpo@halcyon.example",
+          "subject": "Fernwood Ltd: deletion schedule confirmed"
+        }
+      }
+    },
+    {
+      "id": "ticket-subtask-resolved",
+      "obligation": "set ticket TCK-8851 to status \"resolved\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-8851",
+          "status": "resolved"
+        }
+      }
+    },
+    {
+      "id": "register-file",
+      "obligation": "append a Fernwood Ltd row to offboard-register.csv",
+      "file": {
+        "path": "offboard-register.csv"
+      }
+    },
+    {
+      "id": "email-success",
+      "obligation": "email success@halcyon.example with the subject \"Fernwood Ltd offboarding complete\"",
+      "op": {
+        "tool": "email_send",
+        "args": {
+          "to": "success@halcyon.example",
+          "subject": "Fernwood Ltd offboarding complete"
+        }
+      }
+    },
+    {
+      "id": "ticket-resolved",
+      "obligation": "set ticket TCK-8850 to status \"resolved\"",
+      "op": {
+        "tool": "ticket_update",
+        "args": {
+          "ticket_id": "TCK-8850",
+          "status": "resolved"
+        }
+      }
+    }
+  ]
+}

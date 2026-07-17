@@ -1,0 +1,36 @@
+{
+  "tickets": {
+    "TCK-8850": {
+      "status": "in-progress",
+      "comments": [
+        "Underway; checking retention terms first."
+      ]
+    },
+    "TCK-8851": {
+      "status": "access-revoked",
+      "comments": [
+        "Gateway credentials disabled for this tenant."
+      ]
+    }
+  },
+  "refunds": [
+    {
+      "order_id": "ORD-3320",
+      "amount": 240
+    }
+  ],
+  "emails": [
+    {
+      "to": "dpo@halcyon.example",
+      "subject": "Fernwood Ltd: data export manifest prepared"
+    },
+    {
+      "to": "it@fernwood.example",
+      "subject": "Your Halcyon access has now ended"
+    }
+  ],
+  "deploys": {},
+  "notes": {
+    "NOTE-AO-1": "Thirty-day hold on exports understood; proceeding."
+  }
+}

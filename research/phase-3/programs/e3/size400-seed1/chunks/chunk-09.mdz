@@ -1,0 +1,28 @@
+Say $v25
+Say $v4
+IF $v1 < 4 THEN
+  Say $v28
+ELSE
+  $v65 = $v35 * 4
+END
+CASE $v26
+WHEN "next"
+  $v66 = 7
+  Say $v48
+WHEN "draft"
+  $v67 = 0
+ELSE
+  $v68 = $v25 - 2
+  Say $v18
+END
+FOR $v69 IN [6, 8, 4, 4, 9, 7, 0, 9, 1, 2]
+  Say $v69
+END
+$v70 = $v4 - 4
+$v71 = $v50 * 4
+Say $v71
+$v72 = 10
+WHILE $v72 != 0
+  Say $v72
+  $v72 = $v72 - 1
+END

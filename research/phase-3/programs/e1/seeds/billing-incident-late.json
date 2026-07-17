@@ -1,0 +1,33 @@
+{
+  "tickets": {
+    "TCK-2201": {
+      "status": "in-progress",
+      "comments": [
+        "Picked up; working through remediation."
+      ]
+    }
+  },
+  "refunds": [
+    {
+      "order_id": "ORD-5501",
+      "amount": 19.99
+    },
+    {
+      "order_id": "ORD-5502",
+      "amount": 19.99
+    }
+  ],
+  "emails": [
+    {
+      "to": "amara.osei@fernpost.example",
+      "subject": "Your Brightloom refund has been issued"
+    }
+  ],
+  "deploys": {
+    "billing-api": "v3.4.1"
+  },
+  "notes": {
+    "NOTE-BI-1": "Taking this one; checking the guard flag next.",
+    "NOTE-BI-2": "New build is out and answering; guard flag verified on."
+  }
+}

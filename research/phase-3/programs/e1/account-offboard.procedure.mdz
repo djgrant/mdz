@@ -1,0 +1,49 @@
+---
+name: account-offboarding
+---
+
+# Fernwood Ltd account offboarding
+
+Fernwood Ltd has ended its Halcyon contract. Their data export must be prepared, access revoked, the unused portion of the subscription refunded, and deletion scheduled. Main ticket: TCK-8850; access-revocation subtask: TCK-8851. The pro-rata refund is 240.00 against order ORD-3320.
+
+Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+
+First, review the offboarding request in offboard-request.md.
+
+Use ticket_update to set ticket TCK-8850 to status "in-progress".
+
+Use record_note to record a note under id NOTE-AO-1 confirming the retention rules were checked.
+
+Next, confirm in legal-holds.csv that Fernwood Ltd has no active legal hold.
+
+$datasets = [(crm_contacts, primary-db), (invoices, primary-db), (usage_events, event-lake), (support_threads, helpdesk)]
+
+FOR $dataset IN $datasets
+  Next, add $dataset.name ($dataset.store) to export-manifest.md, first confirming it appears in data-inventory.csv.
+END
+
+Use email_send to email dpo@halcyon.example with the subject "Fernwood Ltd: data export manifest prepared".
+
+Use ticket_update to set ticket TCK-8851 to status "access-revoked".
+
+Use email_send to email it@fernwood.example with the subject "Your Halcyon access has now ended".
+
+Next, write revocation-record.md recording when and how access was revoked.
+
+Use refund_issue to issue a refund of 240.00 to order ORD-3320.
+
+Use email_send to email accounts@fernwood.example with the subject "Your pro-rata Halcyon refund".
+
+Use record_note to record a note under id NOTE-AO-2 confirming the refund was issued and notified.
+
+Next, write deletion-schedule.md with deletion dates per the retention rules.
+
+Use email_send to email dpo@halcyon.example with the subject "Fernwood Ltd: deletion schedule confirmed".
+
+Use ticket_update to set ticket TCK-8851 to status "resolved".
+
+Next, append a Fernwood Ltd row to offboard-register.csv.
+
+Use email_send to email success@halcyon.example with the subject "Fernwood Ltd offboarding complete".
+
+Finally, use ticket_update to set ticket TCK-8850 to status "resolved".

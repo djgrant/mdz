@@ -1,0 +1,21 @@
+{
+  "tickets": {
+    "TCK-7710": {
+      "status": "in-progress",
+      "comments": [
+        "Starting the sequence now."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [],
+  "deploys": {
+    "checkout-staging": "v9.2.0",
+    "checkout-eu": "v9.2.0",
+    "checkout-us": "v9.2.0"
+  },
+  "notes": {
+    "NOTE-RR-1": "Environment confirmed at the new build.",
+    "NOTE-RR-2": "Environment confirmed at the new build."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "tickets": {
+    "TCK-7710": {
+      "status": "in-progress",
+      "comments": [
+        "Starting the sequence now."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [],
+  "deploys": {
+    "checkout-staging": "v9.2.0"
+  },
+  "notes": {}
+}

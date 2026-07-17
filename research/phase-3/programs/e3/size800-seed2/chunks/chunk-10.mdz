@@ -1,0 +1,27 @@
+Say $v39
+Say "done"
+IF $v24 < 5 THEN
+  $v71 = 5
+END
+Say $v0
+$v72 = 10
+WHILE $v72 != 0
+  Say $v72
+  $v72 = $v72 - 1
+END
+IF $v49 = 1 THEN
+  Say "hold"
+  Say $v56
+ELSE
+  Say $v52
+  $v73 = $v72 - 4
+END
+$v74 = "next"
+Say $v2
+IF $v56 != 2 THEN
+  Say $v52
+  Say $v65
+ELSE
+  $v75 = $v62 * 2
+  Say "next"
+END

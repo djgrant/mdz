@@ -1,0 +1,23 @@
+{
+  "tickets": {
+    "TCK-9902": {
+      "status": "in-progress",
+      "comments": [
+        "On it; reading the affected-service list."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [
+    {
+      "to": "security@arclight.example",
+      "subject": "CVE-2026-30117: patch window confirmed"
+    }
+  ],
+  "deploys": {
+    "auth-api": "v5.8.4"
+  },
+  "notes": {
+    "NOTE-SP-1": "Treating as high; two services in scope."
+  }
+}

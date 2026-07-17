@@ -1,0 +1,18 @@
+{
+  "tickets": {
+    "TCK-2201": {
+      "status": "in-progress",
+      "comments": [
+        "Picked up; working through remediation."
+      ]
+    }
+  },
+  "refunds": [],
+  "emails": [],
+  "deploys": {
+    "billing-api": "v3.4.1"
+  },
+  "notes": {
+    "NOTE-BI-1": "Taking this one; checking the guard flag next."
+  }
+}
