@@ -8,7 +8,7 @@ $skeleton = the headings, figure captions, and each paragraph's first sentence
 $pass = 1
 
 WHILE $pass != 4
-  USE ./skills/map WITH
+  USE ../skills/map WITH
     worker: opus
     items: $sections
     map: #critique-prompt-{$pass}
