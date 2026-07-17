@@ -6,7 +6,7 @@ name: cve-remediation
 
 A session-fixation vulnerability (CVE-2026-30117) affects Arclight's auth-api and session-store services. Both must be patched, the patching verified and announced, credentials rotated, and ticket TCK-9902 taken through to resolution.
 
-Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+Each step of this procedure must be carried out exactly once, in the order written; a FOR loop carries out its body once per item, in item order.
 
 First, review the security advisory in advisory.md.
 

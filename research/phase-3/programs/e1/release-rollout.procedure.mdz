@@ -6,7 +6,7 @@ name: checkout-staged-rollout
 
 Meridian is rolling checkout v9.2.0 out across three environments in strict sequence — staging first, then eu, then us — with a verification gate after each deploy. Rollout ticket: TCK-7710.
 
-Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+Each step of this procedure must be carried out exactly once, in the order written; a FOR loop carries out its body once per item, in item order.
 
 First, review the release notes in release-notes.md.
 

@@ -30,7 +30,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { appendFile, copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -369,6 +369,12 @@ async function runAgenticClaude(
       opsLog,
     };
   } finally {
+    // Archive the final working directory: the e2a/e2b scorers re-run tests
+    // and benchmarks against the shipped code, which only exists here.
+    const archive = join(PHASE_ROOT, "results", "sandboxes", recordId);
+    await rm(archive, { recursive: true, force: true }).catch(() => {});
+    await mkdir(dirname(archive), { recursive: true });
+    await cp(sandbox, archive, { recursive: true }).catch(() => {});
     await rm(sandbox, { recursive: true, force: true }).catch(() => {});
   }
 }

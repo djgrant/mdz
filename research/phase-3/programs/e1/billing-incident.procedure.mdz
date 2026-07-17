@@ -6,7 +6,7 @@ name: billing-incident-remediation
 
 A duplicate-charge fault in Brightloom's billing batch run has overcharged three customers. The faulty configuration must be corrected and redeployed, the affected orders refunded, the customers told, and ticket TCK-2201 taken through to resolution.
 
-Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+Each step of this procedure must be carried out exactly once, in the order written; a FOR loop carries out its body once per item, in item order.
 
 First, review the incident briefing in briefing.md.
 

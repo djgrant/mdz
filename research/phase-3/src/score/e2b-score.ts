@@ -169,10 +169,16 @@ function main(): void {
     const target = targetOf(rec.id);
     if (!target) continue;
 
-    const testsPass =
-      rec.outputPath && existsSync(phasePath(rec.outputPath))
-        ? runTargetTests(target, phasePath(rec.outputPath)).pass
-        : null;
+    // The harness archives each run's final working directory under
+    // results/sandboxes/<id>; the shipped module lives at its sandbox path.
+    const archived = phasePath(join("results", "sandboxes", rec.id, "src", `${target}.ts`));
+    const candidate =
+      existsSync(archived)
+        ? archived
+        : rec.outputPath && existsSync(phasePath(rec.outputPath))
+          ? phasePath(rec.outputPath)
+          : null;
+    const testsPass = candidate ? runTargetTests(target, candidate).pass : null;
     const mechanism =
       rec.transcriptPath && existsSync(phasePath(rec.transcriptPath))
         ? extractMechanism(readFileSync(phasePath(rec.transcriptPath), "utf8"), rec.rawOutput ?? "")

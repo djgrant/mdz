@@ -336,7 +336,7 @@ name: ${task.mdzName}
 
 ${task.scenario}
 
-Carry out this procedure from the top, in order. Each step must be carried out exactly once; a FOR loop carries out its body once per item, in item order.
+Each step of this procedure must be carried out exactly once, in the order written; a FOR loop carries out its body once per item, in item order.
 
 ${parts.join("\n\n")}
 `;
