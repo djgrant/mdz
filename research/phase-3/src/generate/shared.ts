@@ -24,7 +24,7 @@ export const PROGRAMS_DIR = join(PHASE_ROOT, "programs");
 // Manifest contract (phase-2 contract + phase-3 fields)
 // ---------------------------------------------------------------------------
 
-export type Experiment = "e1" | "e2a" | "e2b" | "e3";
+export type Experiment = "e1" | "e2a" | "e2b" | "e2b2" | "e3";
 export type RunMode = "single-turn" | "agentic";
 
 export interface ManifestEntry {
@@ -56,6 +56,12 @@ export interface ManifestEntry {
    * entries). Defaults to the harness's AGENTIC_TIMEOUT_MS.
    */
   timeoutMs?: number;
+  /**
+   * Per-entry orchestrator model override (a claude alias, e.g. "haiku").
+   * When set, the entry runs on this model regardless of --models, and the
+   * record id omits the model suffix (the entry id already encodes it).
+   */
+  model?: string;
 }
 
 // ---------------------------------------------------------------------------

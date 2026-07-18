@@ -542,14 +542,20 @@ async function main() {
   let skippedGpt = 0;
   for (const entry of manifest) {
     if (args.only && !entry.id.includes(args.only)) continue;
-    for (const model of models) {
+    // A manifest `model` field pins the entry to one orchestrator model,
+    // overriding --models; the entry id already encodes the model, so the
+    // record id drops the model suffix (e.g. e2b2-pricing-haiku-r1).
+    const entryModels = entry.model ? [resolveModel(entry.model)] : models;
+    for (const model of entryModels) {
       // Agentic entries run on claude models only; gpt is silently skipped.
       if (entry.runMode === "agentic" && model.provider !== "claude") {
         skippedGpt++;
         continue;
       }
       for (let r = 1; r <= args.n; r++) {
-        const recordId = `${entry.id}-${model.name}-r${r}`;
+        const recordId = entry.model
+          ? `${entry.id}-r${r}`
+          : `${entry.id}-${model.name}-r${r}`;
         if (done.has(recordId)) continue;
         jobs.push({ entry, model, r, recordId });
       }

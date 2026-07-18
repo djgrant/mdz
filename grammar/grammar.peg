@@ -664,7 +664,8 @@ AssignLineWithValue
       return {
         type: "assign",
         target,
-        ...(typeAnn ? { annotatedType: typeAnn } : {}),
+        ...(typeAnn ? { annotatedType: typeAnn.typeValue } : {}),
+        ...(typeAnn && typeAnn.backing ? { backing: typeAnn.backing } : {}),
         value: value ?? ""
       };
     }
@@ -674,7 +675,8 @@ AssignLineTypeOnly
       return {
         type: "assign",
         target,
-        annotatedType: typeAnn
+        annotatedType: typeAnn.typeValue,
+        ...(typeAnn.backing ? { backing: typeAnn.backing } : {})
       };
     }
 
@@ -682,8 +684,15 @@ AssignStartLine
   = MdZIndent Var _ (":" / AssignEq)
 
 TypeAnnotation
-  = ":" _ typeValue:TypeValue {
-      return typeValue;
+  = ":" _ typeValue:TypeValue backing:FileBacking? {
+      return { typeValue, backing: backing ?? null };
+    }
+
+/* File-backed variable annotation: `$x: string @(./path)` marks the variable
+   as stored at the given path — assignments write the file, reads read it. */
+FileBacking
+  = _ "@(" _ path:$( (!(")" / Newline) .)+ ) ")" {
+      return path.trim();
     }
 
 TypeValue
@@ -723,7 +732,7 @@ TypeSemanticVariant
   = text:$( (!("|" / Newline / End) .)+ ) { return { type: "semantic", text: text.trim() }; }
 
 TypeExprUntilEq
-  = $( ( !(_ AssignEq) !Newline . )+ )
+  = $( ( !(_ AssignEq) !(_ "@(") !Newline . )+ )
 
 TypeLiteral
   = TypeLiteralNumber
@@ -751,7 +760,7 @@ TypeRef
     }
 
 TypeRefTerminator
-  = _ ("," / ")" / ">" / "|" / AssignEq / Newline / End)
+  = _ ("," / ")" / ">" / "|" / "@(" / AssignEq / Newline / End)
 
 TypeName
   = $( [A-Za-z_][A-Za-z0-9_]* )

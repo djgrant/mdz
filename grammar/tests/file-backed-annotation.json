@@ -1,0 +1,21 @@
+[
+  {
+    "type": "assign",
+    "target": "$code",
+    "annotatedType": { "type": "ref", "name": "string" },
+    "backing": "./candidate.ts"
+  },
+  {
+    "type": "assign",
+    "target": "$notes",
+    "annotatedType": { "type": "ref", "name": "string" },
+    "backing": "./out/notes.md",
+    "value": "empty for now"
+  },
+  {
+    "type": "assign",
+    "target": "$plain",
+    "annotatedType": { "type": "ref", "name": "string" },
+    "value": "hello"
+  }
+]

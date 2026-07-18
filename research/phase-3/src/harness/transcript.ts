@@ -43,6 +43,7 @@ function normaliseEntry(raw: unknown): ManifestEntry {
     allowedTools: e.allowedTools,
     passes: e.passes,
     timeoutMs: e.timeoutMs,
+    model: e.model,
   };
 }
 
