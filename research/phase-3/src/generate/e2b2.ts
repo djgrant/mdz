@@ -74,12 +74,10 @@ FOR $i IN [1 .. $n]
   $candidate = $simplified
 END
 
-$winner = SPAWN ${WORKER_AGENT}
+$winner: string @($file) = SPAWN ${WORKER_AGENT}
 WITH
   instruction: Compare these versions of the same module and return the best one: the simplest version that is still clear, complete, and behaviour-preserving. The winner need not be the last.
   iterations: $iterations
-
-$file = $winner
 
 RETURN $winner
 `;

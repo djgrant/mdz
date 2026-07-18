@@ -1,0 +1,15 @@
+---
+name: ralph
+input: $task, $worker, $max-rounds
+---
+
+$round = 0
+
+WHILE $round < $max-rounds
+  SPAWN $worker
+  WITH
+    instruction: $task
+  $round = $round + 1
+END
+
+RETURN $round

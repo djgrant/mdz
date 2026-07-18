@@ -10,21 +10,20 @@
       "target": "ledger",
       "arm": "skill",
       "orchestrator": "haiku",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "ledger.ts",
       "testCommand": "node ledger.test.ts",
       "benchCommand": "node bench.ts",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -32,8 +31,8 @@
       "ledger.test.ts": "/**\n * Behavioural tests for the ledger reporter. Any optimisation must keep every\n * assertion green: the report bytes, the aggregates, and the unit-level\n * semantics are all pinned. Run with:  node ledger.test.ts\n */\n\nimport assert from \"node:assert/strict\";\nimport test from \"node:test\";\n\nimport {\n  TEST_CONFIG,\n  buildFeeTable,\n  categoryLabel,\n  countDuplicates,\n  runPipeline,\n  type Txn,\n} from \"./ledger.ts\";\n\ntest(\"pipeline aggregates and report bytes are unchanged\", () => {\n  const s = runPipeline(TEST_CONFIG, \"test-report.out\");\n  assert.equal(s.duplicates, 0);\n  assert.equal(s.flagged, 36);\n  assert.deepEqual(s.categoryTotals, [\n    473993, 523226, 526777, 477122, 524651, 390526, 419927, 413298,\n  ]);\n  assert.equal(s.feeTotal, 36033);\n  assert.equal(s.reportLines, 810);\n  assert.equal(s.checksum, 2037432415);\n});\n\ntest(\"category labels are stable\", () => {\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n});\n\ntest(\"fee table is stable for the test config\", () => {\n  assert.deepEqual(buildFeeTable(TEST_CONFIG), [11, 81, 54, 27, 87, 60, 33, 6]);\n});\n\ntest(\"duplicate pairs are counted combinatorially\", () => {\n  const t = (id: number, account: string, amount: number, day: number): Txn => ({\n    id,\n    account,\n    amount,\n    category: 0,\n    day,\n  });\n  const txns = [\n    t(1, \"AC1001\", 500, 3),\n    t(2, \"AC1001\", 500, 3),\n    t(3, \"AC1001\", 500, 3),\n    t(4, \"AC1002\", 500, 3),\n    t(5, \"AC1001\", 501, 3),\n    t(6, \"AC1002\", 500, 4),\n    t(7, \"AC1002\", 500, 4),\n  ];\n  // Three identical entries give three pairs; the pair of day-4 entries gives one.\n  assert.equal(countDuplicates(txns), 4);\n});\n",
       "bench.ts": "/**\n * Benchmark: run the full pipeline on the bench workload and print one\n * machine-parseable line. The scorer trusts only this output.\n */\n\nimport { BENCH_CONFIG, runPipeline } from \"./ledger.ts\";\n\nconst t0 = performance.now();\nconst summary = runPipeline(BENCH_CONFIG, \"report.out\");\nconst ms = performance.now() - t0;\n\nconsole.log(`CHECKSUM: ${summary.checksum}`);\nconsole.log(`BENCH_MS: ${Math.round(ms)}`);\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./ledger.ts\n  tests: node ledger.test.ts\n  bench: node bench.ts\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",
@@ -58,21 +57,20 @@
       "target": "ledger",
       "arm": "skill",
       "orchestrator": "sonnet",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "ledger.ts",
       "testCommand": "node ledger.test.ts",
       "benchCommand": "node bench.ts",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -80,8 +78,8 @@
       "ledger.test.ts": "/**\n * Behavioural tests for the ledger reporter. Any optimisation must keep every\n * assertion green: the report bytes, the aggregates, and the unit-level\n * semantics are all pinned. Run with:  node ledger.test.ts\n */\n\nimport assert from \"node:assert/strict\";\nimport test from \"node:test\";\n\nimport {\n  TEST_CONFIG,\n  buildFeeTable,\n  categoryLabel,\n  countDuplicates,\n  runPipeline,\n  type Txn,\n} from \"./ledger.ts\";\n\ntest(\"pipeline aggregates and report bytes are unchanged\", () => {\n  const s = runPipeline(TEST_CONFIG, \"test-report.out\");\n  assert.equal(s.duplicates, 0);\n  assert.equal(s.flagged, 36);\n  assert.deepEqual(s.categoryTotals, [\n    473993, 523226, 526777, 477122, 524651, 390526, 419927, 413298,\n  ]);\n  assert.equal(s.feeTotal, 36033);\n  assert.equal(s.reportLines, 810);\n  assert.equal(s.checksum, 2037432415);\n});\n\ntest(\"category labels are stable\", () => {\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n});\n\ntest(\"fee table is stable for the test config\", () => {\n  assert.deepEqual(buildFeeTable(TEST_CONFIG), [11, 81, 54, 27, 87, 60, 33, 6]);\n});\n\ntest(\"duplicate pairs are counted combinatorially\", () => {\n  const t = (id: number, account: string, amount: number, day: number): Txn => ({\n    id,\n    account,\n    amount,\n    category: 0,\n    day,\n  });\n  const txns = [\n    t(1, \"AC1001\", 500, 3),\n    t(2, \"AC1001\", 500, 3),\n    t(3, \"AC1001\", 500, 3),\n    t(4, \"AC1002\", 500, 3),\n    t(5, \"AC1001\", 501, 3),\n    t(6, \"AC1002\", 500, 4),\n    t(7, \"AC1002\", 500, 4),\n  ];\n  // Three identical entries give three pairs; the pair of day-4 entries gives one.\n  assert.equal(countDuplicates(txns), 4);\n});\n",
       "bench.ts": "/**\n * Benchmark: run the full pipeline on the bench workload and print one\n * machine-parseable line. The scorer trusts only this output.\n */\n\nimport { BENCH_CONFIG, runPipeline } from \"./ledger.ts\";\n\nconst t0 = performance.now();\nconst summary = runPipeline(BENCH_CONFIG, \"report.out\");\nconst ms = performance.now() - t0;\n\nconsole.log(`CHECKSUM: ${summary.checksum}`);\nconsole.log(`BENCH_MS: ${Math.round(ms)}`);\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./ledger.ts\n  tests: node ledger.test.ts\n  bench: node bench.ts\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",
@@ -106,21 +104,20 @@
       "target": "ledger",
       "arm": "skill",
       "orchestrator": "opus",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "ledger.ts",
       "testCommand": "node ledger.test.ts",
       "benchCommand": "node bench.ts",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -128,8 +125,8 @@
       "ledger.test.ts": "/**\n * Behavioural tests for the ledger reporter. Any optimisation must keep every\n * assertion green: the report bytes, the aggregates, and the unit-level\n * semantics are all pinned. Run with:  node ledger.test.ts\n */\n\nimport assert from \"node:assert/strict\";\nimport test from \"node:test\";\n\nimport {\n  TEST_CONFIG,\n  buildFeeTable,\n  categoryLabel,\n  countDuplicates,\n  runPipeline,\n  type Txn,\n} from \"./ledger.ts\";\n\ntest(\"pipeline aggregates and report bytes are unchanged\", () => {\n  const s = runPipeline(TEST_CONFIG, \"test-report.out\");\n  assert.equal(s.duplicates, 0);\n  assert.equal(s.flagged, 36);\n  assert.deepEqual(s.categoryTotals, [\n    473993, 523226, 526777, 477122, 524651, 390526, 419927, 413298,\n  ]);\n  assert.equal(s.feeTotal, 36033);\n  assert.equal(s.reportLines, 810);\n  assert.equal(s.checksum, 2037432415);\n});\n\ntest(\"category labels are stable\", () => {\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n  assert.equal(categoryLabel(3), \"CAT-3-19530\");\n});\n\ntest(\"fee table is stable for the test config\", () => {\n  assert.deepEqual(buildFeeTable(TEST_CONFIG), [11, 81, 54, 27, 87, 60, 33, 6]);\n});\n\ntest(\"duplicate pairs are counted combinatorially\", () => {\n  const t = (id: number, account: string, amount: number, day: number): Txn => ({\n    id,\n    account,\n    amount,\n    category: 0,\n    day,\n  });\n  const txns = [\n    t(1, \"AC1001\", 500, 3),\n    t(2, \"AC1001\", 500, 3),\n    t(3, \"AC1001\", 500, 3),\n    t(4, \"AC1002\", 500, 3),\n    t(5, \"AC1001\", 501, 3),\n    t(6, \"AC1002\", 500, 4),\n    t(7, \"AC1002\", 500, 4),\n  ];\n  // Three identical entries give three pairs; the pair of day-4 entries gives one.\n  assert.equal(countDuplicates(txns), 4);\n});\n",
       "bench.ts": "/**\n * Benchmark: run the full pipeline on the bench workload and print one\n * machine-parseable line. The scorer trusts only this output.\n */\n\nimport { BENCH_CONFIG, runPipeline } from \"./ledger.ts\";\n\nconst t0 = performance.now();\nconst summary = runPipeline(BENCH_CONFIG, \"report.out\");\nconst ms = performance.now() - t0;\n\nconsole.log(`CHECKSUM: ${summary.checksum}`);\nconsole.log(`BENCH_MS: ${Math.round(ms)}`);\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./ledger.ts\n  tests: node ledger.test.ts\n  bench: node bench.ts\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",
@@ -154,21 +151,20 @@
       "target": "logscan",
       "arm": "skill",
       "orchestrator": "haiku",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "logscan.py",
       "testCommand": "python3 test_logscan.py",
       "benchCommand": "python3 bench.py",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -176,8 +172,8 @@
       "test_logscan.py": "\"\"\"Behavioural tests for the log analyser. Any optimisation must keep every\nassertion green: the report bytes, the aggregates, and the unit-level\nsemantics are all pinned. Run with:  python3 test_logscan.py\n\"\"\"\n\nimport unittest\n\nfrom logscan import (\n    TEST_CONFIG,\n    analyse,\n    load_lines,\n    method_weight,\n    status_class,\n    top_path_per_hour,\n)\n\n\nclass TestLogscan(unittest.TestCase):\n    def test_pipeline_aggregates_and_report_bytes(self):\n        s = analyse(TEST_CONFIG, \"test-access.log\", \"test-report.out\")\n        self.assertEqual(s[\"entries\"], 700)\n        self.assertEqual(s[\"flagged\"], 3)\n        self.assertEqual(s[\"weighted\"], 9072)\n        self.assertEqual(s[\"total_bytes\"], 20954254)\n        self.assertEqual(s[\"lines_written\"], 20)\n        self.assertEqual(s[\"checksum\"], 122860189)\n\n    def test_status_class_is_stable(self):\n        self.assertEqual(status_class(404), \"4xx-77\")\n        self.assertEqual(status_class(404), \"4xx-77\")\n\n    def test_method_weight_is_stable(self):\n        self.assertEqual(method_weight(\"POST\", TEST_CONFIG[\"seed\"]), 11)\n\n    def test_top_path_breaks_ties_lexically(self):\n        entries = [\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/c\", \"hour\": 1},\n        ]\n        tops = top_path_per_hour(entries, 3)\n        self.assertEqual(tops[0], (0, \"/a\", 2))\n        self.assertEqual(tops[1], (1, \"/c\", 1))\n        self.assertEqual(tops[2], (2, None, -1))\n\n    def test_load_lines_round_trips(self):\n        with open(\"test-roundtrip.log\", \"w\") as f:\n            f.write(\"alpha beta\\ngamma delta\\n\")\n        self.assertEqual(load_lines(\"test-roundtrip.log\"), [\"alpha beta\", \"gamma delta\"])\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
       "bench.py": "\"\"\"Benchmark: run the full analysis on the bench workload and print one\nmachine-parseable line. The scorer trusts only this output.\"\"\"\n\nimport time\n\nfrom logscan import BENCH_CONFIG, analyse\n\nt0 = time.time()\nsummary = analyse(BENCH_CONFIG, \"access.log\", \"report.out\")\nms = (time.time() - t0) * 1000\n\nprint(\"CHECKSUM: %d\" % summary[\"checksum\"])\nprint(\"BENCH_MS: %d\" % round(ms))\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./logscan.py\n  tests: python3 test_logscan.py\n  bench: python3 bench.py\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",
@@ -202,21 +198,20 @@
       "target": "logscan",
       "arm": "skill",
       "orchestrator": "sonnet",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "logscan.py",
       "testCommand": "python3 test_logscan.py",
       "benchCommand": "python3 bench.py",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -224,8 +219,8 @@
       "test_logscan.py": "\"\"\"Behavioural tests for the log analyser. Any optimisation must keep every\nassertion green: the report bytes, the aggregates, and the unit-level\nsemantics are all pinned. Run with:  python3 test_logscan.py\n\"\"\"\n\nimport unittest\n\nfrom logscan import (\n    TEST_CONFIG,\n    analyse,\n    load_lines,\n    method_weight,\n    status_class,\n    top_path_per_hour,\n)\n\n\nclass TestLogscan(unittest.TestCase):\n    def test_pipeline_aggregates_and_report_bytes(self):\n        s = analyse(TEST_CONFIG, \"test-access.log\", \"test-report.out\")\n        self.assertEqual(s[\"entries\"], 700)\n        self.assertEqual(s[\"flagged\"], 3)\n        self.assertEqual(s[\"weighted\"], 9072)\n        self.assertEqual(s[\"total_bytes\"], 20954254)\n        self.assertEqual(s[\"lines_written\"], 20)\n        self.assertEqual(s[\"checksum\"], 122860189)\n\n    def test_status_class_is_stable(self):\n        self.assertEqual(status_class(404), \"4xx-77\")\n        self.assertEqual(status_class(404), \"4xx-77\")\n\n    def test_method_weight_is_stable(self):\n        self.assertEqual(method_weight(\"POST\", TEST_CONFIG[\"seed\"]), 11)\n\n    def test_top_path_breaks_ties_lexically(self):\n        entries = [\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/c\", \"hour\": 1},\n        ]\n        tops = top_path_per_hour(entries, 3)\n        self.assertEqual(tops[0], (0, \"/a\", 2))\n        self.assertEqual(tops[1], (1, \"/c\", 1))\n        self.assertEqual(tops[2], (2, None, -1))\n\n    def test_load_lines_round_trips(self):\n        with open(\"test-roundtrip.log\", \"w\") as f:\n            f.write(\"alpha beta\\ngamma delta\\n\")\n        self.assertEqual(load_lines(\"test-roundtrip.log\"), [\"alpha beta\", \"gamma delta\"])\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
       "bench.py": "\"\"\"Benchmark: run the full analysis on the bench workload and print one\nmachine-parseable line. The scorer trusts only this output.\"\"\"\n\nimport time\n\nfrom logscan import BENCH_CONFIG, analyse\n\nt0 = time.time()\nsummary = analyse(BENCH_CONFIG, \"access.log\", \"report.out\")\nms = (time.time() - t0) * 1000\n\nprint(\"CHECKSUM: %d\" % summary[\"checksum\"])\nprint(\"BENCH_MS: %d\" % round(ms))\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./logscan.py\n  tests: python3 test_logscan.py\n  bench: python3 bench.py\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",
@@ -250,21 +245,20 @@
       "target": "logscan",
       "arm": "skill",
       "orchestrator": "opus",
-      "strategies": 5
+      "rounds": 3
     },
     "expected": {
       "strategies": [
-        "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-        "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-        "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-        "batching the I/O: replace many small reads or writes with one buffered operation",
-        "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+        "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+        "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+        "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+        "Batch the I/O: replace many small reads or writes with one buffered operation.",
+        "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
       ],
       "targetFile": "logscan.py",
       "testCommand": "python3 test_logscan.py",
       "benchCommand": "python3 bench.py",
-      "workerSpawns": 5,
-      "reduceSpawns": 1,
+      "workerSpawns": 3,
       "subagentType": "sonnet-5"
     },
     "sandbox": {
@@ -272,8 +266,8 @@
       "test_logscan.py": "\"\"\"Behavioural tests for the log analyser. Any optimisation must keep every\nassertion green: the report bytes, the aggregates, and the unit-level\nsemantics are all pinned. Run with:  python3 test_logscan.py\n\"\"\"\n\nimport unittest\n\nfrom logscan import (\n    TEST_CONFIG,\n    analyse,\n    load_lines,\n    method_weight,\n    status_class,\n    top_path_per_hour,\n)\n\n\nclass TestLogscan(unittest.TestCase):\n    def test_pipeline_aggregates_and_report_bytes(self):\n        s = analyse(TEST_CONFIG, \"test-access.log\", \"test-report.out\")\n        self.assertEqual(s[\"entries\"], 700)\n        self.assertEqual(s[\"flagged\"], 3)\n        self.assertEqual(s[\"weighted\"], 9072)\n        self.assertEqual(s[\"total_bytes\"], 20954254)\n        self.assertEqual(s[\"lines_written\"], 20)\n        self.assertEqual(s[\"checksum\"], 122860189)\n\n    def test_status_class_is_stable(self):\n        self.assertEqual(status_class(404), \"4xx-77\")\n        self.assertEqual(status_class(404), \"4xx-77\")\n\n    def test_method_weight_is_stable(self):\n        self.assertEqual(method_weight(\"POST\", TEST_CONFIG[\"seed\"]), 11)\n\n    def test_top_path_breaks_ties_lexically(self):\n        entries = [\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/b\", \"hour\": 0},\n            {\"path\": \"/a\", \"hour\": 0},\n            {\"path\": \"/c\", \"hour\": 1},\n        ]\n        tops = top_path_per_hour(entries, 3)\n        self.assertEqual(tops[0], (0, \"/a\", 2))\n        self.assertEqual(tops[1], (1, \"/c\", 1))\n        self.assertEqual(tops[2], (2, None, -1))\n\n    def test_load_lines_round_trips(self):\n        with open(\"test-roundtrip.log\", \"w\") as f:\n            f.write(\"alpha beta\\ngamma delta\\n\")\n        self.assertEqual(load_lines(\"test-roundtrip.log\"), [\"alpha beta\", \"gamma delta\"])\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
       "bench.py": "\"\"\"Benchmark: run the full analysis on the bench workload and print one\nmachine-parseable line. The scorer trusts only this output.\"\"\"\n\nimport time\n\nfrom logscan import BENCH_CONFIG, analyse\n\nt0 = time.time()\nsummary = analyse(BENCH_CONFIG, \"access.log\", \"report.out\")\nms = (time.time() - t0) * 1000\n\nprint(\"CHECKSUM: %d\" % summary[\"checksum\"])\nprint(\"BENCH_MS: %d\" % round(ms))\n",
       ".claude/commands/optimise.md": "You are an MDZ executor.\n\nMDZ syntax:\n- `$var` holds a value. `$var: <type> @(<path>)` is file-backed: its value\n  lives at <path>; reads and writes go to that file; pass it by path.\n- `USE ~/skills/<name>` executes ./skills/<name>.mdz with the WITH params.\n- `SPAWN <model>` runs a subagent on that model: one real Task call per\n  spawn, carrying the WITH payload.\n\nPRAGMA STRICT\n\nUSE ~/skills/optimise\nWITH\n  file: ./logscan.py\n  tests: python3 test_logscan.py\n  bench: python3 bench.py\n",
-      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table\",\n  \"caching repeated work: memoise pure functions that are called many times with the same few arguments\",\n  \"picking better data structures: replace linear membership checks against a list or array with a hash-based set\",\n  \"batching the I/O: replace many small reads or writes with one buffered operation\",\n  \"hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations\"\n]\n\n$base: string @(./base) = a copy of $file\n\n$fastest: string @(./fastest) = USE ~/skills/map-reduce\nWITH\n  items: $strategies\n  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.\n  map-worker: sonnet-5\n  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.\n  reduce-worker: sonnet-5\n\n$file = $fastest\n\nRETURN the winning strategy and its BENCH_MS\n",
-      "skills/map-reduce.mdz": "---\nname: map-reduce\ninput: $items, $map, $map-worker, $reduce, $reduce-worker?\n---\n\nFOR $item IN $items\n  SPAWN $map-worker\n  WITH\n    instruction: $map\n    item: $item\nEND\n\n$results = every sub-agent output, in the same order as $items\n\nIF $reduce-worker\nTHEN\n  RETURN SPAWN $reduce-worker\n  WITH\n    instruction: $reduce\n    results: $results\nEND\n\nRETURN the result of applying $reduce to $results\n"
+      "skills/optimise.mdz": "---\nname: optimise\ninput: $file, $tests, $bench\n---\n\n$strategies = [\n  \"Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.\",\n  \"Cache repeated work: memoise pure functions that are called many times with the same few arguments.\",\n  \"Pick better data structures: replace linear membership checks against a list or array with a hash-based set.\",\n  \"Batch the I/O: replace many small reads or writes with one buffered operation.\",\n  \"Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations.\"\n]\n\nUSE ~/skills/ralph\nWITH\n  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.\n  worker: sonnet-5\n  max-rounds: 3\n\nRETURN the final BENCH_MS\n",
+      "skills/ralph.mdz": "---\nname: ralph\ninput: $task, $worker, $max-rounds\n---\n\n$round = 0\n\nWHILE $round < $max-rounds\n  SPAWN $worker\n  WITH\n    instruction: $task\n  $round = $round + 1\nEND\n\nRETURN $round\n"
     },
     "allowedTools": [
       "Task",

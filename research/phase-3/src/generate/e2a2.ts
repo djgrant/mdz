@@ -1,16 +1,15 @@
 /**
- * E2a2 — optimise v2 (file-backed variables, capable-worker split).
+ * E2a2 — mdz-ralph (the ralph loop written as an MDZ skill).
  *
- * The second-run mechanism-fix arm for E2a, mirroring e2b2: the optimise
- * program becomes a real skill invoked by USE from a terse slash command,
- * candidates move by file path (`@(<path>)`), every worker is spawned as
- * `sonnet-5`, and the orchestrator model varies per entry (haiku, opus) via
- * the manifest `model` field.
- *
- * NOTE: content-parity discipline does not apply here — this is a mechanism-
- * fix arm, not a content-matched pair. The five strategy hints carry over
- * from E2a with only a grammatical change (gerunds, so `faster by $item`
- * composes); comparisons against v1 arms are indicative only.
+ * The v1 finding was that the e2a skill lost by construction: a single
+ * fan-out with a pick-one reduce cannot compound independent fixes, and the
+ * targets' speedups are a product of five of them. So the second-run arm
+ * replaces the shape rather than tuning it: a generic `ralph` skill (WHILE
+ * loop spawning fresh workers on the whole goal) plus an `optimise` caller
+ * that is content-matched to the v1 prompt-ralph command — same five
+ * strategy bullets verbatim, same 3-round budget, same self-verify
+ * discipline. The pair under test is prompt-ralph (loop in the harness) vs
+ * mdz-ralph (loop in the orchestrator).
  *
  * 2 targets x 1 arm (skill) x 3 orchestrator models = 6 manifest entries.
  */
@@ -19,23 +18,36 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { E2A_TARGETS, type E2aTarget } from "./e2a.ts";
-import { MAP_REDUCE_PATH, ORCHESTRATOR_MODELS, WORKER_AGENT } from "./e2b2.ts";
+import { E2A_TARGETS, PASSES, STRATEGIES, type E2aTarget } from "./e2a.ts";
+import { ORCHESTRATOR_MODELS, WORKER_AGENT } from "./e2b2.ts";
 import { assertValid, rel, writeJson, writeText, type ManifestEntry } from "./shared.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = join(HERE, "fixtures", "e2a");
 
-export const STRATEGIES_V2 = [
-  "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-  "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-  "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-  "batching the I/O: replace many small reads or writes with one buffered operation",
-  "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations",
-] as const;
+// ---------------------------------------------------------------------------
+// The generic ralph skill
+// ---------------------------------------------------------------------------
+
+export const RALPH_SKILL = `---
+name: ralph
+input: $task, $worker, $max-rounds
+---
+
+$round = 0
+
+WHILE $round < $max-rounds
+  SPAWN $worker
+  WITH
+    instruction: $task
+  $round = $round + 1
+END
+
+RETURN $round
+`;
 
 // ---------------------------------------------------------------------------
-// The optimise skill v2 — one generic program; targets bind via USE params.
+// The optimise caller — content-matched to the v1 prompt-ralph command.
 // ---------------------------------------------------------------------------
 
 export const OPTIMISE_SKILL_V2 = `---
@@ -44,26 +56,20 @@ input: $file, $tests, $bench
 ---
 
 $strategies = [
-  "${STRATEGIES_V2[0]}",
-  "${STRATEGIES_V2[1]}",
-  "${STRATEGIES_V2[2]}",
-  "${STRATEGIES_V2[3]}",
-  "${STRATEGIES_V2[4]}"
+  "${STRATEGIES[0]}",
+  "${STRATEGIES[1]}",
+  "${STRATEGIES[2]}",
+  "${STRATEGIES[3]}",
+  "${STRATEGIES[4]}"
 ]
 
-$base: string @(./base) = a copy of $file
-
-$fastest: string @(./fastest) = USE ~/skills/map-reduce
+USE ~/skills/ralph
 WITH
-  items: $strategies
-  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.
-  map-worker: ${WORKER_AGENT}
-  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.
-  reduce-worker: ${WORKER_AGENT}
+  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.
+  worker: ${WORKER_AGENT}
+  max-rounds: ${PASSES}
 
-$file = $fastest
-
-RETURN the winning strategy and its BENCH_MS
+RETURN the final BENCH_MS
 `;
 
 // ---------------------------------------------------------------------------
@@ -96,8 +102,7 @@ WITH
 
 export function buildE2a2(outDir: string): ManifestEntry[] {
   const dir = join(outDir, "e2a2");
-  const mapReduceSkill = readFileSync(MAP_REDUCE_PATH, "utf8");
-  assertValid(mapReduceSkill, "e2a2 skills/map-reduce.mdz");
+  assertValid(RALPH_SKILL, "e2a2 skills/ralph.mdz");
   assertValid(OPTIMISE_SKILL_V2, "e2a2 skills/optimise.mdz");
 
   const entries: ManifestEntry[] = [];
@@ -114,7 +119,7 @@ export function buildE2a2(outDir: string): ManifestEntry[] {
         ...targetFiles,
         ".claude/commands/optimise.md": optimiseCommand(target),
         "skills/optimise.mdz": OPTIMISE_SKILL_V2,
-        "skills/map-reduce.mdz": mapReduceSkill,
+        "skills/ralph.mdz": RALPH_SKILL,
       };
       for (const [relPath, content] of Object.entries(sandbox)) {
         writeText(join(folder, relPath), content);
@@ -131,21 +136,20 @@ export function buildE2a2(outDir: string): ManifestEntry[] {
           target: target.name,
           arm: "skill",
           orchestrator: model,
-          strategies: STRATEGIES_V2.length,
+          rounds: PASSES,
         },
         expected: {
-          strategies: [...STRATEGIES_V2],
+          strategies: [...STRATEGIES],
           targetFile: target.targetFile,
           testCommand: target.testCommand,
           benchCommand: target.benchCommand,
-          workerSpawns: STRATEGIES_V2.length,
-          reduceSpawns: 1,
+          workerSpawns: PASSES,
           subagentType: WORKER_AGENT,
         },
         sandbox,
         allowedTools: ["Task", "Bash", "Read", "Write", "Edit", "Glob", "Grep"],
-        // 5 map workers + a benchmarking reduce over real repos; same
-        // headroom as the e2b2 pipelines.
+        // 3 sequential whole-goal workers over real repos; same headroom as
+        // the e2b2 pipelines.
         timeoutMs: 2400 * 1000,
         model,
       });

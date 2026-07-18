@@ -4,23 +4,17 @@ input: $file, $tests, $bench
 ---
 
 $strategies = [
-  "reducing algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table",
-  "caching repeated work: memoise pure functions that are called many times with the same few arguments",
-  "picking better data structures: replace linear membership checks against a list or array with a hash-based set",
-  "batching the I/O: replace many small reads or writes with one buffered operation",
-  "hoisting loop-invariant work: precompute anything inside a hot loop that does not change between iterations"
+  "Reduce algorithmic complexity: replace nested scans over the same data with a single pass that builds a lookup table.",
+  "Cache repeated work: memoise pure functions that are called many times with the same few arguments.",
+  "Pick better data structures: replace linear membership checks against a list or array with a hash-based set.",
+  "Batch the I/O: replace many small reads or writes with one buffered operation.",
+  "Hoist loop-invariant work: precompute anything inside a hot loop that does not change between iterations."
 ]
 
-$base: string @(./base) = a copy of $file
-
-$fastest: string @(./fastest) = USE ~/skills/map-reduce
+USE ~/skills/ralph
 WITH
-  items: $strategies
-  map: Make $base faster by $item. Preserve every exported name and all observable behaviour exactly; the test suite ($tests) must still pass.
-  map-worker: sonnet-5
-  reduce: Benchmark each candidate with $bench (it prints BENCH_MS) and pick the fastest one that passes $tests. If none passes, keep $base.
-  reduce-worker: sonnet-5
+  task: Make $file faster without changing its observable behaviour. The tests ($tests) must stay green; the benchmark ($bench) prints its result as a line of the form BENCH_MS: <number>. Strategies worth applying: $strategies. Edit $file in place, keeping every exported name and all observable behaviour identical. Run $tests to confirm the tests still pass, then run $bench and report the final BENCH_MS.
+  worker: sonnet-5
+  max-rounds: 3
 
-$file = $fastest
-
-RETURN the winning strategy and its BENCH_MS
+RETURN the final BENCH_MS
