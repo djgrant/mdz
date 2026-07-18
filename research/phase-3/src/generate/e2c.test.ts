@@ -53,12 +53,10 @@ describe("manifest", () => {
     }
   });
 
-  it("expects one skeleton worker plus one per paragraph on the skill arm", () => {
-    const paragraphs = (entries[0].expected as { paragraphs: number }).paragraphs;
-    expect(paragraphs).toBeGreaterThan(10);
+  it("expects three whole-document workers on the skill arm", () => {
     for (const model of ORCHESTRATOR_MODELS) {
       expect(entry(`e2c-skill-${model}`).expected).toMatchObject({
-        workerSpawns: 1 + paragraphs,
+        workerSpawns: 3,
         subagentType: WORKER_AGENT,
       });
       expect(entry(`e2c-goal-${model}`).expected).toMatchObject({ workerSpawns: 0 });
@@ -84,17 +82,18 @@ describe("rewrite.mdz", () => {
     expect(validateMdz(REWRITE_SKILL).ok).toBe(true);
   });
 
-  it("has the two loops: one skeleton spawn, one spawn per paragraph", () => {
-    expect(REWRITE_SKILL).toContain("$skeleton = the headings and captions of $file");
-    expect(REWRITE_SKILL).toContain("FOR $paragraph IN the paragraphs of $file");
-    expect(REWRITE_SKILL.match(new RegExp(`SPAWN ${WORKER_AGENT}`, "g"))!.length).toBe(2);
+  it("is a three-pass pipeline: skeleton, structure/flow, language", () => {
+    expect(REWRITE_SKILL.match(new RegExp(`SPAWN ${WORKER_AGENT}`, "g"))!.length).toBe(3);
+    expect(REWRITE_SKILL).not.toContain("FOR ");
   });
 
   it("filters requirements per spawn via section anchors that exist in the doc", () => {
-    expect(REWRITE_SKILL).toContain("$requirements#skeleton-assessment");
-    expect(REWRITE_SKILL).toContain("$requirements#paragraph-by-paragraph-assessment");
-    expect(REQUIREMENTS).toContain("## Skeleton assessment");
-    expect(REQUIREMENTS).toContain("## Paragraph-by-paragraph assessment");
+    for (const anchor of ["skeleton-assessment", "inductive-explanation", "flow", "language"]) {
+      expect(REWRITE_SKILL).toContain(`$requirements#${anchor}`);
+    }
+    for (const heading of ["## Skeleton assessment", "## Inductive explanation", "## Flow", "## Language"]) {
+      expect(REQUIREMENTS).toContain(heading);
+    }
   });
 });
 

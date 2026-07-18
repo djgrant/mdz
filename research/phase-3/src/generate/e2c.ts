@@ -41,20 +41,21 @@ Read the headings and captions alone:
 - every heading explains what the central finding
 - every caption says what is being measured and which direction is good
 
-## Paragraph-by-paragraph assessment
+## Inductive explanation
 
-Inductive explanation:
 - establish facts first – do not reference them before the reader has been introduced properly
 - build the reader's context brick by brick
 - summarisation is a tool to tell someone what they've been told, never to be used before the content has been explored
 
-Flow:
+## Flow
+
 - try to keep paragraphs under 50 words – split rather than compact
 - no filler: if deleting a sentence loses nothing, it goes
 - continually ask yourself at each sentence: has the reader lost interest yet?
 - lean on examples – code, tables, graphs
 
-Language:
+## Language
+
 - do not coin jargon; if there is no well-known word for a concept, just explain the concept
 - avoid using codenames for ideas – just explain the idea
 - do not compress or summarise just to avoid repeating yourself
@@ -72,22 +73,17 @@ name: rewrite
 input: $file, $requirements
 ---
 
-$skeleton = the headings and captions of $file
+SPAWN ${worker}
+WITH
+  instruction: Apply the following requirements to $file. $requirements#skeleton-assessment
 
 SPAWN ${worker}
 WITH
-  instruction: Apply the following requirements to this skeleton. Return a revised heading/caption list. $requirements#skeleton-assessment
-  skeleton: $skeleton
+  instruction: Apply the following requirements to $file. $requirements#inductive-explanation $requirements#flow
 
-DO Apply the returned revisions to $file
-
-FOR $paragraph IN the paragraphs of $file
-  SPAWN ${worker}
-  WITH
-    instruction: Apply the following requirements to this paragraph. Verdict: DROP, KEEP, or a rewrite. $requirements#paragraph-by-paragraph-assessment
-    paragraph: $paragraph
-  DO Apply the verdict to $file
-END
+SPAWN ${worker}
+WITH
+  instruction: Apply the following requirements to $file. $requirements#language
 
 RETURN $file
 `;
@@ -188,8 +184,8 @@ export function buildE2c(outDir: string): ManifestEntry[] {
           targetFile: "report.md",
           requirementsFile: "requirements.md",
           paragraphs,
-          // Skill arm: one skeleton worker plus one per paragraph.
-          workerSpawns: form === "skill" ? 1 + paragraphs : 0,
+          // Skill arm: skeleton, structure/flow, and language passes.
+          workerSpawns: form === "skill" ? 3 : 0,
           ...(form === "skill" ? { subagentType: worker } : {}),
         },
         sandbox,

@@ -3,21 +3,16 @@ name: rewrite
 input: $file, $requirements
 ---
 
-$skeleton = the headings and captions of $file
+SPAWN sonnet-5
+WITH
+  instruction: Apply the following requirements to $file. $requirements#skeleton-assessment
 
 SPAWN sonnet-5
 WITH
-  instruction: Apply the following requirements to this skeleton. Return a revised heading/caption list. $requirements#skeleton-assessment
-  skeleton: $skeleton
+  instruction: Apply the following requirements to $file. $requirements#inductive-explanation $requirements#flow
 
-DO Apply the returned revisions to $file
-
-FOR $paragraph IN the paragraphs of $file
-  SPAWN sonnet-5
-  WITH
-    instruction: Apply the following requirements to this paragraph. Verdict: DROP, KEEP, or a rewrite. $requirements#paragraph-by-paragraph-assessment
-    paragraph: $paragraph
-  DO Apply the verdict to $file
-END
+SPAWN sonnet-5
+WITH
+  instruction: Apply the following requirements to $file. $requirements#language
 
 RETURN $file
