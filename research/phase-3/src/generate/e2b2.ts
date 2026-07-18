@@ -34,7 +34,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "fixtures", "e2b");
 
 /** The inner higher-order skill, copied verbatim from examples/. */
-const MAP_REDUCE_PATH = resolve(PHASE_ROOT, "..", "..", "examples", "skills", "map-reduce.mdz");
+export const MAP_REDUCE_PATH = resolve(PHASE_ROOT, "..", "..", "examples", "skills", "map-reduce.mdz");
 
 /** Orchestrator models, pinned per entry via the manifest `model` field. */
 export const ORCHESTRATOR_MODELS = ["haiku", "opus"] as const;

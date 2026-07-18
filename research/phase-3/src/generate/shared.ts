@@ -24,7 +24,7 @@ export const PROGRAMS_DIR = join(PHASE_ROOT, "programs");
 // Manifest contract (phase-2 contract + phase-3 fields)
 // ---------------------------------------------------------------------------
 
-export type Experiment = "e1" | "e2a" | "e2b" | "e2b2" | "e3";
+export type Experiment = "e1" | "e2a" | "e2a2" | "e2b" | "e2b2" | "e3";
 export type RunMode = "single-turn" | "agentic";
 
 export interface ManifestEntry {

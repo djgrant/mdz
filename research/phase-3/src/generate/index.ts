@@ -14,6 +14,7 @@ import { pathToFileURL } from "node:url";
 import { PROGRAMS_DIR, type ManifestEntry } from "./shared.ts";
 import { buildE1 } from "./e1.ts";
 import { buildE2a } from "./e2a.ts";
+import { buildE2a2 } from "./e2a2.ts";
 import { buildE2b } from "./e2b.ts";
 import { buildE2b2 } from "./e2b2.ts";
 import { buildE3 } from "./e3.ts";
@@ -24,6 +25,7 @@ export function buildAll(): Record<string, ManifestEntry[]> {
   return {
     e1: buildE1(PROGRAMS_DIR),
     e2a: buildE2a(PROGRAMS_DIR),
+    e2a2: buildE2a2(PROGRAMS_DIR),
     e2b: buildE2b(PROGRAMS_DIR),
     e2b2: buildE2b2(PROGRAMS_DIR),
     e3: buildE3(PROGRAMS_DIR),
