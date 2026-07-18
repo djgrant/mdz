@@ -1,0 +1,65 @@
+<section id="simplify">
+<span class="qref">Does diverge-then-select beat a single context? Subjective selection</span>
+<h2><span class="secno">Experiment 2b:</span>The judge agrees with the benchmark — ralph wins here too</h2>
+
+<p>E2b swaps the benchmark for taste. Targets are over-abstracted modules
+(~300–400 lines, passing test suites) whose abstraction debt is layered —
+indirection wrapping duplication wrapping speculative generality — so three
+successive rounds of genuine simplification are each productive.
+<code>/simplify</code> is the compound MDZ skill: three directional heuristics
+fan out per iteration, an inner reduce picks the winner, the winner seeds the
+next iteration, and a spawned fresh-context judge picks the best iteration at
+the end. <code>/simplify-goal</code> holds the same heuristics and plan in
+prose; <code>/simplify-ralph</code> is the same heuristics as a single-pass
+instruction run three times, fresh sessions, last pass ships unjudged. 2 targets
+× 3 variants × 2 models × n=3 = 36 runs.</p>
+
+<p>Outcome is scored by a pairwise sonnet judge — order counterbalanced, both
+candidates presented with the original — across the three arm pairings per
+target/model/rep: 36 verdicts. All 36 runs passed the test gate, so the judge is
+the discriminator.</p>
+
+<figure>
+  <img src="charts/e2b-judge.png" alt="E2b judge win matrix, test gate, spawn fidelity">
+  <figcaption><b>Figure 5.</b> Left: judge wins per pairing, 12 verdicts each.
+  Centre: test-gate pass rate (1.0 everywhere — the gate gated nothing).
+  Right: mechanism in the skill arm — mean worker spawns against the 9 expected
+  (dashed line) and the judge-spawn rate, by model.</figcaption>
+</figure>
+
+<div class="stats">
+  <div class="stat"><b>9–3</b><span>ralph over the MDZ skill, judge verdicts</span></div>
+  <div class="stat"><b>9–3</b><span>ralph over the goal prompt</span></div>
+  <div class="stat"><b>7–5</b><span>goal over the MDZ skill</span></div>
+  <div class="stat"><b>0.75</b><span>ralph's overall win rate (skill 0.33, goal 0.42)</span></div>
+</div>
+
+<p>The verdicts are one-directional: ralph beats the skill 9–3, beats the goal
+9–3, and the goal edges the skill 7–5. Pooled win rates: ralph 0.75, goal 0.42,
+skill 0.33. The subjective selector reached the same conclusion as E2a's
+benchmark — and the skill's diverge-and-select machinery came last, behind even
+the prose restatement of its own plan. The judge's reasons are consistent in
+tenor: ralph's output had actually collapsed the machinery into plain code,
+where skill-arm output too often shipped conservative or near-unchanged
+files.</p>
+
+<p>The mechanism trace shows the skill arm executing its shape unevenly, and
+along a model split. Haiku mostly ran the notation faithfully — full 3-per-iteration
+fan-out in 5 of 6 runs (four runs even ran a fourth iteration), and it
+spawned the final judge in 4 of 6. Sonnet never once finished the shape: all six
+sonnet skill runs fanned out the first iteration (3 spawns) then abandoned the
+loop and the judge — spawn pattern [3,&nbsp;0,&nbsp;0], judge-spawn rate 0. The
+stronger model overrode the procedure it was given; the weaker model followed
+it. Delegation fidelity, phase 2's headline mechanism, inverted by capability.
+The goal arm spawned nothing at all, as in E2a. Winner-index — which iteration
+the skill's judge picked — was recoverable from only 1 of 36 records, so the
+winners-mid-sequence question stays unanswered.</p>
+
+<div class="verdict">Verdict: subjective selection replicates the objective
+result. Three fresh passes with no kept alternatives beat both orchestrated
+variants under a counterbalanced judge (win rate 0.75 vs 0.33 for the skill),
+and the test gate never once rescued the skill's selection step, because
+nothing failed it. The compound skill's own shape was only executed in full by
+the cheaper model; the capable model quietly reduced it to a single fan-out and
+shipped. Same budget caveat as E2a: ralph spends 2–5× the tokens.</div>
+</section>

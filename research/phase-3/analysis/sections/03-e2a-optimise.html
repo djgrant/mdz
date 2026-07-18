@@ -1,0 +1,72 @@
+<section id="optimise">
+<span class="qref">Does diverge-then-select beat a single context? Objective selection</span>
+<h2><span class="secno">Experiment 2a:</span>The ralph loop routs both orchestrated variants</h2>
+
+<p>A slow-but-correct target program with a test suite and a benchmark, built with
+headroom in several directions (algorithm, caching, data structure, I/O
+batching). Three content-matched variants, invoked identically, the strategy
+strings verbatim across all three:</p>
+
+<ul>
+  <li><code>/optimise</code> — the MDZ consumer skill driving
+  <code>map-reduce.mdz</code>: five strategy hints, one worker per strategy, the
+  reduce runs tests and benchmark on every candidate and ships the fastest that
+  passes;</li>
+  <li><code>/optimise-goal</code> — the same five hints and the same
+  explore-then-select plan as prose, free to fan out with subagents;</li>
+  <li><code>/optimise-ralph</code> — the same five hints and the goal alone,
+  run as three fresh sequential sessions in the same sandbox. No candidates, no
+  selection; re-running is the plan.</li>
+</ul>
+
+<p>The headline metric is the <strong>speedup</strong> of the shipped solution —
+baseline benchmark time over shipped benchmark time, both re-run by the harness;
+the model's own numbers are not trusted. 2 targets × 3 variants × 2 models ×
+n=3 = 36 runs. Every one of the 36 shipped a solution that passes the tests, so
+speedup is the whole comparison.</p>
+
+<figure>
+  <img src="charts/e2a-speedup.png" alt="E2a speedup by variant and target, log scale">
+  <figcaption><b>Figure 4.</b> Shipped speedup per run (dots) with cell medians
+  (bars), log scale, n=6 per variant per target. The ralph loop sits two orders
+  of magnitude above both orchestrated variants on each target.</figcaption>
+</figure>
+
+<div class="stats">
+  <div class="stat"><b>110.8× / 81.1×</b><span>ralph median speedup (ledger / logscan)</span></div>
+  <div class="stat"><b>1.8× / 3.9×</b><span>MDZ skill median speedup</span></div>
+  <div class="stat"><b>1.3× / 2.7×</b><span>goal-prompt median speedup</span></div>
+  <div class="stat"><b>36/36</b><span>runs passing the test gate</span></div>
+</div>
+
+<p>The result is not close. Ralph's medians are 110.8× on ledger and 81.1× on
+logscan; the MDZ skill manages 1.8× and 3.9×; the prose goal 1.3× and 2.7×. The
+mechanism trace explains the shape. The skill did what its notation says — a mean
+of 5.4 worker spawns per run, one per strategy — but each worker gets one shot,
+and the reduce can only pick the best single-shot candidate. The goal variant,
+free to fan out, essentially never did (0.08 spawns per run): it tinkered
+sequentially inside one context and shipped the least. Ralph's three fresh
+sessions each started from the previous pass's improved program, and compounding
+three passes of "make it faster" beat one round of best-of-five.</p>
+
+<p>Within the orchestrated pair, the ordering is consistent: the MDZ skill sits
+above the goal prompt in every cell (medians 1.8× vs 1.3× and 3.9× vs 2.7×). The
+notation did buy real fan-out where the prose plan produced none — the phase-2
+delegation-fidelity finding again — it is just that fan-out was the wrong
+mechanism for this task.</p>
+
+<p class="note"><b>Budget caveat.</b> A ralph run is three full sessions against
+the single session of the other arms; its token budget ran 2–5× the
+single-session variants. Some of the gap is compute, not shape. But the goal
+variant had the same subagent budget available as the skill and declined to
+spend it, and the skill spent its budget on parallel single-shot candidates
+rather than sequential compounding — the shape finding survives the budget
+asymmetry even if the magnitude does not.</p>
+
+<div class="verdict">Verdict: on objective selection the tie-breaker question
+never arose — nothing tied. Iteration with fresh context beat best-of-N
+selection outright (medians ~102× vs 3.0× vs 1.7× pooled). The MDZ skill's
+fan-out is faithful and consistently beats the content-matched prose plan, but
+the map-reduce shape itself is the wrong tool here: keeping alternatives paid
+less than compounding passes.</div>
+</section>

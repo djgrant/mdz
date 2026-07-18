@@ -1,0 +1,45 @@
+<section id="findings">
+<h2>Cross-cutting findings</h2>
+
+<p>Phase 3 asked where procedural form earns its keep. The four experiments give
+one coherent answer with an uncomfortable rider.</p>
+
+<ul>
+  <li><strong>Form pays exactly where the state-reconstruction bet said it
+  would — and nowhere else.</strong> E1's procedure advantage exists only when
+  the event log is withheld (sonnet fx: 0.708 vs 0.583 resumption; log: 1.0 vs
+  1.0), and E3's store only pays past the whole-context cliff (800 statements:
+  0.975 vs 0.537; at 400: a wash). Position and external state are worth
+  carrying when, and only when, the model cannot reconstruct or retain the
+  state itself.</li>
+
+  <li><strong>Capability dominates form, three ways.</strong> Sonnet with prose
+  rules out-resumes haiku with the procedure on every E1 metric. A full event
+  log erases sonnet's form gap entirely. And in E2b, sonnet was the arm that
+  refused to execute the skill's shape — all six sonnet skill runs truncated
+  the loop to one fan-out and skipped the judge, while haiku followed the
+  notation. Procedural form binds weak models more than strong ones, in both
+  the helpful and the unhelpful direction.</li>
+
+  <li><strong>For weak models, form buys a failure mode, not success.</strong>
+  E1 haiku fails either way, but the procedure yields repeat-and-finish (0.667
+  repeat, 0.688 completion) where the rules yield skip-and-abandon (0.210 skip,
+  0.479 completion). Which failure is safer depends on whether the repeated
+  side effects are idempotent — a design lever, not a free win.</li>
+
+  <li><strong>The uncomfortable rider: iteration beat divergence-and-selection
+  on both selection regimes.</strong> The ralph loop — no kept alternatives, no
+  reduce, no judge — won E2a by two orders of magnitude (median ~102× vs 3.0×)
+  and took E2b's judge 9–3 against the skill. The map-reduce skill's fan-out is
+  faithful and consistently beats its content-matched prose twin (which never
+  fanned out at all), so the notation delivers its mechanism; the mechanism
+  just lost. For tasks with compounding structure, best-of-N single shots is
+  the wrong shape, and three fresh contexts over a shared workspace is itself a
+  form of external state — the working directory is the store.</li>
+
+  <li><strong>The E2 arms rank the same under a benchmark and a judge.</strong>
+  ralph &gt; goal ≈ skill on both, which is some evidence the E2b judge is
+  tracking quality rather than style — the objective regime agrees with
+  it.</li>
+</ul>
+</section>

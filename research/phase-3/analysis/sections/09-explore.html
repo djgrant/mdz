@@ -1,0 +1,26 @@
+<section id="explore">
+<h2>Explore the runs</h2>
+
+<p>Every number above resolves to one of the 300 scored runs below. Run ids map
+one-to-one to records in <code>results/*.jsonl</code>, and agentic runs to full
+session transcripts in <code>results/transcripts/</code>. E2b judge verdicts
+live in <code>results/e2b-judge.jsonl</code>.</p>
+
+<div class="explorer">
+  <div class="controls">
+    <button data-exp="e1" class="on">E1 · kill-and-resume</button>
+    <button data-exp="e2a">E2a · optimise</button>
+    <button data-exp="e2b">E2b · simplify</button>
+    <button data-exp="e3">E3 · state at size</button>
+  </div>
+  <div class="twrap" id="runs-table"></div>
+  <p class="hint">Click a column header to sort. A dot marks a metric that does
+  not apply to the run (e.g. assign accuracy in the no-store arm, spawn counts
+  in ralph rows).</p>
+</div>
+
+<script type="application/json" id="runs-data">{{RUNS_JSON}}</script>
+</section>
+
+</article>
+</div>

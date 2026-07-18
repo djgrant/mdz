@@ -1,0 +1,46 @@
+<section id="overview">
+<h2>Overview &amp; method</h2>
+
+<p>MDZ is a superset of Markdown that adds control flow, variables, and calls to
+other documents to prose prompts, with an LLM as the interpreter. Phase 1 showed
+models can execute it; phase 2 showed the execution can be checked from traces the
+harness records. But phase 2's re-run of E4 delivered a null that attacks the
+premise: on single-turn compliance tasks, prose rules carrying the same content
+matched the MDZ procedure exactly (66/66 vs 66/66). Content steered; form added
+nothing. If procedural form is worth anything, it has to be worth something
+<em>elsewhere</em>.</p>
+
+<p>Phase 3's bet: form pays when execution acquires state — when the model must
+know not just what the constraints are but <em>where it is</em>. Three regimes
+were built to test that bet:</p>
+
+<div class="steps">
+  <div class="step"><b>E1 · kill-and-resume</b>An agent died twelve steps into a
+  twenty-step runbook; a fresh session must finish the job. A trace is only
+  interpretable against a program — prose rules have no positions.</div>
+  <div class="step"><b>E2 · map-reduce under divergence</b>Does the skill's real
+  shape — diverge across alternatives, then select — produce work a single
+  context does not? Objective selection (a benchmark, E2a) and subjective
+  selection (a judge, E2b).</div>
+  <div class="step"><b>E3 · state at breakdown sizes</b>Phase 2's store carried
+  signal but had nothing to rescue. E3 re-runs the same arms at 400 and 800
+  statements, past the whole-context cliff.</div>
+</div>
+
+<p>Method carries over from phase 2 unchanged: manifest entries drive the
+harness, traces are captured by the harness (mock MCP tool logs, session
+transcripts, sandbox diffs) and never self-reported, scoring happens offline in
+<code>analyze.py</code>, and every variant pair is content-matched — the E4
+discipline, no strawmen. Where phase 3 needs a judge (E2b), it is the setup phase
+2 validated: pairwise, order counterbalanced, both outputs presented with the
+original. Claude Haiku carried the cheap cells; Sonnet ran where the task needs
+real coding (E2) and as the E1 capability contrast.</p>
+
+<p>One new mechanism arm appears in both E2 experiments: a <strong>ralph
+loop</strong> — the same strategies as a single-pass instruction with no
+explore-then-select plan, run as three fresh sequential sessions against the same
+working directory. Whatever the last pass leaves is what ships. It isolates
+iteration from selection: ralph iterates but keeps no alternatives and cannot
+recover from a bad pass. It turned out to be the most important arm in the
+phase.</p>
+</section>

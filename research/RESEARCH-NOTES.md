@@ -57,4 +57,47 @@ Each failing above was re-run or re-scored; several headline claims changed.
 
 - Local weights and KV-cache state injection – kept out of phase 2.
 - The prose ledger – ruled out by phase 1.
-- E3b at sizes past 400, where the whole-context baseline actually breaks.
+- E3b at sizes past 400, where the whole-context baseline actually breaks. (Done in phase 3.)
+
+## Phase 3 – where does procedural form earn its keep?
+
+Phase 2 ended on the content-vs-form null. Phase 3 bet that form pays when execution
+acquires state – when the model must know where it is, not just what the constraints are.
+300 runs; report in phase-3/analysis/report.html.
+
+- **E1 (kill-and-resume): form helps, capability dominates, and evidence level decides.**
+  A fresh session resuming a half-executed 20-step runbook from a form-neutral trace.
+  Sonnet with the full event log is perfect under BOTH forms (resume 1.0, repeat 0.0) –
+  the whole procedure advantage lives where evidence thins to side effects only
+  (resume 0.71 vs 0.58, repeat 0.29 vs 0.42). Haiku largely cannot resume either way,
+  but the failure modes split by form: procedure yields repeat-but-finish (skip 0.07,
+  completion 0.69), prose yields skip-and-abandon (skip 0.21, completion 0.48). The
+  smoke-run's dramatic double-refund contrast did not survive n=192; the honest claim is
+  a consistent, modest edge that grows as evidence gets poorer.
+- **E2 (diverge-then-select vs ralph loop): the ralph loop won both regimes, decisively.**
+  Objective (optimise, benchmark-selected): ralph medians 111x/81x vs the MDZ map-reduce
+  skill's 1.8x/3.9x and prose-goal's 1.3x/2.7x, all runs passing tests. Subjective
+  (simplify, pairwise judge): ralph 9–3 over the skill and 9–3 over goal; goal even edged
+  the skill 7–5. Three fresh single-minded passes beat one structured session in both –a
+  single session declares victory after one round of improvements; a fresh context resets
+  the ambition threshold. Caveat: ralph spends 2–5x the tokens, but nothing stopped the
+  single-session arms continuing – they chose to stop. Also: every sonnet skill run
+  shortcut the pipeline after iteration 1 ([3,0,0] spawns, judge never spawned); haiku
+  followed the shape more faithfully than sonnet.
+- **E3 (state at breakdown sizes): rescue confirmed – Q5 closes positive.** At 400
+  statements all arms hold (~0.92–1.0 emits). At 800 the whole-context baseline collapses
+  (0.537 emits; 2/6 runs complete, the rest cover 16–48% of the trace) while
+  chunked-store holds 0.975; chunked-nostore falls to 0.441. Load-bearing external state
+  extends the execution ceiling past where a single context breaks, at ~3x wall time. The
+  mechanical assign trace stays mediocre (0.37–0.43) – workers execute correctly without
+  journalling faithfully.
+
+Cost: ~$300 of session usage across 300 runs, e2b's sonnet pipelines dominating.
+
+### Deferred from phase 3
+
+- A real-world E2 target (the synthetic fixtures cap ecological validity).
+- Deviation detection – the audit-substrate bet – still unbuilt; E1's positive result
+  means it was not needed as a fallback flagship.
+- Matched-budget ralph vs skill (ralph at 1 pass, or skill at 3x budget) to separate
+  fresh-context effects from compute effects.

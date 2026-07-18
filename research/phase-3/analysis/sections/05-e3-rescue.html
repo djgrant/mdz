@@ -1,0 +1,69 @@
+<section id="state-rescue">
+<span class="qref">Research question 5, third attempt: does external state extend the ceiling?</span>
+<h2><span class="secno">Experiment 3:</span>At 800 statements the store finally rescues</h2>
+
+<p>Phase 2's E3b showed the store carries real signal across a context boundary
+but could not show rescue: at 100 and 200 statements the whole-context baseline
+does not degrade, so the store only had overhead to demonstrate. E3 re-runs the
+same three arms — <code>internal</code> (whole-context execution),
+<code>chunked-store</code> (one spawned worker per ~25-statement chunk, the
+state tool the only cross-chunk channel), <code>chunked-nostore</code> (the same
+chunked workers guessing cross-chunk values) — at 400 and 800 statements, where
+phase 1 puts the internal baseline past its cliff. Generator, chunking, and
+scoring carry over from phase-2 e3b unchanged: <strong>emit accuracy</strong> is
+the LCS of emitted values against the reference trace's emits, and
+<strong>assign accuracy</strong> is scored from the mechanically captured
+<code>set</code> log (store arm) or the self-reported trace (internal arm).
+2 sizes × 2 seeds × 3 arms × n=3, all haiku = 36 runs.</p>
+
+<figure>
+  <img src="charts/e3-accuracy.png" alt="E3 emit and assign accuracy by arm and size, with phase-2 context">
+  <figcaption><b>Figure 6.</b> Left: emit accuracy by arm and size, n=6 per
+  phase-3 cell; the hatched 100/200 bars are phase-2 e3b results, reproduced
+  here as context and not re-run. Right: assign accuracy — the internal arm's
+  is self-reported (its trace <em>is</em> its output), the store arm's is the
+  harness's own <code>set</code> log.</figcaption>
+</figure>
+
+<div class="stats">
+  <div class="stat"><b>0.537</b><span>internal emit accuracy at 800 (0.999 at 400)</span></div>
+  <div class="stat"><b>0.975</b><span>chunked-store emit accuracy at 800</span></div>
+  <div class="stat"><b>0.441</b><span>chunked-nostore at 800 — the store is doing the work</span></div>
+  <div class="stat"><b>2/6</b><span>internal 800-statement runs that completed their trace</span></div>
+</div>
+
+<p>The cliff arrived on schedule, and this time the store was standing past it.
+At 400 statements all three arms still hold up (internal 0.999, store 0.995,
+no-store 0.924) — the phase-2 picture, overhead and nothing to rescue. At 800
+the internal arm collapses to 0.537 mean emit accuracy, and the collapse is
+truncation, not confusion: all six runs produced fenced traces, but only two ran
+them to completion (both scoring 1.0); the other four stopped a fraction of the
+way through, covering 16–48% of the reference emits. Whole-context execution at
+this size does not go wrong so much as give out.</p>
+
+<p>The chunked store barely notices: 0.975 at 800 against 0.995 at 400, with
+every run producing essentially full-length output (mean emit coverage 1.00).
+Store-arm workers made an average of 131 <code>set</code> and 164
+<code>get</code> calls per 800-statement run — the state tool is load-bearing at
+scale. The no-store control separates the mechanisms: chunking alone scores
+0.441 at 800, and its runs split cleanly — three runs (seed 2) spawned their 21
+workers and scored 0.87–0.89 by guessing well, while the other three (seed 1)
+spawned no workers at all and emitted nothing. Chunking without a state channel
+is fragile twice over: the values it cannot know, and an orchestration that can
+stall outright. Those three empty runs are data, not dropouts.</p>
+
+<p>Two costs temper the rescue. The assign trace remains mediocre — 0.371 at 400
+and 0.430 at 800 from the store's set log (the internal arm's self-reported
+0.769/0.339 is not comparable; see limitations) — so the store rescues
+<em>outputs</em> convincingly and <em>auditability</em> only partially. And the
+store arm pays in wall clock: ~1,000 s per 800-statement run against ~320 s
+internal, with the round-trips to show for it.</p>
+
+<div class="verdict">Verdict: rescue confirmed, reversing phase 2's
+overhead-only reading. When whole-context execution genuinely breaks (internal
+0.537 at 800 statements, 2/6 runs completing), load-bearing external state
+extends the ceiling (chunked-store 0.975) and the no-store control (0.441)
+shows it is the store, not the chunking, doing the rescuing. The answer to Q5
+is yes — at 4× the wall clock, and with an assign trace that still captures
+under half the assignments.</div>
+</section>

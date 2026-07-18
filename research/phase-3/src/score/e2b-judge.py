@@ -59,38 +59,44 @@ def load_jsonl(path: pathlib.Path) -> list[dict]:
 
 
 def read_output(rec: dict) -> str | None:
-    rel = rec.get("outputPath")
-    if not rel:
-        return None
-    path = pathlib.Path(rel)
-    if not path.is_absolute():
-        path = PHASE / path
+    """The shipped module lives in the run's archived sandbox (the harness
+    copies each run's final working directory to results/sandboxes/<id>)."""
+    target = rec["id"].split("-")[1]
+    path = RESULTS / "sandboxes" / rec["id"] / "src" / f"{target}.ts"
     if not path.exists():
         return None
     return path.read_text()
 
 
-def build_pairs(records: dict[str, dict]) -> list[tuple[str, dict, dict]]:
-    """Pair skill and goal runs sharing target, model, and repeat."""
+ARM_PAIRS = [("skill", "goal"), ("skill", "ralph"), ("goal", "ralph")]
+
+
+def build_pairs(records: dict[str, dict]) -> list[tuple[str, str, str, dict, dict]]:
+    """All three arm pairings sharing target, model, and repeat."""
     pairs = []
     for rid, rec in sorted(records.items()):
         m = re.match(r"^e2b-([a-z0-9]+)-skill-(.+)$", rid)
         if not m:
             continue
         target, suffix = m.groups()
-        goal = records.get(f"e2b-{target}-goal-{suffix}")
-        if goal is None:
-            continue
-        pairs.append((f"e2b-{target}-{suffix}", rec, goal))
+        arm_recs = {"skill": rec}
+        for arm in ("goal", "ralph"):
+            other = records.get(f"e2b-{target}-{arm}-{suffix}")
+            if other is not None:
+                arm_recs[arm] = other
+        for left, right in ARM_PAIRS:
+            if left in arm_recs and right in arm_recs:
+                pairs.append((f"e2b-{target}-{left}-vs-{right}-{suffix}",
+                              left, right, arm_recs[left], arm_recs[right]))
     return pairs
 
 
-def assemble(original: str, skill_out: str, goal_out: str, pair_index: int):
-    """Counterbalance: even pairs put the skill arm at A, odd pairs at B."""
-    skill_first = pair_index % 2 == 0
-    a, b = (skill_out, goal_out) if skill_first else (goal_out, skill_out)
+def assemble(original: str, left: str, right: str, left_out: str, right_out: str, pair_index: int):
+    """Counterbalance: even pairs put the left arm at A, odd pairs at B."""
+    left_first = pair_index % 2 == 0
+    a, b = (left_out, right_out) if left_first else (right_out, left_out)
     prompt = PROMPT.format(original=original, candidate_a=a, candidate_b=b)
-    order = {"A": "skill", "B": "goal"} if skill_first else {"A": "goal", "B": "skill"}
+    order = {"A": left, "B": right} if left_first else {"A": right, "B": left}
     return prompt, order
 
 
@@ -116,7 +122,7 @@ def dry_run() -> None:
     original = original_for(target)
     stand_in = "// (stand-in candidate: the original, unchanged)\n" + original
     for index in (0, 1):
-        prompt, order = assemble(original, stand_in, stand_in, index)
+        prompt, order = assemble(original, "skill", "goal", stand_in, stand_in, index)
         print(f"=== pair index {index} (A={order['A']}, B={order['B']}) ===")
         print(prompt)
         print()
@@ -137,16 +143,16 @@ def main() -> None:
             records[r["id"]] = r  # last wins
     done = {r["id"] for r in load_jsonl(OUT)}
 
-    for index, (pair_id, skill_rec, goal_rec) in enumerate(build_pairs(records)):
+    for index, (pair_id, left, right, left_rec, right_rec) in enumerate(build_pairs(records)):
         if pair_id in done:
             continue
         target = pair_id.split("-")[1]
-        skill_out = read_output(skill_rec)
-        goal_out = read_output(goal_rec)
-        if skill_out is None or goal_out is None:
+        left_out = read_output(left_rec)
+        right_out = read_output(right_rec)
+        if left_out is None or right_out is None:
             print(f"skip {pair_id}: missing output file", file=sys.stderr)
             continue
-        prompt, order = assemble(original_for(target), skill_out, goal_out, index)
+        prompt, order = assemble(original_for(target), left, right, left_out, right_out, index)
         proc = subprocess.run(
             ["claude", "-p", prompt, "--model", JUDGE_MODEL, "--output-format", "json"],
             capture_output=True, text=True, timeout=300,

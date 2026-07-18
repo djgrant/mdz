@@ -1,0 +1,313 @@
+{
+  "e1": {
+    "by_arm_model": {
+      "haiku|A-procedure": {
+        "resumptionAccuracy": 0.312,
+        "repeatRate": 0.667,
+        "skipRate": 0.073,
+        "completion": 0.688,
+        "repeatEvents": 3.02,
+        "n": 48
+      },
+      "haiku|C-rules": {
+        "resumptionAccuracy": 0.271,
+        "repeatRate": 0.609,
+        "skipRate": 0.21,
+        "completion": 0.479,
+        "repeatEvents": 2.96,
+        "n": 48
+      },
+      "sonnet|A-procedure": {
+        "resumptionAccuracy": 0.854,
+        "repeatRate": 0.146,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 0.75,
+        "n": 48
+      },
+      "sonnet|C-rules": {
+        "resumptionAccuracy": 0.792,
+        "repeatRate": 0.208,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 1.08,
+        "n": 48
+      }
+    },
+    "by_evidence": {
+      "haiku|A-procedure|fx": {
+        "resumptionAccuracy": 0.125,
+        "repeatRate": 0.875,
+        "skipRate": 0.057,
+        "completion": 0.625,
+        "repeatEvents": 4.04,
+        "n": 24
+      },
+      "haiku|A-procedure|log": {
+        "resumptionAccuracy": 0.5,
+        "repeatRate": 0.458,
+        "skipRate": 0.089,
+        "completion": 0.75,
+        "repeatEvents": 2.0,
+        "n": 24
+      },
+      "haiku|C-rules|fx": {
+        "resumptionAccuracy": 0.042,
+        "repeatRate": 0.861,
+        "skipRate": 0.205,
+        "completion": 0.458,
+        "repeatEvents": 3.96,
+        "n": 24
+      },
+      "haiku|C-rules|log": {
+        "resumptionAccuracy": 0.5,
+        "repeatRate": 0.357,
+        "skipRate": 0.215,
+        "completion": 0.5,
+        "repeatEvents": 1.96,
+        "n": 24
+      },
+      "sonnet|A-procedure|fx": {
+        "resumptionAccuracy": 0.708,
+        "repeatRate": 0.292,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 1.5,
+        "n": 24
+      },
+      "sonnet|A-procedure|log": {
+        "resumptionAccuracy": 1.0,
+        "repeatRate": 0.0,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 0.0,
+        "n": 24
+      },
+      "sonnet|C-rules|fx": {
+        "resumptionAccuracy": 0.583,
+        "repeatRate": 0.417,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 2.17,
+        "n": 24
+      },
+      "sonnet|C-rules|log": {
+        "resumptionAccuracy": 1.0,
+        "repeatRate": 0.0,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 0.0,
+        "n": 24
+      }
+    },
+    "by_killpoint": {
+      "haiku|A-procedure|early": {
+        "resumptionAccuracy": 0.208,
+        "repeatRate": 0.75,
+        "skipRate": 0.135,
+        "completion": 0.583,
+        "repeatEvents": 2.21,
+        "n": 24
+      },
+      "haiku|A-procedure|late": {
+        "resumptionAccuracy": 0.417,
+        "repeatRate": 0.583,
+        "skipRate": 0.01,
+        "completion": 0.792,
+        "repeatEvents": 3.83,
+        "n": 24
+      },
+      "haiku|C-rules|early": {
+        "resumptionAccuracy": 0.25,
+        "repeatRate": 0.583,
+        "skipRate": 0.295,
+        "completion": 0.417,
+        "repeatEvents": 1.67,
+        "n": 24
+      },
+      "haiku|C-rules|late": {
+        "resumptionAccuracy": 0.292,
+        "repeatRate": 0.635,
+        "skipRate": 0.125,
+        "completion": 0.542,
+        "repeatEvents": 4.25,
+        "n": 24
+      },
+      "sonnet|A-procedure|early": {
+        "resumptionAccuracy": 0.875,
+        "repeatRate": 0.125,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 0.38,
+        "n": 24
+      },
+      "sonnet|A-procedure|late": {
+        "resumptionAccuracy": 0.833,
+        "repeatRate": 0.167,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 1.12,
+        "n": 24
+      },
+      "sonnet|C-rules|early": {
+        "resumptionAccuracy": 0.792,
+        "repeatRate": 0.208,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 0.71,
+        "n": 24
+      },
+      "sonnet|C-rules|late": {
+        "resumptionAccuracy": 0.792,
+        "repeatRate": 0.208,
+        "skipRate": 0.0,
+        "completion": 1.0,
+        "repeatEvents": 1.46,
+        "n": 24
+      }
+    }
+  },
+  "e2a": {
+    "tests_pass_rate": 1.0,
+    "n": 36,
+    "median_speedup": {
+      "ledger|goal": 1.31,
+      "ledger|mdz": 1.83,
+      "ledger|ralph": 110.75,
+      "logscan|goal": 2.69,
+      "logscan|mdz": 3.85,
+      "logscan|ralph": 81.06,
+      "all|goal": 1.74,
+      "all|mdz": 2.96,
+      "all|ralph": 102.16
+    },
+    "spawns": {
+      "goal": 0.08,
+      "mdz": 5.42,
+      "ralph": 0.0
+    }
+  },
+  "e2b": {
+    "n_runs": 36,
+    "n_judge": 36,
+    "tests_pass_rate": 1.0,
+    "wins": {
+      "goal-vs-ralph": {
+        "ralph": 9,
+        "goal": 3
+      },
+      "goal-vs-skill": {
+        "goal": 7,
+        "skill": 5
+      },
+      "ralph-vs-skill": {
+        "ralph": 9,
+        "skill": 3
+      }
+    },
+    "win_rates": {
+      "skill": 0.333,
+      "goal": 0.417,
+      "ralph": 0.75
+    },
+    "mechanism": {
+      "skill_mean_worker_spawns": 6.83,
+      "skill_judge_spawn_rate": 0.333,
+      "skill_full_fanout_rate": 0.5,
+      "goal_mean_worker_spawns": 0.0,
+      "winner_index_recovered": 1
+    }
+  },
+  "e3": {
+    "cells": {
+      "chunked-nostore|400": {
+        "emit_acc": 0.924,
+        "assign_acc": null,
+        "emit_coverage": 0.986,
+        "produced_output": 6,
+        "sets": 0.0,
+        "gets": 0.0,
+        "tokens": 5865,
+        "wall_s": 476,
+        "n": 6
+      },
+      "chunked-nostore|800": {
+        "emit_acc": 0.441,
+        "assign_acc": null,
+        "emit_coverage": 0.475,
+        "produced_output": 3,
+        "sets": 0.0,
+        "gets": 0.0,
+        "tokens": 5764,
+        "wall_s": 586,
+        "n": 6
+      },
+      "chunked-store|400": {
+        "emit_acc": 0.995,
+        "assign_acc": 0.371,
+        "emit_coverage": 1.007,
+        "produced_output": 6,
+        "sets": 58.2,
+        "gets": 51.2,
+        "tokens": 6210,
+        "wall_s": 420,
+        "n": 6
+      },
+      "chunked-store|800": {
+        "emit_acc": 0.975,
+        "assign_acc": 0.43,
+        "emit_coverage": 0.997,
+        "produced_output": 6,
+        "sets": 131.3,
+        "gets": 164.2,
+        "tokens": 11039,
+        "wall_s": 1001,
+        "n": 6
+      },
+      "internal|400": {
+        "emit_acc": 0.999,
+        "assign_acc": 0.769,
+        "emit_coverage": 1.006,
+        "produced_output": 6,
+        "sets": 0.0,
+        "gets": 0.0,
+        "tokens": 25837,
+        "wall_s": 203,
+        "n": 6
+      },
+      "internal|800": {
+        "emit_acc": 0.537,
+        "assign_acc": 0.339,
+        "emit_coverage": 0.54,
+        "produced_output": 6,
+        "sets": 0.0,
+        "gets": 0.0,
+        "tokens": 41519,
+        "wall_s": 318,
+        "n": 6
+      }
+    },
+    "phase2_context": {
+      "internal|100": {
+        "emit": 1.0
+      },
+      "internal|200": {
+        "emit": 1.0
+      },
+      "chunked-store|100": {
+        "emit": 1.0,
+        "assign": 0.68
+      },
+      "chunked-store|200": {
+        "emit": 0.82,
+        "assign": 0.41
+      },
+      "chunked-nostore|100": {
+        "emit": 0.94
+      },
+      "chunked-nostore|200": {
+        "emit": 0.78
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+<section id="kill-resume">
+<span class="qref">The flagship: is a trace only interpretable against a program?</span>
+<h2><span class="secno">Experiment 1:</span>Form helps a resuming agent — but capability dominates</h2>
+
+<p>An agent died partway through a twenty-step runbook. A fresh session, with no
+memory of the first, must finish the job. The claim under test: "refund issued at
+14:02" means nothing on its own; against a procedure it means "step 12 done,
+resume at 13". Prose rules have no positions, so the resuming model must re-infer
+intent from side effects.</p>
+
+<p>Two content-matched artefacts per task: <code>A-procedure</code>, the runbook
+as an MDZ procedure (ordered steps, <code>FOR</code> loops over repeated groups,
+an <code>IF</code> guard where a step is conditional), and <code>C-rules</code>,
+the same obligations as prose policy — every ordering constraint stated
+declaratively, loop iterations spelled out as per-item bullets. The kill is
+scripted: the harness fabricates the pre-kill world deterministically (files
+written, mock-tool state mutated) so every variant resumes from an identical
+world. Evidence comes at two levels — <code>log</code>, the raw harness event log
+plus the working directory, with no step numbers and no reference to either
+artefact; and <code>fx</code>, side effects only. Two kill points per task (early
+~1/3, late ~2/3), the late kills landing mid-loop-iteration. 4 tasks × 2 arms ×
+2 evidence levels × 2 kill points × 2 models × n=3 = 192 runs.</p>
+
+<p>Four metrics, scored deterministically from the resume session's mock-tool log
+against the reference remaining-step set: <strong>resumption accuracy</strong>
+(the first side-effectful action taken is the reference next step),
+<strong>repeat rate</strong> (side-effectful actions re-executed that the
+pre-kill world already performed), <strong>skip rate</strong> (reference
+remaining steps never executed), and <strong>completion</strong> (all remaining
+steps done, in a reference-valid order).</p>
+
+<figure>
+  <img src="charts/e1-metrics.png" alt="E1 four metrics by arm and model">
+  <figcaption><b>Figure 1.</b> The four resumption metrics by arm and model,
+  n=48 per bar. Sonnet always completes and never skips; the arms differ on
+  where it resumes and what it repeats. Haiku fails in both arms — but
+  differently.</figcaption>
+</figure>
+
+<div class="stats">
+  <div class="stat"><b>0.854</b><span>sonnet resumption accuracy, procedure (vs 0.792 rules)</span></div>
+  <div class="stat"><b>0.146</b><span>sonnet repeat rate, procedure (vs 0.208 rules)</span></div>
+  <div class="stat"><b>0.210</b><span>haiku skip rate under rules (0.073 under the procedure)</span></div>
+  <div class="stat"><b>0.479</b><span>haiku completion under rules (0.688 under the procedure)</span></div>
+</div>
+
+<p>The headline reads in the procedure's favour but modestly: sonnet resumes at
+the right step 0.854 of the time from the procedure against 0.792 from the rules,
+and repeats an already-done side effect in 0.146 of runs against 0.208. Sonnet
+completes every run in both arms with zero skips — the difference is not whether
+the job gets finished but how much gets redone on the way (0.75 repeated
+side-effectful actions per run from the procedure, 1.08 from the rules).</p>
+
+<p>Haiku is the sharper story, and it is not about accuracy. Both arms fail it
+roughly equally on resumption (0.312 vs 0.271) — but the <em>failure modes</em>
+split by form. Under the procedure haiku repeats and finishes: repeat rate 0.667,
+but skip rate 0.073 and completion 0.688. Under the rules it skips and abandons:
+skip rate 0.210 and completion 0.479. A procedure read top-to-bottom re-executes
+from too early a position; a bag of obligations gets partially satisfied and put
+down. Neither is good, but they are differently bad — re-running an idempotent
+deploy is recoverable; never sending a customer their refund email is not.</p>
+
+<h3>The cuts: the gap lives where evidence is thinnest</h3>
+
+<figure>
+  <img src="charts/e1-cuts.png" alt="E1 resumption accuracy and repeat rate by evidence level and kill point">
+  <figcaption><b>Figure 2.</b> Resumption accuracy and repeat rate cut by
+  evidence level (top, n=24 per bar) and kill point (bottom). With the full
+  event log, sonnet is perfect in <em>both</em> arms; every sonnet arm
+  difference comes from the side-effects-only condition.</figcaption>
+</figure>
+
+<p>The evidence cut is the mechanism finding of the experiment. Given the full
+event log, sonnet resumes perfectly and repeats nothing in both arms — 1.0
+accuracy, 0.0 repeats, procedure and rules alike. The entire headline gap comes
+from the <code>fx</code> condition, where the log is withheld and the resuming
+model must reconstruct position from the working directory and mock-tool state
+alone: procedure 0.708 accuracy and 0.292 repeat rate, rules 0.583 and 0.417.
+That is the design's own prediction — if the procedure's advantage grows as
+evidence thins, position matters most when reconstruction is hardest — and it
+confirms it, with a corollary the design did not state: a good enough event log
+substitutes for position entirely, at least for a strong model. Haiku shows the
+same direction on accuracy (fx: 0.125 vs 0.042; log: 0.500 in both arms) but
+repeats heavily everywhere once the log is gone (0.875 vs 0.861).</p>
+
+<p>The kill-point cut is quieter. Sonnet is stable across both (procedure 0.875
+early / 0.833 late; rules 0.792 at both), so landing the late kill mid-loop-iteration
+did not trip it. Haiku gains most from the procedure at the late kill
+(0.417 vs 0.292 accuracy), which is where an unrolled loop position is hardest to
+re-infer from prose bullets — and late-kill repeats are the expensive ones,
+because there is more completed work to redo (haiku-rules late kills average 4.25
+repeated side effects per run).</p>
+
+<figure>
+  <img src="charts/e1-repeats.png" alt="E1 repeated side-effectful actions">
+  <figcaption><b>Figure 3.</b> The double-refund risk. Left: mean repeated
+  side-effectful actions per run. Right: share of runs with at least one repeat.
+  Every repeat counted here is a re-executed side effect — a refund, an email, a
+  deploy the pre-kill world had already performed.</figcaption>
+</figure>
+
+<div class="verdict">Verdict: the trace-needs-a-program claim survives, but only
+in the regime the theory says it should — when the evidence is side effects
+alone. Capability dominates form: sonnet with prose rules beats haiku with the
+procedure on every metric, and a full event log erases the form gap entirely for
+sonnet. Form's residual value is real but second-order for strong models
+(0.85 vs 0.79 resumption, 0.15 vs 0.21 repeats), and for weak models it buys not
+success but a safer failure mode: repeat-and-finish rather than
+skip-and-abandon.</div>
+</section>

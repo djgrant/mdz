@@ -21,3 +21,16 @@
 {"id":"e2b-pricing-skill-sonnet-r1","target":"pricing","variant":"skill","testsPass":true,"workerSpawns":3,"spawnsPerIteration":[3,0,0],"judgeSpawn":false,"winnerIndex":null}
 {"id":"e2b-pricing-skill-sonnet-r2","target":"pricing","variant":"skill","testsPass":true,"workerSpawns":9,"spawnsPerIteration":[3,3,3],"judgeSpawn":false,"winnerIndex":null}
 {"id":"e2b-report-skill-sonnet-r2","target":"report","variant":"skill","testsPass":true,"workerSpawns":3,"spawnsPerIteration":[3,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-skill-sonnet-r3","target":"report","variant":"skill","testsPass":true,"workerSpawns":3,"spawnsPerIteration":[3,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-haiku-r1","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-haiku-r2","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-haiku-r3","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-sonnet-r1","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-sonnet-r2","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-goal-sonnet-r3","target":"report","variant":"goal","testsPass":true,"workerSpawns":0,"spawnsPerIteration":[0,0,0],"judgeSpawn":false,"winnerIndex":null}
+{"id":"e2b-report-ralph-haiku-r1","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-report-ralph-haiku-r2","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-report-ralph-haiku-r3","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-report-ralph-sonnet-r1","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-report-ralph-sonnet-r2","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}
+{"id":"e2b-report-ralph-sonnet-r3","target":"report","variant":"ralph","testsPass":true,"workerSpawns":0,"spawnsPerIteration":null,"judgeSpawn":null,"winnerIndex":null}

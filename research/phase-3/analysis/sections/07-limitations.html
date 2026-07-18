@@ -1,0 +1,52 @@
+<section id="limitations">
+<h2>Limitations</h2>
+
+<ul>
+  <li><strong>Ralph's token budget is 2–5× the single-session arms.</strong> A
+  ralph run is three fresh sessions; the other arms get one. Both E2 verdicts
+  are therefore about shape-plus-budget, not shape alone. The mechanism reading
+  survives (the goal arm declined a budget it had; the skill spent its budget
+  on parallel single shots), but "ralph wins at matched spend" is unproven.</li>
+
+  <li><strong>Benchmark noise from concurrent load was eliminated by
+  rescoring.</strong> E2a's original benchmark numbers were taken while the
+  machine was running other experiment load; all shipped candidates were
+  re-benchmarked on a quiet machine, and those rescored times are what
+  <code>e2a-scores.jsonl</code> and this report use. Baselines were re-measured
+  in the same pass, so speedups are internally consistent.</li>
+
+  <li><strong>E2b's winner index was rarely recoverable.</strong> The skill asks
+  its spawned judge to pick the best iteration; that pick could be recovered
+  from only 1 of 36 records, so the winner-index distribution — whether winners
+  sit mid-sequence — remains unmeasured. Judge-spawn presence and per-iteration
+  spawn counts are trustworthy; what the judge chose is not.</li>
+
+  <li><strong>Session-limit interruptions required resumes.</strong> Several
+  long runs (E3's 800-statement cells especially, plus a handful of E1 cells)
+  hit provider session limits and were re-run by id; the results files carry
+  the superseded errored records, and scoring deduplicates by id with the last
+  record winning. No cell lost its n, but the affected runs' wall-clock and
+  token figures describe the successful attempt only.</li>
+
+  <li><strong>E1's evidence-level finding rests on sonnet's ceiling.</strong>
+  With the full log, sonnet is perfect in both arms — which shows the log
+  substitutes for position, but also means the log condition has no headroom to
+  detect a form effect. A harder task family could yet find one there.</li>
+
+  <li><strong>The internal arm's assign trace is still self-reported.</strong>
+  E3's internal assign accuracy (0.769 at 400, 0.339 at 800) inherits the
+  phase-1 confound: a formatting lapse is indistinguishable from an execution
+  error, and at 800 the truncated traces make the number mostly a completion
+  measure. Only the store arm's set-log trace is mechanically captured. Emit
+  accuracy, the primary metric, is unaffected.</li>
+
+  <li><strong>Cell sizes are small and coverage is narrow.</strong> Most cells
+  are n=3–6; E3 is haiku-only; E2 uses two synthetic targets per
+  sub-experiment, built to have optimisation headroom and layered abstraction
+  debt respectively. The two-orders-of-magnitude E2a gap and the 800-statement
+  E3 collapse survive the noise; the finer rates (E2b's 9–3 splits, haiku's
+  cut-level E1 rates) are order-of-magnitude estimates. The E2b judge is a
+  single sonnet configuration, counterbalanced but not replicated across
+  judges.</li>
+</ul>
+</section>
