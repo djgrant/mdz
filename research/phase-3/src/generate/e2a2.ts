@@ -73,10 +73,12 @@ RETURN the final BENCH_MS
 `;
 
 // ---------------------------------------------------------------------------
-// Command
+// Prompt — fed to the orchestrator directly, NEVER written into the sandbox:
+// a prompt on disk is visible to spawned workers, and the opus smoke showed a
+// worker invoking it and reading the MDZ-executor role as prompt injection.
 // ---------------------------------------------------------------------------
 
-function optimiseCommand(t: E2aTarget): string {
+function optimisePrompt(t: E2aTarget): string {
   return `You are an MDZ executor.
 
 MDZ syntax:
@@ -117,7 +119,6 @@ export function buildE2a2(outDir: string): ManifestEntry[] {
       const folder = join(dir, `${target.name}-${model}`);
       const sandbox: Record<string, string> = {
         ...targetFiles,
-        ".claude/commands/optimise.md": optimiseCommand(target),
         "skills/optimise.mdz": OPTIMISE_SKILL_V2,
         "skills/ralph.mdz": RALPH_SKILL,
       };
@@ -131,7 +132,7 @@ export function buildE2a2(outDir: string): ManifestEntry[] {
         runMode: "agentic",
         programPath: rel(join(folder, "skills/optimise.mdz")),
         tracePath: null,
-        prompt: "/optimise",
+        prompt: optimisePrompt(target),
         variant: {
           target: target.name,
           arm: "skill",

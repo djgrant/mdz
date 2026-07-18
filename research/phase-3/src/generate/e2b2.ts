@@ -83,10 +83,13 @@ RETURN $winner
 `;
 
 // ---------------------------------------------------------------------------
-// Command
+// Prompt — fed to the orchestrator directly, NEVER written into the sandbox:
+// a prompt on disk is visible to spawned workers, and the e2a2 opus smoke
+// showed a worker invoking it and reading the MDZ-executor role as injection.
 // ---------------------------------------------------------------------------
 
-const SIMPLIFY_COMMAND_V2 = `You are an MDZ executor.
+function simplifyPrompt(moduleFile: string): string {
+  return `You are an MDZ executor.
 
 MDZ syntax:
 - \`$var\` holds a value. \`$var: <type> @(<path>)\` is file-backed: its value
@@ -99,9 +102,10 @@ PRAGMA STRICT
 
 USE ~/skills/simplify
 WITH
-  file: $ARGUMENTS
+  file: ./${moduleFile}
   n: ${ITERATIONS}
 `;
+}
 
 // ---------------------------------------------------------------------------
 // Build
@@ -129,7 +133,6 @@ export function buildE2b2(outDir: string): ManifestEntry[] {
       const sandbox: Record<string, string> = {
         [target.moduleFile]: moduleSource,
         [target.testFile]: testSource,
-        ".claude/commands/simplify.md": SIMPLIFY_COMMAND_V2,
         "skills/simplify.mdz": SIMPLIFY_SKILL_V2,
         "skills/map-reduce.mdz": mapReduceSkill,
       };
@@ -143,7 +146,7 @@ export function buildE2b2(outDir: string): ManifestEntry[] {
         runMode: "agentic",
         programPath: rel(join(folder, "skills/simplify.mdz")),
         tracePath: null,
-        prompt: `/simplify ${target.moduleFile}`,
+        prompt: simplifyPrompt(target.moduleFile),
         variant: {
           target: target.name,
           arm: "skill",

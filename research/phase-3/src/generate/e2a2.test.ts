@@ -76,31 +76,32 @@ describe("optimise.mdz", () => {
   });
 });
 
-describe("command", () => {
+describe("prompt", () => {
   it("is syntax-first, strict, and invokes the skill via USE", () => {
-    const command = entries[0].sandbox![".claude/commands/optimise.md"];
-    expect(command.indexOf("MDZ syntax")).toBeLessThan(command.indexOf("PRAGMA STRICT"));
-    expect(command.indexOf("PRAGMA STRICT")).toBeLessThan(command.indexOf("USE ~/skills/optimise"));
-    expect(command).not.toContain("BEGIN PROGRAM");
+    const prompt = entries[0].prompt;
+    expect(prompt.indexOf("MDZ syntax")).toBeLessThan(prompt.indexOf("PRAGMA STRICT"));
+    expect(prompt.indexOf("PRAGMA STRICT")).toBeLessThan(prompt.indexOf("USE ~/skills/optimise"));
+    expect(prompt).not.toContain("BEGIN PROGRAM");
   });
 
   it("binds the target's file, tests, and bench", () => {
     for (const target of E2A_TARGETS) {
       const e = entries.find((x) => x.id === `e2a2-${target.name}-haiku`)!;
-      const command = e.sandbox![".claude/commands/optimise.md"];
-      expect(command).toContain(`file: ./${target.targetFile}`);
-      expect(command).toContain(`tests: ${target.testCommand}`);
-      expect(command).toContain(`bench: ${target.benchCommand}`);
+      expect(e.prompt).toContain(`file: ./${target.targetFile}`);
+      expect(e.prompt).toContain(`tests: ${target.testCommand}`);
+      expect(e.prompt).toContain(`bench: ${target.benchCommand}`);
     }
   });
+});
 
-  it("ships ralph and optimise skills, no map-reduce, no agent definitions", () => {
+describe("sandbox", () => {
+  it("ships only skills and fixtures: no prompts, no agent or command files", () => {
     for (const e of entries) {
       const keys = Object.keys(e.sandbox!);
       expect(keys).toContain("skills/ralph.mdz");
       expect(keys).toContain("skills/optimise.mdz");
       expect(keys.some((k) => k.includes("map-reduce"))).toBe(false);
-      expect(keys.some((k) => k.startsWith(".claude/agents/"))).toBe(false);
+      expect(keys.some((k) => k.startsWith(".claude/"))).toBe(false);
     }
   });
 });

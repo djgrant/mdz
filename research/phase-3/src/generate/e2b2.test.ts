@@ -81,20 +81,22 @@ describe("manifest", () => {
 });
 
 describe("sandbox", () => {
-  it("ships the v2 skill, map-reduce, and the command — no agent definitions", () => {
+  it("ships the v2 skill and map-reduce — no prompts, no agent or command files", () => {
     for (const e of entries) {
       const keys = Object.keys(e.sandbox!);
       expect(keys).toContain("skills/simplify.mdz");
       expect(keys).toContain("skills/map-reduce.mdz");
-      expect(keys).toContain(".claude/commands/simplify.md");
-      expect(keys.some((k) => k.startsWith(".claude/agents/"))).toBe(false);
+      expect(keys.some((k) => k.startsWith(".claude/"))).toBe(false);
     }
   });
 
-  it("the command explains the syntax tersely: file-backed vars and SPAWN <model>", () => {
-    const command = entries[0].sandbox![".claude/commands/simplify.md"];
-    expect(command).toContain("@(<path>)");
-    expect(command).toContain("SPAWN <model>");
+  it("the prompt explains the syntax tersely and binds the target file", () => {
+    for (const e of entries) {
+      expect(e.prompt).toContain("@(<path>)");
+      expect(e.prompt).toContain("SPAWN <model>");
+      expect(e.prompt).toContain(`file: ./${(e.expected as { targetFile: string }).targetFile}`);
+      expect(e.prompt).not.toContain("$ARGUMENTS");
+    }
   });
 });
 
