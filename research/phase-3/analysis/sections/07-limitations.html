@@ -15,6 +15,14 @@
   <code>e2a-scores.jsonl</code> and this report use. Baselines were re-measured
   in the same pass, so speedups are internally consistent.</li>
 
+  <li><strong>E2b's skill arm does not test its own design.</strong> Two
+  confounds, found post hoc. Sonnet never executed the program (0/6 complete
+  pipelines), so half the skill-arm verdicts judge an improvisation. And the
+  program relays code by value through worker prompts, so even compliant runs
+  measure text-relay drift as much as diverge-then-select. Both were visible in
+  the mechanism data at scoring time and should have gated the arm comparison
+  before any win rates were reported.</li>
+
   <li><strong>E2b's winner index was rarely recoverable.</strong> The skill asks
   its spawned judge to pick the best iteration; that pick could be recovered
   from only 1 of 36 records, so the winner-index distribution — whether winners

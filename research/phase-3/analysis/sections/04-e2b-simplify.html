@@ -1,6 +1,6 @@
 <section id="simplify">
 <span class="qref">Does diverge-then-select beat a single context? Subjective selection</span>
-<h2><span class="secno">Experiment 2b:</span>The judge agrees with the benchmark — ralph wins here too</h2>
+<h2><span class="secno">Experiment 2b:</span>Sonnet did not run the program</h2>
 
 <p>E2b swaps the benchmark for taste. Targets are over-abstracted modules
 (~300–400 lines, passing test suites) whose abstraction debt is layered —
@@ -12,12 +12,9 @@ next iteration, and a spawned fresh-context judge picks the best iteration at
 the end. <code>/simplify-goal</code> holds the same heuristics and plan in
 prose; <code>/simplify-ralph</code> is the same heuristics as a single-pass
 instruction run three times, fresh sessions, last pass ships unjudged. 2 targets
-× 3 variants × 2 models × n=3 = 36 runs.</p>
-
-<p>Outcome is scored by a pairwise sonnet judge — order counterbalanced, both
-candidates presented with the original — across the three arm pairings per
-target/model/rep: 36 verdicts. All 36 runs passed the test gate, so the judge is
-the discriminator.</p>
+× 3 variants × 2 models × n=3 = 36 runs, scored by a pairwise sonnet judge —
+order counterbalanced, both candidates presented with the original — across the
+three arm pairings per target/model/rep: 36 verdicts.</p>
 
 <figure>
   <img src="charts/e2b-judge.png" alt="E2b judge win matrix, test gate, spawn fidelity">
@@ -28,38 +25,47 @@ the discriminator.</p>
 </figure>
 
 <div class="stats">
-  <div class="stat"><b>9–3</b><span>ralph over the MDZ skill, judge verdicts</span></div>
-  <div class="stat"><b>9–3</b><span>ralph over the goal prompt</span></div>
-  <div class="stat"><b>7–5</b><span>goal over the MDZ skill</span></div>
-  <div class="stat"><b>0.75</b><span>ralph's overall win rate (skill 0.33, goal 0.42)</span></div>
+  <div class="stat"><b>0/6</b><span>sonnet skill runs that executed the program in full</span></div>
+  <div class="stat"><b>[3, 0, 0]</b><span>modal sonnet spawn pattern; judge-spawn rate 0</span></div>
+  <div class="stat"><b>5/6</b><span>haiku runs with full fan-out (judge spawned in 4)</span></div>
+  <div class="stat"><b>1–4</b><span>skill vs ralph within haiku's compliant runs</span></div>
 </div>
 
-<p>The verdicts are one-directional: ralph beats the skill 9–3, beats the goal
-9–3, and the goal edges the skill 7–5. Pooled win rates: ralph 0.75, goal 0.42,
-skill 0.33. The subjective selector reached the same conclusion as E2a's
-benchmark — and the skill's diverge-and-select machinery came last, behind even
-the prose restatement of its own plan. The judge's reasons are consistent in
-tenor: ralph's output had actually collapsed the machinery into plain code,
-where skill-arm output too often shipped conservative or near-unchanged
-files.</p>
+<p><strong>Finding 1: the program was not executed by the stronger model.</strong>
+Five of six sonnet skill runs spawned iteration&nbsp;1's three workers and then
+did everything else in the coordinator's own context; the sixth fanned out fully
+but, like every sonnet run, never spawned the final judge. From iteration&nbsp;2
+onward there were no fresh contexts, no reduce workers, and no selection — one
+long session improvising under the skill's name. The headline judge tallies
+(ralph 9–3 over the skill, goal 7–5 over it) therefore compare ralph against a
+program that was never run; they are not evidence about diverge-then-select. The
+model split matters: haiku ran the shape almost faithfully (full fan-out 5/6,
+judge 4/6), and in E2a — cheap one-line strategy payloads — sonnet complied too.
+The defection is specific to expensive spawns: nine 400-line-file relays that
+look redundant to a coordinator that believes it already has the answer.
+Phase 2's delegation-fidelity claim is hereby scoped to cheap payloads;
+notation-level orchestration is not self-enforcing at real workload sizes.</p>
 
-<p>The mechanism trace shows the skill arm executing its shape unevenly, and
-along a model split. Haiku mostly ran the notation faithfully — full 3-per-iteration
-fan-out in 5 of 6 runs (four runs even ran a fourth iteration), and it
-spawned the final judge in 4 of 6. Sonnet never once finished the shape: all six
-sonnet skill runs fanned out the first iteration (3 spawns) then abandoned the
-loop and the judge — spawn pattern [3,&nbsp;0,&nbsp;0], judge-spawn rate 0. The
-stronger model overrode the procedure it was given; the weaker model followed
-it. Delegation fidelity, phase 2's headline mechanism, inverted by capability.
-The goal arm spawned nothing at all, as in E2a. Winner-index — which iteration
-the skill's judge picked — was recoverable from only 1 of 36 records, so the
-winners-mid-sequence question stays unanswered.</p>
+<p><strong>Finding 2: where the program did run, it lost on behaviour drift, not
+simplification quality.</strong> Within haiku's compliant runs the skill went
+1–4 against ralph, and the judge's reasons cluster: the skill's shipped code had
+silently dropped behaviour — <code>resolveOptions</code>/defaults gone in one
+run, locale support gone in another — that the test suite did not cover. The
+cause is in the program text: the map lambda passes the module <em>by value</em>
+(<code>Code: {$code}</code>), so a compliant run performs ~9 whole-file text
+regenerations plus 2 selections, the reducer compares candidates only to each
+other, and each iteration seeds from the previous iteration's text with no path
+back to the original file. Loss compounds and nothing in the loop can detect
+it. Ralph makes three in-place edits with the original repo state always
+readable; it drifted once, the skill drifted repeatedly. The skill's one win
+was the run where it preserved semantics exactly — and there it beat ralph.</p>
 
-<div class="verdict">Verdict: subjective selection replicates the objective
-result. Three fresh passes with no kept alternatives beat both orchestrated
-variants under a counterbalanced judge (win rate 0.75 vs 0.33 for the skill),
-and the test gate never once rescued the skill's selection step, because
-nothing failed it. The compound skill's own shape was only executed in full by
-the cheaper model; the capable model quietly reduced it to a single fan-out and
-shipped. Same budget caveat as E2a: ralph spends 2–5× the tokens.</div>
+<div class="verdict">Verdict: E2b returns two mechanism findings and no verdict
+on diverge-then-select. (1) Sonnet abandoned the program when its spawns became
+expensive — orchestration written in notation was followed by the weaker model
+and overridden by the stronger one. (2) In the compliant subset the skill lost
+because passing code by value through a relay of contexts leaks behaviour that
+neither the reducer nor the tests can see. A by-reference variant — workers
+editing the file in the sandbox, anchored to the original — is required before
+the shape itself can be judged.</div>
 </section>

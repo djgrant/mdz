@@ -15,11 +15,14 @@ one coherent answer with an uncomfortable rider.</p>
 
   <li><strong>Capability dominates form, three ways.</strong> Sonnet with prose
   rules out-resumes haiku with the procedure on every E1 metric. A full event
-  log erases sonnet's form gap entirely. And in E2b, sonnet was the arm that
-  refused to execute the skill's shape — all six sonnet skill runs truncated
-  the loop to one fan-out and skipped the judge, while haiku followed the
-  notation. Procedural form binds weak models more than strong ones, in both
-  the helpful and the unhelpful direction.</li>
+  log erases sonnet's form gap entirely. And in E2b, sonnet did not execute the
+  skill's program at all — zero of six runs completed the pipeline, none
+  spawned the judge — while haiku followed the notation. Procedural form binds
+  weak models more than strong ones, in both the helpful and the unhelpful
+  direction, and it does not bind a strong model whose coordinator judges the
+  spawns too expensive. Orchestration written in notation is a request, not an
+  enforcement; phase-2's delegation-fidelity result held only while spawn
+  payloads were cheap.</li>
 
   <li><strong>For weak models, form buys a failure mode, not success.</strong>
   E1 haiku fails either way, but the procedure yields repeat-and-finish (0.667
@@ -27,19 +30,22 @@ one coherent answer with an uncomfortable rider.</p>
   0.479 completion). Which failure is safer depends on whether the repeated
   side effects are idempotent — a design lever, not a free win.</li>
 
-  <li><strong>The uncomfortable rider: iteration beat divergence-and-selection
-  on both selection regimes.</strong> The ralph loop — no kept alternatives, no
-  reduce, no judge — won E2a by two orders of magnitude (median ~102× vs 3.0×)
-  and took E2b's judge 9–3 against the skill. The map-reduce skill's fan-out is
-  faithful and consistently beats its content-matched prose twin (which never
-  fanned out at all), so the notation delivers its mechanism; the mechanism
-  just lost. For tasks with compounding structure, best-of-N single shots is
-  the wrong shape, and three fresh contexts over a shared workspace is itself a
-  form of external state — the working directory is the store.</li>
+  <li><strong>E2a: the skill complied and still lost — parallel single shots
+  cannot compound.</strong> The fan-out was faithful (5.4 spawns per run against
+  5 expected) and the reduce verified against the benchmark, yet the best
+  one-shot candidate managed 1.8–3.9× where three sequential fresh sessions
+  compounded to ~100×. This is the one E2 cell where the intended comparison
+  actually ran, and the shape lost on the merits (budget caveat aside).</li>
 
-  <li><strong>The E2 arms rank the same under a benchmark and a judge.</strong>
-  ralph &gt; goal ≈ skill on both, which is some evidence the E2b judge is
-  tracking quality rather than style — the objective regime agrees with
-  it.</li>
+  <li><strong>E2b: no verdict on the shape — two mechanism findings
+  instead.</strong> Sonnet never ran the program (see above), so its judge
+  tallies compare ralph to an improvisation. In haiku's compliant runs the
+  skill lost 1–4, and lost on <em>behaviour drift</em>: the program passes code
+  by value through ~9 whole-file text regenerations, the reducer compares
+  candidates only to each other, and no step can see back to the original —
+  loss compounds undetected. The tests passed anyway; the drift lived in
+  uncovered behaviour. The by-reference variant (workers editing the sandbox
+  file, anchored to the original) has not been run, and diverge-then-select
+  remains untested on the subjective regime.</li>
 </ul>
 </section>

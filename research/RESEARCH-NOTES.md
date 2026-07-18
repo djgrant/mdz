@@ -74,16 +74,29 @@ acquires state – when the model must know where it is, not just what the const
   completion 0.69), prose yields skip-and-abandon (skip 0.21, completion 0.48). The
   smoke-run's dramatic double-refund contrast did not survive n=192; the honest claim is
   a consistent, modest edge that grows as evidence gets poorer.
-- **E2 (diverge-then-select vs ralph loop): the ralph loop won both regimes, decisively.**
-  Objective (optimise, benchmark-selected): ralph medians 111x/81x vs the MDZ map-reduce
-  skill's 1.8x/3.9x and prose-goal's 1.3x/2.7x, all runs passing tests. Subjective
-  (simplify, pairwise judge): ralph 9–3 over the skill and 9–3 over goal; goal even edged
-  the skill 7–5. Three fresh single-minded passes beat one structured session in both –a
-  single session declares victory after one round of improvements; a fresh context resets
-  the ambition threshold. Caveat: ralph spends 2–5x the tokens, but nothing stopped the
-  single-session arms continuing – they chose to stop. Also: every sonnet skill run
-  shortcut the pipeline after iteration 1 ([3,0,0] spawns, judge never spawned); haiku
-  followed the shape more faithfully than sonnet.
+- **E2a (optimise): the skill complied and still lost – fan-out was the wrong shape.**
+  Mean 5.4 worker spawns per run against 5 expected; the reduce ran tests and benchmark
+  and shipped the best candidate. Ralph medians 111x/81x vs the skill's 1.8x/3.9x:
+  one-shot parallel candidates cannot compound, three sequential fresh sessions can.
+  Valid comparison, with the 2–5x budget caveat.
+- **E2b (simplify): sonnet did not follow the program.** Zero of six sonnet skill runs
+  executed the pipeline as written (five stopped at [3,0,0] spawns; none spawned the
+  final judge – 0/6, and even the one full fan-out skipped it). The sonnet half of the
+  e2b skill arm compares ralph against a program that was never run, and is not evidence
+  about diverge-then-select. This scopes phase-2's delegation-fidelity claim: sonnet
+  spawned faithfully there (and in e2a) where payloads were cheap; hand it nine
+  400-line-file relay spawns and it defects. Notation-level orchestration is not
+  self-enforcing when the spawns look expensive and redundant to the coordinator.
+- **E2b, compliant subset (haiku ran the program): the skill lost on behaviour drift, not
+  on simplification quality.** Haiku executed the full fan-out in 5/6 runs and lost 1–4
+  to ralph within them. The dominant loss mode: shipped code silently dropping behaviour
+  (resolveOptions/defaults gone, locale support gone) that the test suite did not cover.
+  Cause is structural: the skill passes $code by value – ~9 whole-file text regenerations
+  plus 2 selections per run, the reducer comparing candidates only to each other, each
+  iteration seeded from the last iteration's text with no path back to the original.
+  Loss compounds and nothing in the loop can detect it. Ralph makes 3 in-place edits with
+  the original repo state always readable. A skill whose workers operate in the sandbox
+  anchored to the original file is the fair fight, and has not been run.
 - **E3 (state at breakdown sizes): rescue confirmed – Q5 closes positive.** At 400
   statements all arms hold (~0.92–1.0 emits). At 800 the whole-context baseline collapses
   (0.537 emits; 2/6 runs complete, the rest cover 16–48% of the trace) while
@@ -101,3 +114,6 @@ Cost: ~$300 of session usage across 300 runs, e2b's sonnet pipelines dominating.
   means it was not needed as a fallback flagship.
 - Matched-budget ralph vs skill (ralph at 1 pass, or skill at 3x budget) to separate
   fresh-context effects from compute effects.
+- A by-reference skill variant: workers edit the file in the sandbox, anchored to the
+  original, instead of relaying $code as prompt text. Required before any claim about
+  diverge-then-select itself.
