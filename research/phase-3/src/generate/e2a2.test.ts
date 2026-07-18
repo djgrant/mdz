@@ -20,8 +20,8 @@ beforeAll(() => {
 });
 
 describe("manifest", () => {
-  it("has 2 targets x 2 orchestrator models = 4 skill-arm entries", () => {
-    expect(entries.length).toBe(4);
+  it("has 2 targets x 3 orchestrator models = 6 skill-arm entries", () => {
+    expect(entries.length).toBe(6);
     for (const e of entries) {
       expect(e.experiment).toBe("e2a2");
       expect(e.runMode).toBe("agentic");

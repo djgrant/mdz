@@ -18,7 +18,7 @@
  * fix arm, not a content-matched pair. The three heuristic strings are still
  * carried verbatim from E2b so mechanism extraction stays comparable.
  *
- * 2 targets x 1 arm (skill) x 2 orchestrator models = 4 manifest entries.
+ * 2 targets x 1 arm (skill) x 3 orchestrator models = 6 manifest entries.
  */
 
 import { readFileSync } from "node:fs";
@@ -37,7 +37,7 @@ const FIXTURES = join(HERE, "fixtures", "e2b");
 export const MAP_REDUCE_PATH = resolve(PHASE_ROOT, "..", "..", "examples", "skills", "map-reduce.mdz");
 
 /** Orchestrator models, pinned per entry via the manifest `model` field. */
-export const ORCHESTRATOR_MODELS = ["haiku", "opus"] as const;
+export const ORCHESTRATOR_MODELS = ["haiku", "sonnet", "opus"] as const;
 
 /** Every worker spawn is addressed to this pinned agent definition. */
 export const WORKER_AGENT = "sonnet-5";

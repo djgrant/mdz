@@ -12,7 +12,7 @@
  * from E2a with only a grammatical change (gerunds, so `faster by $item`
  * composes); comparisons against v1 arms are indicative only.
  *
- * 2 targets x 1 arm (skill) x 2 orchestrator models = 4 manifest entries.
+ * 2 targets x 1 arm (skill) x 3 orchestrator models = 6 manifest entries.
  */
 
 import { readFileSync } from "node:fs";

@@ -44,9 +44,9 @@ describe("file-backed @(path) annotation", () => {
 });
 
 describe("manifest", () => {
-  it("has 2 targets x 2 orchestrator models = 4 skill-arm entries", () => {
-    expect(entries.length).toBe(4);
-    expect(new Set(entries.map((e) => e.id)).size).toBe(4);
+  it("has 2 targets x 3 orchestrator models = 6 skill-arm entries", () => {
+    expect(entries.length).toBe(6);
+    expect(new Set(entries.map((e) => e.id)).size).toBe(6);
     for (const e of entries) {
       expect(e.experiment).toBe("e2b2");
       expect(e.runMode).toBe("agentic");

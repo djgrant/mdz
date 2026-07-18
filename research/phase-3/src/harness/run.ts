@@ -153,6 +153,8 @@ interface ResultRecord {
   promptTokens: number;
   completionTokens: number;
   costUsd: number | null;
+  /** Per-model usage/cost from the CLI, when available (agentic runs). */
+  modelUsage?: Record<string, unknown> | null;
   startedAt: string;
   durationMs: number;
   rawOutput: string;
@@ -176,6 +178,7 @@ interface Job {
 // ---------------------------------------------------------------------------
 
 interface AgenticResult extends RunResult {
+  modelUsage?: Record<string, unknown> | null;
   transcriptPath: string | null;
   spawns: Spawn[];
   toolCalls: ToolCall[];
@@ -321,6 +324,7 @@ async function runAgenticClaude(
     let promptTokens = 0;
     let completionTokens = 0;
     let costUsd: number | null = null;
+    let modelUsage: Record<string, unknown> | null = null;
     let rawOutput = "";
     let error: string | null = null;
     let transcriptPath: string | null = null;
@@ -360,6 +364,20 @@ async function runAgenticClaude(
       promptTokens += envelope.inputTokens;
       completionTokens += envelope.outputTokens;
       if (envelope.costUsd != null) costUsd = (costUsd ?? 0) + envelope.costUsd;
+      if (envelope.modelUsage) {
+        // Per-model usage (orchestrator vs pinned workers). Summed across
+        // passes: tokens and costUSD accumulate per model key.
+        modelUsage ??= {};
+        for (const [mod, u] of Object.entries(envelope.modelUsage)) {
+          const prev = (modelUsage[mod] ?? {}) as Record<string, number>;
+          const next = u as Record<string, number>;
+          const sum: Record<string, number> = { ...prev };
+          for (const k of ["inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens", "costUSD"]) {
+            if (typeof next[k] === "number") sum[k] = (sum[k] ?? 0) + next[k];
+          }
+          modelUsage[mod] = sum;
+        }
+      }
       rawOutput = envelope.resultText;
 
       // Locate + copy this pass's session transcript, then mine it.
@@ -395,6 +413,7 @@ async function runAgenticClaude(
       promptTokens,
       completionTokens,
       costUsd,
+      modelUsage,
       durationMs,
       error,
       transcriptPath: transcriptPath
@@ -422,6 +441,8 @@ interface Envelope {
   inputTokens: number;
   outputTokens: number;
   costUsd: number | null;
+  /** Per-model usage from the CLI (covers orchestrator and spawned workers). */
+  modelUsage: Record<string, unknown> | null;
   subtype: unknown;
   isError: boolean;
 }
@@ -440,6 +461,10 @@ function parseEnvelope(stdout: string): Envelope | null {
       num(usage.cache_read_input_tokens),
     outputTokens: num(usage.output_tokens),
     costUsd: typeof obj.total_cost_usd === "number" ? obj.total_cost_usd : null,
+    modelUsage:
+      obj.modelUsage && typeof obj.modelUsage === "object"
+        ? (obj.modelUsage as Record<string, unknown>)
+        : null,
     subtype: obj.subtype,
     isError:
       obj.is_error === true ||
@@ -482,6 +507,7 @@ async function executeJob(job: Job): Promise<ResultRecord> {
       promptTokens: r.promptTokens,
       completionTokens: r.completionTokens,
       costUsd: r.costUsd,
+      modelUsage: r.modelUsage,
       durationMs: r.durationMs,
       rawOutput: r.rawOutput,
       transcriptPath: r.transcriptPath,
