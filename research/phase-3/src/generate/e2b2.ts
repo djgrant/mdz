@@ -79,6 +79,8 @@ WITH
   instruction: Compare these versions of the same module and return the best one: the simplest version that is still clear, complete, and behaviour-preserving. The winner need not be the last.
   iterations: $iterations
 
+$file = $winner
+
 RETURN $winner
 `;
 
