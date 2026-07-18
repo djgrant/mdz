@@ -107,6 +107,46 @@ acquires state – when the model must know where it is, not just what the const
 
 Cost: ~$300 of session usage across 300 runs, e2b's sonnet pipelines dominating.
 
+### Second run set (mechanism fixes; smokes at n=1 unless noted)
+
+The v1 failings above were mechanisms, not conclusions. The second set fixed them one
+at a time and re-ran the skill arms only (goal and ralph stand).
+
+- **E2b2 (simplify, file-backed variables, opus orchestrator + sonnet workers): the
+  fair fight ties.** `$var: type @(path)` moves code between agents by path; workers
+  edit files, never relay text. Opus executed all 13 spawns on both targets and shipped
+  86/90 lines (tests 13/13, 9/9) vs ralph's 78–92. The v1 ralph-vs-skill gap on this
+  task was execution failure (defection + by-value relay), not shape. Per-model cost
+  split now captured: orchestration is ~a third of spend (pricing $2.43 = opus $0.78 +
+  sonnet $1.65) – evidence for the smart-orchestrator/cheaper-worker split.
+- **Delegation fidelity is model-tiered, and PRAGMA STRICT is a request.** Across every
+  v2 cell only opus reliably executed SPAWN programs. Haiku and sonnet, given the same
+  syntax-first prompt, did the work themselves when it fit one session (e2a2 mdz-ralph
+  smokes: haiku 0 spawns/2.5x, sonnet 0 spawns/100x DIY, opus 3 spawns/120x). Fourth
+  consecutive cell with this pattern; it is the phase's most consistent finding.
+- **A SPAWN's return value is a message.** Any value assigned from a SPAWN without a
+  file backing relays through the orchestrator's context and drifts. e2b2's one
+  unbacked value ($winner) was exactly where the last drift lived; fixed with
+  `$winner: string @($file) = SPAWN`, i.e. the worker writes the deliverable.
+- **Do not put prompts in the sandbox.** e2a2 opus smoke: a worker found the
+  orchestrator's command file on disk, invoked it, and correctly treated the
+  MDZ-executor role text as prompt injection. Prompts go to the model; only skills and
+  task material ship in the sandbox. Recursion hazard if a worker obeys instead.
+- **E2a's target class cannot separate the arms.** Ledger falls to a single sonnet
+  session (100x DIY). Any one-session-sized task makes loop-in-harness vs
+  loop-in-orchestrator indistinguishable and defection costless. mdz-ralph (the ralph
+  loop written as a generic MDZ skill: WHILE round < max-rounds, SPAWN worker with the
+  whole goal) is built, compliant under opus, and waits on a harder target.
+- **E2c (prose rewrite, dropped): decomposition broke global coherence, and the judge
+  was too noisy to rank what remained.** Per-paragraph fan-out lost to every
+  whole-document arm – inductive order is a cross-paragraph property no worker owns –
+  while winning the skeleton verdict in every pairing (the one globally-scoped spawn).
+  A three-pass whole-document pipeline (skeleton/flow/language) closed most of the gap
+  but still trailed; and the opus judge reversed two verdicts on unchanged pairs
+  between rounds, so n=1 rankings here are noise. Kept as a design lesson: decompose by
+  concern, not by region, when the quality criterion is global; prose judging needs
+  majority-of-k.
+
 ### Deferred from phase 3
 
 - A real-world E2 target (the synthetic fixtures cap ecological validity).
@@ -115,5 +155,11 @@ Cost: ~$300 of session usage across 300 runs, e2b's sonnet pipelines dominating.
 - Matched-budget ralph vs skill (ralph at 1 pass, or skill at 3x budget) to separate
   fresh-context effects from compute effects.
 - A by-reference skill variant: workers edit the file in the sandbox, anchored to the
-  original, instead of relaying $code as prompt text. Required before any claim about
-  diverge-then-select itself.
+  original, instead of relaying $code as prompt text. DONE in the second run set
+  (e2b2); result: parity with ralph.
+- A harder E2a-class target: multi-session-sized, so DIY is impossible and the loop
+  location matters. Blocks the mdz-ralph vs prompt-ralph comparison.
+- Enforcement for SPAWN (harness-verified, not requested): the only lever left against
+  haiku/sonnet defection, since PRAGMA STRICT does not bind.
+- E2c follow-ups if prose returns: majority-of-k judging, and a final whole-document
+  pass on any decomposed rewrite.

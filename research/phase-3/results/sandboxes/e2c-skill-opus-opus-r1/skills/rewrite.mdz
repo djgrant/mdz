@@ -1,0 +1,18 @@
+---
+name: rewrite
+input: $file, $requirements
+---
+
+SPAWN opus-4-8
+WITH
+  instruction: Apply the following requirements to $file. $requirements#skeleton-assessment
+
+SPAWN opus-4-8
+WITH
+  instruction: Apply the following requirements to $file. $requirements#inductive-explanation $requirements#flow
+
+SPAWN opus-4-8
+WITH
+  instruction: Apply the following requirements to $file. $requirements#language
+
+RETURN $file
