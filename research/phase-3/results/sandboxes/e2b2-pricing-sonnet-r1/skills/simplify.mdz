@@ -1,0 +1,28 @@
+---
+name: simplify
+input: $file, $n
+---
+
+$heuristics = ["making it more direct", "making it more obvious", "making it smaller"]
+$candidate: string @(./candidate.ts) = a copy of $file
+$iterations = []
+
+FOR $i IN [1 .. $n]
+  $base: string @(./base-$i.ts) = a copy of $candidate
+  $simplified: string @(./iterations-$i.ts) = USE ~/skills/map-reduce
+  WITH
+    items: $heuristics
+    map: Simplify $base by $item. Preserve the module's behaviour and public interface exactly; its test suite must still pass.
+    map-worker: sonnet-5
+    reduce: Pick the candidate that most improves the code, or merge two if they compose cleanly: simpler, clearer, behaviour unchanged.
+    reduce-worker: sonnet-5
+  Append $simplified to $iterations
+  $candidate = $simplified
+END
+
+$winner = SPAWN sonnet-5
+WITH
+  instruction: Compare these versions of the same module and return the best one: the simplest version that is still clear, complete, and behaviour-preserving. The winner need not be the last.
+  iterations: $iterations
+
+RETURN $winner

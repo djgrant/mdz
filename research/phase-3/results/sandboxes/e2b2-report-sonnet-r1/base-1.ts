@@ -1,0 +1,142 @@
+/**
+ * Task report module.
+ *
+ * Formats a list of tasks into a plain-text report: a title header, one line
+ * per task, an optional summary section, and a footer with totals. The public
+ * surface is `formatReport` and the option/type exports; everything else is
+ * internal machinery.
+ */
+
+export interface Task {
+  title: string;
+  done: boolean;
+  hours: number;
+}
+
+export interface ReportInput {
+  title: string;
+  tasks: Task[];
+}
+
+export interface ReportOptions {
+  separator?: string;
+  bullet?: string;
+  sections?: string[];
+  /** Only the "default" theme is registered. */
+  theme?: string;
+  /** Only "en" messages are provided. */
+  locale?: string;
+  /** Only plain text output is implemented; the enum anticipates markdown. */
+  outputFormat?: "text";
+}
+
+const DEFAULT_OPTIONS: Required<ReportOptions> = {
+  separator: "=",
+  bullet: "-",
+  sections: ["header", "tasks", "footer"],
+  theme: "default",
+  locale: "en",
+  outputFormat: "text",
+};
+
+// Only the "default" theme ships today; markers live here so branded themes
+// could be added without touching the renderers below.
+const THEMES: Record<string, { doneMarker: string; openMarker: string }> = {
+  default: { doneMarker: "[x]", openMarker: "[ ]" },
+};
+
+// Only "en" is provided; the catalogue exists so translated reports could be
+// introduced without touching the renderers below.
+const MESSAGES: Record<string, Record<string, string>> = {
+  en: {
+    done: "done",
+    total: "total",
+    doneLabel: "Done",
+    openLabel: "Open",
+    hoursLabel: "Hours",
+  },
+};
+
+function message(locale: string, key: string): string {
+  const table = MESSAGES[locale];
+  if (!table) {
+    throw new Error(`no messages for locale: ${locale}`);
+  }
+  const value = table[key];
+  if (value === undefined) {
+    throw new Error(`no message for key: ${key}`);
+  }
+  return value;
+}
+
+const formatHours = (hours: number): string => `${hours}h`;
+
+function summarise(tasks: Task[]) {
+  let doneCount = 0;
+  let totalHours = 0;
+  for (const task of tasks) {
+    if (task.done) {
+      doneCount += 1;
+    }
+    totalHours += task.hours;
+  }
+  return { doneCount, openCount: tasks.length - doneCount, totalHours };
+}
+
+interface RenderContext {
+  readonly input: ReportInput;
+  readonly separator: string;
+  readonly bullet: string;
+  readonly theme: { doneMarker: string; openMarker: string };
+  readonly locale: string;
+}
+
+const RENDERERS: Record<string, (context: RenderContext) => string[]> = {
+  header: ({ input, separator }) => [input.title, separator.repeat(input.title.length)],
+
+  tasks: ({ input, bullet, theme }) =>
+    input.tasks.map((task) => {
+      const marker = task.done ? theme.doneMarker : theme.openMarker;
+      return `${bullet} ${marker} ${task.title} (${formatHours(task.hours)})`;
+    }),
+
+  summary: ({ input, locale }) => {
+    const { doneCount, openCount, totalHours } = summarise(input.tasks);
+    return [
+      `${message(locale, "doneLabel")}: ${doneCount}`,
+      `${message(locale, "openLabel")}: ${openCount}`,
+      `${message(locale, "hoursLabel")}: ${formatHours(totalHours)}`,
+    ];
+  },
+
+  footer: ({ input, locale }) => {
+    const { doneCount, totalHours } = summarise(input.tasks);
+    return [
+      `${doneCount}/${input.tasks.length} ${message(locale, "done")}, ${formatHours(totalHours)} ${message(locale, "total")}`,
+    ];
+  },
+};
+
+export function formatReport(input: ReportInput, options?: ReportOptions): string {
+  const { separator, bullet, sections, theme, locale } = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+  };
+
+  const resolvedTheme = THEMES[theme];
+  if (!resolvedTheme) {
+    throw new Error(`no theme registered under: ${theme}`);
+  }
+
+  const context: RenderContext = { input, separator, bullet, theme: resolvedTheme, locale };
+
+  const lines: string[] = [];
+  for (const section of sections) {
+    const render = RENDERERS[section];
+    if (!render) {
+      throw new Error(`no renderer for section: ${section}`);
+    }
+    lines.push(...render(context));
+  }
+  return lines.join("\n");
+}
