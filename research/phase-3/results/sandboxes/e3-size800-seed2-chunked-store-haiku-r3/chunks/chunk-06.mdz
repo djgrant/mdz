@@ -1,0 +1,25 @@
+$v38 = $v17 + 3
+$v39 = 6
+Say $v2
+$v40 = 10
+WHILE $v40 != 0
+  Say $v40
+  $v40 = $v40 - 1
+END
+FOR $v41 IN [1, 1, 7, 4, 7, 9, 8, 6, 5, 9]
+  Say $v41
+END
+$v42 = 10
+WHILE $v42 != 0
+  Say $v42
+  $v42 = $v42 - 1
+END
+FOR $v43 IN [5, 3, 9, 0, 7, 8, 0, 4, 4, 0]
+  Say $v43
+END
+Say $v42
+$v44 = $v16 + "done"
+$v45 = $v42 + 5
+FOR $v46 IN [4, 0, 3, 0, 6, 1, 7, 6, 5, 6]
+  Say $v46
+END

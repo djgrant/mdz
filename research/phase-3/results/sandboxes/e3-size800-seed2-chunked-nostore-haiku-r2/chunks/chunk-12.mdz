@@ -1,0 +1,26 @@
+IF $v48 > 3 THEN
+  Say "hold"
+  Say $v44
+END
+CASE $v65
+WHEN "hold"
+  $v83 = $v56 * 4
+WHEN "next"
+  Say $v16
+  Say $v24
+ELSE
+  $v84 = 7
+END
+Say $v17
+Say $v1
+IF $v24 != 4 THEN
+  $v85 = $v27 - 4
+END
+Say $v17
+$v86 = $v77 + "ok"
+IF $v49 != 0 THEN
+  $v87 = $v18 - 4
+ELSE
+  $v88 = $v26 + 1
+  Say $v2
+END

@@ -1,0 +1,26 @@
+CASE $v2
+WHEN "blue"
+  Say "ok"
+  $v8 = $v1 + 2
+WHEN "next"
+  Say $v1
+ELSE
+  Say $v2
+END
+FOR $v9 IN [0, 7, 0, 7, 7, 6, 2, 3, 6, 1]
+  Say $v9
+END
+FOR $v10 IN [7, 9, 6, 1, 5, 9, 0, 5, 5, 7]
+  Say $v10
+END
+Say $v3
+IF $v1 < 2 THEN
+  $v11 = $v1 - 3
+  Say $v1
+END
+IF $v1 != 9 THEN
+  Say $v2
+ELSE
+  $v12 = $v3 * 2
+  $v13 = 8
+END

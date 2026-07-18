@@ -1,0 +1,30 @@
+Say $v42
+$v134 = "blue"
+$v135 = $v77 + "blue"
+Say $v116
+$v136 = "red"
+IF $v48 > 3 THEN
+  $v137 = 4
+END
+$v138 = 10
+WHILE $v138 != 0
+  Say $v138
+  $v138 = $v138 - 1
+END
+Say $v42
+Say $v24
+Say $v26
+Say $v1
+$v139 = 7
+$v140 = $v45 * 2
+$v141 = $v24 * 1
+$v142 = $v140 - 5
+Say $v76
+$v143 = $v126 + 2
+$v144 = $v40 + 2
+IF $v102 > 7 THEN
+  $v145 = 3
+  Say $v68
+ELSE
+  Say "next"
+END

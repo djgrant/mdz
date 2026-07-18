@@ -1,0 +1,32 @@
+Say $v24
+$v62 = 10
+WHILE $v62 != 0
+  Say $v62
+  $v62 = $v62 - 1
+END
+Say $v26
+IF $v18 = 7 THEN
+  $v63 = 9
+  $v64 = $v56 + 4
+END
+IF $v3 != 4 THEN
+  Say $v38
+END
+$v65 = "draft"
+FOR $v66 IN [7, 4, 1, 9, 9, 1, 8, 0, 9, 5]
+  Say $v66
+END
+FOR $v67 IN [5, 8, 1, 1, 9, 4, 1, 2, 5, 8]
+  Say $v67
+END
+$v68 = $v50 + "blue"
+CASE $v50
+WHEN "draft"
+  Say $v21
+  $v69 = 0
+WHEN "blue"
+  $v70 = $v3 * 1
+ELSE
+  Say $v17
+  Say $v65
+END

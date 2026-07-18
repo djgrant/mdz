@@ -1,0 +1,27 @@
+IF $v1 > 1 THEN
+  $v23 = 0
+END
+$v24 = 10
+WHILE $v24 != 0
+  Say $v24
+  $v24 = $v24 - 1
+END
+Say $v17
+$v25 = $v2 + "red"
+$v26 = $v17 * 1
+Say "ok"
+$v27 = 10
+WHILE $v27 != 0
+  Say $v27
+  $v27 = $v27 - 1
+END
+CASE $v2
+WHEN "red"
+  $v28 = $v0 + 3
+  $v29 = $v26 + 3
+WHEN "next"
+  $v30 = 6
+  $v31 = $v3 * 2
+ELSE
+  Say $v24
+END

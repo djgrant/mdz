@@ -7,7 +7,7 @@
         "/Users/coder/Repos/djgrant/mdz/research/phase-3/src/harness/mcp-state-server.ts"
       ],
       "env": {
-        "STATE_LOG": "/var/folders/t8/bhx1lqx977df536xx99b4f480000gp/T/mdz-agentic-l2wVL0/.state-log.jsonl"
+        "STATE_LOG": "/var/folders/t8/bhx1lqx977df536xx99b4f480000gp/T/mdz-agentic-mIjYhx/.state-log.jsonl"
       }
     }
   }

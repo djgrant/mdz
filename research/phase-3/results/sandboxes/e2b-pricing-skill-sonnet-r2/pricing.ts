@@ -28,83 +28,83 @@ export interface PricingHooks {
 
 export interface PricingOptions {
   vatRate?: number;
-  /** Only half-up rounding is implemented; the enum anticipates bankers'. */
   roundingMode?: "half-up";
-  /** Reserved for localised price formatting. */
   locale?: string;
-  /** Observability hooks invoked around every pipeline stage. */
   hooks?: PricingHooks;
 }
 
 const DEFAULT_VAT_RATE = 0.2;
 
-const BULK_QUANTITY_THRESHOLD = 10;
-const BULK_DISCOUNT_MULTIPLIER = 0.9;
+const SUPPORTED_CURRENCIES: readonly Currency[] = ["GBP", "EUR", "USD"];
 
-const MULTI_LINE_ITEM_THRESHOLD = 3;
-const MULTI_LINE_DISCOUNT_MULTIPLIER = 0.98;
-
-const LOYALTY_DISCOUNT_MULTIPLIER = 0.95;
-
-function computeSubtotal(order: Order): number {
-  return order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-}
-
-function totalQuantity(order: Order): number {
-  return order.items.reduce((sum, item) => sum + item.quantity, 0);
-}
-
-function distinctItemCount(order: Order): number {
-  return new Set(order.items.map((item) => item.name)).size;
-}
-
-/** Applies bulk, then multi-line, then loyalty discounts, in that order. */
-function applyDiscounts(order: Order, subtotal: number): number {
-  let total = subtotal;
-
-  if (totalQuantity(order) >= BULK_QUANTITY_THRESHOLD) {
-    total *= BULK_DISCOUNT_MULTIPLIER;
+function assertSupportedCurrency(currency: Currency): void {
+  if (!SUPPORTED_CURRENCIES.includes(currency)) {
+    throw new Error(`Unsupported currency: ${currency}`);
   }
-  if (distinctItemCount(order) >= MULTI_LINE_ITEM_THRESHOLD) {
-    total *= MULTI_LINE_DISCOUNT_MULTIPLIER;
-  }
-  if (order.loyaltyMember) {
-    total *= LOYALTY_DISCOUNT_MULTIPLIER;
-  }
-
-  return total;
 }
 
-function applyVat(amount: number, vatRate: number): number {
-  return amount * (1 + vatRate);
+interface DiscountStrategy {
+  applies(order: Order): boolean;
+  apply(subtotal: number): number;
 }
 
-function roundToCents(amount: number): number {
+const discountStrategies: DiscountStrategy[] = [
+  {
+    applies: (order) => order.items.reduce((sum, item) => sum + item.quantity, 0) >= 10,
+    apply: (subtotal) => subtotal * 0.9,
+  },
+  {
+    applies: (order) => new Set(order.items.map((item) => item.name)).size >= 3,
+    apply: (subtotal) => subtotal * 0.98,
+  },
+  {
+    applies: (order) => order.loyaltyMember,
+    apply: (subtotal) => subtotal * 0.95,
+  },
+];
+
+function round(amount: number): number {
   return Math.round(amount * 100) / 100;
 }
 
+function runPipeline(order: Order, options: PricingOptions): number {
+  assertSupportedCurrency(order.currency);
+
+  const hooks = options.hooks ?? {};
+  const vatRate = options.vatRate ?? DEFAULT_VAT_RATE;
+  let running = 0;
+
+  const stage = (name: string, compute: () => number) => {
+    hooks.beforeStage?.(name);
+    running = compute();
+    hooks.afterStage?.(name, running);
+  };
+
+  stage("subtotal", () =>
+    order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+  );
+
+  stage("discount", () =>
+    discountStrategies.reduce(
+      (subtotal, strategy) => (strategy.applies(order) ? strategy.apply(subtotal) : subtotal),
+      running,
+    ),
+  );
+
+  stage("tax", () => running * (1 + vatRate));
+
+  stage("rounding", () => round(running));
+
+  return running;
+}
+
 export class PricingFacade {
-  private readonly vatRate: number;
-  private readonly hooks: PricingHooks;
-
+  private readonly options: PricingOptions;
   constructor(options?: PricingOptions) {
-    this.vatRate = options?.vatRate ?? DEFAULT_VAT_RATE;
-    this.hooks = options?.hooks ?? {};
+    this.options = options ?? {};
   }
-
   price(order: Order): number {
-    const subtotal = this.runStage("subtotal", () => computeSubtotal(order));
-    const discounted = this.runStage("discount", () => applyDiscounts(order, subtotal));
-    const taxed = this.runStage("tax", () => applyVat(discounted, this.vatRate));
-    return this.runStage("rounding", () => roundToCents(taxed));
-  }
-
-  /** Runs a pricing stage, firing `beforeStage`/`afterStage` hooks around it. */
-  private runStage(name: string, run: () => number): number {
-    this.hooks.beforeStage?.(name);
-    const result = run();
-    this.hooks.afterStage?.(name, result);
-    return result;
+    return runPipeline(order, this.options);
   }
 }
 

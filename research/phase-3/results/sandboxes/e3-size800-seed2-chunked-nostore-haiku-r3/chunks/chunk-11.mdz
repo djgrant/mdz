@@ -1,0 +1,27 @@
+Say $v0
+$v76 = 10
+WHILE $v76 != 0
+  Say $v76
+  $v76 = $v76 - 1
+END
+$v77 = $v21 + "hold"
+IF $v76 > 4 THEN
+  $v78 = $v38 - 2
+ELSE
+  Say $v53
+  Say $v74
+END
+Say $v53
+$v79 = 8
+$v80 = "hold"
+Say $v21
+IF $v3 > 0 THEN
+  $v81 = $v42 + 3
+  Say $v17
+ELSE
+  Say "hold"
+  Say $v77
+END
+FOR $v82 IN [3, 8, 8, 3, 4, 6, 8, 3, 2, 1]
+  Say $v82
+END

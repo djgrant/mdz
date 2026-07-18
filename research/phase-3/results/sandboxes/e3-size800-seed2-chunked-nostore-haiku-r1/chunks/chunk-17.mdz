@@ -1,0 +1,25 @@
+FOR $v120 IN [6, 7, 4, 4, 1, 7, 2, 1, 9, 1]
+  Say $v120
+END
+Say $v96
+$v121 = 7
+Say $v49
+Say $v68
+$v122 = $v39 - 3
+$v123 = 3
+IF $v39 < 7 THEN
+  Say $v17
+ELSE
+  Say $v1
+  Say $v35
+END
+FOR $v124 IN [0, 8, 7, 7, 3, 0, 7, 7, 5, 9]
+  Say $v124
+END
+FOR $v125 IN [9, 7, 8, 6, 4, 3, 8, 9, 0, 7]
+  Say $v125
+END
+Say $v96
+Say $v39
+$v126 = $v24 + 1
+$v127 = $v72 + 1

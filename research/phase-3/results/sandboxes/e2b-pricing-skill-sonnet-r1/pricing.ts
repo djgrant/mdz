@@ -39,56 +39,82 @@ export interface PricingOptions {
 const DEFAULT_VAT_RATE = 0.2;
 const SUPPORTED_CURRENCIES: readonly Currency[] = ["GBP", "EUR", "USD"];
 
-// Discount multipliers, applied in order: bulk, then multi-line, then loyalty.
-const BULK_THRESHOLD_UNITS = 10;
-const BULK_DISCOUNT_MULTIPLIER = 0.9;
-const MULTI_LINE_THRESHOLD = 3;
-const MULTI_LINE_DISCOUNT_MULTIPLIER = 0.98;
-const LOYALTY_DISCOUNT_MULTIPLIER = 0.95;
+// ---------------------------------------------------------------------------
+// Discounts
+//
+// Applied in order: bulk, then multi-line, then loyalty.
+// ---------------------------------------------------------------------------
 
-function totalUnits(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.quantity, 0);
+function totalQuantity(order: Order): number {
+  return order.items.reduce((total, item) => total + item.quantity, 0);
 }
 
-function distinctLineCount(items: OrderItem[]): number {
-  return new Set(items.map((item) => item.name)).size;
+function distinctItemCount(order: Order): number {
+  return new Set(order.items.map((item) => item.name)).size;
 }
 
-function applyDiscounts(subtotal: number, order: Order): number {
+function applyDiscounts(order: Order, subtotal: number): number {
   let total = subtotal;
 
-  if (totalUnits(order.items) >= BULK_THRESHOLD_UNITS) {
-    total *= BULK_DISCOUNT_MULTIPLIER;
+  if (totalQuantity(order) >= 10) {
+    total *= 0.9; // bulk
   }
-
-  if (distinctLineCount(order.items) >= MULTI_LINE_THRESHOLD) {
-    total *= MULTI_LINE_DISCOUNT_MULTIPLIER;
+  if (distinctItemCount(order) >= 3) {
+    total *= 0.98; // multi-line
   }
-
   if (order.loyaltyMember) {
-    total *= LOYALTY_DISCOUNT_MULTIPLIER;
+    total *= 0.95; // loyalty
   }
 
   return total;
 }
 
-function computeSubtotal(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-}
+// ---------------------------------------------------------------------------
+// Rounding
+//
+// Every supported currency rounds the same way (half-up to the nearest
+// cent/penny); the check exists so a currency with different rounding rules
+// can be added without silently mispricing it.
+// ---------------------------------------------------------------------------
 
-function applyVat(total: number, vatRate: number): number {
-  return total * (1 + vatRate);
-}
-
-function roundForCurrency(total: number, currency: Currency): number {
+function roundToCurrency(amount: number, currency: Currency): number {
   if (!SUPPORTED_CURRENCIES.includes(currency)) {
     throw new Error(`no rounding policy for currency: ${currency}`);
   }
-  return Math.round(total * 100) / 100;
+  return Math.round(amount * 100) / 100;
 }
 
 // ---------------------------------------------------------------------------
-// Facade
+// Pipeline
+//
+// Each stage is announced to the hooks before it runs and reports the
+// resulting total after.
+// ---------------------------------------------------------------------------
+
+function computeSubtotal(order: Order): number {
+  return order.items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
+}
+
+function applyVat(subtotal: number, vatRate: number): number {
+  return subtotal * (1 + vatRate);
+}
+
+function runStage(hooks: PricingHooks, name: string, compute: () => number): number {
+  hooks.beforeStage?.(name);
+  const result = compute();
+  hooks.afterStage?.(name, result);
+  return result;
+}
+
+function runPipeline(order: Order, vatRate: number, hooks: PricingHooks): number {
+  const subtotal = runStage(hooks, "subtotal", () => computeSubtotal(order));
+  const discounted = runStage(hooks, "discount", () => applyDiscounts(order, subtotal));
+  const taxed = runStage(hooks, "tax", () => applyVat(discounted, vatRate));
+  return runStage(hooks, "rounding", () => roundToCurrency(taxed, order.currency));
+}
+
+// ---------------------------------------------------------------------------
+// Public API
 // ---------------------------------------------------------------------------
 
 export class PricingFacade {
@@ -101,18 +127,7 @@ export class PricingFacade {
   }
 
   price(order: Order): number {
-    const subtotal = this.runStage("subtotal", () => computeSubtotal(order.items));
-    const discounted = this.runStage("discount", () => applyDiscounts(subtotal, order));
-    const taxed = this.runStage("tax", () => applyVat(discounted, this.vatRate));
-    const rounded = this.runStage("rounding", () => roundForCurrency(taxed, order.currency));
-    return rounded;
-  }
-
-  private runStage(name: string, run: () => number): number {
-    this.hooks.beforeStage?.(name);
-    const result = run();
-    this.hooks.afterStage?.(name, result);
-    return result;
+    return runPipeline(order, this.vatRate, this.hooks);
   }
 }
 

@@ -1,0 +1,26 @@
+FOR $v95 IN [9, 2, 5, 0, 9, 9, 1, 6, 4, 7]
+  Say $v95
+END
+$v96 = 10
+WHILE $v96 != 0
+  Say $v96
+  $v96 = $v96 - 1
+END
+CASE $v74
+WHEN "draft"
+  $v97 = 0
+WHEN "red"
+  $v98 = $v3 - 3
+ELSE
+  Say $v27
+  $v99 = 1
+END
+FOR $v100 IN [4, 8, 3, 1, 0, 4, 5, 7, 8, 5]
+  Say $v100
+END
+$v101 = "hold"
+$v102 = 10
+WHILE $v102 != 0
+  Say $v102
+  $v102 = $v102 - 1
+END

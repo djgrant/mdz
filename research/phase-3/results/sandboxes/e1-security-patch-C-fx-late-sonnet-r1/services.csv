@@ -1,0 +1,4 @@
+service,current_version,patched_version,affected
+auth-api,v5.8.1,v5.8.4,yes
+session-store,v2.2.6,v2.2.9,yes
+billing-api,v3.4.0,,no
