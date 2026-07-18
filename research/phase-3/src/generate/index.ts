@@ -17,6 +17,7 @@ import { buildE2a } from "./e2a.ts";
 import { buildE2a2 } from "./e2a2.ts";
 import { buildE2b } from "./e2b.ts";
 import { buildE2b2 } from "./e2b2.ts";
+import { buildE2c } from "./e2c.ts";
 import { buildE3 } from "./e3.ts";
 
 export function buildAll(): Record<string, ManifestEntry[]> {
@@ -28,6 +29,7 @@ export function buildAll(): Record<string, ManifestEntry[]> {
     e2a2: buildE2a2(PROGRAMS_DIR),
     e2b: buildE2b(PROGRAMS_DIR),
     e2b2: buildE2b2(PROGRAMS_DIR),
+    e2c: buildE2c(PROGRAMS_DIR),
     e3: buildE3(PROGRAMS_DIR),
   };
 }
