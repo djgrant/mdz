@@ -1,0 +1,71 @@
+<section id="second-run">
+<h2>Second run set — mechanism fixes</h2>
+
+<p>The E2 failings above are mechanisms, not conclusions: by-value relay,
+defection, and a prompt-injection hazard in the sandbox layout. A second run
+set fixed them one at a time and re-ran the skill arms only (the goal and
+ralph records stand). These are smoke-scale runs — n=1 per cell unless stated
+— so they settle mechanism questions, not effect sizes.</p>
+
+<p><strong>E2b2: with the mechanisms fixed, the skill ties ralph.</strong>
+The v2 simplify skill moves code between agents by path, never by value:
+<code>$var: string @(./candidate.ts)</code> declares a file-backed variable
+whose reads and writes go to the file, and every deliverable — including the
+final judge's pick — is written by the worker that produced it (a SPAWN's
+return value is otherwise a message, and messages drift). Workers are pinned
+to sonnet (<code>SPAWN sonnet-5</code>); the orchestrator model varies per
+cell. Under an opus orchestrator the program ran as written — 13/13 spawns on
+both targets — and shipped 86 and 90 lines (tests 13/13 and 9/9) against
+ralph's 78–92 range. The v1 gap on this task was execution failure, not
+shape.</p>
+
+<p><strong>Cost splits by role.</strong> The harness now records per-model
+usage: the pricing run cost $2.43 — opus $0.78 orchestrating, sonnet $1.65
+working. Orchestration is roughly a third of spend even with the expensive
+model in the chair, which is the economic case for the smart-orchestrator,
+cheaper-worker split.</p>
+
+<p><strong>Delegation fidelity is model-tiered; PRAGMA STRICT is a
+request.</strong> Across every second-run cell, only opus reliably executed
+SPAWN programs. Haiku and sonnet, given the same syntax-first prompt, did the
+work themselves whenever it fit one session: in the rebuilt E2a arm (the ralph
+loop written as a generic MDZ skill), haiku spawned nothing and managed 2.5×,
+sonnet spawned nothing and hit 100× single-handed, opus ran the loop as
+written (3 spawns, 120×). That is the fourth consecutive cell with this
+pattern, and the phase's most consistent finding.</p>
+
+<p><strong>Sonnet's 100× DIY also retires the E2a target class.</strong> A
+target that one session can saturate cannot separate loop-in-harness from
+loop-in-orchestrator, and makes defection costless. The mdz-ralph vs
+prompt-ralph comparison is built and compliant under opus; it waits on a
+multi-session-sized target.</p>
+
+<p><strong>Do not put prompts in the sandbox.</strong> In one opus smoke a
+worker found the orchestrator's command file on disk, invoked it, and —
+correctly — treated the MDZ-executor role text it got back as prompt
+injection, discarding it and finishing its own task. The harness now feeds
+prompts to the orchestrator directly; only skills and task material ship as
+files. The hazard generalises: a less careful worker would have become a
+second MDZ executor and spawned its own pipeline.</p>
+
+<p><strong>E2c (prose rewrite): built, run, and dropped.</strong> A rewrite
+task — the phase-1 report against an explicit writing-requirements doc — was
+added to find a regime where ralph's whole-goal passes should struggle.
+The opposite happened. A per-paragraph fan-out lost to every whole-document
+arm, because inductive order is a cross-paragraph property no single-paragraph
+worker owns; the same runs won the skeleton verdict in every pairing, because
+the skeleton pass <em>was</em> globally scoped. A three-pass whole-document
+pipeline (skeleton, structure/flow, language) at ralph-equivalent cost closed
+most of the gap but still trailed. The opus judge also reversed two verdicts
+on unchanged pairs between judging rounds, so single-shot rankings here are
+noise. The experiment is dropped with two lessons kept: decompose by concern,
+not by region, when the quality criterion is global; and prose judging needs
+majority-of-k verdicts.</p>
+
+<div class="verdict">Verdict: the second run set converts E2b from "the
+program never ran" into a genuine tie with ralph, at the cost of requiring an
+opus orchestrator — delegation is model-tiered and notation alone does not
+enforce it. File-backed variables close the drift channel; prompts must never
+ship as sandbox files. The remaining E2 question — does the loop's location
+matter? — needs a target bigger than one session.</div>
+</section>
