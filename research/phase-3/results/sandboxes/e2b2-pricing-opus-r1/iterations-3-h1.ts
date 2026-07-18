@@ -39,53 +39,6 @@ export interface PricingOptions {
 const DEFAULT_VAT_RATE = 0.2;
 const SUPPORTED_CURRENCIES: readonly Currency[] = ["GBP", "EUR", "USD"];
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-/** Application order matters: bulk, then multi-line, then loyalty. */
-function applyDiscounts(subtotal: number, order: Order): number {
-  let result = subtotal;
-
-  const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  if (totalQuantity >= 10) {
-    result *= 0.9;
-  }
-
-  const distinctNames = new Set(order.items.map((item) => item.name));
-  if (distinctNames.size >= 3) {
-    result *= 0.98;
-  }
-
-  if (order.loyaltyMember) {
-    result *= 0.95;
-  }
-
-  return result;
-}
-
-function runStages(order: Order, vatRate: number, hooks: PricingHooks): number {
-  const stages: Array<[string, (total: number) => number]> = [
-    ["subtotal", () => order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)],
-    ["discount", (total) => applyDiscounts(total, order)],
-    ["tax", (total) => total * (1 + vatRate)],
-    ["rounding", (total) => {
-      if (!SUPPORTED_CURRENCIES.includes(order.currency)) {
-        throw new Error(`no rounding policy for currency: ${order.currency}`);
-      }
-      return round2(total);
-    }],
-  ];
-
-  let running = 0;
-  for (const [stageName, run] of stages) {
-    hooks.beforeStage?.(stageName);
-    running = run(running);
-    hooks.afterStage?.(stageName, running);
-  }
-  return running;
-}
-
 export class PricingFacade {
   private readonly vatRate: number;
   private readonly hooks: PricingHooks;
@@ -96,7 +49,37 @@ export class PricingFacade {
   }
 
   price(order: Order): number {
-    return runStages(order, this.vatRate, this.hooks);
+    const subtotal = this.run("subtotal", () =>
+      order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    );
+
+    const discounted = this.run("discount", () => {
+      let result = subtotal;
+      const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+      const distinctNames = new Set(order.items.map((item) => item.name));
+
+      if (totalQuantity >= 10) result *= 0.9;
+      if (distinctNames.size >= 3) result *= 0.98;
+      if (order.loyaltyMember) result *= 0.95;
+
+      return result;
+    });
+
+    const taxed = this.run("tax", () => discounted * (1 + this.vatRate));
+
+    return this.run("rounding", () => {
+      if (!SUPPORTED_CURRENCIES.includes(order.currency)) {
+        throw new Error(`no rounding policy for currency: ${order.currency}`);
+      }
+      return Math.round(taxed * 100) / 100;
+    });
+  }
+
+  private run(stageName: string, compute: () => number): number {
+    this.hooks.beforeStage?.(stageName);
+    const result = compute();
+    this.hooks.afterStage?.(stageName, result);
+    return result;
   }
 }
 

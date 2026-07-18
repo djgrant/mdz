@@ -30,57 +30,6 @@ export interface ReportOptions {
   outputFormat?: "text";
 }
 
-const THEMES: Record<string, { doneMarker: string; openMarker: string }> = {
-  default: { doneMarker: "[x]", openMarker: "[ ]" },
-};
-
-const MESSAGES: Record<string, Record<string, string>> = {
-  en: { done: "done", total: "total", doneLabel: "Done", openLabel: "Open", hoursLabel: "Hours" },
-};
-
-const hrs = (n: number) => `${n}h`;
-
-function tally(tasks: Task[]) {
-  const doneCount = tasks.filter((t) => t.done).length;
-  const totalHours = tasks.reduce((sum, t) => sum + t.hours, 0);
-  return { doneCount, openCount: tasks.length - doneCount, totalHours };
-}
-
-function lookup<T>(table: Record<string, T>, key: string, what: string): T {
-  const value = table[key];
-  if (value === undefined) throw new Error(`no ${what}: ${key}`);
-  return value;
-}
-
-type Ctx = {
-  input: ReportInput;
-  separator: string;
-  bullet: string;
-  theme: { doneMarker: string; openMarker: string };
-  msg: (key: string) => string;
-};
-
-const SECTION_RENDERERS: Record<string, (ctx: Ctx) => string[]> = {
-  header: ({ input, separator }) => [input.title, separator.repeat(input.title.length)],
-
-  tasks: ({ input, bullet, theme }) =>
-    input.tasks.map((t) => `${bullet} ${t.done ? theme.doneMarker : theme.openMarker} ${t.title} (${hrs(t.hours)})`),
-
-  summary: ({ input, msg }) => {
-    const { doneCount, openCount, totalHours } = tally(input.tasks);
-    return [
-      `${msg("doneLabel")}: ${doneCount}`,
-      `${msg("openLabel")}: ${openCount}`,
-      `${msg("hoursLabel")}: ${hrs(totalHours)}`,
-    ];
-  },
-
-  footer: ({ input, msg }) => {
-    const { doneCount, totalHours } = tally(input.tasks);
-    return [`${doneCount}/${input.tasks.length} ${msg("done")}, ${hrs(totalHours)} ${msg("total")}`];
-  },
-};
-
 const DEFAULT_REPORT_OPTIONS: Required<ReportOptions> = {
   separator: "=",
   bullet: "-",
@@ -90,16 +39,91 @@ const DEFAULT_REPORT_OPTIONS: Required<ReportOptions> = {
   outputFormat: "text",
 };
 
+const THEMES: Record<string, { doneMarker: string; openMarker: string }> = {
+  default: { doneMarker: "[x]", openMarker: "[ ]" },
+};
+
+const MESSAGES: Record<string, Record<string, string>> = {
+  en: {
+    done: "done",
+    total: "total",
+    doneLabel: "Done",
+    openLabel: "Open",
+    hoursLabel: "Hours",
+  },
+};
+
+function message(locale: string, key: string): string {
+  const value = MESSAGES[locale]?.[key];
+  if (value === undefined) {
+    throw new Error(
+      MESSAGES[locale] ? `no message for key: ${key}` : `no messages for locale: ${locale}`,
+    );
+  }
+  return value;
+}
+
+const formatHours = (hours: number): string => `${hours}h`;
+
+type RenderContext = {
+  input: ReportInput;
+  separator: string;
+  bullet: string;
+  theme: { doneMarker: string; openMarker: string };
+  locale: string;
+};
+
+function taskCounts({ input }: RenderContext) {
+  const done = input.tasks.filter((t) => t.done).length;
+  const hours = input.tasks.reduce((sum, t) => sum + t.hours, 0);
+  return { done, open: input.tasks.length - done, hours, total: input.tasks.length };
+}
+
+const SECTION_RENDERERS: Record<string, (context: RenderContext) => string[]> = {
+  header: ({ input, separator }) => [input.title, separator.repeat(input.title.length)],
+
+  tasks: ({ input, bullet, theme }) =>
+    input.tasks.map((task) => {
+      const marker = task.done ? theme.doneMarker : theme.openMarker;
+      return `${bullet} ${marker} ${task.title} (${formatHours(task.hours)})`;
+    }),
+
+  summary: (ctx) => {
+    const { done, open, hours } = taskCounts(ctx);
+    return [
+      `${message(ctx.locale, "doneLabel")}: ${done}`,
+      `${message(ctx.locale, "openLabel")}: ${open}`,
+      `${message(ctx.locale, "hoursLabel")}: ${formatHours(hours)}`,
+    ];
+  },
+
+  footer: (ctx) => {
+    const { done, hours, total } = taskCounts(ctx);
+    return [
+      `${done}/${total} ${message(ctx.locale, "done")}, ${formatHours(hours)} ${message(ctx.locale, "total")}`,
+    ];
+  },
+};
+
 export function formatReport(input: ReportInput, options?: ReportOptions): string {
   const opts = { ...DEFAULT_REPORT_OPTIONS, ...(options ?? {}) };
-
-  const theme = lookup(THEMES, opts.theme, "theme registered under");
-  const table = lookup(MESSAGES, opts.locale, "messages for locale");
-  const msg = (key: string) => lookup(table, key, "message for key");
-
-  const ctx: Ctx = { input, separator: opts.separator, bullet: opts.bullet, theme, msg };
-
-  return opts.sections
-    .flatMap((section) => lookup(SECTION_RENDERERS, section, "renderer for section")(ctx))
-    .join("\n");
+  const theme = THEMES[opts.theme];
+  if (!theme) {
+    throw new Error(`no theme registered under: ${opts.theme}`);
+  }
+  const context: RenderContext = {
+    input,
+    separator: opts.separator,
+    bullet: opts.bullet,
+    theme,
+    locale: opts.locale,
+  };
+  const lines = opts.sections.flatMap((section) => {
+    const renderer = SECTION_RENDERERS[section];
+    if (!renderer) {
+      throw new Error(`no renderer for section: ${section}`);
+    }
+    return renderer(context);
+  });
+  return lines.join("\n");
 }

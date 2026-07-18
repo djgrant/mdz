@@ -39,51 +39,42 @@ export interface PricingOptions {
 const DEFAULT_VAT_RATE = 0.2;
 const SUPPORTED_CURRENCIES: readonly Currency[] = ["GBP", "EUR", "USD"];
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 /** Application order matters: bulk, then multi-line, then loyalty. */
 function applyDiscounts(subtotal: number, order: Order): number {
   let result = subtotal;
 
   const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  if (totalQuantity >= 10) {
-    result *= 0.9;
-  }
+  if (totalQuantity >= 10) result *= 0.9;
 
   const distinctNames = new Set(order.items.map((item) => item.name));
-  if (distinctNames.size >= 3) {
-    result *= 0.98;
-  }
+  if (distinctNames.size >= 3) result *= 0.98;
 
-  if (order.loyaltyMember) {
-    result *= 0.95;
-  }
+  if (order.loyaltyMember) result *= 0.95;
 
   return result;
 }
 
 function runStages(order: Order, vatRate: number, hooks: PricingHooks): number {
-  const stages: Array<[string, (total: number) => number]> = [
-    ["subtotal", () => order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)],
-    ["discount", (total) => applyDiscounts(total, order)],
-    ["tax", (total) => total * (1 + vatRate)],
-    ["rounding", (total) => {
-      if (!SUPPORTED_CURRENCIES.includes(order.currency)) {
-        throw new Error(`no rounding policy for currency: ${order.currency}`);
-      }
-      return round2(total);
-    }],
-  ];
-
-  let running = 0;
-  for (const [stageName, run] of stages) {
+  const run = (stageName: string, fn: () => number): number => {
     hooks.beforeStage?.(stageName);
-    running = run(running);
-    hooks.afterStage?.(stageName, running);
-  }
-  return running;
+    const total = fn();
+    hooks.afterStage?.(stageName, total);
+    return total;
+  };
+
+  let total = run("subtotal", () =>
+    order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+  );
+  total = run("discount", () => applyDiscounts(total, order));
+  total = run("tax", () => total * (1 + vatRate));
+  total = run("rounding", () => {
+    if (!SUPPORTED_CURRENCIES.includes(order.currency)) {
+      throw new Error(`no rounding policy for currency: ${order.currency}`);
+    }
+    return Math.round(total * 100) / 100;
+  });
+
+  return total;
 }
 
 export class PricingFacade {

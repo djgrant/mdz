@@ -2,8 +2,9 @@
  * Order pricing module.
  *
  * Computes the total price of an order: item subtotal, discounts, VAT, and
- * rounding. The public surface is `computePrice`, the `PricingFacade`, and
- * the option/type exports; everything else is internal machinery.
+ * currency-aware rounding. The public surface is `computePrice`, the
+ * `PricingFacade`, and the option/type exports; everything else is internal
+ * machinery.
  */
 
 export interface OrderItem {
@@ -36,62 +37,33 @@ export interface PricingOptions {
 }
 
 const DEFAULT_VAT_RATE = 0.2;
+const SUPPORTED_CURRENCIES: readonly Currency[] = ["GBP", "EUR", "USD"];
 
-// ---------------------------------------------------------------------------
-// Discounts
-// ---------------------------------------------------------------------------
-
-/** Applied in order: bulk, then multi-line, then loyalty. */
-const DISCOUNTS: { applies(order: Order): boolean; apply(subtotal: number): number }[] = [
-  {
-    // Bulk: 10% off once total quantity across all lines reaches 10.
-    applies: (order) => order.items.reduce((sum, item) => sum + item.quantity, 0) >= 10,
-    apply: (subtotal) => subtotal * 0.9,
-  },
-  {
-    // Multi-line: 2% off once the order has 3 or more distinct item names.
-    applies: (order) => new Set(order.items.map((item) => item.name)).size >= 3,
-    apply: (subtotal) => subtotal * 0.98,
-  },
-  {
-    // Loyalty: 5% off for members.
-    applies: (order) => order.loyaltyMember,
-    apply: (subtotal) => subtotal * 0.95,
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Pricing stages
-// ---------------------------------------------------------------------------
-
-function runStage(hooks: PricingHooks, stageName: string, compute: () => number): number {
-  hooks.beforeStage?.(stageName);
-  const result = compute();
-  hooks.afterStage?.(stageName, result);
-  return result;
-}
-
-function subtotal(order: Order): number {
-  return order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-}
-
-function applyDiscounts(order: Order, amount: number): number {
-  let result = amount;
-  for (const discount of DISCOUNTS) {
-    if (discount.applies(order)) {
-      result = discount.apply(result);
-    }
-  }
-  return result;
-}
-
-function round(value: number): number {
+function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-// ---------------------------------------------------------------------------
-// Facade
-// ---------------------------------------------------------------------------
+function stage(hooks: PricingHooks, name: string, run: () => number): number {
+  hooks.beforeStage?.(name);
+  const result = run();
+  hooks.afterStage?.(name, result);
+  return result;
+}
+
+/** Application order matters: bulk, then multi-line, then loyalty. */
+function applyDiscounts(subtotal: number, order: Order): number {
+  let result = subtotal;
+
+  const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  if (totalQuantity >= 10) result *= 0.9;
+
+  const distinctNames = new Set(order.items.map((item) => item.name));
+  if (distinctNames.size >= 3) result *= 0.98;
+
+  if (order.loyaltyMember) result *= 0.95;
+
+  return result;
+}
 
 export class PricingFacade {
   private readonly vatRate: number;
@@ -103,11 +75,17 @@ export class PricingFacade {
   }
 
   price(order: Order): number {
-    let running = runStage(this.hooks, "subtotal", () => subtotal(order));
-    running = runStage(this.hooks, "discount", () => applyDiscounts(order, running));
-    running = runStage(this.hooks, "tax", () => running * (1 + this.vatRate));
-    running = runStage(this.hooks, "rounding", () => round(running));
-    return running;
+    const subtotal = stage(this.hooks, "subtotal", () =>
+      order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    );
+    const discounted = stage(this.hooks, "discount", () => applyDiscounts(subtotal, order));
+    const taxed = stage(this.hooks, "tax", () => discounted * (1 + this.vatRate));
+    return stage(this.hooks, "rounding", () => {
+      if (!SUPPORTED_CURRENCIES.includes(order.currency)) {
+        throw new Error(`no rounding policy for currency: ${order.currency}`);
+      }
+      return round2(taxed);
+    });
   }
 }
 
