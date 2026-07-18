@@ -27,8 +27,9 @@ function entry(id: string): ManifestEntry {
 }
 
 describe("manifest", () => {
-  it("has 3 arms x 3 orchestrator models = 9 entries", () => {
-    expect(entries.length).toBe(9);
+  it("has 3 arms x 3 orchestrator models, plus the all-opus skill cell = 10 entries", () => {
+    expect(entries.length).toBe(10);
+    expect(entry("e2c-skill-opus-opus").sandbox!["skills/rewrite.mdz"]).toContain("SPAWN opus-4-8");
     for (const e of entries) {
       expect(e.experiment).toBe("e2c");
       expect(e.runMode).toBe("agentic");

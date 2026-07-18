@@ -66,14 +66,15 @@ Language:
 // The rewrite skill
 // ---------------------------------------------------------------------------
 
-export const REWRITE_SKILL = `---
+export function rewriteSkill(worker: string): string {
+  return `---
 name: rewrite
 input: $file, $requirements
 ---
 
 $skeleton = the headings and captions of $file
 
-SPAWN ${WORKER_AGENT}
+SPAWN ${worker}
 WITH
   instruction: Apply the following requirements to this skeleton. Return a revised heading/caption list. $requirements#skeleton-assessment
   skeleton: $skeleton
@@ -81,7 +82,7 @@ WITH
 DO Apply the returned revisions to $file
 
 FOR $paragraph IN the paragraphs of $file
-  SPAWN ${WORKER_AGENT}
+  SPAWN ${worker}
   WITH
     instruction: Apply the following requirements to this paragraph. Verdict: DROP, KEEP, or a rewrite. $requirements#paragraph-by-paragraph-assessment
     paragraph: $paragraph
@@ -90,6 +91,12 @@ END
 
 RETURN $file
 `;
+}
+
+export const REWRITE_SKILL = rewriteSkill(WORKER_AGENT);
+
+/** The opus-worker variant runs only under the opus orchestrator. */
+export const OPUS_WORKER = "opus-4-8";
 
 // ---------------------------------------------------------------------------
 // Prompts — fed to the orchestrator directly, never written into the sandbox.
@@ -139,20 +146,29 @@ export function buildE2c(outDir: string): ManifestEntry[] {
 
   const entries: ManifestEntry[] = [];
 
+  // The skill arm also runs an all-opus cell: opus orchestrator, opus workers.
+  const cells: Array<{ form: "goal" | "ralph" | "skill"; model: string; worker: string; id: string }> = [];
   for (const form of ["goal", "ralph", "skill"] as const) {
     for (const model of ORCHESTRATOR_MODELS) {
-      const folder = join(dir, `${form}-${model}`);
+      cells.push({ form, model, worker: WORKER_AGENT, id: `e2c-${form}-${model}` });
+    }
+  }
+  cells.push({ form: "skill", model: "opus", worker: OPUS_WORKER, id: "e2c-skill-opus-opus" });
+
+  for (const { form, model, worker, id } of cells) {
+    {
+      const folder = join(dir, id.replace(/^e2c-/, ""));
       const sandbox: Record<string, string> = {
         "report.md": report,
         "requirements.md": REQUIREMENTS,
       };
-      if (form === "skill") sandbox["skills/rewrite.mdz"] = REWRITE_SKILL;
+      if (form === "skill") sandbox["skills/rewrite.mdz"] = rewriteSkill(worker);
       for (const [relPath, content] of Object.entries(sandbox)) {
         writeText(join(folder, relPath), content);
       }
 
       entries.push({
-        id: `e2c-${form}-${model}`,
+        id,
         experiment: "e2c",
         runMode: "agentic",
         programPath: rel(
@@ -165,6 +181,7 @@ export function buildE2c(outDir: string): ManifestEntry[] {
           form,
           orchestrator: model,
           paragraphs,
+          ...(form === "skill" ? { worker } : {}),
           ...(form === "ralph" ? { passes: PASSES } : {}),
         },
         expected: {
@@ -173,7 +190,7 @@ export function buildE2c(outDir: string): ManifestEntry[] {
           paragraphs,
           // Skill arm: one skeleton worker plus one per paragraph.
           workerSpawns: form === "skill" ? 1 + paragraphs : 0,
-          ...(form === "skill" ? { subagentType: WORKER_AGENT } : {}),
+          ...(form === "skill" ? { subagentType: worker } : {}),
         },
         sandbox,
         allowedTools: ALLOWED_TOOLS,
