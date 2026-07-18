@@ -195,7 +195,8 @@
       "iterations": 10,
       "seed": 1,
       "arm": "internal"
-    }
+    },
+    "timeoutMs": 900000
   },
   {
     "id": "e3-size800-seed1-chunked-store",
@@ -246,7 +247,8 @@
       "Read",
       "mcp__state__get",
       "mcp__state__set"
-    ]
+    ],
+    "timeoutMs": 1800000
   },
   {
     "id": "e3-size800-seed1-chunked-nostore",
@@ -294,7 +296,8 @@
     "allowedTools": [
       "Task",
       "Read"
-    ]
+    ],
+    "timeoutMs": 1800000
   },
   {
     "id": "e3-size800-seed2-internal",
@@ -310,7 +313,8 @@
       "iterations": 10,
       "seed": 2,
       "arm": "internal"
-    }
+    },
+    "timeoutMs": 900000
   },
   {
     "id": "e3-size800-seed2-chunked-store",
@@ -360,7 +364,8 @@
       "Read",
       "mcp__state__get",
       "mcp__state__set"
-    ]
+    ],
+    "timeoutMs": 1800000
   },
   {
     "id": "e3-size800-seed2-chunked-nostore",
@@ -407,6 +412,7 @@
     "allowedTools": [
       "Task",
       "Read"
-    ]
+    ],
+    "timeoutMs": 1800000
   }
 ]

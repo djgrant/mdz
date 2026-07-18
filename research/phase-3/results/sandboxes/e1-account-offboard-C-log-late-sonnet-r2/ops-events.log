@@ -1,0 +1,6 @@
+{"ts":"2026-05-14T09:01:30.000Z","tool":"ticket_update","args":{"comment":"Underway; checking retention terms first.","ticket_id":"TCK-8850","status":"in-progress"}}
+{"ts":"2026-05-14T09:03:00.000Z","tool":"record_note","args":{"text":"Thirty-day hold on exports understood; proceeding.","note_id":"NOTE-AO-1"}}
+{"ts":"2026-05-14T09:12:00.000Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: data export manifest prepared"}}
+{"ts":"2026-05-14T09:13:30.000Z","tool":"ticket_update","args":{"comment":"Gateway credentials disabled for this tenant.","ticket_id":"TCK-8851","status":"access-revoked"}}
+{"ts":"2026-05-14T09:15:00.000Z","tool":"email_send","args":{"to":"it@fernwood.example","subject":"Your Halcyon access has now ended"}}
+{"ts":"2026-05-14T09:18:00.000Z","tool":"refund_issue","args":{"order_id":"ORD-3320","amount":240}}

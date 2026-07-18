@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "state": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/Users/coder/Repos/djgrant/mdz/research/phase-3/src/harness/mcp-state-server.ts"
+      ],
+      "env": {
+        "STATE_LOG": "/var/folders/t8/bhx1lqx977df536xx99b4f480000gp/T/mdz-agentic-JW6zu6/.state-log.jsonl"
+      }
+    }
+  }
+}

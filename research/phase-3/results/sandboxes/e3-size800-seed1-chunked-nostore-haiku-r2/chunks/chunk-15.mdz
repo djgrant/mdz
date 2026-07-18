@@ -1,0 +1,25 @@
+$v113 = $v60 - 5
+Say $v20
+Say $v1
+Say "red"
+$v114 = 10
+WHILE $v114 != 0
+  Say $v114
+  $v114 = $v114 - 1
+END
+IF $v25 != 3 THEN
+  $v115 = 7
+  Say $v54
+ELSE
+  Say $v37
+  $v116 = $v1 * 2
+END
+IF $v111 < 3 THEN
+  $v117 = 9
+  $v118 = 1
+END
+$v119 = 4
+IF $v113 > 2 THEN
+  Say $v93
+  Say "blue"
+END

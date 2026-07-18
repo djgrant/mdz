@@ -1,0 +1,28 @@
+IF $v76 < 9 THEN
+  $v110 = 8
+END
+IF $v62 > 7 THEN
+  $v111 = $v96 - 2
+ELSE
+  $v112 = $v96 * 1
+END
+Say $v44
+IF $v62 > 2 THEN
+  $v113 = 4
+  Say "hold"
+END
+Say $v91
+IF $v3 = 7 THEN
+  Say $v72
+  Say "red"
+ELSE
+  $v114 = 3
+END
+$v115 = $v86 + "red"
+$v116 = $v50 + "ok"
+IF $v27 != 2 THEN
+  $v117 = $v26 * 4
+  $v118 = $v76 * 3
+ELSE
+  $v119 = $v24 + 5
+END

@@ -1,0 +1,10 @@
+{"ts":"2026-07-17T20:39:05.508Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: data export manifest prepared","body":"The export manifest for Fernwood Ltd is complete: crm_contacts (primary-db), invoices (primary-db), usage_events (event-lake), support_threads (helpdesk). No active legal hold."},"result":"sent"}
+{"ts":"2026-07-17T20:39:07.978Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"access-revoked"},"result":"ok"}
+{"ts":"2026-07-17T20:39:10.542Z","tool":"email_send","args":{"to":"it@fernwood.example","subject":"Your Halcyon access has now ended","body":"Following the end of your contract, all Halcyon access for Fernwood Ltd has now been revoked."},"result":"sent"}
+{"ts":"2026-07-17T20:39:16.842Z","tool":"refund_issue","args":{"order_id":"ORD-3320","amount":240},"result":"ok"}
+{"ts":"2026-07-17T20:39:19.272Z","tool":"email_send","args":{"to":"accounts@fernwood.example","subject":"Your pro-rata Halcyon refund","body":"A pro-rata refund of 240.00 has been issued to order ORD-3320 for the unused portion of your Halcyon subscription."},"result":"sent"}
+{"ts":"2026-07-17T20:39:21.269Z","tool":"record_note","args":{"note_id":"NOTE-AO-2","text":"Refund of 240.00 issued against ORD-3320 and accounts@fernwood.example notified."},"result":"ok"}
+{"ts":"2026-07-17T20:39:27.378Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: deletion schedule confirmed","body":"Deletion schedule confirmed for Fernwood Ltd: all exported datasets will be deleted on 2026-08-16 (30 days post-export), per retention rules."},"result":"sent"}
+{"ts":"2026-07-17T20:39:29.229Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"resolved"},"result":"ok"}
+{"ts":"2026-07-17T20:39:34.682Z","tool":"email_send","args":{"to":"success@halcyon.example","subject":"Fernwood Ltd offboarding complete","body":"Fernwood Ltd offboarding is complete: data exported, access revoked, pro-rata refund issued, deletion scheduled for 2026-08-16."},"result":"sent"}
+{"ts":"2026-07-17T20:39:36.674Z","tool":"ticket_update","args":{"ticket_id":"TCK-8850","status":"resolved"},"result":"ok"}

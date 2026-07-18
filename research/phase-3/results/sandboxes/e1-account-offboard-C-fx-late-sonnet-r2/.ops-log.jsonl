@@ -1,0 +1,7 @@
+{"ts":"2026-07-17T21:08:22.618Z","tool":"ops_lookup","args":{},"result":"all"}
+{"ts":"2026-07-17T21:08:31.059Z","tool":"email_send","args":{"to":"accounts@fernwood.example","subject":"Your pro-rata Halcyon refund","body":"Your pro-rata refund of 240.00 has been issued to order ORD-3320 following the closure of your Halcyon contract."},"result":"sent"}
+{"ts":"2026-07-17T21:08:33.802Z","tool":"record_note","args":{"note_id":"NOTE-AO-2","text":"Pro-rata refund of 240.00 issued to ORD-3320 and Fernwood Ltd notified at accounts@fernwood.example."},"result":"ok"}
+{"ts":"2026-07-17T21:08:41.239Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: deletion schedule confirmed","body":"Deletion schedule confirmed: exported datasets will be deleted on 2026-08-16, 30 days after export preparation, per retention rules."},"result":"sent"}
+{"ts":"2026-07-17T21:08:43.952Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"resolved"},"result":"ok"}
+{"ts":"2026-07-17T21:08:50.196Z","tool":"email_send","args":{"to":"success@halcyon.example","subject":"Fernwood Ltd offboarding complete","body":"Fernwood Ltd offboarding is complete: data exported, access revoked, pro-rata refund issued, and deletion scheduled for 2026-08-16."},"result":"sent"}
+{"ts":"2026-07-17T21:08:52.422Z","tool":"ticket_update","args":{"ticket_id":"TCK-8850","status":"resolved"},"result":"ok"}

@@ -1,0 +1,5 @@
+{
+  "batch_window": "02:00-04:00",
+  "retry_limit": 3,
+  "double_charge_guard": true
+}

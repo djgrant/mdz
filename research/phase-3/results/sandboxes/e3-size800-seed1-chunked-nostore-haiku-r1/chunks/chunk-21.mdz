@@ -1,0 +1,25 @@
+Say "blue"
+$v164 = $v0 - 1
+IF $v113 != 8 THEN
+  Say $v26
+  $v165 = 9
+END
+$v166 = $v86 + "next"
+$v167 = $v54 + 3
+Say $v19
+$v168 = $v2 + "ok"
+$v169 = 0
+Say $v134
+Say $v49
+Say $v148
+IF $v90 < 5 THEN
+  $v170 = $v52 * 2
+  $v171 = $v50 * 3
+END
+FOR $v172 IN [5, 3, 0, 3, 2, 2, 1, 5, 8, 1]
+  Say $v172
+END
+$v173 = 9
+$v174 = $v150 + "hold"
+$v175 = "draft"
+Say $v153

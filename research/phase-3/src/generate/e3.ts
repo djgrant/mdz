@@ -185,6 +185,13 @@ export function buildE3(outDir: string): ManifestEntry[] {
         seed,
       };
 
+      // Breakdown-size runs need headroom: an 800-statement trace does not
+      // fit in the 4-minute single-turn default, and its ~22 chunk workers
+      // do not fit in the 10-minute agentic default. "Ran out of time" must
+      // not masquerade as "cannot execute at this size".
+      const internalTimeout = statements >= 800 ? { timeoutMs: 900 * 1000 } : {};
+      const chunkedTimeout = statements >= 800 ? { timeoutMs: 1800 * 1000 } : {};
+
       entries.push({
         id: `e3-${stem}-internal`,
         experiment: "e3",
@@ -193,6 +200,7 @@ export function buildE3(outDir: string): ManifestEntry[] {
         tracePath: rel(tracePath),
         prompt: buildPrompt({ program: source, variant: "standard" }),
         variant: { ...baseVariant, arm: "internal" },
+        ...internalTimeout,
       });
 
       entries.push({
@@ -207,6 +215,7 @@ export function buildE3(outDir: string): ManifestEntry[] {
         sandbox,
         mcp: "state",
         allowedTools: ["Task", "Read", "mcp__state__get", "mcp__state__set"],
+        ...chunkedTimeout,
       });
 
       entries.push({
@@ -220,6 +229,7 @@ export function buildE3(outDir: string): ManifestEntry[] {
         expected: { chunkCount: chunks.length },
         sandbox,
         allowedTools: ["Task", "Read"],
+        ...chunkedTimeout,
       });
     }
   }

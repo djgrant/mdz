@@ -1,0 +1,27 @@
+$v53 = 3
+IF $v17 < 4 THEN
+  Say $v21
+  $v54 = 9
+ELSE
+  $v55 = $v27 * 1
+END
+Say $v17
+$v56 = $v45 + 4
+$v57 = "ok"
+Say $v16
+Say "done"
+IF $v38 < 1 THEN
+  $v58 = 8
+  Say $v21
+ELSE
+  Say $v2
+END
+CASE $v57
+WHEN "next"
+  $v59 = $v48 + 4
+  $v60 = $v18 - 4
+WHEN "next"
+  $v61 = 6
+ELSE
+  Say $v18
+END

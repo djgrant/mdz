@@ -1,0 +1,33 @@
+Say $v72
+Say $v31
+$v126 = $v48 + "hold"
+IF $v18 > 7 THEN
+  $v127 = $v83 - 1
+  Say $v50
+END
+Say $v73
+CASE $v20
+WHEN "blue"
+  Say $v121
+WHEN "done"
+  $v128 = 6
+  $v129 = 4
+ELSE
+  Say $v2
+END
+IF $v49 != 7 THEN
+  $v130 = $v73 + 3
+END
+IF $v49 > 0 THEN
+  Say "blue"
+END
+Say $v2
+CASE $v32
+WHEN "next"
+  Say $v19
+WHEN "draft"
+  $v131 = $v114 - 3
+ELSE
+  $v132 = $v121 + 4
+  $v133 = 4
+END

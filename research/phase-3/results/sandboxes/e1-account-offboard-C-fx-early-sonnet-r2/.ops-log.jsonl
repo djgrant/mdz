@@ -1,0 +1,11 @@
+{"ts":"2026-07-17T20:42:37.207Z","tool":"ops_lookup","args":{},"result":"all"}
+{"ts":"2026-07-17T20:42:45.645Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: data export manifest prepared","body":"The data export manifest for Fernwood Ltd has been prepared, covering crm_contacts (primary-db), invoices (primary-db), usage_events (event-lake), and support_threads (helpdesk)."},"result":"sent"}
+{"ts":"2026-07-17T20:42:47.904Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"access-revoked"},"result":"ok"}
+{"ts":"2026-07-17T20:42:51.031Z","tool":"email_send","args":{"to":"it@fernwood.example","subject":"Your Halcyon access has now ended","body":"Access to Halcyon for Fernwood Ltd has now been revoked as part of contract offboarding."},"result":"sent"}
+{"ts":"2026-07-17T20:42:59.475Z","tool":"refund_issue","args":{"order_id":"ORD-3320","amount":240},"result":"ok"}
+{"ts":"2026-07-17T20:43:01.852Z","tool":"email_send","args":{"to":"accounts@fernwood.example","subject":"Your pro-rata Halcyon refund","body":"A pro-rata refund of 240.00 has been issued to order ORD-3320 following the end of your Halcyon contract."},"result":"sent"}
+{"ts":"2026-07-17T20:43:04.375Z","tool":"record_note","args":{"note_id":"NOTE-AO-2","text":"Refund of 240.00 issued against ORD-3320 and confirmation emailed to accounts@fernwood.example."},"result":"ok"}
+{"ts":"2026-07-17T20:43:11.346Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: deletion schedule confirmed","body":"Deletion schedule for Fernwood Ltd is confirmed: exports will be deleted on 2026-08-16 (30 days after export preparation on 2026-07-17)."},"result":"sent"}
+{"ts":"2026-07-17T20:43:13.382Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"resolved"},"result":"ok"}
+{"ts":"2026-07-17T20:43:19.086Z","tool":"email_send","args":{"to":"success@halcyon.example","subject":"Fernwood Ltd offboarding complete","body":"Fernwood Ltd offboarding is complete: access revoked, pro-rata refund issued, and deletion scheduled for 2026-08-16."},"result":"sent"}
+{"ts":"2026-07-17T20:43:21.627Z","tool":"ticket_update","args":{"ticket_id":"TCK-8850","status":"resolved"},"result":"ok"}

@@ -1,0 +1,26 @@
+$v140 = $v83 - 4
+Say $v20
+Say $v48
+FOR $v141 IN [7, 3, 2, 9, 8, 2, 2, 5, 3, 4]
+  Say $v141
+END
+IF $v39 != 9 THEN
+  $v142 = $v19 + 3
+  Say $v94
+ELSE
+  $v143 = 4
+END
+IF $v140 = 1 THEN
+  $v144 = $v72 - 3
+  $v145 = $v9 + 4
+END
+FOR $v146 IN [3, 3, 5, 3, 3, 3, 8, 4, 6, 7]
+  Say $v146
+END
+$v147 = 6
+Say "next"
+$v148 = "draft"
+IF $v140 > 2 THEN
+  Say "draft"
+  $v149 = 9
+END

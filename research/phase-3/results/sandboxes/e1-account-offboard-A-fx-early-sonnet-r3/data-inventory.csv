@@ -1,0 +1,5 @@
+dataset,records,store
+crm_contacts,1842,primary-db
+invoices,412,primary-db
+usage_events,98214,event-lake
+support_threads,167,helpdesk

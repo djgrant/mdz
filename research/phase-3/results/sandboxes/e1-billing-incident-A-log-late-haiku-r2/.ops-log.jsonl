@@ -1,0 +1,6 @@
+{"ts":"2026-07-17T15:12:54.519Z","tool":"email_send","args":{"to":"jonas.beck@quillmail.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T15:12:55.102Z","tool":"refund_issue","args":{"order_id":"ORD-5503","amount":39.98},"result":"ok"}
+{"ts":"2026-07-17T15:12:55.635Z","tool":"email_send","args":{"to":"priya.nair@lumenpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T15:13:04.101Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"refunds-complete"},"result":"ok"}
+{"ts":"2026-07-17T15:13:04.624Z","tool":"email_send","args":{"to":"finance@brightloom.example","subject":"Billing incident TCK-2201: refunds summary"},"result":"sent"}
+{"ts":"2026-07-17T15:13:07.803Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"resolved"},"result":"ok"}

@@ -1,0 +1,28 @@
+$v31 = $v2 + "next"
+$v32 = $v2 + "next"
+Say $v18
+Say $v9
+IF $v19 = 7 THEN
+  Say $v23
+END
+$v33 = $v9 * 3
+Say "blue"
+FOR $v34 IN [6, 6, 5, 9, 3, 9, 0, 4, 2, 0]
+  Say $v34
+END
+$v35 = 3
+Say "done"
+FOR $v36 IN [5, 5, 3, 9, 6, 5, 4, 0, 4, 1]
+  Say $v36
+END
+$v37 = $v9 - 2
+IF $v0 != 1 THEN
+  $v38 = $v25 - 1
+ELSE
+  Say $v9
+END
+$v39 = 10
+WHILE $v39 != 0
+  Say $v39
+  $v39 = $v39 - 1
+END

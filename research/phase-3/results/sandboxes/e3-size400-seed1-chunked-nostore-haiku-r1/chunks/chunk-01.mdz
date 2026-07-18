@@ -1,0 +1,31 @@
+$v0 = 6
+$v1 = $v0 * 5
+$v2 = "ok"
+IF $v0 != 4 THEN
+  IF $v1 != 4 THEN
+    Say $v2
+  END
+END
+FOR $v3 IN [1, 4, 0, 3, 7, 2, 1, 0, 4, 5]
+  Say $v3
+END
+Say $v0
+$v4 = 1
+Say $v2
+Say $v2
+IF $v4 = 7 THEN
+  $v5 = $v0 * 3
+ELSE
+  $v6 = 8
+END
+CASE $v2
+WHEN "blue"
+  Say $v2
+  Say "draft"
+WHEN "draft"
+  $v7 = 5
+  Say $v0
+ELSE
+  Say $v2
+  $v8 = $v0 - 2
+END

@@ -1,0 +1,14 @@
+{"ts":"2026-07-17T15:13:39.782Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"in-progress"},"result":"ok"}
+{"ts":"2026-07-17T15:13:40.151Z","tool":"record_note","args":{"note_id":"NOTE-BI-1","text":"Ownership of billing incident remediation confirmed. Beginning remediation process for duplicate charge fault affecting three customers."},"result":"ok"}
+{"ts":"2026-07-17T15:13:43.629Z","tool":"deploy_service","args":{"service":"billing-api","version":"v3.4.1"},"result":"deployed"}
+{"ts":"2026-07-17T15:13:46.778Z","tool":"ops_lookup","args":{"entity":"deploys"},"result":"deploys"}
+{"ts":"2026-07-17T15:13:47.382Z","tool":"record_note","args":{"note_id":"NOTE-BI-2","text":"Billing-api deployed to v3.4.1. Double-charge guard is now live and active."},"result":"ok"}
+{"ts":"2026-07-17T15:13:52.061Z","tool":"refund_issue","args":{"order_id":"ORD-5501","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T15:13:52.742Z","tool":"email_send","args":{"to":"amara.osei@fernpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T15:13:53.184Z","tool":"refund_issue","args":{"order_id":"ORD-5502","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T15:13:53.631Z","tool":"email_send","args":{"to":"jonas.beck@quillmail.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T15:13:54.070Z","tool":"refund_issue","args":{"order_id":"ORD-5503","amount":39.98},"result":"ok"}
+{"ts":"2026-07-17T15:13:54.459Z","tool":"email_send","args":{"to":"priya.nair@lumenpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T15:14:05.513Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"refunds-complete"},"result":"ok"}
+{"ts":"2026-07-17T15:14:06.930Z","tool":"email_send","args":{"to":"finance@brightloom.example","subject":"Billing incident TCK-2201: refunds summary","body":"Three refunds have been issued for the duplicate-charge incident from the 12 May billing batch run:\n\n- ORD-5501: $19.99\n- ORD-5502: $19.99\n- ORD-5503: $39.98\n\nTotal: $79.96\n\nAll affected customers have been notified. The double-charge guard has been re-enabled and billing-api has been deployed to v3.4.1."},"result":"sent"}
+{"ts":"2026-07-17T15:14:09.297Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"resolved"},"result":"ok"}

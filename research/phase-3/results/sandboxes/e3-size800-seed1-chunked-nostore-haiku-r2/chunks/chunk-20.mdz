@@ -1,0 +1,30 @@
+$v150 = $v106 + "red"
+Say $v18
+$v151 = "draft"
+$v152 = 6
+$v153 = $v111 + 2
+IF $v152 != 7 THEN
+  $v154 = 2
+  Say $v20
+ELSE
+  $v155 = $v25 + 3
+  $v156 = 3
+END
+Say $v106
+$v157 = $v151 + "red"
+Say $v33
+FOR $v158 IN [6, 2, 4, 9, 5, 7, 6, 6, 2, 5]
+  Say $v158
+END
+$v159 = $v2 + "done"
+Say "ok"
+IF $v55 = 3 THEN
+  $v160 = $v45 - 5
+  $v161 = 0
+END
+IF $v18 < 6 THEN
+  Say $v35
+ELSE
+  $v162 = 0
+  $v163 = $v121 - 4
+END

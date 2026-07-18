@@ -1,0 +1,31 @@
+$v146 = $v1 * 1
+Say $v49
+$v147 = 5
+$v148 = "red"
+IF $v49 = 1 THEN
+  Say $v45
+  $v149 = $v24 + 3
+END
+CASE $v133
+WHEN "red"
+  Say "blue"
+  Say $v56
+WHEN "next"
+  $v150 = $v49 - 2
+ELSE
+  Say $v76
+END
+IF $v76 < 7 THEN
+  $v151 = $v106 + 2
+  $v152 = 9
+END
+Say "ok"
+CASE $v50
+WHEN "red"
+  $v153 = $v146 - 3
+WHEN "next"
+  $v154 = 9
+  $v155 = 3
+ELSE
+  $v156 = 0
+END

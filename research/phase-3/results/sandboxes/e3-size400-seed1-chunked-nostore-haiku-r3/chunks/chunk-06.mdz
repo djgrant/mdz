@@ -1,0 +1,26 @@
+$v40 = $v26 + "red"
+CASE $v20
+WHEN "draft"
+  Say $v0
+  $v41 = $v28 * 5
+WHEN "red"
+  $v42 = $v9 * 1
+  $v43 = 8
+ELSE
+  Say $v39
+END
+IF $v18 != 6 THEN
+  $v44 = 4
+END
+Say $v1
+Say $v25
+Say $v25
+$v45 = 10
+WHILE $v45 != 0
+  Say $v45
+  $v45 = $v45 - 1
+END
+Say $v26
+FOR $v46 IN [8, 4, 7, 1, 2, 3, 6, 3, 5, 4]
+  Say $v46
+END

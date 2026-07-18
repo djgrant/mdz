@@ -1,0 +1,26 @@
+$v134 = $v9 * 4
+Say $v126
+IF $v55 < 4 THEN
+  $v135 = 4
+ELSE
+  Say $v121
+  Say $v79
+END
+Say $v23
+Say $v55
+IF $v60 > 4 THEN
+  $v136 = $v50 - 2
+  $v137 = $v28 * 2
+ELSE
+  Say $v72
+  Say $v106
+END
+CASE $v100
+WHEN "blue"
+  Say $v47
+WHEN "blue"
+  $v138 = $v52 * 1
+  Say "ok"
+ELSE
+  $v139 = 8
+END

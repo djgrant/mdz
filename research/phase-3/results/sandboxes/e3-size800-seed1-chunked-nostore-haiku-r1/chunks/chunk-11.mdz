@@ -1,0 +1,26 @@
+FOR $v81 IN [6, 3, 9, 7, 2, 2, 3, 2, 6, 0]
+  Say $v81
+END
+FOR $v82 IN [9, 4, 3, 6, 7, 3, 7, 9, 6, 0]
+  Say $v82
+END
+$v83 = $v35 * 3
+CASE $v48
+WHEN "draft"
+  Say "draft"
+WHEN "blue"
+  Say $v4
+ELSE
+  $v84 = 3
+  $v85 = $v35 * 4
+END
+$v86 = "ok"
+Say $v72
+FOR $v87 IN [8, 4, 7, 6, 6, 8, 2, 3, 3, 7]
+  Say $v87
+END
+$v88 = 6
+IF $v70 = 1 THEN
+  Say $v49
+  $v89 = 3
+END

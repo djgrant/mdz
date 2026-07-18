@@ -1,0 +1,6 @@
+Say $v50
+$v73 = 10
+WHILE $v73 != 0
+  Say $v73
+  $v73 = $v73 - 1
+END

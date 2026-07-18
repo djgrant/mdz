@@ -1,0 +1,10 @@
+{"ts":"2026-07-17T20:26:36.616Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: data export manifest prepared"},"result":"sent"}
+{"ts":"2026-07-17T20:26:39.392Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"access-revoked"},"result":"ok"}
+{"ts":"2026-07-17T20:26:39.979Z","tool":"email_send","args":{"to":"it@fernwood.example","subject":"Your Halcyon access has now ended"},"result":"sent"}
+{"ts":"2026-07-17T20:26:46.431Z","tool":"refund_issue","args":{"order_id":"ORD-3320","amount":240},"result":"ok"}
+{"ts":"2026-07-17T20:26:49.040Z","tool":"email_send","args":{"to":"accounts@fernwood.example","subject":"Your pro-rata Halcyon refund"},"result":"sent"}
+{"ts":"2026-07-17T20:26:49.565Z","tool":"record_note","args":{"note_id":"NOTE-AO-2","text":"Pro-rata refund of 240.00 issued against ORD-3320 and customer notified."},"result":"ok"}
+{"ts":"2026-07-17T20:26:57.529Z","tool":"email_send","args":{"to":"dpo@halcyon.example","subject":"Fernwood Ltd: deletion schedule confirmed"},"result":"sent"}
+{"ts":"2026-07-17T20:26:57.834Z","tool":"ticket_update","args":{"ticket_id":"TCK-8851","status":"resolved"},"result":"ok"}
+{"ts":"2026-07-17T20:27:03.617Z","tool":"email_send","args":{"to":"success@halcyon.example","subject":"Fernwood Ltd offboarding complete"},"result":"sent"}
+{"ts":"2026-07-17T20:27:03.875Z","tool":"ticket_update","args":{"ticket_id":"TCK-8850","status":"resolved"},"result":"ok"}

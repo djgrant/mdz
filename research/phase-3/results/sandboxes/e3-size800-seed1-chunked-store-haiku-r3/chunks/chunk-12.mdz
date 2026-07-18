@@ -1,0 +1,25 @@
+$v90 = $v28 - 4
+IF $v54 = 6 THEN
+  $v91 = $v60 + 5
+ELSE
+  Say $v39
+  $v92 = $v37 * 4
+END
+$v93 = 10
+WHILE $v93 != 0
+  Say $v93
+  $v93 = $v93 - 1
+END
+Say $v2
+Say $v83
+$v94 = "hold"
+Say $v53
+FOR $v95 IN [2, 8, 1, 2, 5, 0, 9, 7, 8, 5]
+  Say $v95
+END
+FOR $v96 IN [9, 1, 6, 0, 7, 6, 2, 7, 5, 8]
+  Say $v96
+END
+FOR $v97 IN [2, 3, 7, 6, 6, 0, 8, 8, 2, 6]
+  Say $v97
+END

@@ -1,0 +1,25 @@
+$v47 = 10
+WHILE $v47 != 0
+  Say $v47
+  $v47 = $v47 - 1
+END
+$v48 = "draft"
+Say $v4
+$v49 = 10
+WHILE $v49 != 0
+  Say $v49
+  $v49 = $v49 - 1
+END
+$v50 = $v19 * 5
+Say $v28
+FOR $v51 IN [1, 5, 0, 0, 3, 4, 2, 6, 2, 0]
+  Say $v51
+END
+$v52 = 8
+$v53 = 10
+WHILE $v53 != 0
+  Say $v53
+  $v53 = $v53 - 1
+END
+$v54 = 0
+$v55 = $v49 * 2

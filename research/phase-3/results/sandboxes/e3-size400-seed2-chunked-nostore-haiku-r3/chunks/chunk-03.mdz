@@ -1,0 +1,27 @@
+Say $v2
+IF $v0 > 6 THEN
+  $v14 = $v0 * 2
+ELSE
+  $v15 = $v0 * 4
+  Say $v1
+END
+$v16 = $v2 + "ok"
+$v17 = 10
+WHILE $v17 != 0
+  Say $v17
+  $v17 = $v17 - 1
+END
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+Say $v2
+IF $v0 < 3 THEN
+  $v19 = 0
+  $v20 = $v19 + 4
+END
+$v21 = $v16 + "blue"
+IF $v3 < 6 THEN
+  $v22 = 5
+END

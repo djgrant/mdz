@@ -37,7 +37,7 @@
       "Edit",
       "Bash"
     ],
-    "timeoutMs": 1500000
+    "timeoutMs": 2400000
   },
   {
     "id": "e2b-pricing-goal",
@@ -73,7 +73,7 @@
       "Edit",
       "Bash"
     ],
-    "timeoutMs": 1500000
+    "timeoutMs": 2400000
   },
   {
     "id": "e2b-pricing-ralph",
@@ -150,7 +150,7 @@
       "Edit",
       "Bash"
     ],
-    "timeoutMs": 1500000
+    "timeoutMs": 2400000
   },
   {
     "id": "e2b-report-goal",
@@ -186,7 +186,7 @@
       "Edit",
       "Bash"
     ],
-    "timeoutMs": 1500000
+    "timeoutMs": 2400000
   },
   {
     "id": "e2b-report-ralph",

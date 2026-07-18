@@ -1,0 +1,3 @@
+cve,severity,ticket,status
+CVE-2025-99841,medium,TCK-9410,closed
+CVE-2026-30117,high,TCK-9902,patched

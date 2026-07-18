@@ -494,11 +494,12 @@ async function executeJob(job: Job): Promise<ResultRecord> {
   }
 
   // Single-turn: verbatim prompt, all tools disabled.
+  const singleTurnTimeoutMs = entry.timeoutMs ?? SINGLE_TURN_TIMEOUT_MS;
   let run: RunResult;
   if (model.provider === "claude") {
-    run = await runClaude(entry.prompt, model.cliModel, { timeoutMs: SINGLE_TURN_TIMEOUT_MS });
+    run = await runClaude(entry.prompt, model.cliModel, { timeoutMs: singleTurnTimeoutMs });
   } else {
-    run = await runCodex(entry.prompt, model.cliModel, { timeoutMs: SINGLE_TURN_TIMEOUT_MS });
+    run = await runCodex(entry.prompt, model.cliModel, { timeoutMs: singleTurnTimeoutMs });
   }
   return {
     ...base,

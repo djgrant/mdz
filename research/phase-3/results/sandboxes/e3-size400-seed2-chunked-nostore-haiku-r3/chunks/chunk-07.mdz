@@ -1,0 +1,28 @@
+FOR $v47 IN [0, 2, 3, 1, 5, 9, 2, 6, 5, 0]
+  Say $v47
+END
+$v48 = 8
+$v49 = $v1 * 5
+Say $v17
+Say $v25
+Say $v39
+Say $v44
+Say $v3
+IF $v1 != 3 THEN
+  Say $v35
+END
+$v50 = $v44 + "blue"
+IF $v40 < 4 THEN
+  Say $v49
+  $v51 = $v0 - 3
+ELSE
+  Say $v1
+  Say $v25
+END
+Say $v45
+Say $v45
+$v52 = 10
+WHILE $v52 != 0
+  Say $v52
+  $v52 = $v52 - 1
+END

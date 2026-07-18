@@ -247,8 +247,9 @@ export function buildE2b(outDir: string): ManifestEntry[] {
         ...(arm === "ralph" ? { passes: PASSES } : {}),
         // The skill and goal arms carry the whole pipeline (9 workers + a
         // judge, or 3 in-context iterations) over a ~400-line module in one
-        // session; the default 10-minute cap times them out on haiku.
-        ...(arm === "ralph" ? {} : { timeoutMs: 1500 * 1000 }),
+        // session; the default 10-minute cap times them out on haiku, and
+        // sonnet's diligent full pipelines exceeded 25 minutes twice.
+        ...(arm === "ralph" ? {} : { timeoutMs: 2400 * 1000 }),
       });
     }
   }

@@ -1,0 +1,31 @@
+Say $v55
+$v106 = $v32 + "ok"
+CASE $v40
+WHEN "red"
+  $v107 = $v90 + 3
+WHEN "blue"
+  Say "red"
+ELSE
+  $v108 = $v99 * 2
+  Say $v83
+END
+IF $v18 > 2 THEN
+  $v109 = $v33 + 3
+  $v110 = $v19 * 1
+END
+Say $v2
+$v111 = 10
+WHILE $v111 != 0
+  Say $v111
+  $v111 = $v111 - 1
+END
+Say $v79
+CASE $v26
+WHEN "red"
+  $v112 = $v25 * 3
+  Say $v50
+WHEN "blue"
+  Say $v19
+ELSE
+  Say $v106
+END

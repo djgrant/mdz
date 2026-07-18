@@ -1,0 +1,14 @@
+{"ts":"2026-07-17T14:51:02.454Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"in-progress"},"result":"ok"}
+{"ts":"2026-07-17T14:51:02.955Z","tool":"record_note","args":{"note_id":"NOTE-BI-1","text":"Incident ownership confirmed. Beginning remediation for billing duplicate-charge fault."},"result":"ok"}
+{"ts":"2026-07-17T14:51:15.196Z","tool":"deploy_service","args":{"service":"billing-api","version":"v3.4.1"},"result":"deployed"}
+{"ts":"2026-07-17T14:51:18.067Z","tool":"ops_lookup","args":{"entity":"deploys"},"result":"deploys"}
+{"ts":"2026-07-17T14:51:21.019Z","tool":"record_note","args":{"note_id":"NOTE-BI-2","text":"Double-charge guard fix deployed successfully. billing-api running v3.4.1."},"result":"ok"}
+{"ts":"2026-07-17T14:51:29.631Z","tool":"refund_issue","args":{"order_id":"ORD-5501","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T14:51:29.954Z","tool":"refund_issue","args":{"order_id":"ORD-5502","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T14:51:30.207Z","tool":"refund_issue","args":{"order_id":"ORD-5503","amount":39.98},"result":"ok"}
+{"ts":"2026-07-17T14:51:30.479Z","tool":"email_send","args":{"to":"amara.osei@fernpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T14:51:30.737Z","tool":"email_send","args":{"to":"jonas.beck@quillmail.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T14:51:31.048Z","tool":"email_send","args":{"to":"priya.nair@lumenpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T14:51:42.767Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"refunds-complete"},"result":"ok"}
+{"ts":"2026-07-17T14:51:43.090Z","tool":"email_send","args":{"to":"finance@brightloom.example","subject":"Billing incident TCK-2201: refunds summary"},"result":"sent"}
+{"ts":"2026-07-17T14:51:45.603Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"resolved"},"result":"ok"}

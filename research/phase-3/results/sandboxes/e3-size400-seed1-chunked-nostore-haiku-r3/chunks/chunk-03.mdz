@@ -1,0 +1,25 @@
+Say $v4
+$v18 = 10
+WHILE $v18 != 0
+  Say $v18
+  $v18 = $v18 - 1
+END
+$v19 = 5
+$v20 = $v2 + "next"
+IF $v18 != 2 THEN
+  $v21 = 2
+  Say "draft"
+ELSE
+  Say $v18
+END
+IF $v1 = 9 THEN
+  Say $v13
+  $v22 = $v9 - 2
+END
+$v23 = $v0 - 2
+IF $v23 < 0 THEN
+  Say $v0
+  $v24 = $v18 - 4
+END
+Say "draft"
+Say $v19

@@ -1,0 +1,28 @@
+Say $v50
+$v73 = 10
+WHILE $v73 != 0
+  Say $v73
+  $v73 = $v73 - 1
+END
+Say "hold"
+IF $v52 < 0 THEN
+  $v74 = $v9 - 3
+  $v75 = $v74 - 1
+END
+Say $v2
+Say "blue"
+IF $v70 != 5 THEN
+  $v76 = 5
+  Say $v76
+ELSE
+  $v77 = $v33 + 1
+  $v78 = $v52 + 2
+END
+Say $v39
+$v79 = $v49 - 3
+IF $v49 < 7 THEN
+  Say $v19
+ELSE
+  $v80 = $v73 + 1
+  Say $v18
+END

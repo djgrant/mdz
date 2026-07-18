@@ -1,0 +1,32 @@
+---
+name: simplify
+input: $file, $n
+---
+
+# Simplify
+
+Iteratively simplify the code in $file without changing its behaviour: each
+iteration diverges along three heuristics and selects, and a fresh-context
+judge picks the best iteration at the end.
+
+$heuristics = ["make it more direct", "make it more obvious", "make it smaller"]
+$code = the contents of $file
+$iterations = []
+
+FOR $i IN [1 .. $n]
+  $simplified = USE ~/skills/map-reduce
+  WITH
+    worker: general
+    items: $heuristics
+    map: Simplify this code, pushing in one direction: {$item}. Preserve the module's behaviour and public interface exactly; its test suite must still pass. Return the complete revised file, nothing else. Code: {$code}
+    reduce: Pick the candidate that most improves the code, or merge two if they compose cleanly: simpler, clearer, behaviour unchanged. Return one file.
+  Append $simplified to $iterations
+  $code = $simplified
+END
+
+$winner = SPAWN general
+WITH
+  instruction: Compare these versions of the same module and return the best one: the simplest version that is still clear, complete, and behaviour-preserving. The winner need not be the last.
+  iterations: $iterations
+
+RETURN $winner

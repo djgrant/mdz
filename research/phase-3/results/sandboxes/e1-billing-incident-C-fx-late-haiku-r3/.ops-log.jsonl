@@ -1,0 +1,14 @@
+{"ts":"2026-07-17T19:31:24.865Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"in-progress"},"result":"ok"}
+{"ts":"2026-07-17T19:31:27.514Z","tool":"record_note","args":{"note_id":"NOTE-BI-1","text":"Incident ownership confirmed. Beginning remediation of duplicate billing charges from May 12."},"result":"ok"}
+{"ts":"2026-07-17T19:31:37.242Z","tool":"deploy_service","args":{"service":"billing-api","version":"v3.4.1"},"result":"deployed"}
+{"ts":"2026-07-17T19:31:39.771Z","tool":"ops_lookup","args":{"entity":"deploys"},"result":"deploys"}
+{"ts":"2026-07-17T19:31:42.452Z","tool":"record_note","args":{"note_id":"NOTE-BI-2","text":"Guard fix deployed and live. billing-api running v3.4.1 with double_charge_guard enabled."},"result":"ok"}
+{"ts":"2026-07-17T19:31:48.997Z","tool":"refund_issue","args":{"order_id":"ORD-5501","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T19:31:51.879Z","tool":"email_send","args":{"to":"amara.osei@fernpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T19:31:54.327Z","tool":"refund_issue","args":{"order_id":"ORD-5502","amount":19.99},"result":"ok"}
+{"ts":"2026-07-17T19:31:56.778Z","tool":"email_send","args":{"to":"jonas.beck@quillmail.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T19:31:59.351Z","tool":"refund_issue","args":{"order_id":"ORD-5503","amount":39.98},"result":"ok"}
+{"ts":"2026-07-17T19:32:01.739Z","tool":"email_send","args":{"to":"priya.nair@lumenpost.example","subject":"Your Brightloom refund has been issued"},"result":"sent"}
+{"ts":"2026-07-17T19:32:10.051Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"refunds-complete"},"result":"ok"}
+{"ts":"2026-07-17T19:32:13.717Z","tool":"email_send","args":{"to":"finance@brightloom.example","subject":"Billing incident TCK-2201: refunds summary","body":"All refunds for billing incident TCK-2201 have been issued and customers notified. Three orders were affected with total refunds of $79.96. See refunds-summary.md for details."},"result":"sent"}
+{"ts":"2026-07-17T19:32:16.234Z","tool":"ticket_update","args":{"ticket_id":"TCK-2201","status":"resolved"},"result":"ok"}

@@ -1,0 +1,29 @@
+IF $v49 != 9 THEN
+  $v103 = $v24 * 3
+END
+IF $v26 = 9 THEN
+  Say $v52
+END
+Say $v27
+Say $v16
+FOR $v104 IN [2, 6, 5, 5, 8, 9, 2, 6, 4, 7]
+  Say $v104
+END
+Say $v27
+FOR $v105 IN [8, 6, 9, 3, 8, 6, 6, 9, 0, 5]
+  Say $v105
+END
+$v106 = 10
+WHILE $v106 != 0
+  Say $v106
+  $v106 = $v106 - 1
+END
+CASE $v16
+WHEN "blue"
+  Say $v2
+WHEN "done"
+  $v107 = $v102 + 2
+  $v108 = 7
+ELSE
+  $v109 = $v17 - 5
+END

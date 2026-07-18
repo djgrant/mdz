@@ -1,0 +1,27 @@
+Say "hold"
+Say $v39
+CASE $v13
+WHEN "hold"
+  $v56 = $v52 - 4
+  $v57 = 5
+WHEN "draft"
+  $v58 = 0
+ELSE
+  $v59 = $v0 - 4
+  Say "draft"
+END
+Say $v52
+$v60 = 10
+WHILE $v60 != 0
+  Say $v60
+  $v60 = $v60 - 1
+END
+IF $v39 = 3 THEN
+  $v61 = 8
+  $v62 = $v60 * 1
+END
+IF $v60 > 2 THEN
+  $v63 = $v39 + 5
+ELSE
+  $v64 = $v25 + 4
+END

@@ -1,0 +1,28 @@
+$v25 = 10
+WHILE $v25 != 0
+  Say $v25
+  $v25 = $v25 - 1
+END
+IF $v19 < 8 THEN
+  Say $v0
+END
+$v26 = $v13 + "next"
+FOR $v27 IN [8, 7, 0, 1, 7, 0, 8, 9, 3, 9]
+  Say $v27
+END
+Say $v19
+$v28 = $v1 * 4
+IF $v28 != 6 THEN
+  Say $v1
+  Say $v0
+END
+CASE $v2
+WHEN "blue"
+  Say "ok"
+WHEN "blue"
+  Say $v19
+  Say $v13
+ELSE
+  $v29 = 7
+  $v30 = $v28 - 5
+END

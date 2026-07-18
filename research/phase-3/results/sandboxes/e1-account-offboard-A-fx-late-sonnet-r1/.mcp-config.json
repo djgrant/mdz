@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ops": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/Users/coder/Repos/djgrant/mdz/research/phase-3/src/harness/mcp-ops-server.ts"
+      ],
+      "env": {
+        "OPS_LOG": "/var/folders/t8/bhx1lqx977df536xx99b4f480000gp/T/mdz-agentic-LBooIa/.ops-log.jsonl",
+        "OPS_SEED": "/Users/coder/Repos/djgrant/mdz/research/phase-3/programs/e1/seeds/account-offboard-late.json"
+      }
+    }
+  }
+}

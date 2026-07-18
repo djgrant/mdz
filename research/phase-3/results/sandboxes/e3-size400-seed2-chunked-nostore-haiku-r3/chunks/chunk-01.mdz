@@ -1,0 +1,28 @@
+$v0 = 7
+$v1 = $v0 - 5
+$v2 = "blue"
+IF $v0 = 8 THEN
+  IF $v0 > 7 THEN
+    Say $v1
+  END
+END
+$v3 = 3
+Say $v2
+IF $v1 = 3 THEN
+  $v4 = $v3 - 4
+END
+IF $v3 = 0 THEN
+  $v5 = $v3 * 1
+  Say $v2
+END
+Say "next"
+CASE $v2
+WHEN "draft"
+  Say $v3
+  Say $v2
+WHEN "next"
+  $v6 = 9
+  $v7 = $v0 * 2
+ELSE
+  Say "hold"
+END
