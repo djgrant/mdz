@@ -2,13 +2,86 @@
 
 A superset of Markdown designed to exploit LLMs' ability to evaluate programs.
 
-## Vision
+## Examples
 
-This project aims to:
-1. Enable the creation of programs not possible with traditional programming languages
-2. Find and codify LLM's emergent capabilities to evaluate such programs
+Map-reduce is a classic diverge and converge pattern. It takes a list of items, spawns sub-agents transform each of those items, and then spawns one more sub agent to pick the best transformation. 
 
-## Goals
+This can be expressed as a _higher-order_ skill, meaning the general diverge and converge behaviour becomes programmable by using this skill with different inputs.
+
+```ruby
+---
+name: map-reduce
+input: $items, $map, $map-worker, $reduce, $reduce-worker, $scratch
+---
+
+IF $scratch THEN
+  Instruct sub agents to write their outputs into a scratch folder
+ELSE
+  Instruct sub agents to return the output in their response
+END
+
+FOR $item IN $items
+  SPAWN $map-worker
+  WITH
+    instruction: $map
+    item: $item
+END
+
+RETURN SPAWN $reduce-worker
+WITH
+  instruction: $reduce
+  results: every sub-agent output, in the same order as $items
+```
+
+This can be compsed in many different ways. Let's take the example of a **simplify** skill:
+
+```ruby
+---
+name: simplify
+input: $file, $n
+---
+
+$heuristics = ["making it more direct", "making it more obvious", "making it smaller"]
+$candidate: string @(./candidate-{filename}) = a copy of $file
+
+RETURN USE skills/map-reduce
+  WITH
+    items: $heuristics
+    map: Simplify $candidate by $item.
+    reduce: Pick the candidate that most improves the code.
+    map-worker: sonnet
+    reduce-worker: sonnet
+    scratch: true
+```
+
+And that composed skill can be called by prompting:
+
+```ruby
+USE skills/simplify.mdz WITH
+  $file: complex-module.java
+  $n: 3
+```
+
+## Research
+
+So, does the language work, and is it useful in the real world?
+
+Yes, and maybe.
+
+I ran a limited number of experiements in [./research](./research). The core findings so far are that:
+
+1. Agents understand and follow MDZ with minimal explanation. They can throw errors if the language is malformed or there are type errors. It is exteremly expressive – as long as you are cohernet, you can make up syntax on the fly, and models will interpret it in a predictable way.
+2. MDZ itself does not make a model perform any better. It's entirely down to the programs written with it.
+3. MDZ does allow you to describe more advanced orchestration programs, and those programs may  or may not perform better than a simple prompt.
+4. MDZ programs structurally similar to a ralph loop (e.g. hill-climbing) deliver equivalent performance a ralph loop with the same optimisation goal.
+5. Advanced MDZ programs (such as a higher order map-reduce skill) require opus-level models to orchestrate faithfully (they can ofc delegate work to less capable models).
+6. Models do not zero-shot good MDZ programs.
+
+Utlimately, MDZ is a way to concisely express agent behaviours. It does not make the model perform better. If you like reading code, you may like reading MDZ over prose. Its most useful property is composition.
+
+## Language
+
+### Goals
 
 The language is designed to be:
 
@@ -18,7 +91,7 @@ The language is designed to be:
 - Interpretable by LLMs as executable instructions
 - Composable through references to sub-agents and skills
 
-## Syntax
+### Syntax
 
 MDZ is "prose first", meaning that you write prompts as normal, and use MDZ keywords to opt-in to programmatic control flow. 
 
@@ -58,34 +131,6 @@ In the case of MDZ, you end up with a block stream that looks like this:
   }
 ]
 ```
-
-## Explorations
-
-There are a few different ways MDZ could be deployed:
-
-#### 1. LLM runs program, tracking state internally
-
-LLMs are capable of holding state both internally and in context between turns. In some quick benchmarks I found MDZ outperformed prose, and used fewer tokens. However, LLMs can forget things and they do get distracted.
-
-#### 2. LLM runs program, tracking state externally
-
-In this model, the LLM still runs the program, but uses a tool to update and store its internal pointer and program state. A pre-processing step could annotate the program with statement addresses for the LLM to reference.
-
-#### 3. LLM requests programs from a REPL
-
-Similar to the ideas in [recursive language models](https://arxiv.org/abs/2512.24601), the LLM would call out to a REPL to request a module, or part of the program. The evaluation of the program could itself be a recursive call to prevent context rot.
-
-#### 4. LLM rewrites program in tail-recursive loop
-
-At the end of each turn the LLM could call itself with an updated version of the program containing its remaining steps and the program's internal state. This is most likely a bad idea, because one mistake corrupts the program, but it will be fun to explore.
-
-## Contributions
-
-Contributions from the community are warmly welcomed. 
-
-While the language spec is being discovered, the most valuable contribution is sharing data from real-world usage of MDZ.
-
-If there is a feature you think should belong in MDZ, it is recommended that you fork the repo, add the feature to your fork, and share your findings in an issue. The evolution of the language will be driven by data on what works in production.
 
 ## License
 
